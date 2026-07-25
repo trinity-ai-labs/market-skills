@@ -74,8 +74,13 @@ everything downstream.
 
 - **Repo** (most common): fan out 2–4 explore agents in parallel over the codebase (model:
   `sonnet`, effort low) — README, docs/, landing/marketing pages, package manifests,
-  pricing/billing code, auth/team features, CLI surface. They return facts; you write the
-  dossier.
+  pricing/billing code, auth/team features, CLI surface. One of them does **infra-cost
+  archaeology**: inventory every paid service the code actually runs on — cloud/hosting from
+  IaC and deploy configs, databases and queues from docker-compose/connection code, LLM and
+  third-party APIs from SDK imports and call sites, storage/CDN/email/auth providers — plus
+  the usage SHAPE (per-user, per-request, per-token, per-GB) each is billed on. Env
+  *templates* only (`*.example`, `*.sample`) — never read real env/secret files. They return
+  facts; you write the dossier.
 - **Doc** (spec, PRD, pitch memo): read it fully. Note what it asserts vs. what it assumes.
 - **Idea** (described in chat): draft the dossier from the description; the gaps you can't fill
   become Phase 1 questions.
@@ -159,10 +164,12 @@ like: `references/dimensions.md` — load it before dispatching):
 | Channels & GTM landscape | `research/channels.md` | Parallel |
 | Moats, risks & regulation | `research/moats-risks.md` | Parallel |
 
+| Unit economics & COGS at scale | `research/unit-economics.md` | Parallel — whenever the dossier has Cost structure signals (any repo with detectable infra; always for LLM-heavy products) |
+
 Skip a dimension only when the product genuinely lacks it (a free OSS tool may not need
 willingness-to-pay depth); add dimensions when the product demands them (marketplace → supply
-side; regulated space → compliance deep-dive; hardware → unit economics). Say in the report
-which were skipped and why — silent truncation reads as coverage.
+side; regulated space → compliance deep-dive; hardware → BOM-flavored unit economics). Say in
+the report which were skipped and why — silent truncation reads as coverage.
 
 **Orchestration — this runs as a workflow, not a hand of solo agents.** Load
 `references/orchestration.md` and adapt its canonical `Workflow` script; fall back to parallel

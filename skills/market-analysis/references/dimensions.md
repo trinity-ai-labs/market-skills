@@ -154,6 +154,29 @@ Hunt:
 - The channels open to a NEW entrant at the product's stage — ranked, with reasoning.
   Community-led is a compounding layer, never the primary motion for a pre-revenue team.
 
+## Unit economics & COGS at scale (`research/unit-economics.md`) — runs whenever the dossier has Cost structure signals
+
+The repo already named the cost structure; this dimension prices it and projects it. Hunt:
+- **Current metered rates** for every service in the dossier's Cost structure signals —
+  from the providers' own pricing pages (these change; pull dates matter more than usual).
+  Include the free-tier boundaries (many products live inside them at first — say where the
+  cliff is).
+- **Cost per unit of value**: build the formula — cost per active user/month and per core
+  action (per analysis run, per generation, per 1k requests) — from the billing shapes.
+  LLM-heavy products: tokens per action × current per-token rates, with the model named; note
+  the historical direction of those rates (falling) as a trend input, not a promise.
+- **Scale projections**: a cost-vs-revenue table at usage tiers (e.g. 100 / 1k / 10k / 100k
+  users, or the product's natural usage unit), revenue side anchored on the pricing
+  dimension's recommended anchor. Gross margin at each tier; the tier where free-tier cliffs
+  hit; break-even. Flag the "does the margin survive success?" verdict explicitly — a product
+  whose COGS scales linearly with its value delivery (LLM calls, rendering, storage) can be
+  healthy at 100 users and dead at 100k.
+- **Optimization levers** incumbents use in this category (caching, model tiering, batch,
+  self-hosting thresholds) — as evidence of where margin structurally lands, not as advice.
+
+Sources: provider pricing pages (primary), engineering blogs on cost at scale in this
+category, disclosed gross margins of public comparables.
+
 ## Moats, risks & regulation (`research/moats-risks.md`)
 
 Hunt:

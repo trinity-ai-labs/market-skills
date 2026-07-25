@@ -32,6 +32,12 @@ meaningfully better than the current way> · evidence: <what in the source says 
 origin: source-evidence | analyst-proposed <be honest — a one-sentence idea grounds nothing> ·
 class: differentiated | table-stakes · status: settled | research-testable | founder-only
 
+## Cost structure signals (repo sources — from the infra-cost archaeology pass)
+<every paid service the code runs on: service · what it does here · billing shape
+(per-user / per-request / per-token / per-GB / flat) · where detected (manifest, IaC,
+SDK import). Plus the scaling shape in one line: which cost grows with users, which with
+usage, which is flat. Feeds the unit-economics dimension.>
+
 ## Category boundary
 **In:** <the category this competes in>
 **Out:** <adjacent categories explicitly excluded, and why>

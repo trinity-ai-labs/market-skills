@@ -154,6 +154,13 @@ the metric + threshold that tells the founder "we are now in this case".>
 <one table: the 2–3 highest-leverage assumptions flexed ±20–30% → effect on runway and
 revenue. This is the fastest trust-builder in the whole model.>
 
+## COGS & margin at scale
+<imported from the analysis's unit-economics dimension when it ran (repo sources): the
+cost-vs-revenue table at usage tiers, gross margin trajectory, free-tier cliffs, break-even
+tier, and the "does the margin survive success?" verdict [S#]. The pricing row of the
+assumptions table must be consistent with this — a price that only works at today's COGS
+gets a named trigger for revisiting.>
+
 ## Unit economics
 <LTV:CAC AND CAC payback, always together (a 3:1 ratio on a 3-year payback is a cash trap).
 Floors (venture & bootstrap tracks): SaaS ≥3:1 & payback ≤12 mo; prosumer/consumer ≤6 mo
