@@ -70,10 +70,15 @@ preview of the questions still coming.** Pre-answer what the repo/doc/context
 already answers. Full question bank with per-question defaults: `references/grill.md` — load it
 now. The areas that gate everything downstream:
 
+- **Pointers & background** — opens the grill: anything to point the research at (docs, prior
+  research, competitor lists, community threads) and any background the source can't show.
 - **Ambition** — lifestyle business, bootstrapped-profitable, or venture-scale? Changes every
   downstream recommendation; never assume.
 - **Value-hypothesis defense** — the per-VH test questions from the Phase 0 dossier (the
   sharpest part of the grill).
+- **Feature conviction** — which features the founder finds most valuable, ranked; their
+  ranking versus where the product's effort went is either confirmation or the grill's
+  sharpest divergence.
 - **Monetization intent** and price instinct.
 - **Resources** — team, runway (months, not dollars, if they prefer), hours/week, capital
   available or sought.

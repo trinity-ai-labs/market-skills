@@ -124,6 +124,17 @@ blind spot the whole analysis inherits.
 
 Ask only what changes the analysis:
 
+- **Pointers & background** — open the grill (after the naming question, when one is live) with
+  one open invitation: anything they want the research pointed at — docs, prior research,
+  competitor lists, community threads, a spec — and any background the source can't show
+  (history, pivots, why now, who this is for). Read every pointer before dispatching the
+  dimension it touches; named competitors join `mustProfile`. One open ask, cheap to make,
+  and it catches whole directions the dossier alone would miss.
+- **Feature conviction** — which features they find most valuable — the ones they'd fight
+  hardest to keep — ranked. This is founder-only, never inferable from the source, and always
+  asked: where their ranking diverges from where the repo's effort or the docs' pitch went is
+  the sharpest finding the grill can produce, and their top-ranked feature gets research
+  priority — the willingness-to-pay and competitor-gap work centers on it.
 - **Category call** — when the product straddles categories, propose the boundary and let them
   push back ("I'd analyze this as an AI app-builder, not an IDE — Cursor is adjacent, Lovable is
   direct. Agree?").

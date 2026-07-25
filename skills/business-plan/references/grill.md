@@ -22,7 +22,18 @@ check-in, not a roadmap, and is fine.
 Skip any question the context already answers. The ORDER matters — early answers gate which
 later questions exist at all.
 
-## 1. Ambition & audience (first — selects the artifact)
+## 0. Pointers & background (opens the grill)
+
+- **"Anything you want to point me at, or background I should have?"** — docs, prior
+  research, competitor lists, community threads, a spec; history, pivots, why now, who this
+  is really for. One open ask, offered as an invitation, not a requirement — default: proceed
+  on the dossier alone. Every pointer gets read before the dispatch that touches its topic;
+  named competitors join `mustProfile`; background lands as `[F#]` facts. This is a check-in
+  shape (an open door, not a decision), so it's the one question that may open the grill
+  without a recommended answer. For an idea with no settled name, the naming question still
+  comes before everything — this follows it.
+
+## 1. Ambition & audience (selects the artifact)
 
 - **"Venture-scale, bootstrapped-profitable, or lifestyle?"** Changes every downstream
   recommendation. Default: read the product's surface — a category with winner-take-most
@@ -44,6 +55,12 @@ later questions exist at all.
 - For each `founder-only` value hypothesis (from the dossier Phase 0 just built): **"The
   evidence says the bet is X — is that the value you'd defend, or is it Y?"** Sharpest
   question in the grill; ask per-hypothesis, not as a blob.
+- **"Which features would you fight hardest to keep — rank your top three?"** Always asked,
+  never skipped as settled: the founder's own ranking is founder-only knowledge, and it
+  either confirms the dossier's hypotheses or produces the grill's sharpest divergence
+  (the effort went into X, the docs sell Y, but they'd die on the hill of Z). The top-ranked
+  feature gets research priority — willingness-to-pay and competitor-gap work centers on it —
+  and the plan's Solution section leads with it.
 - **"What do you know that the market doesn't?"** — the secret behind the product. If the
   answer is generic ("AI is big"), say so: a thesis needs a non-consensus belief.
 - **"What traction exists today?"** — users, revenue, waitlist, DMs, anything. Zero is an
