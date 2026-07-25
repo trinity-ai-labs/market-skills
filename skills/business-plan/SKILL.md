@@ -1,6 +1,6 @@
 ---
 name: business-plan
-description: Use when a product — a code repo, a spec/doc, or an idea — needs a business plan or a path to market: monetization, go-to-market, pricing, financial projections, milestones, risks. Grills the founder first; consumes the market-analysis skill as its research engine.
+description: Use when a product — a code repo, a spec/doc, or an idea — needs a business plan or a path to market: monetization, go-to-market, pricing, financial projections, milestones, risks. For market research alone, use the market-analysis skill instead.
 ---
 
 # Business Plan — Conductor
