@@ -43,7 +43,11 @@ Hunt:
   non-product alternative — status quo / spreadsheet / manual process / build-internally —
   because that's often what's really being displaced, and it re-frames which attributes matter.
   Then **direct** (same job, same buyer), **indirect** (same job, different mechanism),
-  **adjacent** (incumbents one feature-launch away). Name the bucket and why.
+  **adjacent** (incumbents one feature-launch away). Name the bucket and why. Classify by the
+  BUYER'S decision, not the feature list: a platform offering the identical capability but
+  requiring the buyer to migrate their stack onto it is **adjacent for buyers who won't
+  migrate and direct for buyers who would** — pick per the dossier's target segment and say
+  which rule you applied (this call moves the sizing, so it's never left implicit).
 - Per competitor: what it does (one paragraph), pricing model + actual price points, disclosed
   traction (ARR, users, downloads — only if stated somewhere citable), funding/investors,
   positioning claim in their own words, **most likely next move**, and **what they structurally
@@ -179,6 +183,13 @@ Hunt:
 
 - **Marketplace/supply side**: liquidity, chicken-and-egg strategies that worked in the category.
 - **Compliance deep-dive**: regulated verticals (health, fintech, kids) — certification costs and
-  timelines become plan-level facts.
+  timelines become plan-level facts. Also triggered by MECHANISM, not just vertical: a
+  horizontal product that touches other people's regulated data (clones prod databases,
+  processes PII, records calls) earns this dimension too.
 - **Unit economics**: hardware or high-COGS products — BOM, margins, logistics.
 - **Ecosystem/API**: platform products — who would build on it, precedent take-rates.
+
+Add-ons have no canned playbook block. The conductor AUTHORS one in the same format as the six
+standard dimensions above (output file name + Hunt list + sources + the shared skeleton) and
+passes it in `playbooks` — never dispatch a dimension whose playbook is empty (the canonical
+workflow script throws on it).

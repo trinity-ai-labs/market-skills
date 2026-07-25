@@ -8,7 +8,7 @@ section is yours.
 
 ```markdown
 # Product Dossier — <Product Name>
-_Source: <repo path | doc | idea> · Updated: <date>_
+_slug: <the settled slug — the deterministic folder key> · Source: <repo path | doc | idea> · Updated: <date>_
 
 ## What it is
 <one precise paragraph — no marketing voice>
@@ -29,6 +29,7 @@ _Source: <repo path | doc | idea> · Updated: <date>_
 <3–6 falsifiable claims about why anyone pays. Each:>
 **VH1 — <claim>**: pain: <what it kills> · who: <segment feeling it most> · vs today: <why
 meaningfully better than the current way> · evidence: <what in the source says so> ·
+origin: source-evidence | analyst-proposed <be honest — a one-sentence idea grounds nothing> ·
 class: differentiated | table-stakes · status: settled | research-testable | founder-only
 
 ## Category boundary
@@ -89,7 +90,9 @@ no entrenched pricing to fight, but no proof either). Why the differentiator sur
 would change the conclusion, and the cheapest real-world validation for each>
 
 ## Assumptions
-<dispatched-mode gaps: assumption · default chosen · why · what changes if wrong>
+<ALWAYS present. Dispatched mode: every gap you would have asked about. Interactive mode: the
+defaults you took without grilling (geography, etc.) — or "None — all gaps closed in the
+grill." Each entry: assumption · default chosen · why · what changes if wrong>
 
 ## Coverage
 <dimensions run, dimensions skipped and why, verification passes performed>
@@ -133,8 +136,13 @@ _Every externally-sourced figure or claim in the reports. Re-verify before reuse
 |---|---|---|---|---|---|---|
 ```
 
-Research agents append their source tables here (or the conductor merges them at synthesis) —
-the reports cite by number `[S12]` so every figure traces in one hop.
+**Written exclusively by the conductor at synthesis** — `[S#]` numbers are assigned at that
+merge, from the Sources tables inside each `research/*.md`. Research agents NEVER write
+sources.md (thirty parallel appenders can't number anything); every brief says so. The reports
+cite `[S12]` so every figure traces in one hop.
+
+Per-dimension `research/<dimension>.md` files follow the skeleton in `dimensions.md`, not this
+file.
 
 ## `business-plan.md`
 

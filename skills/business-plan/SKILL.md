@@ -22,9 +22,11 @@ product name, kebab-case; re-runs update in place, never a new folder):
 
 ```
 ~/Documents/business/<product-slug>/
+  founder-brief.md            # the grill's numbered [F#] facts (Phase 1) — the plan cites these
   one-pager.md                # the door-opener — always produced first, every track
   business-plan.md            # the main artifact — SHAPE DEPENDS ON TRACK (see below)
   financial-model.md          # assumptions table + scenarios, referenced by the plan
+  red-team.md                 # the panel's objections + dispositions (Phase 4)
   deliverables/
     business-plan.html        # rendered deliverables (Phase 5)
     business-plan.pdf
@@ -37,14 +39,27 @@ Templates AND the track branch (venture memo vs. bootstrap operating plan vs. le
 investors don't read 40-page plans; the classic genre survives only for banks/grants):
 `references/plan-template.md`. Load it before drafting.
 
+The market-analysis skill's root is `~/.claude/skills/market-analysis` (fallback:
+`~/.agents/skills/market-analysis`) — every cross-skill reference below resolves against it.
+`~` is shorthand in this document only: expand to the absolute home path in every path you
+pass to a tool or an agent brief.
+
 ## Phase 0 — Ground
 
-Resolve the slug, look inside `~/Documents/business/<slug>/`. A market analysis already there
-is prior work: if the product dossier still matches reality and the analysis is recent, plan to
-reuse it and say so; if the product moved or the analysis is stale (months old in a fast
-category), plan a refresh run. If the source is a repo, skim enough (README, docs) to talk
-about the product credibly in the grill — the deep product read belongs to the market-analysis
-skill's Phase 0, not to you.
+Resolve the slug per market-analysis's slug rule (repo → analyzed directory name, settled
+name wins; for an idea with no name, do NOT write any file — settling the name is the first
+grill turn). Look inside `~/Documents/business/<slug>/` (and `ls` the parent for an existing
+folder naming the same product). A market analysis already there is prior work: **reuse** if
+the dossier still matches reality and `_Analyzed:` is under ~90 days old in a fast-moving
+category (AI tooling, consumer apps) or ~12 months otherwise; between those, run the
+competitor-analysis Monitoring plan re-check (pricing pages, changelogs) as a partial refresh
+and note it in Coverage; past them, or if the product's stage/boundary moved, plan a full
+refresh.
+
+Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
+dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet.
+The grill needs the dossier's value hypotheses to exist; nothing else of market-analysis runs
+yet.
 
 ## Phase 1 — Grill the founder
 
@@ -66,18 +81,37 @@ now. The areas that gate everything downstream:
 
 Call out bad answers when you see them — a venture-scale ambition with 4 hours/week, a price
 instinct 10× under the category's floor, "no competitors". Push with reasoning; a wrong premise
-you let through makes the whole plan fiction. Answers become `founder-brief` facts the plan
-cites the same way it cites sources.
+you let through makes the whole plan fiction.
+
+Close the grill by writing `founder-brief.md` — the numbered fact table (template in
+`references/plan-template.md`) every `[F#]` citation in the plan resolves through, exactly as
+`[S#]` resolves through sources.md. It's written BEFORE any dispatch, and Phase 2's brief
+carries it verbatim so F-numbers stay stable everywhere.
 
 ## Phase 2 — Run the market analysis
 
-The research engine is the **market-analysis skill**, run brief+skill style: load
-`~/.claude/skills/market-analysis/SKILL.md` (fallback: `~/.agents/skills/market-analysis/SKILL.md`)
-and execute it in **dispatched mode** — the founder's Phase 1 answers are its brief, so it never
-re-asks the user; its research fan-out runs as its own workflow fleet per its
-`references/orchestration.md`, so your conductor context stays lean. If the harness supports
-agents that can spawn agents, you may instead hand the whole execution to ONE executor agent
-(model: `opus`, effort high) with the same brief; either way you verify the return.
+The research engine is the **market-analysis skill**, run brief+skill style: load its SKILL.md
+from the skill root and execute **Phases 1–4 only** (Phase 0 already ran; skip its Phase 5
+deliverables and its user-facing close — you render in your own Phase 5, and its analysis PDF
+is rendered only if the founder asked for a standalone one in the grill). Its research
+fan-out runs as its own workflow fleet per its `references/orchestration.md`, so your
+conductor context stays lean. Default to running it yourself in-session; hand it to ONE
+executor agent (model: `opus`, effort high) only when you've confirmed this harness lets
+dispatched agents spawn agents. Either way, the brief is this verbatim contract (the fields
+market-analysis's own "Dispatched brief contract" requires):
+
+```
+MODE: dispatched
+Do NOT ask the user anything — Phase 1 is satisfied by the founder brief below; every
+remaining gap becomes an entry in the report's Assumptions section.
+Run: market-analysis Phases 1–4 only. No deliverables, no user-facing close.
+slug: <slug> · outDir: <absolute path> · date: <today> · source: <repo path | doc | idea text>
+ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: run sizing as a
+  single light pass (the venture-scale sniff test still gets stated); venture/lender: full rigor.
+mustProfile: <competitors the founder named — always profiled, whatever their kind>
+founder brief (verbatim):
+<founder-brief.md content>
+```
 
 Reuse from Phase 0 applies: a fresh, matching analysis skips this phase entirely — verify it
 against the checklist below and move on.
@@ -91,6 +125,11 @@ against the checklist below and move on.
 - The competitor set includes the rivals the founder named in Phase 1 (or says why not).
 - `Coverage` names what was skipped and why; `Risks to this analysis` is non-empty (a market
   analysis with nothing soft in it wasn't done honestly).
+- `Assumptions` is present and non-empty for a dispatched run — each entry states the default,
+  why, and what changes if wrong. An empty Assumptions section from a headless run means gaps
+  were guessed silently.
+- `Value hypothesis verdicts` covers every VH in the dossier (confirmed / weakened / refuted /
+  untested) — Phase 3's Solution section may only build on confirmed ones.
 
 A failed check goes BACK with a sharper brief ("the sizing is single-sourced top-down — re-run
 bottom-up per the playbook"), not patched by you. Judge and direct; don't do the fleet's job.
@@ -111,33 +150,47 @@ load-bearing rules:
   table (source: analysis, founder, or explicit guess), the revenue build is bottom-up, and
   base/downside/upside scenarios move the assumptions — not the conclusions. Fake precision is
   the failure mode; visible formulas are the fix.
-- **Ambition shapes shape.** Venture-scale gets the investor-facing memo framing; bootstrap
-  gets a cash-curve and time-to-default-alive framing. Same evidence, different document.
+- **Track shapes shape — three ways.** Venture gets the investor-facing memo framing;
+  bootstrap/lifestyle gets a cash-curve and time-to-default-alive framing; lender gets
+  repayment-capacity framing (3–5yr financials, use-of-funds line items, tone shifted from
+  bet-defense to ability-to-service-the-loan). Same evidence, different document.
 - **Every Low-tagged assumption gets a validation step** in the plan's validation section —
   the cheapest real-world test (interviews, landing page, waitlist, pre-sales) with a kill/
   continue threshold.
+- **Reconcile the one-pager last.** After financial-model.md is written, re-open one-pager.md
+  and reconcile every number against it — the ask, the SOM range, the price. A one-pager
+  number that disagrees with the model it fronts is the commonest credibility kill.
 
 ## Phase 4 — Red team
 
 Before the plan is done, it gets attacked. Dispatch a panel — one agent per lens, parallel
-(model: `opus`, effort high; these need to be smart):
+(model: `opus`, effort high; these need to be smart). Lens 1 matches the track:
 
-- **Skeptical investor** — kill the thesis: market too small, moat copyable, why-now weak?
+- **Capital skeptic** — venture: *skeptical investor* (market too small, moat copyable,
+  why-now weak?) · bootstrap/lifestyle: *default-alive skeptic* (does this reach cash-positive
+  before the runway ends?) · lender: *credit officer* (does cash flow service the debt through
+  the downside case?).
 - **Operator** — kill the execution: does the milestone plan survive contact with the team
   size, runway, and the founder's hours?
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
   price, from what they use today?
 
-Each returns its top 3–5 objections with severity. Fold: fix what's fixable, and put what
-isn't in the plan's Risks section with a straight face — a plan that pre-states its best
-objections beats one that hides them. If an objection guts the thesis, say so to the founder
-plainly and revise the bet — that IS the job.
+Every panelist brief carries the founder's named fear `[F#]` with the instruction: attack this
+hardest, then name the two risks the founder did NOT name.
+
+Each panelist's objections land in `red-team.md`:
+`| # | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |`.
+Fold: fix what's fixable; every row disposed "moved to Risks" appears in the plan's Key risks
+section by its number — a plan that pre-states its best objections beats one that hides them.
+If an objection guts the thesis, say so to the founder plainly and revise the bet — that IS
+the job.
 
 ## Phase 5 — Deliverables
 
 Render `business-plan.md` (+ the financial model) into ONE polished, self-contained
 `deliverables/business-plan.html` and a print-quality `deliverables/business-plan.pdf`, and
-`one-pager.md` into its own single-page pair, per
+`one-pager.md` into its own single-page pair (no cover page — rendering.md's single-page
+exemption; it fails verification if it spills to page 2), per
 `~/.claude/skills/market-analysis/references/rendering.md` (the shared rendering system —
 design, paged-media CSS, toolchain ladder, and the mandatory render → Read the PDF back →
 check every page → fix loop). A deliverable you didn't read back is not done.

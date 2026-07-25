@@ -20,7 +20,10 @@ founder hands an investor without apologizing.
   sentence from the report's content; the exhibit below is the proof.
 - **Exec summary is pyramid-first**: conclusion paragraph, then 3–5 supporting bullets.
 - **Cover page**: report title, one-line subtitle that states the takeaway, product/org name,
-  date, "prepared by" line. Nothing else.
+  date, "prepared by" line. Nothing else. **Exception — single-page artifacts (the
+  one-pager)**: no cover at all; the title block is the first element of the one and only
+  page, and the deliverable fails verification if it spills to page 2 (cut content, never
+  shrink type below 9pt).
 - **Exhibits**: chart/table dominant with a short "what this means" annotation beside or
   directly under it. Sources footnote at point of use (`[S12]` linking to the source table in
   the appendix), not buried in endnotes. Every table: consistent units, right-aligned numbers,
@@ -58,6 +61,12 @@ tr             { break-inside: avoid; }          /* helps, but NOT reliable in C
   `break-inside: avoid` on `<tr>` is unreliable in Blink — for a table whose rows must not
   split (the assumptions table, competitor profiles), either keep rows short, or build the
   "table" from `div`s with `break-inside: avoid` per row. Check in the verify pass either way.
+- **Never wrap a table you expect to paginate in a `break-inside: avoid` container**
+  (`.exhibit`, `.card`, `figure`): if the whole table still fits on one fresh page, Chromium
+  relocates the entire wrapper to the next page instead of splitting it — a big blank gap on
+  the prior page, and the thead-repeat behavior silently never exercised (live-verified
+  failure). Paginating tables get their own unwrapped container, with the title as a sibling
+  heading outside the avoid box.
 - Long content that can't shrink (wide matrices): rotate to a landscape section
   (`@page wide { size: A4 landscape } .wide { page: wide }`) rather than letting it clip.
 
@@ -83,6 +92,10 @@ size. Exact invocation:
 margin/paper flags — margins live in `@page`, which is why the CSS above owns them. If Chrome
 isn't at that path, try `Chromium.app`, `chromium`, `google-chrome`.
 
+On macOS this prints harmless `ERROR:...task_policy_set...invalid argument` lines to stderr on
+every run. **Success is the PDF written non-empty on disk, not a quiet stderr** — do not fall
+through to step 2 because of those lines (live-verified: the PDF is fine).
+
 **2. WeasyPrint — when Chromium mis-breaks something you can't restructure.** Full paged-media
 implementation, very predictable breaks, no JS execution. Install needs brew libs FIRST — a
 bare pip install fails to import Pango:
@@ -92,12 +105,15 @@ brew install cairo pango gdk-pixbuf libffi
 uvx --from weasyprint weasyprint report.html report.pdf   # or pip install weasyprint in a venv
 ```
 
-**3. pandoc → weasyprint — quick markdown-direct draft** (`pandoc report.md -t html5
---css=print.css --pdf-engine=weasyprint -o report.pdf`). Never install LaTeX/basictex for this
-— that's a different, heavier route these reports don't need.
+**3. pandoc → weasyprint — draft preview ONLY, never the deliverable** (`pandoc report.md
+--pdf-engine=weasyprint -o draft.pdf`): it renders the markdown, so it structurally cannot
+produce the cover page, action titles, exhibits, or chips the design system requires. Never
+install LaTeX/basictex for any of this.
 
-If a tool is missing, install it (brew/uv) rather than degrading the output; tell the user what
-was installed.
+Step 1 needs no install and Chrome is present on virtually every macOS box — verify it FIRST.
+Ask before brew-installing anything (slow, mutates the user's system). If no PDF path is
+available at all, ship the self-contained HTML, say plainly that the PDF step was blocked and
+why, and do not call the deliverables phase complete.
 
 ## The verify loop — mandatory, not a suggestion
 

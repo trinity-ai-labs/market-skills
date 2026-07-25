@@ -19,15 +19,20 @@ later questions exist at all.
   guess and why.
 - **"Who reads this plan?"** Self/cofounder → operating plan. Investors → memo (+ ask if a
   deck outline is wanted). Bank/grant → the classic full plan. Default: self + future
-  investors → memo shape.
+  investors → memo shape. When audience and ambition conflict, audience picks the shape,
+  ambition picks the financial framing (the rule lives in plan-template.md). Also settle here:
+  does the founder want the market analysis rendered as its own standalone PDF, or only the
+  plan?
+- For an idea source with no settled name: **the naming question comes before everything** —
+  no folder or file exists until it's answered.
 - If venture: **"What round, roughly when?"** — sets the financials horizon (to the next
   fundable milestone).
 
 ## 2. Value & product conviction (tests the dossier's hypotheses)
 
-- For each `founder-only` value hypothesis: **"The evidence says the bet is X — is that the
-  value you'd defend, or is it Y?"** Sharpest question in the grill; ask per-hypothesis, not
-  as a blob.
+- For each `founder-only` value hypothesis (from the dossier Phase 0 just built): **"The
+  evidence says the bet is X — is that the value you'd defend, or is it Y?"** Sharpest
+  question in the grill; ask per-hypothesis, not as a blob.
 - **"What do you know that the market doesn't?"** — the secret behind the product. If the
   answer is generic ("AI is big"), say so: a thesis needs a non-consensus belief.
 - **"What traction exists today?"** — users, revenue, waitlist, DMs, anything. Zero is an
@@ -35,9 +40,11 @@ later questions exist at all.
 
 ## 3. Monetization & pricing instinct
 
-- **"Who pays, and roughly what?"** Default: anchor on the analysis's pricing research —
-  offer the competitor-derived anchor and let them react. A price instinct 10× under the
-  category floor gets challenged on the spot (underpricing is the commonest founder error).
+- **"Who pays, and roughly what?"** The deep pricing research hasn't run yet at grill time —
+  do a quick pre-research scan of 2–3 obvious competitors' pricing pages, offer that anchor
+  flagged as pre-research, and let them react. A price instinct 10× under the category floor
+  gets challenged on the spot (underpricing is the commonest founder error). The dispatched
+  analysis then tests their instinct properly.
 - **"Subscription, usage, one-time?"** Default: the category's packaging norm unless a value
   hypothesis argues otherwise.
 

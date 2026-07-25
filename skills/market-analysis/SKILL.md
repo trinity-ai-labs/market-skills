@@ -22,10 +22,17 @@ deliberate about every dispatch, not fixed-size.
 | **Interactive** | Invoked directly in a conversation | Yes — grill on genuine gaps (see Phase 1) |
 | **Dispatched** | Run as a sub-agent (e.g. by the business-plan skill) | **Never.** The brief carries the founder's answers; any remaining gap becomes a logged assumption, not a question |
 
-You are in dispatched mode when your dispatch brief says so, or when you have no human turn to
-ask into. In dispatched mode every gap you would have asked about goes into the report's
-`Assumptions` section as: the assumption, why you chose that default, and what would change if
-it's wrong.
+You are in dispatched mode when — and only when — your brief carries the line
+`MODE: dispatched`. Never infer it; default to interactive. In dispatched mode every gap you
+would have asked about goes into the report's `Assumptions` section as: the assumption, why
+you chose that default, and what would change if it's wrong.
+
+**Dispatched brief contract** — a dispatching skill (e.g. business-plan) must pass, and you
+must refuse to start without: `MODE: dispatched` · `slug` · `outDir` (absolute — never
+`~`-prefixed) · `date` · `source` (repo path | doc path | idea text) · the founder/user
+answers as numbered facts · any category-boundary decision already made · `mustProfile`
+(competitors the founder named — always profiled) · which of your phases to run (a conductor
+that renders its own deliverables will say "Phases 0–4 only, no user-facing close").
 
 ## Output contract — deterministic home
 
@@ -43,11 +50,19 @@ All output lands in one stable folder per product:
     market-analysis.pdf
 ```
 
-**Slug rule (deterministic):** source is a repo → kebab-case of the repo's root directory name.
-Source is a doc or an idea → kebab-case of the settled product name. Same product → same folder,
-on every run, forever. A re-run **updates files in place** — never a `-v2` folder, never a
-timestamped copy. If the folder already exists, read it first: prior research is context to
-refresh, not to ignore.
+**Slug rule (deterministic).** The settled product name wins; the repo directory name (for a
+monorepo: the analyzed package's directory, not the repo root) is the fallback only when no
+product name is established. Normalize exactly: lowercase → replace every run of non-`[a-z0-9]`
+with a single `-` → trim leading/trailing `-`. An idea with no name yet gets NO files written
+until the name settles — settling it is the first grill turn (interactive) or comes from the
+brief (dispatched). Before minting a folder, `ls ~/Documents/business/` and reuse any existing
+folder whose dossier names the same product. Record the slug as a `slug:` line in the
+dossier's front matter. Same product → same folder, on every run, forever. A re-run **updates
+files in place** — never a `-v2` folder, never a timestamped copy; prior research is context
+to refresh, not to ignore.
+
+`~` is shorthand in this document only: expand it to the absolute home path in every path you
+pass to a tool or embed in an agent brief — agents never receive a `~`-prefixed path.
 
 Templates for every file: `references/templates.md`. Load it before writing any output file.
 
@@ -57,9 +72,10 @@ The input is a product pointed at one of three ways. Build `product-dossier.md` 
 market research — research agents get briefed FROM the dossier, so a mushy dossier poisons
 everything downstream.
 
-- **Repo** (most common): fan out 2–4 explore agents in parallel over the codebase — README,
-  docs/, landing/marketing pages, package manifests, pricing/billing code, auth/team features,
-  CLI surface. They return facts; you write the dossier.
+- **Repo** (most common): fan out 2–4 explore agents in parallel over the codebase (model:
+  `sonnet`, effort low) — README, docs/, landing/marketing pages, package manifests,
+  pricing/billing code, auth/team features, CLI surface. They return facts; you write the
+  dossier.
 - **Doc** (spec, PRD, pitch memo): read it fully. Note what it asserts vs. what it assumes.
 - **Idea** (described in chat): draft the dossier from the description; the gaps you can't fill
   become Phase 1 questions.
@@ -86,6 +102,9 @@ Before spending research tokens, close the genuine gaps. Grill like a partner, n
 **one question at a time, each with your recommended answer and why** — a wrong guess is cheap
 to correct and moves faster than a blank question. Pre-answer everything the dossier already
 answers. Never batch a questionnaire.
+
+An idea with no settled name gets the naming question FIRST — the slug, folder, and every
+file wait on it ("I'd plan this under the working name X — keep it, or name it now?").
 
 **The value hypotheses set the agenda.** For each hypothesis, decide: settled by the source,
 testable by research, or only answerable by this human — and ask ONLY the third kind. The
@@ -116,10 +135,16 @@ logged assumptions.
 
 ## Phase 2 — Research fan-out
 
-**Competitive landscape runs first, alone.** It's the fastest way to falsify the category
-boundary — if the "direct competitors" turn out to live in a different category, you fix the
-frame BEFORE sizing a market that doesn't exist. Read its return, adjust the dossier's category
-boundary if needed, then fan out the rest in parallel.
+**Precondition: prove web access.** Run one trivial WebSearch before dispatching anything. If
+the web is unreachable, STOP and say so plainly — a market analysis without web access is not
+producible, and agents without web tools don't fail loudly, they fabricate confidently.
+
+**Competitive landscape runs first, alone — a hard gate.** It's the fastest way to falsify the
+category boundary — if the "direct competitors" turn out to live in a different category, you
+fix the frame BEFORE sizing a market that doesn't exist. Concretely: the engine is TWO
+workflow invocations (Workflow A = competitive landscape = the table's first row; Workflow B =
+every other row), with a conductor checkpoint between them where you read A's category verdict
+and update the dossier's boundary before B runs. Never fold them into one uninterrupted run.
 
 The standard dimensions (playbooks per dimension, including what each agent's return must look
 like: `references/dimensions.md` — load it before dispatching):
@@ -160,11 +185,14 @@ the TIERING, not the count. **Set model and effort on every dispatch — never i
 
 | Stage | Model | Effort |
 |---|---|---|
+| Phase 0 explore agents | `sonnet` | low |
 | Finders, profilers, dimension researchers | `sonnet` | low–medium |
-| Verifiers | `sonnet` | medium |
-| Per-dimension reconcilers / pre-synthesis | `opus` | high |
+| Verifiers, gap-closers | `sonnet` | medium |
+| Per-dimension reconcilers / competitors.md writer | `opus` | high |
 | Completeness critic | `opus` | high |
-| Final synthesis (Phase 4) | the strongest model in the session — the conductor itself, or one top-tier dispatch | max |
+
+Final synthesis (Phase 4) is not a dispatch at all — it runs in the conductor's own turn, on
+the strongest model in the session, never delegated.
 
 Every brief carries: the dossier (inline, it's short), the category boundary, the dimension
 playbook from `references/dimensions.md`, the citation contract (below), and the exact output
@@ -177,15 +205,19 @@ sources**; if they disagree >30%, report the range and why they diverge (usually
 category boundaries). Tag every figure High (directly disclosed / primary survey), Medium
 (derived via stated formula from disclosed inputs), or Low (flagged assumption). A number that
 can't be sourced is reported as unavailable — **never fabricate a specific-looking figure**.
+If you cannot reach the web, return an empty findings set with `reason: no-web-access` — never
+answer a factual question from memory, and never cite a URL you could not fetch this session.
 
 ## Phase 3 — Adversarial verification
 
 The load-bearing numbers — headline market size, top-3 competitor traction claims, the
-willingness-to-pay anchor — get a hostile second pass. Dispatch verify agents (model: `sonnet`)
-prompted to **refute**: "Here is a claim and its sources. Try to break it — find a contradicting
-source, a category-boundary mismatch, a stale date, a misread quote. Default to refuted if
-uncertain." A claim that survives keeps its tag; a refuted claim gets corrected or downgraded to
-Low with the dispute noted. Verify the top claims, not every line — be conscious of the fleet.
+willingness-to-pay anchor — get a hostile second pass. Dispatch verify panels (model: `sonnet`,
+effort medium; three orthogonal lenses per claim: source integrity, category-boundary match,
+recency) prompted to **refute**, defaulting to refuted when uncertain. **Any single lens's
+refutation is a dispute** — the lenses are orthogonal, so a boundary-smuggled figure trips
+exactly one; majority voting would wave it through. A disputed claim gets corrected or
+downgraded to Low with the dispute (and its lens) noted. Cap the pass at the top ~12 non-L
+claims — L-tagged figures are already flagged assumptions, nothing to refute.
 
 ## Phase 4 — Synthesize
 

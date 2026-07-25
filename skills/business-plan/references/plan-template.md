@@ -8,8 +8,14 @@ sheet" — Paul Graham). The founder's ambition + audience (grill Phase 1) selec
 | Track | Main artifact (`business-plan.md`) | Financials horizon |
 |---|---|---|
 | Venture-scale (raising) | Investment memo — 2–4 pages seed, 5–8 Series A+ | 24–36 mo, to the next fundable milestone |
-| Bootstrapped / solo | Lean plan: canvas + 6–12 month operating plan | Months, not years; default-alive curve |
+| Bootstrapped / lifestyle / solo | Lean plan: canvas + 6–12 month operating plan | Months, not years; default-alive curve |
 | Bank / SBA / grant | The classic full plan (only live use of the genre) | 3–5 yr + use-of-funds detail |
+
+**The selection rule when the axes conflict**: AUDIENCE selects the document shape (a
+bank/grant reader forces the lender track regardless of ambition); AMBITION selects the
+financial framing and horizon inside it. Self/cofounder-only reader + venture ambition → memo
+shape with no ask section. Lifestyle = the bootstrap track with a fixed income target in place
+of a growth curve.
 
 **Always produce `one-pager.md` first, on every track** — the door-opener artifact; writing it
 first forces the clarity every longer document inherits. Then the main artifact. The plan is
@@ -24,6 +30,17 @@ read in ~20 minutes by a skeptic: density and traceability beat completeness.
   `[founder voice — verify/rewrite]` — evidence is yours to write; conviction is theirs.
 - Every fact: `[S#]` (sources.md) or `[F#]` (founder brief). No third kind.
 
+## `founder-brief.md`
+
+```markdown
+# Founder Brief — <Product>
+_Grilled: <date> · Cited from the plan as [F#]_
+
+| # | Fact | Grill area | Note |
+|---|---|---|---|
+| F1 | <the answer, as a fact> | ambition | <e.g. "founder override: kept price despite floor evidence"> |
+```
+
 ## `one-pager.md`
 
 ```markdown
@@ -31,11 +48,14 @@ read in ~20 minutes by a skeptic: density and traceability beat completeness.
 **Problem** <2–3 sentences, the beachhead segment's words [S#]>
 **Solution** <what it does + the differentiated value, not the feature list>
 **Why now** <the shift that opens the window [S#]>
-**Market** <SOM range with the bottom-up formula visible [S#]>
+**Market** <venture: SOM range, bottom-up formula visible [S#] · bootstrap: the beachhead
+segment + a reachable-customer count, no TAM · lender: the serviceable revenue base the loan
+underwrites>
 **Traction** <realest numbers available; "pre-launch, validating via X" beats padding>
 **Model** <price × who pays × motion>
 **Team** <why these humans [F#]>
-**The ask** <capital + what milestone it buys | for bootstrap: the 90-day goal>
+**The ask** <venture: capital + the milestone it buys · bootstrap: the 90-day goal · lender:
+amount, term, use of funds in 3–4 line items, and the cash flow that repays it>
 ```
 
 ## `business-plan.md` — venture track (memo shape, Sequoia-skeleton order)
@@ -109,6 +129,9 @@ repayment-capacity.
 
 ```markdown
 # Financial Model — <Product>
+_Horizon by track: venture 24–36 mo · bootstrap/lifestyle 6–12 mo monthly · lender 3–5 yr
+annual with monthly year 1_
+
 ## Assumptions (every input lives here — nothing buried in a formula)
 | # | Assumption | Value | Source | Confidence |
 |---|---|---|---|---|
@@ -133,11 +156,18 @@ revenue. This is the fastest trust-builder in the whole model.>
 
 ## Unit economics
 <LTV:CAC AND CAC payback, always together (a 3:1 ratio on a 3-year payback is a cash trap).
-Floors: SaaS ≥3:1 & payback ≤12 mo; prosumer/consumer ≤6 mo payback, LTV $40–120 at
-$5–15/mo. Show the cohort retention curve assumption behind LTV — the ratio is gameable,
-the curve is not.>
+Floors (venture & bootstrap tracks): SaaS ≥3:1 & payback ≤12 mo; prosumer/consumer ≤6 mo
+payback, LTV $40–120 at $5–15/mo. A product straddling both: pick by the grilled price point —
+single-user pricing under ~$25/mo is judged on the prosumer floor, team pricing on the SaaS
+floor; if the model carries both plans, show both floors against their own segments. Show the
+cohort retention curve assumption behind LTV — the ratio is gameable, the curve is not.>
 
 ## Runway & milestone
 <burn, months of runway, and the specific milestone (not "more revenue") this period buys;
 the date the company is default-alive or needs capital — whichever comes first.>
+
+## Use of funds & repayment (lender track only)
+<capital by line item, the drawdown schedule, annual debt service, and DSCR (operating cash
+flow ÷ debt service) in base AND downside. A downside DSCR under 1.0 is stated, never
+smoothed.>
 ```
