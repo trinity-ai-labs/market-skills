@@ -65,7 +65,8 @@ yet.
 
 The market analysis can research everything except what's in the founder's head. Before any
 dispatch, grill — like a partner who's about to co-sign the plan, not a form. **One question at
-a time, each with your recommended answer and why.** Pre-answer what the repo/doc/context
+a time, each with your recommended answer and why — the message ends on the ask, never on a
+preview of the questions still coming.** Pre-answer what the repo/doc/context
 already answers. Full question bank with per-question defaults: `references/grill.md` — load it
 now. The areas that gate everything downstream:
 

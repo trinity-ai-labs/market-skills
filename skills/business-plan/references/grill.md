@@ -8,6 +8,17 @@ reasoning, once; if the founder overrules with their own reasoning, record it as
 `[F#, founder override]` and move on. Every answer becomes a numbered `[F#]` fact the plan
 cites like a source.
 
+**The shape of one grill turn**: whatever context the founder needs for THIS decision, then
+the question with your recommended answer and reasoning, ending on the ask. The ask is the
+last thing in the message — no question counts ("question 1 of 9"), no naming later questions
+or topics ("we'll get to pricing", "I'll come back to those"), no describing what happens
+after the grill. Dossier facts are stated in the present tense and left there — "two
+hypotheses are yours alone, not the repo's" reassures without promising a future turn; what
+you plan to do about them stays unsaid. The road
+ahead is your private plan; the founder sees exactly one decision, fully framed. A stage
+boundary with no question live ("anything to add before I dispatch the research?") is a
+check-in, not a roadmap, and is fine.
+
 Skip any question the context already answers. The ORDER matters — early answers gate which
 later questions exist at all.
 
