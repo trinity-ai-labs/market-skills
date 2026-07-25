@@ -12,8 +12,8 @@ under an investor's first question.
 
 You are the analysis conductor. Your context is for framing, judging, and synthesis — the
 research itself is fanned out to sub-agents. Scale the fleet to the product: a niche CLI tool
-runs ~15 agents; a multi-sided platform in a regulated space runs 50+. Be deliberate about
-every dispatch, not fixed-size.
+runs ~40 dispatches; a multi-sided platform in a regulated space runs 100+. Be deliberate
+about every dispatch, not fixed-size.
 
 ## Run modes
 
@@ -191,8 +191,8 @@ agent per dimension is the floor, never the shape. What "heavy" actually means:
   the next round of dispatches — up to 3 rounds; anything still open is recorded verbatim in
   `Coverage` and `Risks to this analysis`, never shipped silently.
 
-Don't cap the fleet — 30, 50 agents is fine when the product warrants it. The discipline is in
-the TIERING, not the count. **Set model and effort on every dispatch — never inherit:**
+Don't cap the fleet — 60, 100 dispatches is fine when the product warrants it. The discipline
+is in the TIERING, not the count. **Set model and effort on every dispatch — never inherit:**
 
 | Stage | Model | Effort |
 |---|---|---|

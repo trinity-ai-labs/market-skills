@@ -250,9 +250,10 @@ Phase 4), in your own turn, never delegated.
 ## Scaling judgment
 
 - Niche/simple product: trim discovery lenses to 3 (keep the status-quo lens), `profileCap: 6`,
-  skip add-on dimensions — ~15 agents.
-- Standard product: as-is — ~25–40 agents.
+  trim `verifyCap` toward the handful of genuinely load-bearing claims, skip add-on
+  dimensions — ~35–50 dispatches once the verify panels and critic run.
+- Standard product: as-is — ~60–90 dispatches (the verify panels are `verifyCap × 3` of them).
 - Complex/regulated/multi-sided: add add-on dimensions (each needs a real playbook block —
-  the script throws on a missing one), raise `profileCap` and `verifyCap` — 50+ agents is
-  fine. The tiering table in SKILL.md is the cost discipline; never economize by inheriting
+  the script throws on a missing one), raise `profileCap` and `verifyCap` — 100+ dispatches
+  is fine. The tiering table in SKILL.md is the cost discipline; never economize by inheriting
   models or dropping the verify/critic stages.
