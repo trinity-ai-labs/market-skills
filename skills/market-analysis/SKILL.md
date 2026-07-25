@@ -1,0 +1,238 @@
+---
+name: market-analysis
+description: Use when a product needs a rigorous market analysis — market sizing, competitive landscape, customer segments, pricing, timing — whether the product is a code repo, a spec/PRD/doc, or just an idea described in chat. Also the sub-skill the business-plan skill dispatches headless.
+---
+
+# Market Analysis — Evidence Engine
+
+Produce a market analysis a founder can bet money on. The core principle: **evidence over
+narrative**. Every number is traceable to a dated source, sized bottom-up before top-down,
+reported as a range with a confidence tag — never a fake-precise point estimate that collapses
+under an investor's first question.
+
+You are the analysis conductor. Your context is for framing, judging, and synthesis — the
+research itself is fanned out to sub-agents. Scale the fleet to the product: a niche CLI tool
+might need 4 research agents; a multi-sided platform in a regulated space might need 12+. Be
+deliberate about every dispatch, not fixed-size.
+
+## Run modes
+
+| Mode | When | Questions to the user |
+|---|---|---|
+| **Interactive** | Invoked directly in a conversation | Yes — grill on genuine gaps (see Phase 1) |
+| **Dispatched** | Run as a sub-agent (e.g. by the business-plan skill) | **Never.** The brief carries the founder's answers; any remaining gap becomes a logged assumption, not a question |
+
+You are in dispatched mode when your dispatch brief says so, or when you have no human turn to
+ask into. In dispatched mode every gap you would have asked about goes into the report's
+`Assumptions` section as: the assumption, why you chose that default, and what would change if
+it's wrong.
+
+## Output contract — deterministic home
+
+All output lands in one stable folder per product:
+
+```
+~/Documents/business/<product-slug>/
+  product-dossier.md        # what the product IS (Phase 0)
+  market-analysis.md        # the main report (Phase 4)
+  competitor-analysis.md    # deep competitive landscape (Phase 4)
+  sources.md                # master source log — every number's URL, pull date, quote, confidence
+  research/<dimension>.md   # raw per-dimension findings from research agents
+  deliverables/             # rendered HTML + PDF of the reports (Phase 5)
+    market-analysis.html
+    market-analysis.pdf
+```
+
+**Slug rule (deterministic):** source is a repo → kebab-case of the repo's root directory name.
+Source is a doc or an idea → kebab-case of the settled product name. Same product → same folder,
+on every run, forever. A re-run **updates files in place** — never a `-v2` folder, never a
+timestamped copy. If the folder already exists, read it first: prior research is context to
+refresh, not to ignore.
+
+Templates for every file: `references/templates.md`. Load it before writing any output file.
+
+## Phase 0 — Understand the product
+
+The input is a product pointed at one of three ways. Build `product-dossier.md` before any
+market research — research agents get briefed FROM the dossier, so a mushy dossier poisons
+everything downstream.
+
+- **Repo** (most common): fan out 2–4 explore agents in parallel over the codebase — README,
+  docs/, landing/marketing pages, package manifests, pricing/billing code, auth/team features,
+  CLI surface. They return facts; you write the dossier.
+- **Doc** (spec, PRD, pitch memo): read it fully. Note what it asserts vs. what it assumes.
+- **Idea** (described in chat): draft the dossier from the description; the gaps you can't fill
+  become Phase 1 questions.
+
+The dossier must state: what the product is (one paragraph, precise), who it's for, the core
+jobs it does, its stage (idea / building / shipped / revenue), stack and distribution surface
+(desktop/web/CLI/API), anything priced or monetized today, and — critically — the **category
+boundary**: what adjacent categories this is NOT (the single biggest cause of a mushy analysis
+is an unbounded category; "market size" for a fuzzy category is an unfalsifiable number).
+
+**Extract value, not just facts.** The dossier's load-bearing section is **Value hypotheses**:
+3–6 falsifiable claims about why anyone would pay — each naming the pain it kills, who feels it
+most acutely, why this product's answer is meaningfully better than what those people do today,
+and the evidence in the source. A repo tells you more than its README: where the engineering
+effort went is what the maker believes matters; the onboarding flow is the intended aha moment;
+the roadmap/issues are the value bets not yet placed. Brief the explore agents to hunt exactly
+that, and to separate **differentiated value** (absent in alternatives) from **table stakes**
+(needed to play, worthless to lead with). These hypotheses drive everything after: the grill
+tests them on the founder, and every research dispatch tests them on the market.
+
+## Phase 1 — Frame and grill (interactive mode)
+
+Before spending research tokens, close the genuine gaps. Grill like a partner, not a form:
+**one question at a time, each with your recommended answer and why** — a wrong guess is cheap
+to correct and moves faster than a blank question. Pre-answer everything the dossier already
+answers. Never batch a questionnaire.
+
+**The value hypotheses set the agenda.** For each hypothesis, decide: settled by the source,
+testable by research, or only answerable by this human — and ask ONLY the third kind. The
+sharpest questions are hypothesis tests, not intake fields: "the effort in this repo says
+real-time collab is the bet — but the docs sell speed. Which is the value you'd defend?" A
+grill that could have been a web search is a wasted turn; a hypothesis you never surfaced is a
+blind spot the whole analysis inherits.
+
+Ask only what changes the analysis:
+
+- **Category call** — when the product straddles categories, propose the boundary and let them
+  push back ("I'd analyze this as an AI app-builder, not an IDE — Cursor is adjacent, Lovable is
+  direct. Agree?").
+- **Target customer** — who pays, if it's not obvious. Segment guesses with a recommendation.
+- **Geography / language** — default global-English unless the product says otherwise.
+- **Pricing intent** — subscription? usage? one-time? Even a rough instinct disciplines the
+  willingness-to-pay research.
+- **What they already believe** — competitors they fear, numbers they've heard. You'll verify,
+  not trust — but it seeds the search.
+
+Call out bad framing when you see it — a category chosen to make the TAM look big, a "no real
+competitors" claim, a customer defined as "everyone". A wrong frame you let through is your
+failure. When the user pushes back with reasons, update; when they push back with vibes, say so
+and hold.
+
+In dispatched mode this phase reads the brief's answers instead, and unresolved items become
+logged assumptions.
+
+## Phase 2 — Research fan-out
+
+**Competitive landscape runs first, alone.** It's the fastest way to falsify the category
+boundary — if the "direct competitors" turn out to live in a different category, you fix the
+frame BEFORE sizing a market that doesn't exist. Read its return, adjust the dossier's category
+boundary if needed, then fan out the rest in parallel.
+
+The standard dimensions (playbooks per dimension, including what each agent's return must look
+like: `references/dimensions.md` — load it before dispatching):
+
+| Dimension | Output file | Runs |
+|---|---|---|
+| Competitive landscape | `research/competitors.md` | First, alone |
+| Market sizing (TAM/SAM/SOM) | `research/sizing.md` | Parallel, after competitors |
+| Customers, segments & JTBD | `research/customers.md` | Parallel |
+| Pricing & willingness to pay | `research/pricing.md` | Parallel |
+| Trends, timing & why-now | `research/trends.md` | Parallel |
+| Channels & GTM landscape | `research/channels.md` | Parallel |
+| Moats, risks & regulation | `research/moats-risks.md` | Parallel |
+
+Skip a dimension only when the product genuinely lacks it (a free OSS tool may not need
+willingness-to-pay depth); add dimensions when the product demands them (marketplace → supply
+side; regulated space → compliance deep-dive; hardware → unit economics). Say in the report
+which were skipped and why — silent truncation reads as coverage.
+
+**Orchestration — this runs as a workflow, not a hand of solo agents.** Load
+`references/orchestration.md` and adapt its canonical `Workflow` script; fall back to parallel
+`Agent` dispatches only when the harness has no Workflow tool, keeping the same structure. One
+agent per dimension is the floor, never the shape. What "heavy" actually means:
+
+- **Multi-modal competitor discovery**: 3–5 finder agents, each searching a DIFFERENT way
+  (category keywords, "alternative to X" queries, community/forum threads, marketplaces & app
+  stores, funding databases). Dedup, then **loop until dry** — keep sweeping until a round
+  surfaces nothing new. Then one profiling agent PER competitor that matters.
+- **Split load-bearing dimensions**: sizing runs separate bottom-up and top-down agents,
+  reconciled afterward; customers split per segment when segments diverge.
+- **Verify panels, not spot checks** (Phase 3).
+- **Completeness critic** before synthesis: one strong agent asks "what's missing — dimension
+  not run, claim unverified, competitor unprofiled, number single-sourced?" Its findings are
+  the next round of dispatches, looping until it comes back clean.
+
+Don't cap the fleet — 30, 50 agents is fine when the product warrants it. The discipline is in
+the TIERING, not the count. **Set model and effort on every dispatch — never inherit:**
+
+| Stage | Model | Effort |
+|---|---|---|
+| Finders, profilers, dimension researchers | `sonnet` | low–medium |
+| Verifiers | `sonnet` | medium |
+| Per-dimension reconcilers / pre-synthesis | `opus` | high |
+| Completeness critic | `opus` | high |
+| Final synthesis (Phase 4) | the strongest model in the session — the conductor itself, or one top-tier dispatch | max |
+
+Every brief carries: the dossier (inline, it's short), the category boundary, the dimension
+playbook from `references/dimensions.md`, the citation contract (below), and the exact output
+file path. Research agents WRITE their own `research/<dimension>.md` and return a compact
+summary — you read summaries, not raw dumps.
+
+**Citation contract (goes in every brief, verbatim):** every external claim carries its source
+URL, the date pulled, and the exact figure or quote used. Numbers need **two independent
+sources**; if they disagree >30%, report the range and why they diverge (usually: different
+category boundaries). Tag every figure High (directly disclosed / primary survey), Medium
+(derived via stated formula from disclosed inputs), or Low (flagged assumption). A number that
+can't be sourced is reported as unavailable — **never fabricate a specific-looking figure**.
+
+## Phase 3 — Adversarial verification
+
+The load-bearing numbers — headline market size, top-3 competitor traction claims, the
+willingness-to-pay anchor — get a hostile second pass. Dispatch verify agents (model: `sonnet`)
+prompted to **refute**: "Here is a claim and its sources. Try to break it — find a contradicting
+source, a category-boundary mismatch, a stale date, a misread quote. Default to refuted if
+uncertain." A claim that survives keeps its tag; a refuted claim gets corrected or downgraded to
+Low with the dispute noted. Verify the top claims, not every line — be conscious of the fleet.
+
+## Phase 4 — Synthesize
+
+Write `market-analysis.md`, `competitor-analysis.md`, and `sources.md` per
+`references/templates.md`. Synthesis is YOUR job — never delegated, because it needs everything
+in one head. The parts that are judgment, not aggregation:
+
+- **Reconciled sizing**: bottom-up is the anchor (population × ARPU × stated penetration guess);
+  top-down is the sanity check. Show the formula, not just the result.
+- **Whitespace & positioning recommendation**: the specific gap this product can credibly own,
+  and whether its differentiator is a real moat or a feature competitors copy in two quarters.
+  This section is the load-bearing link to any downstream business plan — make it a specific,
+  falsifiable bet, not a restatement of the product idea.
+- **Risks to this analysis**: what's soft, what would change the conclusion, what to validate
+  with real customers before committing capital. Carry every Low-tagged figure here.
+
+## Phase 5 — Deliverables (HTML + PDF)
+
+The markdown is the working truth; the deliverable is a document worth putting in front of an
+investor. Render `market-analysis.md` + `competitor-analysis.md` into ONE polished, self-contained
+`deliverables/market-analysis.html` and a print-quality `deliverables/market-analysis.pdf`.
+Follow `references/rendering.md` exactly — it carries the design system, the paged-media CSS
+that stops tables and figures from being cut across pages, the PDF toolchain fallback ladder,
+and the mandatory verify loop: **render the PDF, Read it back, check every page for cut
+content, fix, re-render.** A deliverable you didn't read back is not done.
+
+Close by telling the user where everything landed (the deterministic folder) and the 2–3
+findings that should change what they do next.
+
+## Quality bars — non-negotiable
+
+- Bottom-up sizing anchors; top-down only corroborates. Ranges, never fake-precise points.
+- Every figure confidence-tagged; every source in `sources.md` with URL + pull date.
+- Category boundary stated explicitly, with what's excluded and why.
+- Competitor analysis names each rival's likely next move, not just their feature list.
+- The whitespace recommendation is falsifiable ("own X for segment Y because incumbents
+  structurally can't Z"), not generic.
+- Unsourceable numbers are declared unavailable, never invented.
+
+## Common failure modes
+
+| Failure | Fix |
+|---|---|
+| Sizing a fuzzy category | Phase 0 boundary first; competitors falsify it before sizing runs |
+| Single-sourced headline number | Two independent sources or downgrade to Low |
+| $4.3B-by-2027 fake precision | Range + visible formula + confidence tag |
+| Feature matrix with no wedge | Every competitor profile ends with "what they don't cover and why" |
+| Research dumps as the report | Agents write `research/`; you synthesize judgment on top |
+| Asking the user what research can answer | Pre-answer from evidence; grill only genuine forks |
+| New folder per run | Deterministic slug; update in place |
