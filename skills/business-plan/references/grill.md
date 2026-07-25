@@ -55,10 +55,10 @@ later questions exist at all.
 - For each `founder-only` value hypothesis (from the dossier Phase 0 just built): **"The
   evidence says the bet is X — is that the value you'd defend, or is it Y?"** Sharpest
   question in the grill; ask per-hypothesis, not as a blob.
-- **"Which features would you fight hardest to keep — rank your top three?"** Always asked,
+- **"Which features do you find the most valuable — rank your top three?"** Always asked,
   never skipped as settled: the founder's own ranking is founder-only knowledge, and it
   either confirms the dossier's hypotheses or produces the grill's sharpest divergence
-  (the effort went into X, the docs sell Y, but they'd die on the hill of Z). The top-ranked
+  (the effort went into X, the docs sell Y, but the value they see is in Z). The top-ranked
   feature gets research priority — willingness-to-pay and competitor-gap work centers on it —
   and the plan's Solution section leads with it.
 - **"What do you know that the market doesn't?"** — the secret behind the product. If the
