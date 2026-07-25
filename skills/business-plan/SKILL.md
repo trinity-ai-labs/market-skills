@@ -87,6 +87,15 @@ Call out bad answers when you see them — a venture-scale ambition with 4 hours
 instinct 10× under the category's floor, "no competitors". Push with reasoning; a wrong premise
 you let through makes the whole plan fiction.
 
+**If the founder declines the grill** ("no time — just build it, assume whatever you need"):
+don't insist, and don't default silently. Send ONE non-blocking message carrying only the two
+decisions that select the document itself — ambition and audience — each as a recommended
+default they can flip in a word, then proceed without waiting. Every other question's default
+goes into `founder-brief.md` tagged `assumed — no grill` (default · why · what changes if
+wrong), the declination itself is recorded as an `[F#]` fact, and the plan opens with the
+assumption list so reading the plan becomes the grill. The red team still runs — with no
+grill it's the only adversary the plan ever met.
+
 Close the grill by writing `founder-brief.md` — the numbered fact table (template in
 `references/plan-template.md`) every `[F#]` citation in the plan resolves through, exactly as
 `[S#]` resolves through sources.md. It's written BEFORE any dispatch, and Phase 2's brief
