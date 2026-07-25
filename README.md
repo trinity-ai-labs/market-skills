@@ -5,11 +5,16 @@ Two agent skills that take a product to market, packaged as a standalone, instal
 - **`market-analysis`** — heavy, evidence-first market research for a product (a code repo, a
   spec/doc, or an idea): value-hypothesis extraction, multi-agent competitor discovery and
   profiling, bottom-up market sizing, customers/JTBD, pricing & willingness-to-pay, timing,
-  channels, moats — with adversarial verification of every load-bearing number.
+  channels, moats — plus infra-cost archaeology on repo sources (derive COGS from the actual
+  stack, project cost vs revenue at scale) — with adversarial verification of every
+  load-bearing number.
 - **`business-plan`** — the conductor that grills the founder, runs `market-analysis` as its
   research engine, and produces the plan artifact the founder's track actually needs
-  (investor memo / bootstrap operating plan / lender classic) plus a one-pager and a
-  bottom-up financial model.
+  (investor memo / bootstrap operating plan / lender classic) plus a one-pager, a bottom-up
+  financial model with strategy simulations (bootstrap vs raise as parallel paths, beachhead
+  sequencing, profit-reinvestment loops, pre-committed switch triggers), an adversarial
+  red-team pass, and a growth-engine section that turns GTM into automated per-product agent
+  skills (content, screenshots/video, docs-sync).
 
 Both write deterministically to `~/Documents/business/<product-slug>/` (same product → same
 folder, re-runs update in place) and render polished, self-contained HTML + page-verified PDF
@@ -85,6 +90,8 @@ skills/
     references/
       grill.md                    # the founder question bank, with defaults and stance
       plan-template.md            # artifact-by-track templates + financial model rules
+      strategy-sim.md             # competing capital/GTM paths as parallel models; reinvestment engine
+      growth-engine.md            # the automated GTM machine: content/visual/docs skills + weekly loop
 ```
 
 `business-plan` references `market-analysis`'s rendering.md and dispatches the skill itself —

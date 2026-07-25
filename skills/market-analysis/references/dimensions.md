@@ -153,6 +153,11 @@ Hunt:
   broken without high NRR.
 - The channels open to a NEW entrant at the product's stage — ranked, with reasoning.
   Community-led is a compounding layer, never the primary motion for a pre-revenue team.
+- **Automation leverage in this category**: which growth levers are demonstrably
+  automatable here (programmatic/comparison SEO that survives quality gates, changelog-as-SEO,
+  screenshot/demo pipelines, AI-UGC creative testing, standing directory queues) and which
+  burn trust in THIS audience (developer communities are adversarial to bot-shaped output).
+  Evidence: what visibly works for the profiled competitors.
 
 ## Unit economics & COGS at scale (`research/unit-economics.md`) — runs whenever the dossier has Cost structure signals
 
@@ -209,10 +214,11 @@ Hunt:
   timelines become plan-level facts. Also triggered by MECHANISM, not just vertical: a
   horizontal product that touches other people's regulated data (clones prod databases,
   processes PII, records calls) earns this dimension too.
-- **Unit economics**: hardware or high-COGS products — BOM, margins, logistics.
+- **Hardware BOM & logistics** (`research/bom.md`): hardware or physical-goods products —
+  BOM, margins, logistics. Extends (never replaces) the standard unit-economics block.
 - **Ecosystem/API**: platform products — who would build on it, precedent take-rates.
 
-Add-ons have no canned playbook block. The conductor AUTHORS one in the same format as the six
-standard dimensions above (output file name + Hunt list + sources + the shared skeleton) and
+Add-ons have no canned playbook block. The conductor AUTHORS one in the same format as the
+eight standard dimensions above (output file name + Hunt list + sources + the shared skeleton) and
 passes it in `playbooks` — never dispatch a dimension whose playbook is empty (the canonical
 workflow script throws on it).

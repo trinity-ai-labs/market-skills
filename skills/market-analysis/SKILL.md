@@ -12,8 +12,8 @@ under an investor's first question.
 
 You are the analysis conductor. Your context is for framing, judging, and synthesis — the
 research itself is fanned out to sub-agents. Scale the fleet to the product: a niche CLI tool
-might need 4 research agents; a multi-sided platform in a regulated space might need 12+. Be
-deliberate about every dispatch, not fixed-size.
+runs ~15 agents; a multi-sided platform in a regulated space runs 50+. Be deliberate about
+every dispatch, not fixed-size.
 
 ## Run modes
 
@@ -31,8 +31,11 @@ you chose that default, and what would change if it's wrong.
 must refuse to start without: `MODE: dispatched` · `slug` · `outDir` (absolute — never
 `~`-prefixed) · `date` · `source` (repo path | doc path | idea text) · the founder/user
 answers as numbered facts · any category-boundary decision already made · `mustProfile`
-(competitors the founder named — always profiled) · which of your phases to run (a conductor
-that renders its own deliverables will say "Phases 0–4 only, no user-facing close").
+(competitors the founder named — always profiled) · `ambition` (venture | bootstrap |
+lifestyle | lender — bootstrap/lifestyle skips the top-down sizing agent and runs bottom-up
+only, while still stating the venture-scale sniff test) · which of your phases to run (a
+conductor that ran your Phase 0 itself and renders its own deliverables will say "Phases 1–4
+only, no deliverables, no user-facing close").
 
 ## Output contract — deterministic home
 
@@ -45,6 +48,7 @@ All output lands in one stable folder per product:
   competitor-analysis.md    # deep competitive landscape (Phase 4)
   sources.md                # master source log — every number's URL, pull date, quote, confidence
   research/<dimension>.md   # raw per-dimension findings from research agents
+  research/profiles/<competitor>.md  # one file per profiled competitor (Workflow A)
   deliverables/             # rendered HTML + PDF of the reports (Phase 5)
     market-analysis.html
     market-analysis.pdf
@@ -162,9 +166,8 @@ like: `references/dimensions.md` — load it before dispatching):
 | Pricing & willingness to pay | `research/pricing.md` | Parallel |
 | Trends, timing & why-now | `research/trends.md` | Parallel |
 | Channels & GTM landscape | `research/channels.md` | Parallel |
-| Moats, risks & regulation | `research/moats-risks.md` | Parallel |
-
 | Unit economics & COGS at scale | `research/unit-economics.md` | Parallel — whenever the dossier has Cost structure signals (any repo with detectable infra; always for LLM-heavy products) |
+| Moats, risks & regulation | `research/moats-risks.md` | Parallel |
 
 Skip a dimension only when the product genuinely lacks it (a free OSS tool may not need
 willingness-to-pay depth); add dimensions when the product demands them (marketplace → supply
@@ -185,7 +188,8 @@ agent per dimension is the floor, never the shape. What "heavy" actually means:
 - **Verify panels, not spot checks** (Phase 3).
 - **Completeness critic** before synthesis: one strong agent asks "what's missing — dimension
   not run, claim unverified, competitor unprofiled, number single-sourced?" Its findings are
-  the next round of dispatches, looping until it comes back clean.
+  the next round of dispatches — up to 3 rounds; anything still open is recorded verbatim in
+  `Coverage` and `Risks to this analysis`, never shipped silently.
 
 Don't cap the fleet — 30, 50 agents is fine when the product warrants it. The discipline is in
 the TIERING, not the count. **Set model and effort on every dispatch — never inherit:**

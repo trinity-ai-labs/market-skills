@@ -75,6 +75,14 @@ later questions exist at all.
   build-in-public; writer → SEO; neither → launch platforms + one community). The plan
   commits to ONE primary channel for 90 days; 6–9 months to compounding traction is the
   honest expectation to set.
+- **"How automated do you want the growth engine — and where's your no-automation line?"**
+  Default: automate content drafting, screenshots/assets, repurposing, and the directory
+  queue behind one weekly approval pass; never auto-publish brand-voice surfaces or speak AS
+  the founder unreviewed. Their line goes in the plan's Growth engine section.
+- If ambition came back genuinely undecided between bootstrap and raising: **"Want the model
+  to run both paths side by side?"** Default yes — that's what the strategy simulation is
+  for; their exit-size beliefs (grill them: "what outcome would make this a win for YOU?")
+  pick the winner, not the bigger topline.
 
 ## 7. Timeline & fear
 

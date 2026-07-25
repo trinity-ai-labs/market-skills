@@ -27,6 +27,7 @@ Workflow({ script: <Workflow A below>, args: {
   boundary: "<the category boundary paragraph>",
   citation: "<the citation contract from SKILL.md, verbatim — including the no-web-access refusal clause>",
   mustProfile: ["<competitor the founder/user named>", ...],   // always profiled, regardless of kind
+  playbookCompetitors: "<the Competitive landscape block from dimensions.md, verbatim>",
   profileCap: 12,          // direct profiled up to this; non-direct up to half of it
   maxCompetitors: 60,
   dryRounds: 2,
@@ -52,6 +53,7 @@ export const meta = {
 
 const { date, outDir, dossier, boundary, citation, mustProfile = [], profileCap = 12,
         maxCompetitors = 60, dryRounds = 2, playbookCompetitors } = args
+if (!playbookCompetitors) throw new Error('no competitors playbook — pass the dimensions.md block')
 const CTX = `Product dossier:\n${dossier}\n\nCategory boundary: ${boundary}\n\n${citation}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
 
 const COMP_SCHEMA = { type: 'object', properties: { competitors: { type: 'array', items: {
@@ -120,7 +122,10 @@ return {
 **Conductor checkpoint (between A and B):** read `categoryVerdict`. If `confirms: false`,
 update `product-dossier.md`'s Category boundary to `revisedBoundary`, note the change to the
 user (interactive) or in Assumptions (dispatched), and pass the revised boundary into
-Workflow B. Never let B run against a boundary A just falsified.
+Workflow B. Never let B run against a boundary A just falsified. Also build B's
+`profiledSummary` from A's return — one line per profiled competitor,
+`"<name> (<kind>): <summary>"`, joined with newlines — and carry every other arg forward
+unchanged.
 
 ## Workflow B — Research + Verify + Critique
 
@@ -128,7 +133,8 @@ Args: everything from A plus `boundary` (post-verdict), `dimensions`, `playbooks
 `verifyCap`, and `profiledSummary` (compact roster + wedge lines from A's return).
 
 ```js
-// dimensions: e.g. ["sizing","customers","pricing","trends","channels","moats-risks"]
+// dimensions: e.g. ["sizing","customers","pricing","trends","channels","unit-economics","moats-risks"]
+//   ("unit-economics" whenever the dossier has Cost structure signals)
 // NEVER include "competitors" — Workflow A owns it. Must include "sizing".
 // playbooks: { <dimension>: "<verbatim block from dimensions.md>" } — one entry per dimension.
 // prior: { <dimension>: "<existing research/<d>.md content>" | null } — re-run merge context.
@@ -143,8 +149,9 @@ export const meta = {
 }
 
 const { date, outDir, dossier, boundary, citation, dimensions, playbooks, prior = {},
-        profiledSummary, verifyCap = 12 } = args
+        profiledSummary = '(none)', verifyCap = 12 } = args
 if (dimensions.includes('competitors')) throw new Error('competitors is Workflow A\'s job')
+if (!dimensions.includes('sizing')) throw new Error('sizing is mandatory')
 for (const d of dimensions) if (!playbooks[d]) throw new Error(`no playbook for dimension "${d}" — author one before dispatching`)
 const CTX = `Product dossier:\n${dossier}\n\nCategory boundary (settled after competitor research): ${boundary}\n\nCompetitive set: ${profiledSummary}\n\n${citation}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
 const updateRule = (d) => prior[d]

@@ -80,6 +80,11 @@ verdict that confirmed or moved it>
 ## Channels & GTM landscape
 <how this category is bought; channels open to a new entrant, ranked>
 
+## Unit economics & COGS at scale (when the dimension ran)
+<cost-per-user / cost-per-action formulas from the detected stack; the cost-vs-revenue table
+at usage tiers; gross-margin trajectory; free-tier cliffs; break-even tier; the "does the
+margin survive success?" verdict — every rate cited [S#] with its pull date>
+
 ## Value hypothesis verdicts
 <one row per VH from the dossier: confirmed / weakened / refuted / untested — with the
 dimension evidence that decided it. The whitespace bet below builds ONLY on confirmed ones.>

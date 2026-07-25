@@ -99,6 +99,19 @@ time-to-value (<30 min unassisted aha?). CAC/ACV sanity ≤ ~30–40%. Hybrid is
 steady state. Solo founder: ONE primary channel matched to founder strength, 90-day commit,
 6–9 months to compounding traction — never promise a 90-day breakout.>
 
+## Growth engine
+<the automated execution machine, per growth-engine.md: the three per-product skills to build
+(content w/ voice.md + contracts, visual-asset capture, docs-sync), the weekly loop sized to
+the founder's hours [F#], the no-full-automation zones, and the engine build-out as dated
+roadmap items. Entry sequencing when beachhead-first: the scored beachhead + pre-committed
+expansion pins with unlock conditions (strategy-sim.md §2).>
+
+## Milestones & roadmap
+<dated 6–12 month milestones: product, validation gates from the plan's validation section,
+the growth-engine build-out items (which automation skill lands in which month), and the
+funding/path gate each milestone feeds. This is the section the operator red-team lens
+attacks.>
+
 ## Financial summary
 <the 5 numbers from financial-model.md: burn, runway, base-case revenue at horizon,
 CAC payback + LTV:CAC (always paired), the milestone this capital buys>
@@ -153,6 +166,13 @@ the metric + threshold that tells the founder "we are now in this case".>
 ## Sensitivity
 <one table: the 2–3 highest-leverage assumptions flexed ±20–30% → effect on runway and
 revenue. This is the fastest trust-builder in the whole model.>
+
+## Strategy comparison (when a capital-path or sequencing fork was open)
+<the Path Comparison + Trigger table from strategy-sim.md §5: parallel paths off shared unit
+economics, dilution ladder per raising path, founder $ at low/base/high exits, and the
+pre-committed switch triggers. Bootstrap paths embed the reinvestment engine (default-alive
+gate, four buckets with the owner-pay floor, channel-unlock milestones, Rule-of-40
+validator).>
 
 ## COGS & margin at scale
 <imported from the analysis's unit-economics dimension when it ran (repo sources): the

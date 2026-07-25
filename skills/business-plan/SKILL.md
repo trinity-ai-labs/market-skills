@@ -71,12 +71,16 @@ now. The areas that gate everything downstream:
 
 - **Ambition** — lifestyle business, bootstrapped-profitable, or venture-scale? Changes every
   downstream recommendation; never assume.
+- **Value-hypothesis defense** — the per-VH test questions from the Phase 0 dossier (the
+  sharpest part of the grill).
 - **Monetization intent** and price instinct.
 - **Resources** — team, runway (months, not dollars, if they prefer), hours/week, capital
   available or sought.
 - **Unfair advantages** — distribution, audience, domain expertise, tech head start.
 - **Constraints & appetite** — geography, compliance lines, will they do sales calls, content,
   paid ads?
+- **Automation appetite** — how much of the growth engine gets automated, and the founder's
+  no-automation line (feeds the plan's Growth engine section).
 - **Timeline** — when does the first dollar need to arrive?
 
 Call out bad answers when you see them — a venture-scale ambition with 4 hours/week, a price
@@ -106,8 +110,9 @@ Do NOT ask the user anything — Phase 1 is satisfied by the founder brief below
 remaining gap becomes an entry in the report's Assumptions section.
 Run: market-analysis Phases 1–4 only. No deliverables, no user-facing close.
 slug: <slug> · outDir: <absolute path> · date: <today> · source: <repo path | doc | idea text>
-ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: run sizing as a
-  single light pass (the venture-scale sniff test still gets stated); venture/lender: full rigor.
+ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: skip the top-down
+  sizing agent, bottom-up only (the venture-scale sniff test still gets stated); else full rigor.
+categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
 mustProfile: <competitors the founder named — always profiled, whatever their kind>
 founder brief (verbatim):
 <founder-brief.md content>
@@ -150,6 +155,17 @@ load-bearing rules:
   table (source: analysis, founder, or explicit guess), the revenue build is bottom-up, and
   base/downside/upside scenarios move the assumptions — not the conclusions. Fake precision is
   the failure mode; visible formulas are the fix.
+- **Open strategic forks get simulated, not asserted.** When the capital path (bootstrap vs
+  raise) or entry sequencing (beachhead vs broad) is genuinely open after the grill, build
+  the paths as parallel copies of one model and compare founder dollars across exit scenarios,
+  with pre-committed switch triggers — load `references/strategy-sim.md` and follow it. The
+  reinvestment engine there also shapes every bootstrap-track model (default-alive gate,
+  owner-pay floor, loop-not-funnel growth), fork or no fork.
+- **The plan ships a growth engine, not a marketing wishlist.** The GTM section's execution
+  half is the mostly-automated weekly machine from `references/growth-engine.md` — the three
+  per-product skills (content, visual assets, docs-sync), the automation rules that survive
+  Google and slop backlash, and the weekly loop sized to the founder's grilled hours, with
+  engine build-out as named roadmap items.
 - **Track shapes shape — three ways.** Venture gets the investor-facing memo framing;
   bootstrap/lifestyle gets a cash-curve and time-to-default-alive framing; lender gets
   repayment-capacity framing (3–5yr financials, use-of-funds line items, tone shifted from
