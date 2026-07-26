@@ -791,11 +791,11 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		req["claim"]      = "confidence_own subject stale_after rests_on"
 		req["assumption"] = "value sensitivity validated_by"
 		req["question"]   = "gaps"
-		# The decision-brief fields in references/decisions.md (criteria,
-		# option_evidence, founder_reasoning, likelihood, evidence_grade) are
-		# deliberately NOT required here: the decision note in vault.md is a
-		# valid decision note without them, and a lint that fails the schema
-		# document own worked example is a lint people switch off.
+		# The decision-brief fields in references/decisions.md are deliberately
+		# NOT required here: the decision note in vault.md is a valid decision
+		# note without them, and a lint that fails the schema document own
+		# worked example is a lint people switch off. They are checked for
+		# COHERENCE instead - see the brief list below.
 		req["decision"]   = "confidence_own options chosen reasoning reopen_if rests_on"
 
 		why["id"]             = "nothing can address this note, so every edge that was meant to point at it dangles"
@@ -820,6 +820,51 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		why["chosen"]         = "the record says a fork was considered and not which way it went"
 		why["reasoning"]      = "the decision cannot be re-evaluated when its basis moves"
 		why["reopen_if"]      = "a decision with no trigger is indistinguishable from one nobody may revisit, so it gets filed rather than re-checked"
+
+		# The decision-brief fields below are not in any req[] entry - no type
+		# requires them - but they share this table because the question it
+		# answers is the same one: what does the absence of this field cost.
+		# Reached from the decision-brief check rather than from required-field.
+		why["criteria"]           = "there is nothing to compare the choice against, so the values-congruence check - the one signal that catches a wrong recommendation - can never be run"
+		why["criteria_ranked_by"] = "a skill-ranked list reads later as the ranking the founder gave, and the recommendation then agrees with those criteria by construction"
+		why["option_evidence"]    = "the evidence sits on the decision as a whole, so a column that was well sourced and a column with nothing behind it are indistinguishable"
+		why["do_nothing"]         = "the mandatory status-quo column stops being mechanically checkable, and a grid that quietly dropped it presented the decision as already made"
+		why["founder_reasoning"]  = "the record reads six months later as a choice made on analysis, and the constraint that actually drove it - I do not want to owe anyone money - is gone, unrecoverable, and was the reason the decision was right"
+		why["likelihood"]         = "the probability survives only in a hedged verb that fuses it with confidence, so a thin lean and a well-evidenced coin flip become the same sentence"
+		why["likelihood_range"]   = "the band term drifts between readers far enough to justify different choices, and neither reader learns they disagreed"
+		why["evidence_grade"]     = "the register of the recommendation is set by how the author felt about the call rather than by the evidence"
+
+		# What a brief-backed decision note owes, from the field table in
+		# references/decisions.md. Keep this list and the trigger split below in
+		# sync with that table required column: a field added there, or moved
+		# between required and conditional, has to be added or moved here.
+		#
+		# Presence cannot be required of every decision note, because only a
+		# GUIDED fork produces a brief - a direct-posture founder who simply
+		# decided writes a decision note carrying none of these, which is
+		# exactly vault.md worked example. What CAN be required is coherence:
+		# carry one and you owe the rest.
+		#
+		# `notrigger` marks the members that never themselves demand the rest.
+		# Only the option-grid fields trigger, because each is meaningless
+		# alone: ranked criteria with no evidence per option, or a likelihood
+		# with no evidence grade, is half a brief. `founder_reasoning` is the
+		# opposite - a verbatim record of what the founder said is worth having
+		# on any decision note, so a note migrated out of older prose can
+		# legitimately preserve it and carry nothing else. Triggering on it
+		# would fail that note, and the cheapest way to green would be deleting
+		# the verbatim words, which is the exact loss the field was split out of
+		# `reasoning` to prevent.
+		#
+		# Absent from the list entirely, on the same reasoning: `assumptions_low`,
+		# which decisions.md marks required only when any exist and which names
+		# load-bearing beliefs worth recording on any decision, and the review
+		# fields (reaffirmed, reviewed, what_happened, was_the_reasoning_right,
+		# review_note), which record what happened to a decision afterwards -
+		# something a decision with no brief behind it goes through the same.
+		brief = "criteria criteria_ranked_by option_evidence do_nothing founder_reasoning likelihood likelihood_range evidence_grade"
+		nbrief = split(brief, brieff, " ")
+		notrigger["founder_reasoning"] = 1
 
 		nedge = split(edgefields, edgef, " ")
 		rank["L"] = 1; rank["M"] = 2; rank["H"] = 3
@@ -913,6 +958,32 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 				for (j = 1; j <= nreq; j++) {
 					if (present(f, rf[j])) continue
 					report(f, "required-field", id, "missing required field `" rf[j] "`" (ty != "" ? " on a " ty " note" : "") " - " (rf[j] in why ? why[rf[j]] : "the schema requires it") ". A half-filled note makes later queries return false negatives that read as clean")
+				}
+
+				# --- a decision brief is all of its fields or none of them -
+				# An option-grid field is what says a brief stands behind this
+				# record; from there the rest are owed, including
+				# founder_reasoning, which a brief owes without ever being what
+				# demands one. The note carrying a grid and a recommendation
+				# and no founder_reasoning is the one this exists for - it
+				# reads as complete to every consumer, and nothing else in the
+				# corpus can tell that it is not.
+				#
+				# One report per missing field, same as required-field above:
+				# eight costs concatenated into a single message is a paragraph
+				# nobody reads to the end.
+				if (ty == "decision") {
+					carried = ""; ncarried = 0; ntrig = 0
+					for (b = 1; b <= nbrief; b++) {
+						if (!present(f, brieff[b])) continue
+						carried = carried (ncarried++ ? ", " : "") "`" brieff[b] "`"
+						if (!(brieff[b] in notrigger)) ntrig++
+					}
+					for (b = 1; ntrig > 0 && b <= nbrief; b++) {
+						bf = brieff[b]
+						if (present(f, bf)) continue
+						report(f, "decision-brief-incomplete", id, "carries the decision-brief field" (ncarried > 1 ? "s" : "") " " carried " but not `" bf "`. A decision note carrying none of the option-grid fields is a founder who simply decided, and is correct as written - only a guided fork produces a brief. One carrying some of them is a brief-backed decision that lost a field, and it reads as complete to every consumer while the missing part answers nothing. Without " bf ", " why[bf])
+					}
 				}
 
 				# --- the type is stated three times and all three agree ----
