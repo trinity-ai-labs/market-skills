@@ -17,11 +17,25 @@ method and tools only, never user data.** Scripts are stateless: they take a pat
 operate on it. That separation is what lets the skills be public while the work stays
 private, and lets a user upgrade the skills without touching their corpus.
 
-**3. Scripts have ZERO dependencies.** Node, importing only from `node:*`. No
-`package.json`, no lockfile, no install step. People clone this repo to *get* the
-skills — requiring a package manager to use or check them is a barrier, and a
-transitive dependency in a tool that reads someone's private business corpus is a
-supply-chain risk nobody asked for.
+**3. Repo tooling assumes Node; shipped tooling assumes only POSIX shell.**
+`scripts/check.mjs` is a repo gate — it runs for contributors who have already cloned
+this repo to open a PR, and Node is a fair assumption there. Anything the skill invokes
+on a *user's* machine is shipped tooling (`scripts/vault-lint.sh`, landing in a later
+slice) and must assume nothing beyond POSIX shell: a user installs a skill to use it,
+and a runtime prerequisite discovered at the moment of use is a broken product. Node is
+not present on a machine running Claude Code by default — the native installer,
+Homebrew, WinGet, apt, dnf and apk never install it.
+
+Both tiers still have ZERO dependencies, but on supply-chain grounds rather than
+convenience: a tool that reads a user's entire private business corpus should not carry
+a transitive dependency tree. No `package.json`, no lockfile, no install step, on either
+side of the split.
+
+The repo gate stays on Node rather than moving to Python for a narrower reason:
+`node --version` either works or reports not-found, while `python3` passes
+`command -v` on both macOS and Windows and then fails anyway — an Xcode trampoline stub
+on macOS, a Store alias stub on Windows. A runtime that fails honestly is preferable to
+one that lies.
 
 ## The gate
 
@@ -70,9 +84,13 @@ Branch prefixes: `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`.
 ```
 skills/market-analysis/   SKILL.md + references/   the research engine
 skills/business-plan/     SKILL.md + references/   the plan conductor
-scripts/check.mjs         the gate
+scripts/check.mjs         the repo gate — Node, contributors only
+scripts/vault-lint.sh     shipped tooling — POSIX shell only, ships to users
 install.sh                symlinks both skills into every agent skills home
 ```
+
+`vault-lint.sh` does not exist yet — it lands with the vault work. Rule 3 above has the
+reasoning for why the two scripts sit under different constraints.
 
 `install.sh` symlinks by default, so a `git pull` here updates the live skills on every
 machine that installed that way — which means **a broken commit on `main` breaks
