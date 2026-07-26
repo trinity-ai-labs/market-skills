@@ -719,8 +719,8 @@ app.
 
 **Migrations are forward-only.** There is no downgrade path, because writing one means
 supporting every field the newer schema added in a shape the older one can hold, which is a
-second schema maintained forever. The migration procedure lives in the `vault-migration.md`
-reference alongside this file.
+second schema maintained forever. The migration procedure lives in the
+[vault-migration.md](vault-migration.md) reference alongside this file.
 
 ## The queries this schema exists to make trivial
 

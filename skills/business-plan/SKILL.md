@@ -138,6 +138,10 @@ finds a *different* engagement's vault and reads the wrong corpus with no error 
 existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill does not
 understand stops the run rather than being half-read.
 
+If the founder already has a corpus from earlier work — research files, a plan citing `[S#]`/
+`[F#]` codes — adopt it instead of scaffolding an empty vault:
+[references/vault-migration.md](references/vault-migration.md).
+
 Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
 dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet —
 writing it to `vault/research/product-dossier.md`. The grill needs the dossier's value
