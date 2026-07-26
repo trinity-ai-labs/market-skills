@@ -89,8 +89,11 @@ scripts/vault-lint.sh     shipped tooling — POSIX shell only, ships to users
 install.sh                symlinks both skills into every agent skills home
 ```
 
-`vault-lint.sh` does not exist yet — it lands with the vault work. Rule 3 above has the
-reasoning for why the two scripts sit under different constraints.
+`vault-lint.sh` ships to users and runs read-only against a vault path: no arguments beyond
+`--vault` (or `VAULT_PATH`) for the checks, `--json` for an agent consumer, `--unverified`
+for the notes asserted with nothing behind them, and `graph <ID>` for one note's
+neighbourhood. Rule 3 above has the reasoning for why the two scripts sit under different
+constraints.
 
 `install.sh` symlinks by default, so a `git pull` here updates the live skills on every
 machine that installed that way — which means **a broken commit on `main` breaks

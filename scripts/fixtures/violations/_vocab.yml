@@ -1,0 +1,54 @@
+# Fixture vocabulary - the vault's own _vocab.yml, trimmed to the four subjects
+# this fixture takes a position on. A real vault seeds this from the skill's
+# vocabulary.yml reference and extends it per engagement, which is why the lint
+# reads this file and never the shipped one.
+
+terms:
+
+  timing-window:
+    definition: The shift that makes this product possible or necessary now, and how long
+      the window it opens stays open. The mechanism, not the narrative.
+    aliases:
+      - why-now
+      - market-timing
+      - timing
+      - window
+    required: true
+
+  price-anchor:
+    definition: The price point the plan recommends, per unit and cadence. What the product
+      charges. What the segment demonstrably pays is a separate position.
+    aliases:
+      - price
+      - pricing
+      - price-point
+      - list-price
+    required: true
+
+  primary-risk:
+    definition: The highest-ranked way this product dies, with the leading indicator that
+      would show it happening. Singular deliberately - a set-valued subject collides with
+      itself and buries the real conflicts under false ones.
+    aliases:
+      - top-risk
+      - key-risk
+      - main-risk
+    required: true
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver behind
+      it. Not required, because a plan can be sound against a flat market it has correctly
+      sized.
+    aliases:
+      - growth-rate
+      - market-trajectory
+    required: false
+
+  defensibility:
+    definition: Which durable advantage is actually available, stated as a benefit plus a
+      barrier. Required, and deliberately left with no claim under it in this fixture so the
+      coverage query has a gap to report.
+    aliases:
+      - moat
+      - barrier-to-entry
+    required: true
