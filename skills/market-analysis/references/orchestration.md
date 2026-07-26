@@ -247,6 +247,34 @@ is false, either runs another Workflow B round or records every `unclosedGaps` e
 in `Coverage` and `Risks to this analysis` — never ships silently. Then synthesis (SKILL.md
 Phase 4), in your own turn, never delegated.
 
+## Fleet hygiene — the three failures that corrupt a return
+
+**1. Assign source-ID blocks BEFORE dispatch, including for waves you haven't run yet.**
+Parallel researchers left to pick their own IDs will collide, and two different sources
+carrying the same `[S#]` is a silent citation corruption that survives into the plan. Give each
+agent an explicit, disjoint range; reserve blocks for later waves in the same table so a
+follow-up dispatch can't collide with this one. An agent that exhausts its block **stops and
+requests an extension** — it never spills into the next.
+
+**2. Never instruct a parallel fleet to use the browser. The browser context is SHARED.**
+Concurrently-dispatched agents drive **one** browser tab, not one each. In practice: an agent
+navigated to its own source, and its next call returned a *sibling agent's* search results,
+because a third agent had navigated the same tab out from under it mid-task. The agent has no
+way to detect this — the page loads, the content is plausible, and it gets attributed to the
+wrong dimension. **This is silent data corruption, not a race you can retry around.** Web
+search and fetch are per-agent and safe; the browser is not. If a fleet member genuinely needs
+a browser, run it alone, after the parallel wave has drained.
+
+**3. A starved agent must SAY it was starved.** Per-session caps (search budgets in
+particular) can exhaust mid-wave, and the failure mode is an agent that quietly narrows to
+whatever it could reach and writes a confident report over a biased source set. Require an
+explicit scope note — *"searches were unavailable from point X; findings below rest on direct
+fetches against named URLs, which biases toward guessable URLs"* — plus explicit negatives for
+what could not be reached, in place of silent omission. **Also verify the cap actually binds
+before telling a fleet to work around it:** a cap hit on the conductor's own thread does not
+necessarily bind the dispatched agents, and a workaround issued on a wrong diagnosis costs
+tool calls and can introduce failure 2.
+
 ## Scaling judgment
 
 - Niche/simple product: trim discovery lenses to 3 (keep the status-quo lens), `profileCap: 6`,

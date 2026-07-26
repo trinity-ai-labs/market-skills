@@ -230,6 +230,32 @@ can't be sourced is reported as unavailable — **never fabricate a specific-loo
 If you cannot reach the web, return an empty findings set with `reason: no-web-access` — never
 answer a factual question from memory, and never cite a URL you could not fetch this session.
 
+**Source-class precedence, in this order — it decides which number wins when they conflict:**
+
+1. **Independent measurement and primary disclosure.** Third-party harnesses, benchmarks run by
+   someone with no stake, filings, and the vendor's own published price list (a price list is
+   primary about *price*, whatever else it is).
+2. **Vendor self-reports — comparable ONLY against other vendor self-reports.** Never rank a
+   vendor's self-measured claim against an independent measurement; the methodologies aren't
+   the same instrument and the comparison manufactures a result. A vendor roadmap claim
+   ("10× lower cost per token, shipping 2H") is credible about *intent and direction* and is
+   not evidence of a *realised market price*. Say which of the two you are asserting.
+3. **Aggregators — discarded, not averaged, when internally inconsistent.** An aggregator whose
+   own figures disagree with each other, or that reports a rate with no stated formula, is not
+   a weak source to be blended in. It is an unusable one. Averaging it with a good source
+   launders the error into the headline.
+
+**Distinguish the metric from the thing.** Two true measurements can point opposite ways
+because they measure different quantities — a *list price for a named product* and a
+*cost-per-unit-of-capability index* both legitimately called "price". Where a trend claim is
+load-bearing, state which quantity moved, over what window, and by what mechanism (a step
+change, a new cheaper entrant, a genuine cut). A plan that conflates them will be split open by
+the first careful reader.
+
+**A predictive claim is not refuted by a flat historical baseline.** When the founder's belief
+is about what *will* happen, the historical series establishes the baseline the claim predicts
+a break from — report it that way rather than filing it as a contradiction.
+
 ## Phase 3 — Adversarial verification
 
 The load-bearing numbers — headline market size, top-3 competitor traction claims, the

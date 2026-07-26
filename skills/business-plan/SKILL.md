@@ -61,6 +61,23 @@ dossier-building pass (explore agents on a repo; drafting from a doc/idea), no r
 The grill needs the dossier's value hypotheses to exist; nothing else of market-analysis runs
 yet.
 
+**Sweep for founder-authored writing before the grill — it is the cheapest context you will
+ever get.** Blog, changelog, README, docs, talks, launch threads, issue bodies. Founders
+routinely explain their own reasoning in public and then never mention it, because to them it
+isn't news. Skipping this sweep means grilling for things already written down and, worse,
+missing the founder's own framing of why the product is shaped as it is. Anything found lands
+as `[F#]` with its URL.
+
+**The dossier is the plan's product-truth spine — thinness here propagates everywhere.** A
+dossier that is *true but small* is more dangerous than one that is wrong, because nothing in
+it trips a check and every downstream document inherits its omissions. Two habits prevent it:
+size the dossier against the product's own documentation (if the product's user guide for one
+surface is longer than your whole dossier, the dossier is not done), and **organise it around
+seams — what is true only because these parts are in one system — with the capability
+inventory demoted to an appendix.** A per-capability list is the wrong instrument for any
+product whose claim is integration, and it will make an integrated product read as a pile of
+commodities.
+
 ## Phase 1 — Grill the founder
 
 The market analysis can research everything except what's in the founder's head. Before any
@@ -176,6 +193,12 @@ load-bearing rules:
   with pre-committed switch triggers — load `references/strategy-sim.md` and follow it. The
   reinvestment engine there also shapes every bootstrap-track model (default-alive gate,
   owner-pay floor, loop-not-funnel growth), fork or no fork.
+- **Sequencing IS projection — the roadmap and the model are one artifact.** Every roadmap item
+  names the assumption it moves, items unlock each other (levers multiply, they don't add),
+  sequence value ≠ sum of item values, and **resource-independence gets checked before ranking
+  by value** — items gated on different constrained resources don't compete and can run
+  concurrently, which a naive value-ranking will serialise and lose. Load
+  `references/roadmap-sequencing.md` and follow it whenever the plan has a roadmap.
 - **The plan ships a growth engine, not a marketing wishlist.** The GTM section's execution
   half is the mostly-automated weekly machine from `references/growth-engine.md` — the three
   per-product skills (content, visual assets, docs-sync), the automation rules that survive
@@ -209,6 +232,56 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
 Every panelist brief carries the founder's named fear `[F#]` with the instruction: attack this
 hardest, then name the two risks the founder did NOT name.
 
+**Code-verify every objection about the subject's own product BEFORE disposing of it. This is
+the single highest-value rule in the skill.** Panelists reason from the plan document, and the
+plan document under-describes the product — so a panel will reliably assert the product lacks
+things it ships, and those false objections then get "fixed" into the plan as concessions or
+roadmap items. Any objection of the form *"it has no X"*, *"it can't do Y"*, or *"users would
+have to Z"* gets checked against source (the repo, the product's own docs) before it is
+accepted, moved to Risks, or rejected. Milestone fields, issue titles and backlog labels are
+**not** evidence of absence.
+
+Two reading errors to watch for specifically, because both produce confident and wrong
+objections:
+
+- **Names are not behaviour.** Enum values, type lists, error codes and field names describe
+  the *condition that raised a thing* — never its frequency, its severity, or its cost to the
+  user. A list of twenty failure states reads like a product that fails constantly; check the
+  defaults and the opt-outs before characterising any of it as friction.
+- **Constants are not product limits.** A number in the source may be an internal batch size,
+  an I/O bound, or a machine-protection default with a user-facing setting elsewhere. Find the
+  user-facing knob and its range before quoting a ceiling.
+
+**Expansion-hypothesis test** — apply to every "we could also sell to ___" the panel or the
+plan proposes. Three questions, all three must pass or the population is a *qualifier inside
+the existing beachhead*, not a segment: (a) is it **additive**, or already counted inside the
+SAM? (b) is the driver an **obligation** or a preference? (c) does it pay for anything at all
+today? Record the kill reason — later audits need to distinguish "already counted" (a durable
+kill) from "too complex for that segment" (a kill that may have been made under a pessimistic
+read of the product and is worth re-testing once the dossier is accurate).
+
+**Weigh negative evidence by whether the thing exists yet.** Absence of articulated demand is
+*weak* evidence when the product category doesn't exist (nobody complains about the absence of
+a thing they've never seen; they ask for a faster version of what they have) and *strong*
+evidence when the thing shipped and people declined to buy it. Treat a dead comparable as
+strong evidence only after checking it was actually the same product — a failed thin version
+of an idea prices the thin version, not the idea.
+
+**"A competitor ships that free" prices the version that shipped, not the capability.** Same
+discipline as the dead comparable: check what the free thing actually does *at the layer the
+subject's claim is made*. A checkbox and a guarantee are different products even when the
+feature list calls them the same word — the free version often does the easy 80% and leaves the
+correctness layer, which is exactly where the subject's engineering went, undone. The tell is
+what users of the free version have had to build for themselves on top of it: **hand-built
+substitutes around a free feature are the clearest available signal that the free feature
+didn't finish the job**, and counting them is a stronger demand instrument than counting
+forum complaints.
+
+**Name the layer a cost trend actually reaches.** Falling input costs let an incumbent give
+away *compute*; they do not let it give away *correctness*, which is engineering. A
+commoditisation argument that doesn't name its layer overclaims in one direction, and a moat
+argument that ignores the layer it does reach overclaims in the other.
+
 Each panelist's objections land in `red-team.md`:
 `| # | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |`.
 Fold: fix what's fixable; every row disposed "moved to Risks" appears in the plan's Key risks
@@ -232,9 +305,31 @@ Close with specific callouts, not a summary dump: the thesis in one sentence, th
 likely to be wrong and its validation step, the red-team objection that survived, the first
 three milestones, and where everything landed. Invite pushback on the specific bet.
 
+## Standing rules — they outrank convenience
+
+1. **A claim that the subject "has no X" is unactionable until checked against source.**
+   Milestone fields are not evidence.
+2. **Names describe conditions, not costs.** Enum values, type lists and field names say what
+   raised a thing — never how often, how badly, or at what cost to the user.
+3. **Evaluate the bundle, not the columns.** A product whose thesis is integration will always
+   score as commodity on a per-capability grid. When the claim is coupling, the capability
+   matrix must be supplemented, never trusted alone.
+4. **Set the lens before reading the facts:** entity → product truth → interpretation. A corpus
+   can be sound in its research layer and wrong in its plan layer purely because the scope was
+   set by the wrong entity.
+5. **M&A and corporate events are a standing sweep, not a per-session option** — mandatory
+   whenever the plan reasons about an exit, a category leader, or a competitor's trajectory. A
+   category's ownership can change between two sessions of the same engagement; a plan that
+   missed it argues against a company that no longer exists in that form.
+6. **Retraction is visible.** Strike through with the reason. Silent deletion lets a dead claim
+   return two drafts later with its cause of death erased.
+
 ## Quality bars — non-negotiable
 
 - Every market fact traces to `sources.md` or the founder brief; confidence tags survive import.
+- The steady-state ceiling is computed and stated, not implied by a 12-month curve.
+- The cost of the alternative is priced wherever the price is defended.
+- Every roadmap item names the assumption it moves.
 - The financial model's assumptions table is complete — no number appears in a projection that
   isn't a named assumption row.
 - The plan matches the founder's stated ambition, not a template's default ambition.

@@ -23,6 +23,13 @@ read in ~20 minutes by a skeptic: density and traceability beat completeness.
 
 **Writing rules (every track):**
 - Section headings are action titles — the finding as a sentence, never "Market Overview".
+- **Retraction is visible, never silent.** When a claim is withdrawn or corrected, strike it
+  through and give the reason inline. Silent deletion is how a retracted claim comes back two
+  drafts later, having lost the record of why it died.
+- **Jargon check before the founder reads it.** Idiom that is invisible to a native speaker of
+  one business dialect is opaque to everyone else — "in anger", "logo count", "land and
+  expand", "above the fold". Founder-facing and international-audience docs get every one
+  translated to the plain fact it stood for.
 - Banned words (each is a red flag to the people who read hundreds of these): revolutionary,
   disruptive, game-changing, cutting-edge, delve, tapestry, paramount, landscape-as-filler,
   seamless-as-filler. Replace each with the specific fact it was standing in for.
@@ -166,6 +173,40 @@ the metric + threshold that tells the founder "we are now in this case".>
 ## Sensitivity
 <one table: the 2–3 highest-leverage assumptions flexed ±20–30% → effect on runway and
 revenue. This is the fastest trust-builder in the whole model.>
+
+## Steady state — model to the ceiling, not to the horizon (MANDATORY, every track)
+<Twelve monthly rows can hide a structural ceiling completely. One line of algebra exposes it.
+Write the steady-state identity for the business and solve it:
+
+  seats = trials × conversion × seats-per-account ÷ churn          (subscription shape)
+
+At equilibrium, new customers = churned customers, so the ceiling is set by the RATIO, not by
+the growth rate — and no amount of time in the projection changes it. State the number, state
+which assumption it is most sensitive to, and say plainly whether the ceiling is above or
+below the founder's stated goal. A plan whose 12-month curve is rising toward a ceiling it
+never names is the commonest way a model misleads its own author.
+
+Then check whether any assumption is COHORT-DEPENDENT rather than flat. Churn is the divisor
+— if it varies by cohort (multi-seat accounts churning less than solo, annual less than
+monthly), the ceiling changes SHAPE, not just height, and a flat churn row silently averages
+that away. Name any assumption you suspect is cohort-dependent and mark it for post-launch
+measurement.>
+
+## Cost of the alternative (MANDATORY wherever price is defended)
+<Affordability is not a pricing argument. "X% of what they already spend" says nothing about
+whether they'd rather spend zero. Price the SUBSTITUTE the buyer would actually assemble:
+tools + integrations + the fraction of a person who owns and maintains the glue.
+
+The maintainer's time is usually the dominant term and is the one plans omit. Use a real
+wage source, state the fully-loaded multiplier, and show the per-seat figure at 1 / 5 / 20
+seats — the shape almost always changes across that range, and a substitute that is FREE at
+n=1 is a genuine finding that constrains where the argument may be used, not something to
+bury.
+
+Then check the inversion: is the buyer most able to self-build also the most expensive to
+have doing it? If so, say it — it is usually the strongest sentence available. If the evidence
+is arithmetic rather than observed behaviour, tag it as such and do not call it revealed
+preference.>
 
 ## Strategy comparison (when a capital-path or sequencing fork was open)
 <the Path Comparison + Trigger table from strategy-sim.md §5: parallel paths off shared unit
