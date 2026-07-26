@@ -360,7 +360,7 @@ status: current             # required
 confidence: M               # required — derived, never authored on a claim
 confidence_own: H           # required — the assessment on the claim's own merits
 created: "2026-03-15"       # required
-subject: "market.timing_window"    # required — a term from the controlled vocabulary
+subject: "timing-window"           # required — a term from the controlled vocabulary
 stale_after: "2027-01-01"          # required — quoted date; past it, the claim needs re-checking
 rests_on:                          # required — block list
   - FACT-GF45SD01
@@ -382,7 +382,7 @@ extended per engagement. The vocabulary reference is authoritative for the terms
 near-miss terms are detected; this schema only requires that the value be one of them.
 A claim whose `subject` is absent from `_vocab.yml` is a lint failure, not a silent pass:
 free-text subjects are the same as no subjects, because two researchers write
-`pricing.wtp` and `willingness-to-pay` for the same thing and the collision that would have
+`wtp` and `willingness-to-pay` for the same thing and the collision that would have
 surfaced their disagreement never happens.
 
 **`stale_after` is declared per claim and never derived from a pull date.** A vendor price
@@ -718,7 +718,7 @@ SOURCE-K92MZ1QA   the revision text, quoted verbatim              confidence M
 FACT-GF45SD01     the deadline is 1 January 2027                  own H → M
       ↑ rests_on
 CLAIM-AS23SD44    the deadline opens a 12-month buying window     own H → M
-      ↑ rests_on                                                  subject: market.timing_window
+      ↑ rests_on                                                  subject: timing-window
 DECISION-VV02HH55 sell direct before building the channel         own H → M
                                                                   reopen_if: the deadline moves
 ```
