@@ -125,6 +125,19 @@ Render, then **Read the PDF back** (the Read tool renders PDF pages) and inspect
 4. Page numbers and running footer present from page 2; cover clean.
 5. Chips/charts legible in grayscale logic (letter in every chip, labels on every SVG mark).
 6. Page count sane — a 40-page PDF from a 15-page report means a CSS break rule exploded.
+7. **Content actually present, not merely paginated.** Compare the rendered page against the
+   source markdown section by section, not just for layout faults.
+
+**The Chromium two-column silent clip — this has bitten twice; check for it explicitly.** With
+a multi-column layout, headless Chromium can silently DROP overflow content instead of
+paginating it. The page count reads *correct* — often "1" — while whole sections are simply
+missing from the output. Nothing errors, nothing looks broken, and a page-count check passes.
+
+**Therefore the page count is never evidence that the render is complete.** The only reliable
+test is reading the PDF back and confirming that each section of the source appears in it. If
+a section is missing, the fix is to drop the multi-column rule for that block (or the whole
+document) rather than to nudge the CSS — column overflow behaviour is not reliably
+controllable across the toolchain ladder.
 
 Fix the CSS (or restructure the offending exhibit), re-render, re-read. Loop until clean, then
 tell the user the PDF passed page-by-page inspection — and only then is the deliverable done.

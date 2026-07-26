@@ -33,8 +33,60 @@ later questions exist at all.
   without a recommended answer. For an idea with no settled name, the naming question still
   comes before everything — this follows it.
 
+## 0b. The two stories — ASK THESE OPENLY, BEFORE ANY TARGETED PROBE
+
+Two open questions, in this order, before anything pointed:
+
+- **"Tell me your story."**
+- **"Tell me the product's story."**
+
+**Why they come first, and why they must stay open.** A pointed question constrains the answer
+to the interviewer's frame — you can only learn what you already thought to ask about. These
+two are the only chance to hear what the founder thinks matters, in their ordering, before
+your frame is imposed. In practice they surface the origin constraint, the real user, and the
+thing the founder cares about that the repo cannot show — and they routinely produce the
+plan's actual thesis.
+
+Follow-up worth asking every time: **"What failure are you designing against?"** A product's
+shape is usually a defence against one remembered failure, and naming it is often the single
+most productive turn in the whole grill.
+
+Do not open the grill by asking for **documents**. Documents are a Phase 0 sweep, not a
+conversation.
+
+## 0c. Entity — what is the company, and is this product all of it?
+
+- **"Is this product the company, or the first product of something larger?"** Ask it
+  explicitly; never infer it from the repo, the domain, or the fact that the product has a
+  name. A founder building product one of a research lab, a studio, or a platform will answer
+  every subsequent question about ambition, exit, margin and roadmap *as if* the product were
+  the whole thing, because that is the question you asked.
+  **Default: assume the product IS the company, and say so as the assumption you're testing.**
+  If the answer is "product one," several things change at once and none of them are cosmetic:
+  a ceiling computed for this product is **product one's contribution**, not the company's;
+  the exit thesis points at a different comparable class entirely; and Part I's vision is the
+  parent, while GTM stays the product.
+  **Get this before the dossier is interpreted.** The ordering that works is
+  **entity → product truth → interpretation**; reading the facts before the lens is set is
+  how a corpus ends up sound in its research layer and wrong in its plan layer.
+- **"If this is product one, what funds product two?"** Product margin, a raise, or a separate
+  business line. The answer decides whether margin is a nice-to-have or the strategic core.
+
 ## 1. Ambition & audience (selects the artifact)
 
+- **"Do you need an exit, and on what clock?"** Ask it directly rather than reading it off the
+  ambition answer. "Venture-scale" and "I want to be acquired" are different claims, and a
+  founder who intends to hold can still want a raise. If the answer is *no forced exit*, then
+  **acquirability stops being a justification and becomes an option the plan preserves** —
+  which is strictly stronger, because no section then depends on which comparable class is
+  right. Record it, and delete every "we should do X because it improves acquirability"
+  argument from the draft.
+- **"Raise, or fund from revenue — and if raise, how much and for what?"** The useful framing,
+  and worth saying out loud to the founder: **selling early is not what costs the upside;
+  selling CHEAP is.** Pre-revenue, a round is priced on thesis; after evidence, on evidence.
+  So the question is rarely "raise or not" but "what is the cheapest evidence that reprices
+  this, and can runway reach it?" That reframes the raise as **runway-sized**, and makes
+  personal runway the model's decisive input rather than a footnote.
 - **"Venture-scale, bootstrapped-profitable, or lifestyle?"** Changes every downstream
   recommendation. Default: read the product's surface — a category with winner-take-most
   dynamics suggests venture; a niche tool with clear WTP suggests bootstrap. Say which you'd
