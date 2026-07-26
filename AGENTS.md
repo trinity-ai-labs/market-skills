@@ -89,10 +89,8 @@ scripts/vault-lint.sh     shipped tooling — POSIX shell only, ships to users
 install.sh                symlinks both skills into every agent skills home
 ```
 
-`scripts/check.mjs` and `scripts/vault-lint.sh` sit under different constraints: the
-gate runs here, for contributors, so Node is a fair assumption; `vault-lint.sh` runs on
-a user's machine as part of the skill, so it can assume nothing beyond POSIX shell (see
-rule 3 above). `vault-lint.sh` does not exist yet — it lands with the vault work.
+`vault-lint.sh` does not exist yet — it lands with the vault work. Rule 3 above has the
+reasoning for why the two scripts sit under different constraints.
 
 `install.sh` symlinks by default, so a `git pull` here updates the live skills on every
 machine that installed that way — which means **a broken commit on `main` breaks
