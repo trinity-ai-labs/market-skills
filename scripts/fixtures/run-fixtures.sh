@@ -33,10 +33,11 @@ LINT="$HERE/../vault-lint.sh"
 # and a check that was deleted look identical from the outside, so this list is
 # the thing that has to be edited deliberately when either happens.
 EXPECTED="ambiguous-value block-scalar-field confidence-propagation coverage-gap
-dangling-edge duplicate-id duplicate-url filename-mismatch folded-scalar
-frontmatter inline-flow-list malformed-edge near-miss-subject null-value
-orphan-source required-field stale-claim supersedes-reason supersedes-status
-type-agreement unknown-subject unparsed-line"
+dangling-edge decision-brief-incomplete duplicate-id duplicate-url
+filename-mismatch folded-scalar frontmatter inline-flow-list malformed-edge
+near-miss-subject null-value orphan-source required-field stale-claim
+supersedes-reason supersedes-status type-agreement unknown-subject
+unparsed-line"
 
 PASS=0
 FAIL=0
@@ -102,7 +103,12 @@ printf '\nviolating vault\n'
 VIOL_STATUS=$(run_status "$HERE/violations")
 [ "$VIOL_STATUS" = "1" ] && ok "exits 1" || no "exits 1 (got $VIOL_STATUS)"
 
-FIRED=$("$LINT" --vault "$HERE/violations" --json 2>/dev/null |
+# Captured once and sliced three ways below. The lint is deterministic for a
+# given vault, so re-invoking it per assertion buys nothing and costs a full
+# re-parse of every fixture note each time.
+VJSON=$("$LINT" --vault "$HERE/violations" --json 2>/dev/null)
+
+FIRED=$(printf '%s\n' "$VJSON" |
 	awk -F'"check": "' 'NF > 1 { split($2, a, "\""); print a[1] }' |
 	LC_ALL=C sort -u)
 
@@ -137,7 +143,7 @@ done <"$PAIRS_FILE.got"
 # resolution order that has stopped resolving. Every violating note declares its
 # own checks on a `Violates:` line, and each is asserted against that file.
 printf '\nper-file expectations\n'
-PAIRS=$("$LINT" --vault "$HERE/violations" --json 2>/dev/null |
+PAIRS=$(printf '%s\n' "$VJSON" |
 	awk -F'"file": "' 'NF > 1 {
 		split($2, a, "\"")
 		split($0, b, "\"check\": \"")
@@ -176,6 +182,44 @@ while read -r rel chk; do
 	*) no "$rel fired $chk without declaring it" ;;
 	esac
 done <"$PAIRS_FILE"
+
+# --- 2c. the decision-brief boundary, both sides -----------------------------
+# decision-brief-incomplete is the one check that has to stay silent on two
+# whole legitimate shapes of note, so firing is only half of what needs
+# asserting. Not firing is the half that would go unnoticed: a coherence check
+# turned into a presence check still fires everywhere the fixtures look, and
+# only fails a real vault - and the note it would fail is one whose author gets
+# to green by deleting the founder's own words.
+printf '\ndecision-brief boundary\n'
+
+HALF=$(printf '%s\n' "$VJSON" | grep 'DECISION-HALF0003.md' | grep 'decision-brief-incomplete')
+case "$HALF" in
+*'but not `founder_reasoning`'*) ok "a full grid with no founder_reasoning fails" ;;
+*) no "a full grid with no founder_reasoning did not fail" ;;
+esac
+case "$HALF" in
+*assumptions_low*) no "assumptions_low was demanded of a note with no Low assumptions - decisions.md marks it conditional" ;;
+*) ok "conditional assumptions_low is not demanded" ;;
+esac
+
+# One report per missing field, so a partial grid fails once for each. Counted
+# rather than pattern-matched: a check that named one missing field and stopped
+# would still match every substring assertion above.
+GRID=$(printf '%s\n' "$VJSON" | grep -c 'DECISION-GRID0004.md.*decision-brief-incomplete')
+[ "$GRID" = "4" ] && ok "a partial grid fails once per missing field" ||
+	no "a partial grid should fail 4 times, got $GRID"
+
+# The two shapes that must stay silent, both in the clean vault: a decision note
+# in vault.md's minimal shape, and a migrated one that preserved the founder's
+# words and nothing else. The clean vault is already required to report nothing,
+# so these assert the notes are genuinely read rather than skipped.
+for note in DECISION-DR07KK21 DECISION-MG18QW42; do
+	G=$("$LINT" graph "$note" --vault "$HERE/clean" --depth 1 2>&1)
+	case "$G" in
+	*"$note"*decision*) ok "$note is read, and the clean vault stays silent on it" ;;
+	*) no "$note was not read (got: $G)" ;;
+	esac
+done
 
 # --- 3. JSON is well-formed enough to slice ---------------------------------
 printf '\njson\n'

@@ -495,6 +495,35 @@ option_evidence:
 The do-nothing column is usually the one with nothing behind it, and that absence is a finding.
 Omitting the entry hides it exactly where it matters most.
 
+**What the lint enforces is all-or-nothing, not presence.** Only a guided fork produces a brief
+([grill.md](grill.md#posture--read-it-off-the-first-substantive-answer-never-ask-for-it)). A
+founder in the direct posture who simply decided writes a `decision` note carrying none of the
+fields above, and that note is complete as it stands — it is the worked example in
+[vault.md](vault.md#the-decision-note-keeps-the-rejected-options-and-the-reopen-trigger). So
+`vault-lint.sh` never requires these fields of a decision note. It fires
+`decision-brief-incomplete` when a note carries any **option-grid** field — `criteria`,
+`criteria_ranked_by`, `option_evidence`, `do_nothing`, `likelihood`, `likelihood_range`,
+`evidence_grade` — and not the rest of them, `founder_reasoning` included. Those seven are what
+say a brief stands behind the record, because each is meaningless alone: ranked criteria with no
+evidence per option, or a likelihood with no evidence grade, is half a brief.
+
+**`founder_reasoning` is owed by a brief and never demands one.** It is the exception, on
+purpose. A verbatim record of what the founder said is worth having on any decision note, so a
+note carrying it and nothing else — a decision migrated out of older prose that held the
+founder's own words — is a legitimate write and stays green. Triggering on it would fail that
+note, and the cheapest way back to green would be deleting the verbatim words. The conditional
+rows are never demanded and never trigger either, for the same reason: `assumptions_low` names
+load-bearing beliefs worth recording on any decision, and the review rows record what happened
+to a decision afterwards, which a decision with no brief behind it goes through just the same.
+
+**The failure this prevents:** requiring the fields on every decision note would fail vault.md's
+own worked example, and a lint that fails the schema document's own example is one people switch
+off. Requiring them nowhere leaves the half-filled note — a grid, a ranked criteria list, a
+recommendation, and no `founder_reasoning` — reading as complete to every consumer and to every
+later reader, with nothing in the corpus able to say otherwise. Carrying none of the option-grid
+fields is a different and legitimate shape of record. Carrying some of them is the state that is
+silently wrong.
+
 ### The one block-scalar field this document asks for
 
 Multi-line prose in vault frontmatter is restricted to a closed set of fields using the literal
