@@ -35,7 +35,9 @@ answers as numbered facts · any category-boundary decision already made · `mus
 lifestyle | lender — bootstrap/lifestyle skips the top-down sizing agent and runs bottom-up
 only, while still stating the venture-scale sniff test) · which of your phases to run (a
 conductor that ran your Phase 0 itself and renders its own deliverables will say "Phases 1–4
-only, no deliverables, no user-facing close").
+only, no deliverables, no user-facing close"). One optional field: `vault` (absolute path). When
+it is present the fleet also emits notes per the **vault note contract** below; when it is
+absent nothing about the research changes and no notes are written.
 
 ## Output contract — deterministic home
 
@@ -217,9 +219,10 @@ Final synthesis (Phase 4) is not a dispatch at all — it runs in the conductor'
 the strongest model in the session, never delegated.
 
 Every brief carries: the dossier (inline, it's short), the category boundary, the dimension
-playbook from `references/dimensions.md`, the citation contract (below), and the exact output
-file path. Research agents WRITE their own `research/<dimension>.md` and return a compact
-summary — you read summaries, not raw dumps.
+playbook from `references/dimensions.md`, the citation contract (below), the vault note contract
+(below) whenever the run carries a `vault:` path, and the exact output file path. Research
+agents WRITE their own `research/<dimension>.md` and return a compact summary — you read
+summaries, not raw dumps.
 
 **Citation contract (goes in every brief, verbatim):** every external claim carries its source
 URL, the date pulled, and the exact figure or quote used. Numbers need **two independent
@@ -229,6 +232,81 @@ category boundaries). Tag every figure High (directly disclosed / primary survey
 can't be sourced is reported as unavailable — **never fabricate a specific-looking figure**.
 If you cannot reach the web, return an empty findings set with `reason: no-web-access` — never
 answer a factual question from memory, and never cite a URL you could not fetch this session.
+
+**Vault note contract (goes in every research brief verbatim — only when the brief carries a
+`vault:` path).** The research prose does not change: the dimension file is still written per
+`references/templates.md`, with its Sources table in-file. On top of it, each researcher emits
+atomic notes for the outputs a later document leans on — a `source` note per citable source, and
+ONE `question` note recording what the dimension could NOT answer. Notes for every paragraph
+produce a second corpus nobody maintains; these are the assertable surface.
+
+Generate every ID as the uppercased type, a hyphen, and eight random alphanumerics. There is no
+registry, no counter, and no allocation table, so parallel researchers never coordinate and a
+collision is structurally impossible rather than procedurally avoided:
+
+```sh
+LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 8; echo
+```
+
+Write each note to `<vault>/sources/<ID>.md` or `<vault>/questions/<ID>.md` — filename exactly
+the ID plus `.md`, no slug and no date. A short body paragraph follows the frontmatter and is
+never parsed.
+
+```yaml
+---
+id: SOURCE-K92MZ1QA
+type: source
+title: "Publisher — what this material is"
+status: current
+confidence: M
+created: "2026-07-26"
+url: "https://example.com/reports/2026/pricing"
+url_canonical: "example.com/reports/2026/pricing"
+pulled: "2026-07-26"
+quote: |
+  The load-bearing passage, verbatim, exactly as printed.
+---
+```
+
+```yaml
+---
+id: QUESTION-DD31RR09
+type: question
+title: "The question this dimension could not answer"
+status: current
+confidence: M
+created: "2026-07-26"
+gaps:
+  - "What is specifically missing, one entry each"
+  - "Not the topic — the absence that makes this open"
+---
+```
+
+Five rules bind both, and every one of them fails silently rather than loudly:
+
+- **Block lists, never `[a, b]`.** Obsidian rewrites an inline flow list into block form when it
+  saves, so a vault authored inline loses those values the first time somebody opens a note, and
+  the query that depended on them returns a clean result over a corpus it can no longer see. An
+  empty list is an omitted key — never `gaps: []` and never a bare `gaps:`.
+- **Coerce nothing.** Every value is a string: quote every date, quote anything containing `: `,
+  and never write a bare `yes` / `no` / `on` / `off` / `null` / `~`. YAML 1.1 and 1.2 disagree
+  about those, so an unquoted value means one thing to the editor and another to the checker.
+- **`quote` is required, and `|` is the only block form allowed.** Never `>`, which reflows line
+  breaks into spaces at read time. URLs rot and pages are silently edited; the verbatim passage
+  is what keeps the chain checkable after the page is gone.
+- **`url_canonical` is the normalised `url`** — drop the scheme, `www.`, the fragment and every
+  tracking parameter (`utm_*`, `fbclid`, `gclid`, `ref`), lowercase the host, drop a trailing
+  slash, keep every query parameter that selects content. Two researchers citing one page from
+  a newsletter link and a search result otherwise produce two notes, and a claim resting on both
+  looks doubly sourced when it rests on one document.
+- **One assertion per note.** `status` and `confidence` are per-note fields, so a note asserting
+  two things has no correct move when half of it is disproved.
+
+A researcher never writes a `claim`, an `assumption`, or a `decision` — those are the
+conductor's synthesis, and a `fact` needs a `rests_on` edge into a source the conductor owns.
+The other four note types, the edges, and confidence derivation are in
+[the vault schema](../business-plan/references/vault.md), which is authoritative; nothing above
+overrides it.
 
 **Source-class precedence, in this order — it decides which number wins when they conflict:**
 

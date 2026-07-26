@@ -10,10 +10,70 @@ conductor: your context is for grilling the founder, judging sub-agent returns, 
 plan. Heavy research never runs in your own turn — the market-analysis skill is your research
 engine, and its fleet does the digging.
 
-The core principle: **a plan is a decision document, not a brochure.** Every market fact in it
-is imported from the market analysis by source reference — if a number in the plan can't be
-traced to a line in `market-analysis.md` or to a founder answer, the plan is drifting from
-evidence into narrative. Flag it, don't let it stand.
+The core principle: **a plan is a decision document, not a brochure.** Every load-bearing
+assertion is registered as an atomic note in a **vault** — a claim ledger in the user's own
+directory — so the corpus can tell you what it no longer knows.
+
+## The invariants — stated first because compaction re-attaches only the head of this file
+
+An invariant written inside Phase 4 is not in context when Phase 4 runs. So everything that
+must hold in a later phase is stated here, once, and the phases below only say where it
+applies. Each line names the failure it prevents; the reference behind it carries the detail
+and is never restated here.
+
+**Evidence discipline**
+
+1. **Every market fact is imported by reference, never re-derived.** It resolves through
+   `sources.md`, the founder brief, or a vault note, with its confidence tag intact. A number
+   that traces to nothing is narrative wearing evidence; flag it, don't let it stand.
+2. **A claim that the subject "has no X" is unactionable until checked against source.**
+   Milestone fields, issue titles and backlog labels are not evidence of absence.
+3. **Names describe conditions, not costs.** Enum values, type lists and field names say what
+   raised a thing — never how often, how badly, or at what cost to the user.
+4. **Evaluate the bundle, not the columns.** A product whose thesis is integration always
+   scores as commodity on a per-capability grid, so the matrix gets supplemented, never trusted
+   alone.
+5. **Set the lens before reading the facts:** entity → product truth → interpretation. A corpus
+   can be sound in its research layer and wrong in its plan layer purely because the scope was
+   set by the wrong entity.
+6. **M&A and corporate events are a standing sweep, not a per-session option** — mandatory
+   whenever the plan reasons about an exit, a category leader, or a competitor's trajectory. A
+   category's ownership can change between two sessions; a plan that missed it argues against a
+   company that no longer exists in that form.
+
+**The vault** — schema, edges and the six-step authoring checklist are in
+[references/vault.md](references/vault.md). Point at it; never restate it.
+
+7. **The vault is a ledger over the prose, not a replacement for it.** Research files stay
+   exactly as they are; each phase additionally emits a note per load-bearing output. Prose
+   citing `[S4]` inside a sentence resolves forward and nowhere else, so an amended source lands
+   in one file while four documents downstream stay confidently wrong.
+8. **IDs are `TYPE-` plus eight random alphanumerics, with no registry and no counter.** Two
+   parallel researchers never coordinate. A sequential scheme makes collision procedurally
+   avoided, and the procedure is exactly what parallel researchers skip.
+9. **Block lists, never inline flow lists.** Obsidian rewrites `[A, B]` into block form when it
+   saves, so a vault authored inline loses every edge the moment somebody opens a note — and
+   the blast-radius query then returns a clean result over a corpus it can no longer see.
+10. **Coerce nothing.** Every frontmatter value is a string: quote every date and anything
+    containing `: `, and omit a key rather than writing an empty list. A reader that coerces has
+    to reproduce YAML's rules exactly, and no two implementations agree on them.
+11. **Confidence is derived — `min(confidence_own, every rests_on target)`.** Without it a
+    hedged source becomes a fairly confident fact becomes a flat headline claim: every hop
+    locally reasonable, the hedge gone by the third, asserted to a stranger who will act on it.
+12. **`rests_on` is required on a `fact`.** A fact with no source is an unverified claim wearing
+    the word "fact", which is the note people cite without hesitating. Phase 1's grilled facts
+    therefore need a `source` note for the interview itself before any of them can exist.
+13. **A claim's `subject` is a term from the vault's `_vocab.yml`**, seeded from
+    [references/vocabulary.yml](references/vocabulary.yml). Free-text subjects are the same as
+    no subjects: two researchers write `wtp` and `willingness-to-pay`, and the collision that
+    would have surfaced their disagreement never fires.
+14. **Retraction is visible.** A retracted note stays with `status: retracted` and its reason;
+    a withdrawn line in the prose is struck through with the reason. Silent deletion lets a dead
+    claim return two drafts later with its cause of death erased.
+15. **Lint is a gate, not a report.** The shipped `scripts/vault-lint.sh` runs at Phase 2's
+    per-dimension checkpoint, while the authoring context is still live and a fix costs one
+    turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
+    not render.
 
 ## Output contract — deterministic home
 
@@ -22,11 +82,17 @@ product name, kebab-case; re-runs update in place, never a new folder):
 
 ```
 ~/Documents/business/<product-slug>/
-  founder-brief.md            # the grill's numbered [F#] facts (Phase 1) — the plan cites these
   one-pager.md                # the door-opener — always produced first, every track
   business-plan.md            # the main artifact — SHAPE DEPENDS ON TRACK (see below)
   financial-model.md          # assumptions table + scenarios, referenced by the plan
   red-team.md                 # the panel's objections + dispositions (Phase 4)
+  vault/                      # the claim ledger — scaffolded in Phase 0
+    .vault/config.json        # schemaVersion — a directory without it is not a vault
+    _vocab.yml                # controlled subjects, seeded from references/vocabulary.yml
+    sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note, <ID>.md
+    research/
+      product-dossier.md      # written INTO the vault (Phase 0), not as a standalone file
+      founder-brief.md        # the grill's numbered [F#] facts (Phase 1) — the plan cites these
   deliverables/
     business-plan.html        # rendered deliverables (Phase 5)
     business-plan.pdf
@@ -35,9 +101,14 @@ product name, kebab-case; re-runs update in place, never a new folder):
   ...market-analysis files (owned by that skill)
 ```
 
+The two files under `vault/research/` are prose the vault does not touch; they sit inside it so
+the `source` notes resting on them carry a vault-relative path, which is what makes duplicate
+detection work for a source with no public URL. Layout rules:
+[references/vault.md](references/vault.md#layout-one-directory-per-type-one-file-per-note).
+
 Templates AND the track branch (venture memo vs. bootstrap operating plan vs. lender classic —
 investors don't read 40-page plans; the classic genre survives only for banks/grants):
-`references/plan-template.md`. Load it before drafting.
+[references/plan-template.md](references/plan-template.md). Load it before drafting.
 
 The market-analysis skill's root is `~/.claude/skills/market-analysis` (fallback:
 `~/.agents/skills/market-analysis`) — every cross-skill reference below resolves against it.
@@ -56,17 +127,28 @@ competitor-analysis Monitoring plan re-check (pricing pages, changelogs) as a pa
 and note it in Coverage; past them, or if the product's stage/boundary moved, plan a full
 refresh.
 
+**Scaffold the vault before anything writes.** Create the tree above, write
+`.vault/config.json` with its `schemaVersion`, and copy
+[references/vocabulary.yml](references/vocabulary.yml) to `vault/_vocab.yml` — a copy, not a
+pointer, so a vault stays checkable against the vocabulary it was written under after the skill
+ships new terms. Extend it by that file's governance rule; never delete or redefine a base term.
+Pass the absolute vault path to every agent and tool: resolution is `--vault` or `VAULT_PATH`
+and nothing else, because an upward search from a repo either walks to the filesystem root or
+finds a *different* engagement's vault and reads the wrong corpus with no error at all. An
+existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill does not
+understand stops the run rather than being half-read.
+
 Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
-dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet.
-The grill needs the dossier's value hypotheses to exist; nothing else of market-analysis runs
-yet.
+dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet —
+writing it to `vault/research/product-dossier.md`. The grill needs the dossier's value
+hypotheses to exist; nothing else of market-analysis runs yet.
 
 **Sweep for founder-authored writing before the grill — it is the cheapest context you will
 ever get.** Blog, changelog, README, docs, talks, launch threads, issue bodies. Founders
 routinely explain their own reasoning in public and then never mention it, because to them it
 isn't news. Skipping this sweep means grilling for things already written down and, worse,
 missing the founder's own framing of why the product is shaped as it is. Anything found lands
-as `[F#]` with its URL.
+as `[F#]` with its URL, and as a `source` note carrying that URL.
 
 **The dossier is the plan's product-truth spine — thinness here propagates everywhere.** A
 dossier that is *true but small* is more dangerous than one that is wrong, because nothing in
@@ -84,8 +166,9 @@ The market analysis can research everything except what's in the founder's head.
 dispatch, grill — like a partner who's about to co-sign the plan, not a form. **One question at
 a time, each with your recommended answer and why — the message ends on the ask, never on a
 preview of the questions still coming.** Pre-answer what the repo/doc/context
-already answers. Full question bank with per-question defaults: `references/grill.md` — load it
-now. The areas that gate everything downstream:
+already answers. Full question bank with per-question defaults:
+[references/grill.md](references/grill.md) — load it now. The areas that gate everything
+downstream:
 
 - **Pointers & background** — opens the grill: anything to point the research at (docs, prior
   research, competitor lists, community threads) and any background the source can't show.
@@ -108,8 +191,10 @@ now. The areas that gate everything downstream:
 
 **Posture is inferred, never asked.** Read it off the first substantive answer: a founder who
 cannot evaluate the options gets six forks — ambition, audience, capital path, pricing model,
-beachhead, motion — as decision briefs per `references/decisions.md`, and everyone else gets the
-bank above in the same number of turns. The tell and the six forks: `references/grill.md`.
+beachhead, motion — as decision briefs per
+[references/decisions.md](references/decisions.md), and everyone else gets the bank above in
+the same number of turns. The tell, the six forks, and the `fact` note that records the posture:
+[references/grill.md](references/grill.md#record-the-posture-as-a-fact-because-it-changes-how-every-later-answer-is-read).
 
 Call out bad answers when you see them — a venture-scale ambition with 4 hours/week, a price
 instinct 10× under the category's floor, "no competitors". Push with reasoning; a wrong premise
@@ -119,15 +204,33 @@ you let through makes the whole plan fiction.
 don't insist, and don't default silently. Send ONE non-blocking message carrying only the two
 decisions that select the document itself — ambition and audience — each as a recommended
 default they can flip in a word, then proceed without waiting. Every other question's default
-goes into `founder-brief.md` tagged `assumed — no grill` (default · why · what changes if
-wrong), the declination itself is recorded as an `[F#]` fact, and the plan opens with the
-assumption list so reading the plan becomes the grill. The red team still runs — with no
-grill it's the only adversary the plan ever met.
+becomes an `assumption` note carrying its `sensitivity` and a `validated_by` step, listed in
+`founder-brief.md` tagged `assumed — no grill` (default · why · what changes if wrong). The
+declination is itself an `[F#]` fact, and the plan opens with the assumption list so reading the
+plan becomes the grill. The red team still runs — with no grill it's the only adversary the plan
+ever met.
 
-Close the grill by writing `founder-brief.md` — the numbered fact table (template in
-`references/plan-template.md`) every `[F#]` citation in the plan resolves through, exactly as
-`[S#]` resolves through sources.md. It's written BEFORE any dispatch, and Phase 2's brief
-carries it verbatim so F-numbers stay stable everywhere.
+**The grill's output is notes, not only a table — and the order matters.** Write ONE `source`
+note for the interview FIRST, with `url` and `url_canonical` both set to the vault-relative
+path `research/founder-brief.md`
+([the source note](references/vault.md#the-source-note-keeps-the-quote-that-outlives-the-url)
+covers a source with no public URL that way). Only then does each grilled answer become a
+`fact` note resting on it — invariant 12 is what makes the order load-bearing: emit the facts
+first and every one is either invalid or points at an ID that does not exist yet. Quote the
+founder's own words in the body; a paraphrase is a judgement nobody can re-check. Fields and
+the six-step checklist:
+[references/vault.md](references/vault.md#writing-a-note-the-six-step-checklist).
+
+A fork raised to a decision brief closes as a `decision` note in `vault/decisions/` — the same
+artifact, with the extra fields
+[references/decisions.md](references/decisions.md#the-record-extends-the-vaults-decision-note-it-does-not-replace-it)
+defines. There is no second record and no parallel directory.
+
+Close the grill by writing `vault/research/founder-brief.md` — the numbered fact table
+(template in [references/plan-template.md](references/plan-template.md)) every `[F#]` citation
+in the plan resolves through, exactly as `[S#]` resolves through `sources.md`. `[F#]` stays the
+human-readable citation; the `fact` note ID is what a query reaches. It's written BEFORE any
+dispatch, and Phase 2's brief carries it verbatim so F-numbers stay stable everywhere.
 
 ## Phase 2 — Run the market analysis
 
@@ -147,6 +250,8 @@ Do NOT ask the user anything — Phase 1 is satisfied by the founder brief below
 remaining gap becomes an entry in the report's Assumptions section.
 Run: market-analysis Phases 1–4 only. No deliverables, no user-facing close.
 slug: <slug> · outDir: <absolute path> · date: <today> · source: <repo path | doc | idea text>
+vault: <absolute path to the vault scaffolded in Phase 0>  — emit notes per its vault note
+  contract; the research prose is unchanged.
 ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: skip the top-down
   sizing agent, bottom-up only (the venture-scale sniff test still gets stated); else full rigor.
 categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
@@ -157,6 +262,19 @@ founder brief (verbatim):
 
 Reuse from Phase 0 applies: a fresh, matching analysis skips this phase entirely — verify it
 against the checklist below and move on.
+
+**Only the load-bearing outputs atomise.** Each dimension emits a `source` note per citable
+source and ONE `question` note carrying its `gaps` — what the dimension could not answer — plus
+`covers` once something answers part of it. The prose keeps every argument; the notes hold what
+a later document leans on. A note per paragraph produces a second corpus nobody maintains.
+
+**Lint at the per-dimension gate, not at the end.** As each dimension returns, run
+`scripts/vault-lint.sh` over the vault before you accept it. A missing `rests_on`, an unknown
+subject term, a duplicate `url_canonical` and a confidence-propagation violation are all silent
+in the file itself and all cheap to fix while the researcher's context is live. Deferred to
+Phase 5, an unknown subject term is unfixable — the only person who knew which existing term it
+belonged under is gone. Resolve it by finding that term; adding a new one to silence the error
+skips the question the error existed to ask.
 
 **Verify the return — architect-style, against the contract, before you build on it:**
 
@@ -172,50 +290,78 @@ against the checklist below and move on.
   were guessed silently.
 - `Value hypothesis verdicts` covers every VH in the dossier (confirmed / weakened / refuted /
   untested) — Phase 3's Solution section may only build on confirmed ones.
+- Lint is clean, and every dimension left a `question` note. A dimension with no gaps is a
+  dimension that did not look.
 
 A failed check goes BACK with a sharper brief ("the sizing is single-sourced top-down — re-run
 bottom-up per the playbook"), not patched by you. Judge and direct; don't do the fleet's job.
 
 ## Phase 3 — Draft the plan
 
+**Query the vault instead of re-reading the corpus. This is what the vault is for.** The
+drafting input is the index — every `current` claim with its derived confidence, read in one
+pass — not hundreds of KB of research prose read imperfectly. Re-reading the prose is exactly
+how a Low-tagged figure gets promoted by paraphrase: the note carries its confidence, the
+paragraph does not. The one-liners are in
+[references/vault.md](references/vault.md#the-queries-this-schema-exists-to-make-trivial); the
+coverage query is in [references/vocabulary.yml](references/vocabulary.yml).
+
+Four query results are resolved BEFORE a section is written, never after:
+
+- **Subject collisions** — two `current` claims on one subject. Each is a contradiction, a
+  duplicate, or a missing `scopes` edge, and the fix is one of those three edits. Picking a side
+  silently is how the disagreement returns in the red team as an objection you already had the
+  evidence to settle.
+- **Coverage gaps** — a `required: true` subject with no claim under it: a plan section resting
+  on nothing. Research it or state the gap. This is the check that catches a thin spine, which
+  the note schema structurally cannot — you cannot type a fact nobody wrote.
+- **Stale claims** — `stale_after` already passed. Re-check or downgrade before citing.
+- **`status: unverified`** — asserted with nothing behind it. Each needs a validation step in
+  the plan, or it does not get asserted.
+
 Write `one-pager.md` FIRST (it forces the clarity everything else inherits), then
 `business-plan.md` in the track's shape, then `financial-model.md` — all per
-`references/plan-template.md`. Drafting is YOUR work — it needs the founder's answers, the analysis, and judgment in one head. The
-load-bearing rules:
+[references/plan-template.md](references/plan-template.md). Drafting is YOUR work — it needs the
+founder's answers, the vault, and judgment in one head. The load-bearing rules:
 
+- **Write `used_in` at the moment of citation** — `"business-plan.md#why-now"` on every claim
+  the draft leans on. Without it a stale claim tells you it needs re-checking but not which
+  paragraph is standing on it, so the re-check gets deferred because nobody can size it.
 - **The thesis traces.** The plan's core bet restates the analysis's whitespace recommendation,
   sharpened by the founder's unfair advantages — traceably, not vibes-first.
-- **Import, never re-derive.** Market facts arrive with their confidence tags intact — a Low
-  bottom-up estimate does not become a headline claim. Cite `[S#]` from `sources.md` and
-  `[F#]` from the founder brief.
+- **Cite by code, and there is no third kind.** `[S#]` resolves through `sources.md`, `[F#]`
+  through the founder brief; invariant 1 is what bars a fact with neither.
 - **The financial model is assumption-first.** Every input is a named row in the assumptions
   table (source: analysis, founder, or explicit guess), the revenue build is bottom-up, and
   base/downside/upside scenarios move the assumptions — not the conclusions. Fake precision is
-  the failure mode; visible formulas are the fix.
+  the failure mode; visible formulas are the fix. Every explicit-guess row is an `assumption`
+  note with a `sensitivity`, which is what orders the validation queue.
 - **Open strategic forks get simulated, not asserted.** When the capital path (bootstrap vs
   raise) or entry sequencing (beachhead vs broad) is genuinely open after the grill, build
   the paths as parallel copies of one model and compare founder dollars across exit scenarios,
-  with pre-committed switch triggers — load `references/strategy-sim.md` and follow it. The
-  reinvestment engine there also shapes every bootstrap-track model (default-alive gate,
-  owner-pay floor, loop-not-funnel growth), fork or no fork.
+  with pre-committed switch triggers — load [references/strategy-sim.md](references/strategy-sim.md)
+  and follow it. The reinvestment engine there also shapes every bootstrap-track model
+  (default-alive gate, owner-pay floor, loop-not-funnel growth), fork or no fork.
 - **Sequencing IS projection — the roadmap and the model are one artifact.** Every roadmap item
   names the assumption it moves, items unlock each other (levers multiply, they don't add),
   sequence value ≠ sum of item values, and **resource-independence gets checked before ranking
   by value** — items gated on different constrained resources don't compete and can run
   concurrently, which a naive value-ranking will serialise and lose. Load
-  `references/roadmap-sequencing.md` and follow it whenever the plan has a roadmap.
+  [references/roadmap-sequencing.md](references/roadmap-sequencing.md) and follow it whenever
+  the plan has a roadmap.
 - **The plan ships a growth engine, not a marketing wishlist.** The GTM section's execution
-  half is the mostly-automated weekly machine from `references/growth-engine.md` — the three
-  per-product skills (content, visual assets, docs-sync), the automation rules that survive
-  Google and slop backlash, and the weekly loop sized to the founder's grilled hours, with
-  engine build-out as named roadmap items.
+  half is the mostly-automated weekly machine from
+  [references/growth-engine.md](references/growth-engine.md) — the three per-product skills
+  (content, visual assets, docs-sync), the automation rules that survive Google and slop
+  backlash, and the weekly loop sized to the founder's grilled hours, with engine build-out as
+  named roadmap items.
 - **Track shapes shape — three ways.** Venture gets the investor-facing memo framing;
   bootstrap/lifestyle gets a cash-curve and time-to-default-alive framing; lender gets
   repayment-capacity framing (3–5yr financials, use-of-funds line items, tone shifted from
   bet-defense to ability-to-service-the-loan). Same evidence, different document.
 - **Every Low-tagged assumption gets a validation step** in the plan's validation section —
   the cheapest real-world test (interviews, landing page, waitlist, pre-sales) with a kill/
-  continue threshold.
+  continue threshold, recorded as the assumption note's `validated_by`.
 - **Reconcile the one-pager last.** After financial-model.md is written, re-open one-pager.md
   and reconcile every number against it — the ask, the SOM range, the price. A one-pager
   number that disagrees with the model it fronts is the commonest credibility kill.
@@ -234,8 +380,13 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
   price, from what they use today?
 
-Every panelist brief carries the founder's named fear `[F#]` with the instruction: attack this
-hardest, then name the two risks the founder did NOT name.
+**The target list is generated, not read.** Two queries run before the panel is briefed:
+`scripts/vault-lint.sh --unverified`, and every claim that reached the plan carrying
+`confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the
+attack surface each panelist's brief carries in its lens. "Read the plan and object" produces
+objections about whatever a panelist happened to notice; this produces them about what the
+corpus already knows is weak. Every brief also carries the founder's named fear `[F#]`: attack
+this hardest, then name the two risks the founder did NOT name.
 
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
@@ -243,19 +394,8 @@ plan document under-describes the product — so a panel will reliably assert th
 things it ships, and those false objections then get "fixed" into the plan as concessions or
 roadmap items. Any objection of the form *"it has no X"*, *"it can't do Y"*, or *"users would
 have to Z"* gets checked against source (the repo, the product's own docs) before it is
-accepted, moved to Risks, or rejected. Milestone fields, issue titles and backlog labels are
-**not** evidence of absence.
-
-Two reading errors to watch for specifically, because both produce confident and wrong
-objections:
-
-- **Names are not behaviour.** Enum values, type lists, error codes and field names describe
-  the *condition that raised a thing* — never its frequency, its severity, or its cost to the
-  user. A list of twenty failure states reads like a product that fails constantly; check the
-  defaults and the opt-outs before characterising any of it as friction.
-- **Constants are not product limits.** A number in the source may be an internal batch size,
-  an I/O bound, or a machine-protection default with a user-facing setting elsewhere. Find the
-  user-facing knob and its range before quoting a ceiling.
+accepted, moved to Risks, or rejected — invariants 2 and 3 are the reading discipline, and both
+produce confident and wrong objections when skipped.
 
 **Expansion-hypothesis test** — apply to every "we could also sell to ___" the panel or the
 plan proposes. Three questions, all three must pass or the population is a *qualifier inside
@@ -291,10 +431,17 @@ Each panelist's objections land in `red-team.md`:
 `| # | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |`.
 Fold: fix what's fixable; every row disposed "moved to Risks" appears in the plan's Key risks
 section by its number — a plan that pre-states its best objections beats one that hides them.
-If an objection guts the thesis, say so to the founder plainly and revise the bet — that IS
-the job.
+**A surviving objection also lands in the vault**, as a `claim` that `supersedes` what it
+corrects or an `assumption` with a `validated_by` step. An objection disposed only in the table
+is one nothing downstream can find. If an objection guts the thesis, say so to the founder
+plainly and revise the bet — that IS the job.
 
 ## Phase 5 — Deliverables
+
+**Lint is the release gate, and it runs before the first render.** `scripts/vault-lint.sh` must
+be clean over the whole vault: a plan citing a retracted or superseded source does not ship. The
+failure this stops is the worst one available — a polished PDF asserting flatly what the corpus
+already withdrew, handed to the one reader with no way to check it.
 
 Render `business-plan.md` (+ the financial model) into ONE polished, self-contained
 `deliverables/business-plan.html` and a print-quality `deliverables/business-plan.pdf`, and
@@ -310,35 +457,19 @@ Close with specific callouts, not a summary dump: the thesis in one sentence, th
 likely to be wrong and its validation step, the red-team objection that survived, the first
 three milestones, and where everything landed. Invite pushback on the specific bet.
 
-## Standing rules — they outrank convenience
-
-1. **A claim that the subject "has no X" is unactionable until checked against source.**
-   Milestone fields are not evidence.
-2. **Names describe conditions, not costs.** Enum values, type lists and field names say what
-   raised a thing — never how often, how badly, or at what cost to the user.
-3. **Evaluate the bundle, not the columns.** A product whose thesis is integration will always
-   score as commodity on a per-capability grid. When the claim is coupling, the capability
-   matrix must be supplemented, never trusted alone.
-4. **Set the lens before reading the facts:** entity → product truth → interpretation. A corpus
-   can be sound in its research layer and wrong in its plan layer purely because the scope was
-   set by the wrong entity.
-5. **M&A and corporate events are a standing sweep, not a per-session option** — mandatory
-   whenever the plan reasons about an exit, a category leader, or a competitor's trajectory. A
-   category's ownership can change between two sessions of the same engagement; a plan that
-   missed it argues against a company that no longer exists in that form.
-6. **Retraction is visible.** Strike through with the reason. Silent deletion lets a dead claim
-   return two drafts later with its cause of death erased.
-
 ## Quality bars — non-negotiable
 
 - Every market fact traces to `sources.md` or the founder brief; confidence tags survive import.
+- Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
+- Every claim cited in a rendered document carries `used_in`; every `required: true` subject
+  has a claim under it or a stated gap.
 - The steady-state ceiling is computed and stated, not implied by a 12-month curve.
 - The cost of the alternative is priced wherever the price is defended.
 - Every roadmap item names the assumption it moves.
 - The financial model's assumptions table is complete — no number appears in a projection that
   isn't a named assumption row.
 - The plan matches the founder's stated ambition, not a template's default ambition.
-- Red team ran, and its surviving objections are IN the plan.
+- Red team ran, and its surviving objections are IN the plan and in the vault.
 - Rendered deliverables verified page-by-page.
 
 ## Common failure modes
@@ -346,8 +477,10 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Failure | Fix |
 |---|---|
 | Plan re-researches the market inline | Dispatch the market-analysis skill; conduct, don't dig |
+| Synthesis re-reads the research corpus | Query the vault — reading prose is how a Low tag gets lost |
+| Notes written up at the end, in one pass | Emit per dimension; lint at the gate while context is live |
 | Thesis is the product description reworded | Trace it to the whitespace recommendation + unfair advantage |
-| Low-confidence number promoted to headline | Tags survive import; validation step instead |
+| Low-confidence number promoted to headline | Confidence is derived; tags survive import; validation step instead |
 | Hockey-stick from penetration hand-waving | Bottom-up build; scenarios move assumptions |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |

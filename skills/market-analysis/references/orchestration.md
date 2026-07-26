@@ -14,7 +14,9 @@ job, on its own strongest-model turn, after reading everything.
 **Preconditions (conductor, before Workflow A):**
 - Confirm web tools work: run one trivial WebSearch. No web access → STOP and tell the user a
   market analysis is not producible without it. Never fall back to memory.
-- `outDir` is ABSOLUTE (expand `~` yourself — briefs never carry `~` paths).
+- `outDir` is ABSOLUTE (expand `~` yourself — briefs never carry `~` paths). So is the vault
+  path, when the run has one: note resolution is an explicit path or nothing, and an agent that
+  searches upward for a vault finds a different engagement's corpus and writes into it silently.
 - Scripts can't call `Date.now()` — pass `date` in.
 - On a re-run, load each existing `research/*.md` into `prior` so agents update instead of
   clobbering.
@@ -26,6 +28,8 @@ Workflow({ script: <Workflow A below>, args: {
   dossier: "<full product-dossier.md content, inline>",
   boundary: "<the category boundary paragraph>",
   citation: "<the citation contract from SKILL.md, verbatim — including the no-web-access refusal clause>",
+  vaultNotes: "",          // "" when the run has no vault. Otherwise the vault note contract from
+                           // SKILL.md, verbatim, with <vault> already expanded to the absolute path.
   mustProfile: ["<competitor the founder/user named>", ...],   // always profiled, regardless of kind
   playbookCompetitors: "<the Competitive landscape block from dimensions.md, verbatim>",
   profileCap: 12,          // direct profiled up to this; non-direct up to half of it
@@ -51,10 +55,10 @@ export const meta = {
   ],
 }
 
-const { date, outDir, dossier, boundary, citation, mustProfile = [], profileCap = 12,
-        maxCompetitors = 60, dryRounds = 2, playbookCompetitors } = args
+const { date, outDir, dossier, boundary, citation, vaultNotes = '', mustProfile = [],
+        profileCap = 12, maxCompetitors = 60, dryRounds = 2, playbookCompetitors } = args
 if (!playbookCompetitors) throw new Error('no competitors playbook — pass the dimensions.md block')
-const CTX = `Product dossier:\n${dossier}\n\nCategory boundary: ${boundary}\n\n${citation}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
+const CTX = `Product dossier:\n${dossier}\n\nCategory boundary: ${boundary}\n\n${citation}\n${vaultNotes}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
 
 const COMP_SCHEMA = { type: 'object', properties: { competitors: { type: 'array', items: {
   type: 'object', properties: { name: {type:'string'}, kind: {enum:['direct','indirect','adjacent','status-quo']}, why: {type:'string'}, url: {type:'string'} },
@@ -148,12 +152,12 @@ export const meta = {
   ],
 }
 
-const { date, outDir, dossier, boundary, citation, dimensions, playbooks, prior = {},
-        profiledSummary = '(none)', verifyCap = 12 } = args
+const { date, outDir, dossier, boundary, citation, vaultNotes = '', dimensions, playbooks,
+        prior = {}, profiledSummary = '(none)', verifyCap = 12 } = args
 if (dimensions.includes('competitors')) throw new Error('competitors is Workflow A\'s job')
 if (!dimensions.includes('sizing')) throw new Error('sizing is mandatory')
 for (const d of dimensions) if (!playbooks[d]) throw new Error(`no playbook for dimension "${d}" — author one before dispatching`)
-const CTX = `Product dossier:\n${dossier}\n\nCategory boundary (settled after competitor research): ${boundary}\n\nCompetitive set: ${profiledSummary}\n\n${citation}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
+const CTX = `Product dossier:\n${dossier}\n\nCategory boundary (settled after competitor research): ${boundary}\n\nCompetitive set: ${profiledSummary}\n\n${citation}\n${vaultNotes}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
 const updateRule = (d) => prior[d]
   ? `\n\nThis file EXISTS from a prior run — UPDATE it: keep every prior source row with its original Pulled date, mark superseded figures as superseded (new figure + new date alongside), add new findings. Never delete a prior sourced row. Prior content:\n${prior[d]}`
   : ''
@@ -249,12 +253,28 @@ Phase 4), in your own turn, never delegated.
 
 ## Fleet hygiene — the three failures that corrupt a return
 
-**1. Assign source-ID blocks BEFORE dispatch, including for waves you haven't run yet.**
-Parallel researchers left to pick their own IDs will collide, and two different sources
-carrying the same `[S#]` is a silent citation corruption that survives into the plan. Give each
-agent an explicit, disjoint range; reserve blocks for later waves in the same table so a
-follow-up dispatch can't collide with this one. An agent that exhausts its block **stops and
-requests an extension** — it never spills into the next.
+**1. Never let a parallel fleet allocate IDs from a shared sequence — give every agent the
+same random-ID recipe instead.** Two different sources carrying one ID is a silent citation
+corruption that survives into the plan, and any scheme that hands out ranges only makes the
+collision *procedurally* avoided — the procedure being exactly what two agents dispatched in
+the same wave skip. So there is nothing to hand out:
+
+- **Note IDs are `TYPE-` plus eight random alphanumerics**
+  (`LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 8; echo`), generated by each agent
+  independently, with no registry and no counter. The type prefix is the only structure, and it
+  is derived from the note, not allocated. Over a corpus of a few hundred notes the collision
+  probability is around 2 in 10 billion, so no reserved range, no disjoint table, and no
+  exhaustion-and-extension protocol is needed — the whole mechanism disappears rather than
+  being administered. Full rules: [the vault schema](../../business-plan/references/vault.md).
+- **`[S#]` citation codes are a rendering concern and stay the conductor's alone.** They are
+  assigned at the `sources.md` merge (see *After Workflow B returns* above), after every agent
+  has returned, so two agents can never reach for the same number in the first place. An agent
+  that writes an `[S#]` into a research file is writing a code nothing will resolve; agents cite
+  by URL and pull date, and the conductor numbers what it merges.
+
+The failure this replaces was real and worth naming: reserved blocks made every follow-up wave
+a coordination step against a table somebody had to keep, and the first wave that forgot it
+produced two sources under one code with no signal that anything was wrong.
 
 **2. Never instruct a parallel fleet to use the browser. The browser context is SHARED.**
 Concurrently-dispatched agents drive **one** browser tab, not one each. In practice: an agent
