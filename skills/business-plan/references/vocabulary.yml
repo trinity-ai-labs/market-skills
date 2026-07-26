@@ -1,0 +1,664 @@
+# The controlled subject vocabulary — the base terms and the rules that keep them honest
+#
+# This file ships with the skill. At vault creation it is copied to the vault root as
+# `_vocab.yml`, where each engagement extends it with its own terms. A claim note's
+# `subject` field must be a key in that file; a subject absent from it is a lint failure,
+# never a silent pass.
+#
+# Contents
+#   1. The two mechanisms this file powers
+#   2. The two calibration risks
+#   3. Governance — adding a term
+#   4. Extension — the vault's own `_vocab.yml`
+#   5. Aliasing and near-miss detection
+#   6. Format rules for this file
+#   7. The terms
+#
+# ---------------------------------------------------------------------------------------
+# 1. The two mechanisms this file powers
+# ---------------------------------------------------------------------------------------
+#
+# CONTRADICTION DETECTION IS A SUBJECT COLLISION. Two current claims carrying the same
+# `subject` with different values are a collision, and a collision is where a
+# contradiction, a duplicate, or a missing `scopes` edge is hiding. Finding them is
+# mechanical:
+#
+#     grep -rh '^subject:' "$VAULT_PATH/claims" | sort | uniq -d
+#
+# That only works if both claims chose the same key. `pricing` and `pricing-model` never
+# collide, so two researchers who disagree about the price stay in agreement as far as any
+# query can tell. The failure is silent — an unresolved contradiction and a corpus with no
+# contradictions look identical. Making an unknown term a lint ERROR is what converts a
+# silent miss into a loud one at the moment the note is written, which is the only moment
+# anyone still remembers what they meant.
+#
+# COVERAGE IS A QUERY, and `required: true` is what drives it. The note schema cannot catch
+# a thin spine, because you cannot type a fact nobody wrote. Declaring up front which
+# subjects a plan must take a position on turns the omission into an answerable question:
+#
+#     VOCAB="$VAULT_PATH/_vocab.yml"
+#     awk '/^  [a-z][a-z0-9-]*:$/ { t = substr($1, 1, length($1) - 1) }
+#          /^    required: true$/ { print t }' "$VOCAB" |
+#     while read -r term; do
+#       grep -rqs "^subject: \"$term\"\$" "$VAULT_PATH/claims" ||
+#         echo "coverage gap - no claim on required subject $term"
+#     done
+#
+# A spine with twelve gaps then announces itself instead of being inherited in silence by
+# every document downstream of it.
+#
+# ---------------------------------------------------------------------------------------
+# 2. The two calibration risks
+# ---------------------------------------------------------------------------------------
+#
+# Anyone editing this file is erring in one of two directions, and should know which.
+#
+# TOO GRANULAR and nothing ever collides. Split `price-anchor` into `price-anchor-monthly`,
+# `price-anchor-annual` and `price-anchor-enterprise` and the two researchers who disagree
+# about the price now write under different keys. Every query returns clean. Contradiction
+# detection does not fail loudly here — it dies quietly, and the corpus reports health it
+# does not have. The tell is a term that reliably collects exactly one claim per
+# engagement. That term is a property of a claim, not a subject, and belongs folded into
+# its parent.
+#
+# TOO COARSE and everything collides into noise. Collapse the economics cluster into one
+# `financials` term and every model input lands on it, so `uniq -d` returns a subject with
+# forty claims under it and no two of them in conflict. A reviewer reads the first ten
+# false collisions and stops reading, at which point the real one arrives unread. The tell
+# is a term whose collisions are routinely resolved with "these are about different
+# things".
+#
+# The base below is sized so a typical engagement puts a few claims under most terms. That
+# density is the target: enough that a genuine duplicate surfaces, few enough that a
+# flagged collision is worth opening.
+#
+# Set-valued subjects are the classic too-coarse mistake. A plan names five risks, not one,
+# so a `risks` term collides with itself by construction. `primary-risk` is deliberately
+# singular — the highest-ranked way the product dies — and the other four are claims under
+# the terms they actually concern.
+#
+# ---------------------------------------------------------------------------------------
+# 3. Governance — adding a term
+# ---------------------------------------------------------------------------------------
+#
+# Governance matters more than the initial list. Every controlled vocabulary rots the same
+# way: someone hits an unknown-subject lint error, adds a term to silence it, and repeats
+# until the vocabulary is a transcript of whatever people happened to type. At that point
+# the collision query has nothing left to collide and the coverage query lists terms no
+# process produces.
+#
+# ADDING A TERM IS DELIBERATE AND CARRIES A DEFINITION. The definition states what a claim
+# under this subject asserts AND what it excludes. The exclusion clause is the load-bearing
+# half, because the ambiguity a vocabulary has to kill is the boundary between two adjacent
+# terms, not the meaning of either one alone. Without it the next author picks by feel and
+# the two of them stop colliding.
+#
+# THE FIRST QUESTION IS ALWAYS WHICH EXISTING TERM IT BELONGS UNDER. Adding is the last
+# resort. A lint error is the vocabulary asking whether this claim is genuinely a new
+# subject or the same subject spelled differently, and answering it with a new term skips
+# the question the error existed to ask.
+#
+# A TERM MUST NAME SOMETHING A SKILL ALREADY PRODUCES A POSITION ON — traceable to a
+# research dimension, a plan section, or a financial-model assumption row. A term with no
+# producer collects zero claims forever, so if it is required the coverage query reports a
+# gap no process will ever close, and a coverage report with permanent false gaps is one
+# people learn to skim.
+#
+# `required` IS MANDATORY ON EVERY TERM AND HAS NO DEFAULT. `required: false` means someone
+# decided a plan may omit this subject. An absent key would mean nobody decided, and the
+# coverage query cannot tell those apart — it would silently treat undecided as not
+# required, which is the answer that produces no visible work.
+#
+# REMOVING A TERM IS NOT DELETION. Demote it to an alias on its replacement. Deleting it
+# turns every existing claim that used it into an unknown-subject error at the next lint,
+# and a lint run that fails on notes nobody touched is one people switch off.
+#
+# ---------------------------------------------------------------------------------------
+# 4. Extension — the vault's own `_vocab.yml`
+# ---------------------------------------------------------------------------------------
+#
+# The base is method knowledge — the subjects any business plan takes a position on. Each
+# engagement has its own subjects that would be meaningless anywhere else. That split is
+# what lets the skill get better across engagements while the corpus stays private.
+#
+# `_vocab.yml` AT THE VAULT ROOT IS THE FILE LINT READS. It is seeded from this file at
+# vault creation and holds the base terms plus the engagement's own, in the same shape. The
+# lint never reads this file directly, because a vault must stay checkable against the
+# vocabulary it was written under even after the skill ships new terms.
+#
+# EXTENSION IS ADDITIVE. Never delete or redefine a base term in a vault copy. A claim
+# written under the shipped definition then asserts something the corpus no longer records,
+# and nothing marks the notes that predate the redefinition. When a base term is too broad
+# for an engagement, add a narrower term and point the narrower claim at the broader one
+# with a `scopes` edge — that is the edge's whole purpose.
+#
+# UPGRADING A VAULT ADDS NEW BASE TERMS AND KEEPS LOCAL ONES. If a local term's key
+# collides with a newly shipped base term, the local one is renamed by whoever added it,
+# before the merge. Letting a local term shadow a base term means two engagements use one
+# key for two different subjects, and the shipped definition quietly stops being true of
+# half the corpora that cite it.
+#
+# ---------------------------------------------------------------------------------------
+# 5. Aliasing and near-miss detection
+# ---------------------------------------------------------------------------------------
+#
+# Aliases are what make a near-miss RESOLVABLE rather than silent. The agent normalises to
+# the canonical key when it writes a note, so `wtp` is stored as `willingness-to-pay` and
+# the collision query still fires. Lint reports the unknown terms and the near-misses.
+#
+# AN ALIAS MUST BE UNAMBIGUOUS. No alias may equal a term key or an alias of another term.
+# Normalisation would otherwise have two correct answers and would pick one, silently
+# routing two different subjects to one key. For the same reason, a genuinely ambiguous
+# near-miss gets NO alias — `positioning` could mean `category-boundary` or
+# `competitive-gap`, so it is deliberately absent and lint reports it as unknown, which
+# sends the author to the definitions instead of guessing on their behalf.
+#
+# DETECTION ORDER. Lint resolves a claim's `subject` in this order and stops at the first
+# match:
+#
+#   1. EXACT match against a term key. Valid, nothing reported.
+#   2. EXACT match against an alias. Resolvable — reported as a fixable near-miss naming
+#      the canonical key, not as an error.
+#   3. NORMALISED match. Lowercase both sides and strip every character outside `a-z0-9`
+#      (`printf '%s' "$s" | tr 'A-Z' 'a-z' | tr -cd 'a-z0-9'`). `Pricing_Model`,
+#      `pricingmodel` and `PRICING-MODEL` all collapse to `pricingmodel`. Case and
+#      separator drift is the most common near-miss and this catches all of it for one
+#      `tr` per term.
+#   4. PREFIX or CONTAINMENT on the normalised forms — one contains the other, or they
+#      share a prefix of at least five characters. Catches `pricing` against
+#      `pricing-model` and `churnrate` against `churn`. Reported as a near-miss naming the
+#      candidate.
+#   5. Anything else is an UNKNOWN-SUBJECT ERROR with no suggestion.
+#
+# EDIT DISTANCE IS DELIBERATELY NOT USED. The lint is POSIX shell with no runtime beyond
+# it, and a Levenshtein routine there is a nested loop per candidate pair over the whole
+# term list — slow enough on a few hundred notes that people stop running the lint, and a
+# check nobody runs catches nothing. Rules 3 and 4 catch the near-misses that actually
+# occur (case, separator, singular or plural, and a shorter form of a longer term) at grep
+# speed.
+#
+# ---------------------------------------------------------------------------------------
+# 6. Format rules for this file
+# ---------------------------------------------------------------------------------------
+#
+# BLOCK LISTS, NEVER INLINE FLOW LISTS. `aliases` is always a block list. This file lives
+# at the vault root, inside the tree Obsidian opens, and Obsidian rewrites `[a, b]` into
+# block form when it saves — so a vocabulary authored inline and grepped inline loses those
+# aliases the first time somebody opens the vault in an editor. The vault's own detection
+# query, `grep -rnE '^[a-z_]+: \[' "$VAULT_PATH"`, is recursive over the whole vault and
+# would flag an inline `aliases` here as a violation of the schema this file supports.
+#
+# COERCE NOTHING. Quote anything a YAML parser would read as something other than text —
+# dates, leading zeros, bare `yes` / `no` / `on` / `off` / `null` / `~`, and any value
+# containing a colon followed by a space. A term NAMED `no-code` is fine; a bare VALUE `no`
+# is not. `required: true` is the one intentional non-string in the file, and it stays
+# unquoted because `true` reads as the same boolean in YAML 1.1 and 1.2 and in every
+# implementation of both — there is no divergence for a reader to be wrong about.
+#
+# DEFINITIONS ARE PLAIN MULTI-LINE SCALARS. Continuation lines are indented under the key.
+# A plain scalar cannot contain a colon followed by a space, so definitions are written
+# without one. The shipped lint parses this file with a subset parser that handles flat
+# scalars and block lists only, and a block scalar would read as an empty value to it.
+#
+# ---------------------------------------------------------------------------------------
+# 7. The terms
+# ---------------------------------------------------------------------------------------
+#
+# Each term traces to a research dimension in the market-analysis skill, a section of the
+# plan template, or a row of the financial model's assumptions table. Nothing here was
+# invented for the vocabulary.
+
+terms:
+
+# --- Demand: who has the problem, how badly, and how many of them there are --------------
+
+  problem-acuteness:
+    definition: How acutely the named segment feels the problem, evidenced by what they
+      say and what they already do about it. Distinct from market size, which counts
+      people rather than measuring pain, and from job-to-be-done, which describes the task
+      rather than the urgency.
+    aliases:
+      - pain-severity
+      - pain-acuteness
+      - problem-severity
+      - pain-level
+      - acuteness
+    required: true
+
+  job-to-be-done:
+    definition: The end-to-end task the customer wants completed, and the point in that
+      sequence where current tools break the chain. Describes the work, not the product
+      and not the pain level.
+    aliases:
+      - jtbd
+      - customer-job
+      - job
+      - use-case
+      - workflow
+    required: true
+
+  beachhead-segment:
+    definition: The segment the product enters first and the reasoning that selected it.
+      One segment, not a list of candidates. Who signs the purchase order is a separate
+      position, held by buyer-profile.
+    aliases:
+      - beachhead
+      - target-segment
+      - initial-segment
+      - icp
+      - first-customer
+    required: true
+
+  buyer-profile:
+    definition: Who actually authorises the purchase, and whether that is one person with
+      self-serve payment authority or a committee. Separate from beachhead-segment because
+      the user and the buyer are frequently not the same person, and the difference selects
+      the go-to-market motion.
+    aliases:
+      - buyer
+      - economic-buyer
+      - decision-maker
+      - buying-committee
+      - purchase-authority
+    required: false
+
+  market-size:
+    definition: The size of the reachable market, as a figure with the formula that
+      produced it. Covers TAM, SAM and SOM on a venture track and the reachable-customer
+      count on a bootstrap track. The rate at which that figure moves is market-growth.
+    aliases:
+      - tam
+      - sam
+      - som
+      - market-sizing
+      - addressable-market
+      - reachable-customers
+    required: true
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver
+      behind it. Not required, because a plan can be sound against a flat market it has
+      correctly sized, and an unsourced growth rate is worse than none.
+    aliases:
+      - growth-rate
+      - market-trajectory
+      - category-growth
+      - market-growth-rate
+    required: false
+
+# --- Timing: why this window is open, and what closes it ---------------------------------
+
+  timing-window:
+    definition: The shift that makes this product possible or necessary now, and how long
+      the window it opens stays open. The mechanism, not the narrative.
+    aliases:
+      - why-now
+      - market-timing
+      - timing
+      - window
+      - why-now-window
+    required: true
+
+  platform-risk:
+    definition: What happens to the product if the platform or model vendor it sits on
+      ships this capability natively, and who is closest to doing so. Distinct from
+      competitive-gap, which is about the market as it stands rather than a dependency
+      that could remove the product outright.
+    aliases:
+      - platform-dependency
+      - vendor-risk
+      - platform-exposure
+      - dependency-risk
+    required: false
+
+# --- Competition: the frame, the opening, and the substitute ------------------------------
+
+  category-boundary:
+    definition: Which category the product competes in, and therefore which set of
+      alternatives the buyer compares it against. Every sizing figure and every competitor
+      classification assumes an answer to this, which is why it is a position and not a
+      label.
+    aliases:
+      - category
+      - market-category
+      - category-definition
+      - category-verdict
+    required: true
+
+  competitive-gap:
+    definition: What the competitive set structurally does not cover, and why they leave
+      it open. The wedge. Distinct from defensibility, which is about holding the opening
+      after the incumbents notice it.
+    aliases:
+      - wedge
+      - whitespace
+      - differentiation
+      - competitive-whitespace
+      - unmet-need
+    required: true
+
+  defensibility:
+    definition: Which durable advantage is actually available, stated as a benefit plus a
+      barrier, with the specific answer to why a well-funded competitor cannot copy it
+      within eighteen months. A claim with a benefit and no barrier belongs under
+      competitive-gap instead.
+    aliases:
+      - moat
+      - barrier-to-entry
+      - competitive-advantage
+      - power
+      - durability
+    required: true
+
+  switching-cost:
+    definition: What it costs the buyer to leave the alternative they use today, in money,
+      data migration and habit. Distinct from alternative-cost, which prices staying put
+      rather than leaving.
+    aliases:
+      - switching-costs
+      - lock-in
+      - migration-cost
+      - switching-friction
+    required: false
+
+  alternative-cost:
+    definition: Total cost of the substitute the buyer would otherwise assemble, including
+      the fraction of a person who maintains it. Distinct from affordability, which is a
+      ratio and not an argument, and from switching-cost, which prices the move away.
+    aliases:
+      - tco
+      - diy-cost
+      - cost-of-alternative
+      - build-vs-buy
+      - substitute-cost
+    required: true
+
+# --- Pricing: what to charge, how to package it, and what they will pay -------------------
+
+  price-anchor:
+    definition: The price point the plan recommends, per unit and cadence. What the
+      product charges. What the segment demonstrably pays is willingness-to-pay, and the
+      two differing is a finding rather than a contradiction.
+    aliases:
+      - price
+      - pricing
+      - price-point
+      - list-price
+      - price-hypothesis
+    required: true
+
+  packaging:
+    definition: How the price is structured — tiers, the metered and flat components, and
+      what each tier gates. The shape of the charge, not its level.
+    aliases:
+      - pricing-model
+      - tiers
+      - tiering
+      - price-structure
+      - packaging-model
+    required: true
+
+  willingness-to-pay:
+    definition: What the segment demonstrably pays for this job today, from what they buy
+      elsewhere and what they complain about. Evidence about the buyer rather than a
+      decision by the seller.
+    aliases:
+      - wtp
+      - price-sensitivity
+      - ability-to-pay
+      - price-tolerance
+    required: true
+
+  free-tier:
+    definition: Whether the product offers a free tier or a trial, which one, and the
+      time-to-value and deal-size conditions that make it fit. Not required, because no
+      free entry point is a valid and common answer.
+    aliases:
+      - freemium
+      - trial-model
+      - free-plan
+      - trial
+    required: false
+
+# --- Go-to-market: how it reaches the buyer, and what that costs --------------------------
+
+  gtm-motion:
+    definition: Whether the product is sold self-serve, sales-led or hybrid, and the deal
+      size, buyer type and time-to-value gates that select it. The motion, not the
+      individual channels inside it.
+    aliases:
+      - motion
+      - sales-motion
+      - gtm
+      - go-to-market
+      - distribution-motion
+    required: true
+
+  primary-channel:
+    definition: The one channel the plan commits to first, and why it is reachable for a
+      new entrant at this stage. Ranked alternatives are claims under this same subject,
+      which is what makes two incompatible first channels collide.
+    aliases:
+      - channel
+      - acquisition-channel
+      - distribution-channel
+      - main-channel
+    required: true
+
+  time-to-value:
+    definition: How long from first contact to the point the buyer gets the result they
+      came for, unassisted. A gate on the motion and on free-tier fit, which is why it is
+      a subject rather than a detail of either.
+    aliases:
+      - ttv
+      - time-to-aha
+      - activation-time
+      - onboarding-time
+    required: false
+
+  cac:
+    definition: Cost to acquire one paying customer, per channel, as an input assumption.
+      The verdict on whether that cost is survivable is ltv-cac.
+    aliases:
+      - customer-acquisition-cost
+      - acquisition-cost
+      - cost-per-customer
+    required: true
+
+  growth-loop:
+    definition: The mechanism by which this period's output funds or feeds next period's
+      input, and where it saturates. A loop with no named saturation term is a projection
+      rather than a position.
+    aliases:
+      - growth-engine
+      - reinvestment-loop
+      - compounding-loop
+      - growth-mechanism
+    required: false
+
+  expansion-sequence:
+    definition: The segments entered after the beachhead, in order, each with the
+      condition that unlocks it. Named before the beachhead is won, which is what
+      distinguishes a sequence from a wish.
+    aliases:
+      - expansion-plan
+      - bowling-pin
+      - entry-sequencing
+      - sequencing
+      - expansion-pins
+    required: false
+
+  traction:
+    definition: What the product has demonstrably achieved so far — usage, revenue,
+      retention or the validation evidence standing in for them pre-launch. Not required,
+      because a pre-launch plan honestly has none, and a required subject that is
+      routinely empty trains people to ignore the coverage report.
+    aliases:
+      - early-traction
+      - traction-metrics
+      - adoption
+      - usage-traction
+      - proof-of-demand
+    required: false
+
+# --- Economics: the assumption rows the model is built on ---------------------------------
+
+  conversion-rate:
+    definition: The rate at which one funnel stage becomes the next, most often trial or
+      signup to paid. State the stages the rate spans, because a rate with unstated
+      endpoints cannot be contradicted by another one.
+    aliases:
+      - conversion
+      - trial-conversion
+      - signup-conversion
+      - close-rate
+    required: true
+
+  churn:
+    definition: The rate at which customers or revenue leave, per period, and whether it
+      varies by cohort. The model's mandatory negative assumption and the divisor in the
+      steady-state identity, which is why it is required even when the number is a guess.
+    aliases:
+      - churn-rate
+      - retention
+      - retention-rate
+      - attrition
+      - renewal-rate
+    required: true
+
+  ltv-cac:
+    definition: Whether the acquisition economics work, as the lifetime-value to
+      acquisition-cost ratio AND the payback period together. Deliberately one subject
+      rather than two, because a healthy ratio on a long payback is a cash trap and
+      splitting them lets a plan quote whichever half looks better.
+    aliases:
+      - unit-economics
+      - ltv
+      - ltv-to-cac
+      - cac-payback
+      - payback-period
+    required: true
+
+  revenue-forecast:
+    definition: Base-case revenue at the plan's horizon, built bottom-up from the channel
+      and pricing chain. The number the projection produces, not the ceiling it is heading
+      toward.
+    aliases:
+      - revenue-projection
+      - base-case-revenue
+      - forecast
+      - projection
+      - revenue-build
+    required: true
+
+  gross-margin:
+    definition: Contribution margin per unit of value delivered and how it moves with
+      scale, including where free-tier boundaries and volume cliffs land. Not required,
+      because the unit-economics dimension only runs when the product has a cost structure
+      worth pricing.
+    aliases:
+      - margin
+      - cogs
+      - contribution-margin
+      - unit-cost
+      - margin-at-scale
+    required: false
+
+  steady-state-ceiling:
+    definition: The equilibrium the business converges on, from the identity where new
+      customers equal churned customers, stated as a number against the founder's stated
+      goal. Set by the ratio between the inputs, never by the growth rate, which is why it
+      is a separate subject from revenue-forecast.
+    aliases:
+      - ceiling
+      - steady-state
+      - equilibrium
+      - saturation-point
+      - growth-ceiling
+    required: true
+
+  runway:
+    definition: Burn rate, months of cash remaining, and the date the business is either
+      default-alive or needs capital. One position, because the three numbers are the same
+      claim stated three ways and splitting them lets one be revised without the others.
+    aliases:
+      - burn
+      - burn-rate
+      - months-of-runway
+      - default-alive
+      - cash-runway
+    required: true
+
+  hiring-plan:
+    definition: Who gets hired, when, and how long each role takes to become productive.
+      Not required, because a solo plan with no hires is a complete answer rather than a
+      gap.
+    aliases:
+      - headcount
+      - hires
+      - team-ramp
+      - hiring-ramp
+      - staffing
+    required: false
+
+# --- Strategy and risk: the forks, the proof, and the ways it dies -------------------------
+
+  capital-path:
+    definition: Whether the business bootstraps, raises, or takes debt, and what the
+      choice implies for pace, dilution and founder outcome. The path, not the amount.
+    aliases:
+      - funding-path
+      - capital-strategy
+      - funding-strategy
+      - bootstrap-vs-raise
+      - raise-or-bootstrap
+    required: true
+
+  next-milestone:
+    definition: The one falsifiable proof the current period buys, and the date it lands
+      on. Singular by construction — a list of roadmap items is not a milestone, and the
+      question this answers is what the next tranche of time or money proves.
+    aliases:
+      - milestone
+      - funding-milestone
+      - next-gate
+      - proof-point
+      - milestone-gate
+    required: true
+
+  founder-advantage:
+    definition: What this team has that a competent stranger attempting the same thing
+      would not, made concrete. Distinct from defensibility, which is a property of the
+      business rather than of the people.
+    aliases:
+      - unfair-advantage
+      - founder-market-fit
+      - why-us
+      - team-advantage
+    required: true
+
+  primary-risk:
+    definition: The highest-ranked way this product dies, with the leading indicator that
+      would show it happening. Singular deliberately — a set-valued subject collides with
+      itself and buries the real conflicts under false ones. The other risks are claims
+      under the subjects they actually concern.
+    aliases:
+      - top-risk
+      - key-risk
+      - biggest-threat
+      - kill-risk
+      - main-risk
+    required: true
+
+  regulatory-exposure:
+    definition: What compliance or regulatory obligation the product carries, including a
+      positive finding that nothing material applies. Not required, because for most
+      products the honest answer is short and a required row here pads the coverage report
+      without improving a plan.
+    aliases:
+      - compliance
+      - regulation
+      - regulatory-risk
+      - legal-exposure
+      - compliance-burden
+    required: false
