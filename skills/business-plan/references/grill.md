@@ -22,6 +22,156 @@ check-in, not a roadmap, and is fine.
 Skip any question the context already answers. The ORDER matters — early answers gate which
 later questions exist at all.
 
+## Contents
+
+- [Posture — read it off the first substantive answer, never ask for it](#posture--read-it-off-the-first-substantive-answer-never-ask-for-it)
+  - [The tell is uncertainty about what the question means, not ignorance of the answer](#the-tell-is-uncertainty-about-what-the-question-means-not-ignorance-of-the-answer)
+  - [Guided posture asks fewer questions, not more](#guided-posture-asks-fewer-questions-not-more)
+  - [Six forks earn a brief; everything else stays a question with a default](#six-forks-earn-a-brief-everything-else-stays-a-question-with-a-default)
+  - [Record the posture as a fact, because it changes how every later answer is read](#record-the-posture-as-a-fact-because-it-changes-how-every-later-answer-is-read)
+- [0. Pointers & background](#0-pointers--background-opens-the-grill)
+- [0b. The two stories](#0b-the-two-stories--ask-these-openly-before-any-targeted-probe)
+- [0c. Entity — what is the company](#0c-entity--what-is-the-company-and-is-this-product-all-of-it)
+- [1. Ambition & audience](#1-ambition--audience-selects-the-artifact)
+- [2. Value & product conviction](#2-value--product-conviction-tests-the-dossiers-hypotheses)
+- [3. Monetization & pricing instinct](#3-monetization--pricing-instinct)
+- [4. Resources & constraints](#4-resources--constraints-the-plan-must-survive-these)
+- [5. Unfair advantages](#5-unfair-advantages-the-thesis-multiplier)
+- [6. GTM appetite](#6-gtm-appetite-motion-must-fit-the-founder-not-just-the-market)
+- [7. Timeline & fear](#7-timeline--fear)
+
+## Posture — read it off the first substantive answer, never ask for it
+
+The bank below assumes the founder holds the answers and the job is to get them out. That is
+right for a founder who can evaluate the options and wrong for one who cannot: for them the
+same question is a quiz. Two postures run the same bank.
+
+- **Direct** — the bank as written. Confirm the default, take the correction, move on.
+- **Guided** — six of the questions arrive as decision briefs instead: the fork laid out with
+  evidence, costs, and a recommendation whose strength is stated, per
+  [decisions.md](decisions.md). The choice is still the founder's; only the preparation changes.
+  Every guided fork closes as a decision record, so the choice, the founder's own reasoning and
+  the trigger that would reopen it outlive the conversation that produced them.
+
+**Direct posture costs nothing.** A founder who knows their answers gets the same questions in
+the same number of turns — no extra confirmation turn, no "would you like me to explain that
+first?". The failure this prevents: a mechanism built for the founder who needs help, billed to
+the founder who does not, is one an experienced founder learns to route around, and they route
+around the whole grill rather than the one turn.
+
+**Never ask which posture the founder wants.** "How much background do you want on these?" is
+itself a business-literacy question, and the founder who most needs guided posture is the least
+able to answer it — they do not yet know which terms they will fail to hold. It also marks them:
+a founder invited to self-identify as inexperienced generally declines, and then answers the
+ambition question anyway, from a guess you now have no reason to distrust.
+
+### The tell is uncertainty about what the question means, not ignorance of the answer
+
+Three answers to "venture-scale, bootstrapped-profitable, or lifestyle?" that look alike in a
+transcript and are not:
+
+| what comes back | what it is | what you do |
+|---|---|---|
+| "Bootstrapped. I'm not putting investors on the cap table." | **decided** — wants confirmation | Take it, record it, next question. Direct. |
+| "Depends what the category looks like. If it's winner-take-most I'd have to raise — what did the dossier show?" | **undecided expert** — holds the terms, wants the tradeoff | Give the tradeoff in that turn. Still direct: one turn, not a brief. |
+| "Venture I guess?" · "What does venture-scale mean for someone like me?" · "Which one do people normally pick?" | **novice** — wants the tradeoff *and* what the terms mean | Guided. Raise it to a brief. |
+
+The three novice tells, stated so they can be spotted in one read: the answer **restates the
+question**, **asks what the options imply**, or **picks with no stated reason**. A stated reason
+is the discriminator — "bootstrapped, because I did the investor thing once and hated it" is a
+decided founder even though the reason is not a business argument; "bootstrapped I think" is not.
+
+**Row two is the one that gets misread.** An expert who has not decided looks superficially like
+a novice: both answer with a question. Treat a returned question as expert unless the question
+is about **vocabulary**. The failure: briefing an experienced founder's open question spends the
+expensive instrument on someone who wanted two sentences, and reads as being talked down to,
+which costs the credibility the rest of the grill runs on.
+
+**Read it off §0b, before any fork is asked.** "Tell me your story" and "tell me the product's
+story" come before every decision in the bank, and they are where posture shows — in whether the
+founder reaches for market vocabulary unprompted and uses it correctly, not in how confident
+they sound. Fluency and confidence are unrelated. The §0c entity answer is the second read.
+
+**Posture is re-read, never fixed.** A founder can be fluent on pricing and blank on capital
+path. Flip it for later forks when a later answer shows command of the terms, and supersede the
+recorded fact per
+[vault.md's status rule](vault.md#status-moves-in-one-direction-and-never-silently). One thing
+does not change mid-flight: **a brief already sent keeps its forcing function.** If the founder
+returns section 4's ranking and then says "just tell me what to do", the ranking is captured and
+the brief finishes as written — see
+[the forcing function](decisions.md#the-forcing-function-is-the-intervention-and-it-is-the-part-users-like-least).
+
+### Guided posture asks fewer questions, not more
+
+A founder who cannot answer six quick questions can answer three well-framed forks. So guided
+posture **compresses everything outside the six**: questions the dossier can pre-answer collapse
+into a stated default rather than a turn, questions a fork will settle are not asked separately
+(a founder who has just chosen a bootstrap path in a brief does not then get §1's raise
+question), and the recovered turns are spent on the forks.
+
+**The failure this prevents:** guided posture built as "explain more" turns a nine-turn grill
+into a twenty-turn course, and the founder who needed the help is exactly the one who abandons
+it halfway and leaves you with three answers and no plan.
+
+**Never gloss a term the founder has already used correctly.** Definitions ride inside the
+brief — in the grid rows, written in the founder's own words — not as a preamble turn. A term
+explained back to someone who just used it is the single fastest way to lose an interview, and
+it is what a posture rule applied by category rather than by evidence produces.
+
+### Six forks earn a brief; everything else stays a question with a default
+
+| fork | where it surfaces | what a wrong answer propagates into |
+|---|---|---|
+| **Ambition** | §1 — venture / bootstrapped / lifestyle | Every downstream recommendation, and which artifact gets written at all |
+| **Audience** | §1 — who reads this plan | The document's shape: operating plan, memo, or the classic full plan |
+| **Capital path** | §1 raise-or-revenue, with §4's capital answer | The financials horizon, personal runway as an input, and whether margin is a nice-to-have or the strategic core |
+| **Pricing model** | §3 — subscription, usage, one-time | Revenue model, ceiling computation, and every number in the financial section |
+| **Beachhead** | No single question — it forms from §2's feature ranking and the dossier's segments | Research priority, the GTM plan, and the first year of roadmap sequencing |
+| **Motion** | §6 — the one channel sustainable for 90 days | Growth engine, whether sales-led is viable, and what the founder is committed to doing weekly |
+
+These six share two properties: a wrong answer propagates furthest, and the terms are the ones
+most likely to be misunderstood. "Venture-scale", "beachhead", "usage-based" and "sales-led" all
+sound like descriptions of a situation and are in fact commitments.
+
+**Guided posture does not lower the bar for raising a brief** — decisions.md's
+[two conditions](decisions.md#a-fork-the-founder-cannot-answer-becomes-a-brief-and-most-forks-do-not)
+still both have to hold. Posture detection is the early read of the first one: the recommended
+default gave the founder nothing to push against, because they cannot evaluate it. The six above
+satisfy the second by construction, which is why the list is closed at six — a seventh fork
+briefed because the founder hesitated spends the attention the six need. Everything else stays a
+question carrying a recommended default, in both postures.
+
+**The entity question (§0c) is asked verbatim in both postures and is never raised to a brief.**
+It has a right answer the founder already holds — they know whether they are building product
+one of something larger — so a brief has nothing to lay out. It is also the question most often
+answered wrong in *either* posture, because a founder who does not hear the distinction answers
+every ambition, exit and margin question as though the product were the whole company. Ask it
+early, explicitly, and before the dossier is interpreted.
+
+### Record the posture as a fact, because it changes how every later answer is read
+
+Write it when it is first read, not at the close of the grill. Everything after it is read
+through it: in guided posture, "yes" to a question carrying a recommended default is agreement
+with the recommender, not an independent answer, and a founder brief that does not say so gets
+cited six months later as the founder's own settled position — by which point nobody can tell
+which it was.
+
+It is a `fact` note per
+[the fact note](vault.md#the-fact-note-is-one-observed-value-with-its-provenance). `fact`
+requires `rests_on`, and the source is the founder interview itself — the same source note the
+rest of the `[F#]` facts hang from. Abridged; the required fields are vault.md's:
+
+```yaml
+type: fact
+title: "Founder posture is guided — the ambition and capital-path forks are briefed, not asked"
+rests_on:
+  - SOURCE-4KQ2M8DR   # the founder interview
+```
+
+**The note's body is the tell, quoted verbatim.** "What does venture-scale mean for someone like
+me?" is the evidence for the posture; a paraphrase — "founder seemed unfamiliar with the
+options" — is a judgement nobody can re-check, and re-checking is the whole point of recording it.
+
 ## 0. Pointers & background (opens the grill)
 
 - **"Anything you want to point me at, or background I should have?"** — docs, prior
