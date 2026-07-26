@@ -106,6 +106,11 @@ now. The areas that gate everything downstream:
   no-automation line (feeds the plan's Growth engine section).
 - **Timeline** — when does the first dollar need to arrive?
 
+**Posture is inferred, never asked.** Read it off the first substantive answer: a founder who
+cannot evaluate the options gets six forks — ambition, audience, capital path, pricing model,
+beachhead, motion — as decision briefs per `references/decisions.md`, and everyone else gets the
+bank above in the same number of turns. The tell and the six forks: `references/grill.md`.
+
 Call out bad answers when you see them — a venture-scale ambition with 4 hours/week, a price
 instinct 10× under the category's floor, "no competitors". Push with reasoning; a wrong premise
 you let through makes the whole plan fiction.
