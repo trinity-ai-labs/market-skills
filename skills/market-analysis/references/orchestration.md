@@ -43,6 +43,14 @@ same stages and fleets with parallel `Agent` dispatches per stage, and run the d
 category checkpoint, and the critic loop by hand across turns. The structure is the
 requirement; the tool is the convenience.
 
+## Contents
+
+- [Workflow A — Discover + Profile + category verdict](#workflow-a--discover--profile--category-verdict)
+- [Workflow B — Research + Verify + Critique](#workflow-b--research--verify--critique)
+- [After Workflow B returns](#after-workflow-b-returns)
+- [Fleet hygiene — the three failures that corrupt a return](#fleet-hygiene--the-three-failures-that-corrupt-a-return)
+- [Scaling judgment](#scaling-judgment)
+
 ## Workflow A — Discover + Profile + category verdict
 
 ```js
