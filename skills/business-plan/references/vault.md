@@ -18,7 +18,7 @@ they may not omit.
 - [Four format invariants that break silently](#four-format-invariants-that-break-silently)
   - [Block lists survive an Obsidian save; inline flow lists do not](#block-lists-survive-an-obsidian-save-inline-flow-lists-do-not)
   - [Coerce nothing: ban the ambiguous value instead of parsing it](#coerce-nothing-ban-the-ambiguous-value-instead-of-parsing-it)
-  - [A block scalar is allowed on three fields, and nowhere else](#a-block-scalar-is-allowed-on-three-fields-and-nowhere-else)
+  - [A block scalar is allowed on four fields, and nowhere else](#a-block-scalar-is-allowed-on-four-fields-and-nowhere-else)
   - [One assertion per note, because status and confidence are per-note](#one-assertion-per-note-because-status-and-confidence-are-per-note)
 - [Frontmatter schemas, with required fields marked](#frontmatter-schemas-with-required-fields-marked)
   - [Every note carries these six fields](#every-note-carries-these-six-fields)
@@ -224,16 +224,19 @@ be wrong about.
 
 Quoting is always safe. When in doubt, quote.
 
-### A block scalar is allowed on three fields, and nowhere else
+### A block scalar is allowed on four fields, and nowhere else
 
-Three fields carry prose that must survive exactly as written: `quote` on
-[the source note](#the-source-note-keeps-the-quote-that-outlives-the-url), and `reasoning` and
+Four fields carry prose that must survive exactly as written: `quote` on
+[the source note](#the-source-note-keeps-the-quote-that-outlives-the-url); `reasoning` and
 `reopen_if` on
-[the decision note](#the-decision-note-keeps-the-rejected-options-and-the-reopen-trigger).
-Those three, and only those three, may use the YAML literal block scalar (`|`). Every other
-field in this schema is a flat scalar or a block list.
+[the decision note](#the-decision-note-keeps-the-rejected-options-and-the-reopen-trigger); and
+`founder_reasoning`, which
+[decisions.md](decisions.md#the-founders-reasoning-is-kept-verbatim-and-separate) adds to the
+decision note to hold the founder's own words separately from the skill's `reasoning`. Those
+four, and only those four, may use the YAML literal block scalar (`|`). Every other field in
+this schema is a flat scalar or a block list.
 
-**The folded form (`>`) is banned everywhere, including on these three fields.** Folded style
+**The folded form (`>`) is banned everywhere, including on these four fields.** Folded style
 reflows a block onto single lines at read time, joining line breaks into spaces. That is
 tolerable for prose nobody needs verbatim, and it is exactly wrong for `quote`, whose only job
 is to preserve the passage as printed. Write `|`. Never write `>`.
@@ -241,14 +244,15 @@ is to preserve the passage as printed. Write `|`. Never write `>`.
 **A block scalar on any field outside this set is an error, not a style choice.** `title`,
 `chosen`, `killed_because`, and every other prose field in this schema is a flat, possibly
 quoted scalar on one line. Writing `title: |` is not a richer way to write a title — it is the
-wrong syntax for that field, and a reader that tolerates it has to special-case a fourth,
-fifth, and sixth field, which is what keeping the set closed is for.
+wrong syntax for that field, and a reader that tolerates it has to special-case a fifth, sixth,
+and seventh field, which is what keeping the set closed is for.
 
 **Where the block ends:** everything indented further than the key (`quote:`, `reasoning:`,
-`reopen_if:`) belongs to the value, line by line, until the first line that dedents back to the
-key's own indentation or less — that line, and everything after it, is the next key or the end
-of the frontmatter. A parser reading `quote: |` does not stop at the first blank line or the
-first piece of punctuation; it keeps consuming indented lines until the indentation drops.
+`reopen_if:`, `founder_reasoning:`) belongs to the value, line by line, until the first line
+that dedents back to the key's own indentation or less — that line, and everything after it, is
+the next key or the end of the frontmatter. A parser reading `quote: |` does not stop at the
+first blank line or the first piece of punctuation; it keeps consuming indented lines until the
+indentation drops.
 
 **The failure this prevents:** a naive frontmatter reader that does not special-case `|` reads
 `quote: |` as the literal two-character value `"|"` and moves on, silently treating every
@@ -256,9 +260,17 @@ indented line that follows as if it belonged to the next key. It returns a `sour
 parsed without error and has no quote in it — on the single field this schema exists to keep
 verbatim. Rejecting block scalars outright fails the opposite way: every `source` note and
 every `decision` note in this document uses one, so a parser that refuses them on sight rejects
-every note the schema tells you to write. A closed set of three lets a reader do neither:
-handle the literal block for three known keys, and reject anything else loudly instead of
+every note the schema tells you to write. A closed set of four lets a reader do neither:
+handle the literal block for four known keys, and reject anything else loudly instead of
 guessing.
+
+**The set grew by one, and that is the exception, not the start of a pattern.**
+`founder_reasoning` was added because a real field needed a verbatim multi-line value and no
+existing field could hold it without paraphrasing the founder's words — not because a fourth
+option was convenient. A set that grows every time a new document wants a prose field stops
+being closed in anything but name, and the closure is what lets a reader special-case a fixed,
+small, enumerable list instead of writing a general-purpose YAML block-scalar handler. Expect
+this to happen rarely.
 
 ### One assertion per note, because status and confidence are per-note
 
