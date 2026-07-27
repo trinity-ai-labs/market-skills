@@ -27,6 +27,7 @@ which of their rules bite differently when you are writing three hundred notes i
 - [Six schema rules that bite differently in bulk](#six-schema-rules-that-bite-differently-in-bulk)
 - [Budget a day per hundred notes, and finish a stage or revert it](#budget-a-day-per-hundred-notes-and-finish-a-stage-or-revert-it)
 - [An upgraded vault enters here, not at Stage 1 — reconcile the claims an amended definition left behind](#an-upgraded-vault-enters-here-not-at-stage-1--reconcile-the-claims-an-amended-definition-left-behind)
+- [A moved vault root is one directory rename, and the citations inside it are what breaks](#a-moved-vault-root-is-one-directory-rename-and-the-citations-inside-it-are-what-breaks)
 - [Finish with vault-lint, and know which failures legitimately survive](#finish-with-vault-lint-and-know-which-failures-legitimately-survive)
 
 ## The extraction manifest is already written — it is the plan's citations
@@ -615,6 +616,48 @@ a distinct cost:
 check that catches a half-done reconciliation — a replacement written while its target is still
 `current` — and it is the reason this is a lint-verifiable procedure rather than a careful one.
 The census below is the acceptance test, unchanged.
+
+## A moved vault root is one directory rename, and the citations inside it are what breaks
+
+The default vault root moved from `~/Documents/business/` to `~/Documents/go-to-market/`. The old
+name described only the business-plan half, while the pair also produces the whole market
+analysis — a folder named for one of the two skills is wrong the moment the other writes into it.
+`go-to-market` is the plugin's own displayName and covers both. Like the section above, this is a
+vault you already have rather than a corpus you are converting, so read it as a short procedure
+rather than a stage.
+
+**The move is a plain directory rename, and nothing inside the vault changes.**
+
+```sh
+mv ~/Documents/business ~/Documents/go-to-market
+```
+
+The engagement folder IS the vault — there is no `vault/` subdirectory — so the rename is the
+whole migration. No note is rewritten, no `rests_on` edge is re-pointed, no `.vault/config.json`
+schemaVersion moves. The property that makes a corpus portable, that copying the slug directory
+carries every citation and every edge with it, is the same one that makes this free.
+
+**A vault is resolved by `--vault` or `VAULT_PATH` and nothing else, so a path passed explicitly
+is unaffected by the default moving.** The skills never search upward for a vault and the lint
+never infers one, so a corpus you have always addressed by its full path keeps working where it
+sits. What moved is only the default the skills scaffold under and `ls` for a prior engagement.
+Renaming is still worth doing, so that Phase 0 finds the existing folder instead of minting a
+second one beside it — but nothing forces it and nothing breaks on the day you upgrade.
+
+**Grep the corpus for absolute references to the old path before you call the move done.**
+
+```sh
+grep -rn 'Documents/business' ~/Documents/go-to-market/<product-slug>
+```
+
+A note, a research file, or a `sources.md` row can cite an absolute path, and the rename leaves
+every one of them pointing at nothing. That is the failure this step prevents: a broken absolute
+path inside a sources table is indistinguishable on the page from a working one, so nothing
+surfaces it — it reads as a valid citation, in a table of valid citations, and the reference
+quietly stops resolving. One real corpus carried three: a self-referential `**File:**` line at the
+top of a research file, a handoff pointer into a sibling note, and a source cell in a sizing
+table. Rewrite each to a vault-relative path rather than to the new absolute one, so the next move
+costs nothing.
 
 ## Finish with vault-lint, and know which failures legitimately survive
 
