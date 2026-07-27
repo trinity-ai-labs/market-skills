@@ -181,9 +181,34 @@ Source = [S#] | [F#] | "guess — validate". At least one negative assumption is
 
 ## Revenue build (bottom-up ONLY)
 <channel → spend → CAC → new customers/mo → conversion → price → revenue, as a visible chain.
-NEVER "X% of TAM" as a model input. Every inflection point names its operational driver
-(hire ramp, channel launch, seasonality) — smooth exponential curves read as reverse-
-engineered from a funding target.>
+NEVER "X% of TAM" as a model input.
+
+The shape of the curve is an assumption in BOTH directions, and both directions name a driver.
+Every inflection point names its operational driver (hire ramp, channel launch, seasonality) —
+smooth exponential curves read as reverse-engineered from a funding target. Every flat or
+near-flat stretch names one too: zero growth is not the absence of an assumption, it is the
+assertion that next month's reach, conversion and mix are identical to this month's. That
+needs a driver exactly as an inflection does — a hard channel cap, a fixed-capacity delivery
+model, a deliberate no-growth policy — and with none named the line is UNMODELLED, not
+conservative.
+
+The two directions are not equally dangerous, and the flat one is worse: an over-projection
+gets challenged, an under-projection gets believed. A hockey stick draws a red team; a flat
+line reads as conservative, therefore credible, therefore unexamined — so it is the flat line
+that reaches the founder's decisions with nothing behind it.
+
+Then compute the projection's OWN implied monthly growth rate and place it against the
+`## Observed growth band` section of competitor-analysis.md. Outside the band in EITHER
+direction — faster than the fastest comparable, or slower than the slowest — is stated and
+defended by a named difference (a channel none of them run, a delivery model that caps
+throughput, a segment that buys on a different cycle), or the projection is re-cut. The bottom
+edge is where this bites: take a mature comparable's rate, decay it across the horizon, and it
+still lands far above zero, which is what makes a no-growth model indefensible rather than
+careful. Worked example: a plan projects 40 customers in month 1 and 44 in month 24 — 0.4%/mo
+— against a band running 2–9%/mo whose slow end is an eight-year-old company. That projection
+is not the cautious floor of the band, it is a fifth of it. Asked why, the founder says "there
+are only so many hours in my week" — which is a real driver, a fixed-capacity delivery model,
+and belongs in the model as a stated cap rather than as a curve that quietly flatlines.>
 
 ## Scenarios — one engine, three assumption sets
 <Base / Downside / Upside as DELTAS on the assumptions table (downside = a real stress:
@@ -210,7 +235,28 @@ Then check whether any assumption is COHORT-DEPENDENT rather than flat. Churn is
 — if it varies by cohort (multi-seat accounts churning less than solo, annual less than
 monthly), the ceiling changes SHAPE, not just height, and a flat churn row silently averages
 that away. Name any assumption you suspect is cohort-dependent and mark it for post-launch
-measurement.>
+measurement.
+
+Then label every input in the identity structural or policy — those two words, no third:
+
+  structural — set by the market or the product, not by the founder: churn at the rate the
+  evidence supports, the category's conversion benchmark, the price band willingness-to-pay
+  supports.
+  policy — set by a founder decision: how many channels run, hours a week into the business,
+  the price point chosen inside that band, headcount, how much of the growth engine gets built.
+
+A ceiling whose BINDING input is policy is the ceiling of THIS CONFIGURATION, not of the
+business, and is stated that way — with the ceiling under at least one changed policy value
+shown beside it, so a choice reads as a choice. Worked example: the identity solves to 180
+seats, the binding input is trial flow, and trial flow is one channel worked six hours a week.
+The line reads "180 seats at one channel and six hours a week; 360 at two channels and the
+same hours" — the same arithmetic, relabelled, and it moves the founder from "the business
+tops out below my goal" to "this configuration does".
+
+The failure this prevents: the model lets a decision become a law of nature and then reports
+the consequence as physics, and a number reported as physics is one nobody argues with. The
+cohort check above asks whether an input is uniform; this one asks whether it is chosen. Both
+run, and neither answers the other's question.>
 
 ## Cost of the alternative (MANDATORY wherever price is defended)
 <Affordability is not a pricing argument. "X% of what they already spend" says nothing about
