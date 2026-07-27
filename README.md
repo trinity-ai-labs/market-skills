@@ -77,10 +77,45 @@ for it on its own as reliably as the main thread does:
 
 ---
 
+## On disk
+
+`~/Documents/business/<product-slug>/` **is** the vault — there is no `vault/` subdirectory.
+The slug directory itself carries `.vault/config.json`, and everything else the skills produce
+lives inside it:
+
+```
+~/Documents/business/<product-slug>/
+├── .vault/config.json      # schemaVersion — a directory without it is not a vault
+├── _vocab.yml              # controlled subject vocabulary
+├── sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note
+├── research/           # all prose — market-analysis dimensions, product-dossier.md,
+│                        #   founder-brief.md — untouched by the vault machinery
+├── sources.md           # the [S#] index
+├── one-pager.md  business-plan.md  financial-model.md  red-team.md   # plan documents
+└── deliverables/        # rendered business-plan.html/.pdf, one-pager.html/.pdf
+```
+
+Why the boundary sits at the slug directory and not one level down: a source with no public
+URL carries a *vault-relative* path, so anything a `source` note rests on must be inside the
+vault or the path resolves to nothing — silently, since a missing file is not a malformed
+field. Research prose is exactly such a source — a competitor ledger or a dimension file is
+frequently the evidence itself. One level down, `research/competitors.md` would read as
+vault-relative, resolve nowhere, and lint clean anyway.
+
+It's also what makes a corpus **portable**: copy the slug directory and every citation, every
+`rests_on` edge, and every research file travels with it.
+
+This is a summary, not the authority — see
+[`skills/business-plan/references/vault.md`](skills/business-plan/references/vault.md#layout-one-directory-per-type-one-file-per-note)
+("Layout: one directory per type, one file per note") and
+[`skills/business-plan/SKILL.md`](skills/business-plan/SKILL.md) for the full rules.
+
+---
+
 ## `vault-lint.sh`
 
-The plugin ships one executable. `business-plan` builds a claim vault under
-`~/Documents/business/<product-slug>/vault/` — every load-bearing number traced to a dated
+The plugin ships one executable. `business-plan` builds a claim vault at
+`~/Documents/business/<product-slug>/` — every load-bearing number traced to a dated
 source — and `vault-lint.sh` is the read-only whole-corpus check that gates it: dangling edges,
 confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
 still cited.
@@ -89,7 +124,7 @@ Claude Code puts an enabled plugin's `bin/` on the Bash tool's `PATH`, so the sk
 bare, from whatever directory the user happens to be working in:
 
 ```sh
-vault-lint.sh --vault ~/Documents/business/<product-slug>/vault
+vault-lint.sh --vault ~/Documents/business/<product-slug>
 vault-lint.sh --unverified --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
@@ -100,7 +135,7 @@ prerequisite discovered at the moment of use is a broken product.
 
 ---
 
-## Layout
+## Repo layout
 
 ```
 .
