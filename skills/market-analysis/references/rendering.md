@@ -29,7 +29,14 @@ founder hands an investor without apologizing.
   the appendix), not buried in endnotes. Every table: consistent units, right-aligned numbers,
   hairline row rules or ≤8% zebra tint — never heavy bands.
 - **Charts are inline SVG** you author (bars for sizing ranges, a 2×2 positioning map dots +
-  labels). No chart libraries, no external anything — the file must open offline, forever.
+  labels, an indexed multi-series line chart for comparable growth curves). No chart libraries,
+  no external anything — the file must open offline, forever.
+- **The growth-curve chart is indexed, not calendar**: months since each company's stated origin
+  on x, the metric on y, one path per comparable, each labelled at its own line end (a legend
+  keyed by color alone dies in grayscale). This product's own projection overlays the set and must
+  read as different in kind — dashed stroke plus its own end label — because an overlay that looks
+  like one more comparable hides the single comparison the exhibit exists to make. Companies
+  excluded from the overlay are listed in the caption, not omitted.
 
 ## Print CSS — the pagination rules that actually work
 
