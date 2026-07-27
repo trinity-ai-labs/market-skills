@@ -57,7 +57,7 @@ No new note type, no `schemaVersion` bump, and no change to `vault-lint.sh`.
 
 ## A verdict is computed from a driver identity, never asserted
 
-**The verdict is computed from a driver identity, never asserted.** The target outcome is
+**The identity comes first.** The target outcome is
 decomposed into the drivers that produce it — for a revenue target, `MRR = paying customers ×
 price`, with paying customers in turn a function of reach, conversion and retention; for a
 user-count target, the equivalent chain. Each driver takes its value from evidence: price from
