@@ -1,10 +1,15 @@
 # The target verdict — decomposed into drivers, computed, then negotiated
 
 A target is a concrete outcome plus a date: a monthly revenue figure by a month, a paying-user
-count before a raise, a salary replaced inside eighteen months. This file is the method for
-judging one — how the outcome decomposes into drivers, where each driver's value comes from,
-what the verdict says, what it says when the evidence cannot carry a verdict at all, and what
-happens when the answer is no.
+count before a raise, a salary replaced inside eighteen months. **Either axis may be stated as a
+range** — a salary replaced in eighteen to twenty-four months, a company sold for a value range
+inside a date range — and a range on both axes at once is how an exit target normally arrives,
+not an edge case. The scalar statement is the simple form of the same thing, a range of one; a
+ranged target is solved at [the corners of the rectangle its ranges
+describe](#a-stated-range-on-either-axis-is-a-rectangle-solved-at-its-corners), never at a
+midpoint. This file is the method for judging one — how the outcome decomposes into drivers,
+where each driver's value comes from, what the verdict says, what it says when the evidence
+cannot carry a verdict at all, and what happens when the answer is no.
 
 It sits behind invariant 16, and carries the verdict half of invariant 18, exactly as
 [vault.md](vault.md) sits behind invariants 7–15: the head of `SKILL.md` carries the rule, this
@@ -16,9 +21,12 @@ inside Phase 3 is not in context when Phase 3 runs.
 
 - [The outcome decomposes into drivers before any number goes into it](#the-outcome-decomposes-into-drivers-before-any-number-goes-into-it)
   - [Each driver takes its value from a named place in the corpus](#each-driver-takes-its-value-from-a-named-place-in-the-corpus)
+  - [The multiple's inputs have homes too, and not one of them is ARR](#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)
 - [The verdict names which driver binds, and by how much](#the-verdict-names-which-driver-binds-and-by-how-much)
 - [A binding driver that is policy makes the verdict conditional, not negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative)
 - [A driver that traces to nothing makes the verdict undetermined, not negative](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
+- [A stated range on either axis is a rectangle, solved at its corners](#a-stated-range-on-either-axis-is-a-rectangle-solved-at-its-corners)
+- [The multiple usually binds, and it is always the least evidenced driver](#the-multiple-usually-binds-and-it-is-always-the-least-evidenced-driver)
 - [A verdict is capped twice and never asserted at high confidence](#a-verdict-is-capped-twice-and-never-asserted-at-high-confidence)
 - [Two verdicts, because a late-only verdict wastes a whole research run](#two-verdicts-because-a-late-only-verdict-wastes-a-whole-research-run)
 - [The nearest reachable target is a solve, not a smaller number chosen by feel](#the-nearest-reachable-target-is-a-solve-not-a-smaller-number-chosen-by-feel)
@@ -59,7 +67,9 @@ results is well-formed.
   from the four inputs in [the multiple's own driver-home
   table](#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr), and the verdict is
   solved at both of them — [the multiple usually
-  binds](#the-multiple-usually-binds-and-it-is-always-the-least-evidenced-driver).
+  binds](#the-multiple-usually-binds-and-it-is-always-the-least-evidenced-driver). This is also
+  the shape most often stated as a range on both axes at once, so the corner solve and the
+  multiple band compose: each corner is solved across the band, not at a point inside it.
 
 **Forcing an exit into the revenue identity is the substitution this shape exists to stop, and it
 is silent.** Reduced to revenue, an exit target's dominant term disappears: the growth slope at
@@ -147,6 +157,8 @@ for that, when what is true is that this roadmap cannot sell it for that.
 memory.** A band whose ends trace to nothing is a scalar with error bars painted on, and it fails
 in the direction that hides: it *passes* the flip test, because ends chosen close together give
 the same verdict at both, and the run then reports a verdict that rests on the width of a guess.
+
+## The verdict names which driver binds, and by how much
 
 The verdict is not a yes or a no. It is: the value each driver has to reach for the target to
 land on its date, the value the evidence actually supports, and the ratio between them — with the
@@ -268,6 +280,117 @@ belongs in a `question` note with its gaps stated.
 ("probably a stretch") is the same failure with better manners: it lands on the founder as a no,
 and it carries none of the evidence a no would have had to carry.
 
+## A stated range on either axis is a rectangle, solved at its corners
+
+A target stated as a value range over a date range is two ranges, and the pair describes a
+rectangle rather than a point. **Solve the identity at its corners, never at its centre.** The
+corners are not equally hard, and which ones clear *is* the verdict:
+
+- **the cheapest corner** — the low value at the late date;
+- **the hardest corner** — the high value at the early date;
+- **the two mixed corners** — low value early, high value late. These are the ones that separate a
+  value problem from a date problem, because each moves one axis at a time.
+
+A ranged target therefore does not return one answer. It returns **which corners clear and which
+do not, with the binding driver named per corner** — strictly more actionable than a single
+verdict, because it tells the founder which part of their own ambition is the problem and leaves
+the rest standing. *The low end at the late date clears on an evidenced multiple; the high end at
+the early date needs a multiple nothing in the reference class supports* is a sentence a founder
+can act on. "Undetermined" over the whole rectangle is not.
+
+**The failure collapsing a range to its midpoint causes:** a midpoint is a number neither end of
+the range asserts, entering the identity carrying the authority of both — the same defect this
+file already rejects when a founder's instinct and an evidenced range get averaged. It does more
+damage here, because the collapse destroys the finding as well as the number: a rectangle where
+three corners clear and one does not reads at its centre as a single clean yes, and the corner
+that fails is usually the one the founder was actually aiming at.
+
+**A stated range is not an assumption, and it does not trigger the flip test.** [A driver that
+traces to nothing](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
+returns *undetermined* when re-solving at both ends of an **assumption's** plausible range moves
+the verdict. A stated target range is not an unevidenced input — it is the founder's own intent,
+chosen deliberately, and nobody has to source it. Conflating the two returns *undetermined* for
+every ranged target by construction: a rectangle drawn across a real decision boundary is exactly
+one whose corners disagree, and that disagreement is the finding rather than a gap in the
+evidence.
+
+**The two tests compose, because they run on different things.** The flip test runs on **evidence
+uncertainty** — the plausible range of a driver nobody sourced. The corner solve runs on **stated
+intent** — the range the founder chose. So each corner is a solve in its own right and gets its
+own flip test on the drivers inside it: a corner whose verdict flips across an assumption's band
+returns *undetermined for that corner*, with its own cheapest test, while its neighbours still
+return clean verdicts. A run that reports one undetermined for the whole rectangle has thrown away
+every corner that was settled.
+
+**The late end of a date range is not the easy end.** It is cheaper on ARR — the reference-class
+decay has more months to compound, so the revenue term clears more easily — and *more exposed on
+the multiple*, because the window under the band is structural and time-varying. A date five years
+out assumes the window that produced today's comparable exits is still open in five years, and
+nothing evidences that. The two axes pull against each other rather than relaxing together, so a
+founder who widens the date to make the target easier has bought ARR headroom by taking on window
+risk nobody told them about. Surfacing that trade is what the [shelf life on the multiple's
+claim](#the-multiple-usually-binds-and-it-is-always-the-least-evidenced-driver) is for: a cheapest
+corner whose multiple claim outlives the plan's own horizon gets reported as the safest corner,
+which is the reverse of what is true.
+
+## The multiple usually binds, and it is always the least evidenced driver
+
+In an exit identity the multiple is usually the binding driver and always the least evidenced one,
+so the two rules above fire on it hard rather than needing new ones. Nothing here is a new test —
+this is where the existing tests land once the identity has a multiple in it.
+
+**An exit verdict solved at a single assumed multiple is [a driver that traces to
+nothing](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative), applied to
+the term that decides the answer.** An unsourced multiple is an `assumption` note carrying its
+`value` and its `sensitivity` like any other, and the flip test runs across its plausible band.
+Flip it and the verdict moves: a stated exit value that clears at the band's top and misses at its
+bottom is not a verdict, it is the band being reported as an answer. The run returns
+**undetermined**, with the cheapest test named.
+
+**The cheapest test is a comparable-exit reference class, not a founder interview.** The founder
+cannot know the multiple — it is set by buyers they have not met, at a moment that has not
+happened — so asking returns their hope wearing the authority of an answer to a question that was
+formally asked. That is worse than the assumption it replaced: an `assumption` note carries its
+sensitivity and invites the flip test, while a founder's figure enters as `[F#]` and reads as
+grilled fact. What settles it is the disclosed acquisitions in the category, indexed the way
+`research/growth-curves.md` indexes anything else — to the acquired company's growth slope at the
+moment of sale — with the multiple each one implies and a kill/continue threshold stated against
+them.
+
+A worked example, invented end to end:
+
+> A founder wants a stated exit value inside four years. The revenue identity, solved at the sale
+> date on the evidenced driver ranges, gives an ARR band the plan plausibly reaches. Dividing the
+> stated exit value by that band needs a multiple near the top of what the comparable set supports
+> at the slope this roadmap implies. Re-solve at the bottom of the multiple band and the same ARR
+> lands nearer a third of the stated value.
+>
+> **Readout:** *undetermined. The verdict flips across the multiple's plausible band, and the ARR
+> term is not what is in question — it clears at both ends. The cheapest test is a comparable-exit
+> reference class: the disclosed acquisitions in this category, indexed to the acquired company's
+> growth slope at the moment of sale, with the multiple each one implies. Kill/continue: if the
+> comparable set's implied multiple at your roadmap's slope sits below the multiple this exit
+> value needs, the stated value does not clear at any ARR this plan reaches by the date — and what
+> binds is the slope, not the revenue.*
+
+**The window under the band is structural and time-varying, so the multiple's claim needs a
+`stale_after` that lands inside the plan's horizon.** Every claim carries one
+([vault.md](vault.md#every-note-carries-these-six-fields)), and for every other driver in this
+file the field is routine bookkeeping: conversion at a stage and retention per period drift
+slowly. The multiple does not. A multiple assumed three years out assumes the window that produced
+today's comparable exits is still open on the sale date, and that assumption expires on a schedule
+of its own that nothing in the plan touches. Declare the shelf life at the point the comparable
+set stops being the same buyers under the same conditions — inside the target's horizon, never on
+it or past it. This is the first driver in this file whose `stale_after` is load-bearing rather
+than administrative.
+
+**The failure a horizon-length `stale_after` causes:** the claim comes up for re-checking for the
+first time on the date the plan was to be executed against it, which is the one date the answer
+stops being useful. Everything built on that multiple — the roadmap aimed at a named acquirer, the
+milestone a raise was sized against — ran the whole way on a band nobody re-drew, and it read
+exactly like a band re-drawn last week. A claim inside its shelf life and a claim whose shelf life
+was set too generously are the same note.
+
 ## A verdict is capped twice and never asserted at high confidence
 
 Invariant 11 already caps a verdict at its weakest input: `confidence = min(confidence_own, every
@@ -318,14 +441,24 @@ preference.
 solve the same identity for the outcome actually achievable by the stated date.** That solved
 outcome is the counter-offer, and nothing else is.
 
-- **The date is held, not solved for.** The stated number arriving later is a legitimate second
-  offer, but it answers a different question — it belongs in the lever table below with hours,
-  capital and price, never folded into the counter-offer. Blending the two produces an offer the
-  founder agrees to without knowing which of the two things they just agreed to move.
-- **Solve at both ends of every evidenced range, and present a band.** A single-point
-  counter-offer implies a precision the evidence does not have — and a founder who lands inside
-  the band but below that point reads it as a miss against a target the evidence never pinned to
-  one number.
+- **The date is held, not solved for — and a stated date range is held as stated.** The stated
+  number arriving later is a legitimate second offer, but it answers a different question — it
+  belongs in the lever table below with hours, capital and price, never folded into the
+  counter-offer. Blending the two produces an offer the founder agrees to without knowing which of
+  the two things they just agreed to move. Where the date was stated as a range, hold the whole
+  range: solve the counter-offer at each of its ends rather than collapsing it to a point or a
+  midpoint, because a midpoint is a date the founder never named. A date **outside** the stated
+  range remains a lever, exactly as a later date is against a stated point.
+- **Solve at both ends of every evidenced range, and present a band — one band per corner.** A
+  single-point counter-offer implies a precision the evidence does not have, and a founder who
+  lands inside the band but below that point reads it as a miss against a target the evidence
+  never pinned to one number.
+- **Keep the founder's stated range and the evidence's range visibly apart in the readout.** The
+  first is intent and the second is uncertainty, and they arrive as the same shape — an interval
+  with two ends. Merged into one interval, the founder reads the whole width as their own ambition
+  being narrowed, when half of it is the evidence admitting what it does not know; and the corner
+  structure disappears with it, so nobody can tell which end of the ambition the analysis actually
+  reached.
 - **The counter-offer assumes nothing the founder has not already stated.** The moment it quietly
   assumes more hours it stops being reachable on the stated resources, which is the one property
   that made it the counter-offer.
@@ -346,15 +479,26 @@ The negotiation output is three parts, in this order, visibly separated:
 | price | the evidenced band | solved from the identity | what the willingness-to-pay evidence says at that point |
 | date | the stated date | solved from the identity | what the delay costs — runway, a window, a competitor |
 
+**For an exit target the lever set is different, because hours, capital and price all move ARR and
+ARR is not what binds.** Those three still act, one term down, through the left side of the
+identity — but a table offering only them answers the question the founder did not ask, using the
+term the verdict was least sensitive to. The exit levers are slope, acquirer legibility and date:
+
+| Lever | Stated now | Would have to become | What that costs, and what it assumes |
+|---|---|---|---|
+| growth slope at the sale date | the slope the plan's own projection implies, placed against the indexed set | solved from the identity | what has to be spent to hold that slope *through* the sale month — a slope held for a quarter and a slope standing on the date are different commitments, and only the second one is in the identity |
+| acquirer legibility | the acquirers the dossier's seam argument actually names, and how many | solved from the identity — the strategic-necessity position and the buyer count the required multiple takes | the roadmap items that make the product visibly the patch for a named buyer, and what those items displace |
+| date | the stated date, or the stated date range held at both ends | solved from the identity | what the delay costs — runway, a competitor, and the window, which is the one term a delay moves against the founder rather than for them |
+
 **Every lever value is solved from the same identity with the other drivers held at their
 evidenced values.** A lever line produced any other way is a wish with a number attached, and it
 is the line a founder will actually try to execute.
 
 **A lever whose required value contradicts something already established is shown with the
 contradiction named, not quietly dropped.** A price above the band the willingness-to-pay
-evidence supports, hours above what the founder said they have — both stay in the table, labelled
-as what they are. Dropping them reads as "there is nothing you can do"; including them silently
-reads as a plan.
+evidence supports, hours above what the founder said they have, a multiple above anything the
+comparable set has paid at that slope — all of them stay in the table, labelled as what they are.
+Dropping them reads as "there is nothing you can do"; including them silently reads as a plan.
 
 **Levers stay out of the counter-offer.** Fused, the founder agrees to a number and a commitment
 in a single word — and six weeks later remembers only the number, while the plan is built on the
@@ -389,18 +533,26 @@ number a founder is most likely to want re-litigated later.
 
 ## Computing a verdict: the checklist
 
-1. **Write the identity** for the target's shape, in full, before any value goes into it.
+1. **Write the identity** for the target's shape, in full, before any value goes into it —
+   including the exit shape, whose left term is one of the other identities solved at the sale
+   date and whose right term is a multiple band. **Write the target's stated ranges beside it**,
+   on either axis, exactly as stated.
 2. **Fill each driver from its named home** — price, conversion, retention, reach — and record
    any founder-instinct divergence rather than averaging it.
 3. **Classify each driver `structural` or `policy`** from the table's `kind` column, before any
    verdict is written. A verdict whose binding driver turns out to be policy is negative for the
-   stated configuration only, and is written in those words.
+   stated configuration only, and is written in those words. For an exit target this runs over
+   the multiple's four inputs too — slope and the named acquirer are policy, scarcity and the
+   bidder count are structural.
 4. **Write every unsourced driver as an `assumption`** with its `value` and `sensitivity`. None of
    them enters the identity as though it were sourced.
-5. **Run the flip test** at both ends of every assumption's plausible range. If the verdict flips,
-   stop: return *undetermined* plus the cheapest test that settles it, and name the threshold.
+5. **Run the flip test** at both ends of every assumption's plausible range — evidence
+   uncertainty only, never the target's own stated range. If the verdict flips, stop: return
+   *undetermined* plus the cheapest test that settles it, and name the threshold.
 6. **Solve for the required value of each driver** at the target date, and name the one that
-   binds — with the size of its gap, its kind, and with the drivers that clear stated too.
+   binds — with the size of its gap, its kind, and with the drivers that clear stated too. Where
+   either axis was stated as a range, solve at the rectangle's corners and report which clear,
+   with the binding driver named per corner; never solve at a midpoint.
 7. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
    below.
 8. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
