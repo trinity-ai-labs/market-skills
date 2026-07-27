@@ -564,6 +564,24 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
   why-now weak?) · bootstrap/lifestyle: *default-alive skeptic* (does this reach cash-positive
   before the runway ends?) · lender: *credit officer* (does cash flow service the debt through
   the downside case?).
+
+  **Where the settled target is an exit, this lens asks the acquirer's question instead of the
+  funder's** — not *would an investor put money into this*, but *which named acquirer has a hole
+  this patches, and is the product visibly the patch*. The brief carries the dossier's seam
+  argument and the acquirer set the exit identity was solved against, counted, and the lens attacks
+  the name and the count rather than the ARR. **An unnamed acquirer is not an answer, and neither
+  is a named one whose hole the plan never states.** "Someone in this category would want this"
+  grants the driver the verdict was most sensitive to —
+  [references/target.md](references/target.md) homes strategic necessity to a *named* acquirer and
+  files it as `policy`, so a lens that accepts the unnamed form hands back a clean bill on the term
+  the whole exit rests on. Two follow-ons the lens owes: a single interested buyer is a price
+  **floor** and not a price, so a count of one is reported as one rather than as evidence of
+  demand; and *what stops this acquirer building it itself inside two quarters* is the scarcity
+  input asked from the buyer's side, where the honest answer prices an acquihire instead of an
+  acquisition. **The failure this prevents:** an exit plan collects a full investor-shaped
+  objection table — market size, moat, why-now — and reads as thoroughly attacked while nobody
+  asked who buys it. Fundable and acquirable have different answers often enough that a pass on one
+  says nothing about the other.
 - **Operator** — kill the execution: does the milestone plan survive contact with the team
   size, runway, and the founder's hours?
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
