@@ -361,9 +361,13 @@ ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: s
 target: <the outcome the plan is engineered backwards from, and its date | "no specific
   number">  — size at the resolution this needs: a target denominated in customers or MRR makes
   the bottom-up segment count the load-bearing output, not the top-down category figure.
-provisionalVerdict: <reachable | unreachable | undetermined, and the driver it named as binding
-  | "none — no target stated">  — pre-research, so it is an assumption and never citable; the
-  driver it names is the one to research hardest.
+provisionalVerdict: <reachable | unreachable | undetermined, the driver it named as binding, and
+  that driver's kind — structural | policy | "none — no target stated">  — pre-research, so it is
+  an assumption and never citable; the driver it names is the one to research hardest, and the
+  kind says what "hardest" means. A structural driver wants better evidence for the value it
+  already has; a policy one wants evidence for what it could be set to — channel throughput, and
+  which comparable strategies at this stage were adoptable at all — which is a different hunt
+  pointed at different sources.
 categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
 mustProfile: <competitors the founder named — always profiled, whatever their kind>
 founder brief (verbatim):
@@ -536,12 +540,18 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
 attack surface each panelist's brief carries in its lens. "Read the plan and object" produces
 objections about whatever a panelist happened to notice; this produces them about what the
 corpus already knows is weak. Every brief also carries the founder's named fear `[F#]`: attack
-this hardest, then name the two risks the founder did NOT name.
+this hardest, then name the two risks the founder did NOT name. The operator and target-customer
+briefs additionally carry the structural half of `research/growth-curves.md`'s strategy record —
+what comparables had that this founder does not — because that is an objection the corpus can
+already evidence rather than one a panelist has to invent.
 
 **The verdict is on the attack surface, not only the plan built on it.** Every brief carries the
-settled target, the verdict, and the driver the verdict named as binding; a panel that attacks
-only the plan grants the number the plan is engineered backwards from. Re-run the identity
-against any objection that survives: [references/target.md](references/target.md).
+settled target, the verdict, the driver the verdict named as binding, and that driver's `kind`;
+a panel that attacks only the plan grants the number the plan is engineered backwards from, and
+one told a driver binds without being told it is `policy` grants the configuration the verdict
+was computed under — the assumption most worth attacking, and the one no lens is otherwise
+tasked with. Re-run the identity against any objection that survives:
+[references/target.md](references/target.md).
 
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
