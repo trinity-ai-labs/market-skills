@@ -30,8 +30,9 @@
 //   9. Every `#anchor` in a markdown link resolves to a heading in the file it
 //      points at — these references are navigated by their Contents blocks, and
 //      a link whose heading was renamed or deleted lands the reader nowhere.
-//      A file carrying a `## Contents` heading must yield at least one anchor
-//      link, so one index rewritten out of link form cannot go silently unchecked
+//      A file carrying a `## Contents` heading must offer at least one list-item
+//      anchor link, so an index rewritten out of link form cannot go unchecked
+//      while the rest of the file keeps this green
 //
 // Checks 6-9 each fail when their own source pattern matches NOTHING, because a
 // check that quietly stops matching prints the same green as a check that passed.
@@ -331,7 +332,6 @@ async function checkAnchorsResolve() {
   for await (const file of walk(SKILLS_DIR)) {
     if (!file.endsWith('.md')) continue;
     const text = await readFile(file, 'utf8');
-    let here = 0;
     for (const target of localLinks(text)) {
       const hash = target.indexOf('#');
       if (hash === -1) continue;
@@ -342,21 +342,25 @@ async function checkAnchorsResolve() {
       const dest = path === '' ? file : resolve(dirname(file), path);
       if (!dest.endsWith('.md') || !existsSync(dest)) continue;
 
-      here += 1;
+      anchors += 1;
       if (!(await slugsOf(dest)).has(anchor)) {
         const where = dest === file ? 'this file' : relative(ROOT, dest);
         fail(file, 'link', `dead anchor -> ${target} — no heading in ${where} slugs to "${anchor}"`);
       }
     }
-    anchors += here;
 
-    // A `## Contents` block that yields no anchor link at all. The repo-wide
-    // guard below only fires when EVERY file goes silent, so one Contents block
-    // rewritten into plain text or into raw <a href="#…"> HTML would stop being
-    // checked while the other files kept this green — an index nothing verifies,
-    // reading as coverage.
-    if (here === 0 && /^##\s+Contents\s*$/m.test(stripFences(text))) {
-      fail(file, 'link', 'has a `## Contents` heading but yields no #anchor link — its index is unchecked');
+    // The index itself, guarded separately from the links above: a `## Contents`
+    // block whose entries have stopped being list-item anchor links. Rewritten
+    // into plain text or into raw <a href="#…"> HTML, the block drops out of the
+    // check while the rest of the file keeps it green — and an index nobody
+    // validates is one readers follow into nothing. The repo-wide guard below is
+    // no help, since it only speaks when EVERY file has gone silent. Asking
+    // merely for an anchor SOMEWHERE in the file is no help either: decisions.md
+    // carries 8 outside its Contents block, enough to mask a gutted index on
+    // their own. Indented entries count — they are most of the real index.
+    const body = stripFences(text);
+    if (/^##\s+Contents\s*$/m.test(body) && !/^\s*- \[.+?\]\(#[^)]+\)\s*$/m.test(body)) {
+      fail(file, 'link', 'has a `## Contents` heading but no list-item anchor link — its index is unchecked');
     }
   }
   if (anchors === 0) fail(SKILLS_DIR, 'link', 'no #anchor links found — check 9 ran on nothing');
