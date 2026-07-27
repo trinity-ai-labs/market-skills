@@ -56,12 +56,22 @@ attack is one nobody can trust either.
 A driver value is only a driver value if you can say where it came from. Every one of them has a
 home, and the home is not the same for all four:
 
-| driver | where its value comes from |
-|---|---|
-| price | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
-| conversion | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts |
-| retention | the same, and it is per-period, so the period is part of the value |
-| reach | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput |
+| driver | kind | where its value comes from |
+|---|---|---|
+| price | policy within a structural band | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
+| conversion | structural | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts |
+| retention | structural | the same, and it is per-period, so the period is part of the value |
+| reach | policy | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput |
+
+**`kind` records who sets the value, and it is what a negative verdict is later allowed to
+conclude.** A **structural** driver is set by the category and the product: conversion and
+retention are what they are at the stage the target counts, and no decision the founder takes this
+week moves them. A **policy** driver is a value the founder chose and could choose differently —
+reach is channels × hours, which is a decision, and price is a point the founder picks inside a
+band the willingness-to-pay evidence sets, so the point is policy and the band is structural.
+[A binding driver that is policy makes the verdict conditional, not
+negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative) is the test
+that runs on this column.
 
 **Where the founder's instinct and the evidenced range disagree, record the divergence — never
 average them.** The midpoint of a founder's hope and a benchmark is a number neither of them
