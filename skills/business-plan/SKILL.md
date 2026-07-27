@@ -844,7 +844,23 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - The projection's implied monthly growth rate is placed against the observed growth band, and
   its implied trajectory against the indexed comparable curves at matching months since origin.
   Any excursion — in level, in either direction, or in shape — names the difference defending it.
-- The cost of the alternative is priced wherever the price is defended.
+- Wherever the price is defended, BOTH lenses are priced: the cost of the alternative the buyer
+  avoids, and the value the product delivers them. One line, not two, because an enumeration that
+  names one of a pair is how the other gets dropped. A price defended on cost alone is unmodelled,
+  not conservative — the substitute's cost is a floor under the buyer's alternative, and a plan
+  that prices only that side caps itself at the DIY figure while reading as rigour, since the
+  substitute number is well-sourced and the output figure nobody computed is simply absent.
+- A retention value carries its band, its position inside that band, and what in the built product
+  places it there — and a ceiling that binds on it is the ceiling of THIS PRODUCT AS BUILT, never
+  of the market. An improvement claim on either half of the loop, delivered value or retention,
+  carries a sourced base and labels its magnitude `measured`, `reference-class` or `assumed`, with
+  an `assumed` one taking the both-directions test. Both flatter the thing the founder built, which
+  is what makes them easy to write and hard to challenge, and churn is the divisor of the
+  steady-state identity, so an unguarded retention claim moves the answer further than any other
+  input in the model.
+- A plan whose roadmap improves the product states what that does to retention, or states that it
+  does nothing to it and why. Silence is read as no effect, which is a claim nobody made — and it
+  is exactly the claim a category-floor churn row asserts by construction.
 - Every roadmap item names the assumption it moves.
 - The financial model's assumptions table is complete — no number appears in a projection that
   isn't a named assumption row.
