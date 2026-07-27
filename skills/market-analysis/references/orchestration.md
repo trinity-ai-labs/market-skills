@@ -144,9 +144,25 @@ unchanged.
 Args: everything from A plus `boundary` (post-verdict), `dimensions`, `playbooks`, `prior`,
 `verifyCap`, and `profiledSummary` (compact roster + wedge lines from A's return).
 
+**The dimension list is data — a new dimension needs a playbook, not a code change.** `dimensions`
+is passed in and mapped, and the only hard requirements the script enforces are that `sizing` is
+present, `competitors` is not, and every listed dimension has a playbook block. Growth curves
+enters as `"growth-curves"` with its block from `dimensions.md` and nothing here is edited.
+
+**But ordering alone does not hand a dimension the evidence it depends on.** Growth curves
+consumes the profiled set AND their dated traction points. The ordering half is honoured by
+construction: B runs only after A's conductor checkpoint, so the profiles exist on disk before any
+B agent starts. The evidence half was not — `profiledSummary` is a roster of names, kinds and
+≤120-word wedge lines, and the dated points are not in it. A curve-fitting agent handed only that
+roster re-searches every company's traction from scratch and fits a series the observed growth band
+was never derived from: two files disagreeing about the same company, with nothing in either
+saying which is right. So B's shared context now points every dimension agent at the profile files
+themselves, and says not to re-derive what A already sourced.
+
 ```js
-// dimensions: e.g. ["sizing","customers","pricing","trends","channels","unit-economics","moats-risks"]
+// dimensions: e.g. ["growth-curves","sizing","customers","pricing","trends","channels","unit-economics","moats-risks"]
 //   ("unit-economics" whenever the dossier has Cost structure signals)
+//   ("growth-curves" reads A's profiles off disk — see the CTX note below, not profiledSummary)
 // NEVER include "competitors" — Workflow A owns it. Must include "sizing".
 // playbooks: { <dimension>: "<verbatim block from dimensions.md>" } — one entry per dimension.
 // prior: { <dimension>: "<existing research/<d>.md content>" | null } — re-run merge context.
@@ -165,7 +181,7 @@ const { date, outDir, dossier, boundary, citation, vaultNotes = '', dimensions, 
 if (dimensions.includes('competitors')) throw new Error('competitors is Workflow A\'s job')
 if (!dimensions.includes('sizing')) throw new Error('sizing is mandatory')
 for (const d of dimensions) if (!playbooks[d]) throw new Error(`no playbook for dimension "${d}" — author one before dispatching`)
-const CTX = `Product dossier:\n${dossier}\n\nCategory boundary (settled after competitor research): ${boundary}\n\nCompetitive set: ${profiledSummary}\n\n${citation}\n${vaultNotes}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
+const CTX = `Product dossier:\n${dossier}\n\nCategory boundary (settled after competitor research): ${boundary}\n\nCompetitive set: ${profiledSummary}\n\nThat roster is an INDEX, not the evidence. Every profiled competitor's full profile — including every dated traction point with its own date and source — is on disk at ${outDir}/research/profiles/, and ${outDir}/research/competitors.md carries the capability matrix and the observed growth band. Any dimension needing those points READS THEM THERE and re-derives nothing Workflow A already sourced: a second series for the same company contradicts the band with nothing to arbitrate it.\n\n${citation}\n${vaultNotes}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
 const updateRule = (d) => prior[d]
   ? `\n\nThis file EXISTS from a prior run — UPDATE it: keep every prior source row with its original Pulled date, mark superseded figures as superseded (new figure + new date alongside), add new findings. Never delete a prior sourced row. Prior content:\n${prior[d]}`
   : ''
