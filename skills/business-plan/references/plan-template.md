@@ -208,7 +208,21 @@ careful. Worked example: a plan projects 40 customers in month 1 and 44 in month
 — against a band running 2–9%/mo whose slow end is an eight-year-old company. That projection
 is not the cautious floor of the band, it is a fifth of it. Asked why, the founder says "there
 are only so many hours in my week" — which is a real driver, a fixed-capacity delivery model,
-and belongs in the model as a stated cap rather than as a curve that quietly flatlines.>
+and belongs in the model as a stated cap rather than as a curve that quietly flatlines.
+
+That is the LEVEL check. Run the SHAPE check after it: place the projection's implied
+trajectory against the indexed series in research/growth-curves.md at MATCHING MONTHS SINCE
+ORIGIN — month 6 against month 6, month 18 against month 18 — not one averaged rate against
+the band's two endpoints. The level check alone clears a projection that sits mid-band on its
+average and still asserts a shape NO COMPARABLE IN THE SET HAS EVER HAD: flat where every
+comparable decayed, or one rate held across the whole horizon where every comparable's rate
+fell after its first year. The averaging is what hides it — a single rate stated for the whole
+horizon understates the early months and overstates the late ones AT THE SAME TIME, and lands
+inside the band on both. A shape the indexed set does not contain is defended by a named
+difference exactly as a level excursion is, or the curve is re-cut against the fitted decay.
+Where growth-curves.md reports too few points to fit a shape, say the shape check could not
+run — never let it quietly collapse back into the level check while the model reads as though
+both were made.>
 
 ## Scenarios — one engine, three assumption sets
 <Base / Downside / Upside as DELTAS on the assumptions table (downside = a real stress:
