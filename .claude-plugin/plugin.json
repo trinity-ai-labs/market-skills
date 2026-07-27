@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "market",
+  "displayName": "Go To Market",
+  "description": "Take a product to market: evidence-first market analysis (sizing, competitors, segments, pricing, timing) and the business plan built on it (monetization, GTM, projections, milestones, risks). Ships vault-lint.sh, the claim-ledger lint the plan gates on.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Trinity AI Labs",
+    "url": "https://github.com/trinity-ai-labs"
+  },
+  "homepage": "https://github.com/trinity-ai-labs/market-skills",
+  "repository": "https://github.com/trinity-ai-labs/market-skills",
+  "license": "MIT",
+  "keywords": [
+    "market-analysis",
+    "business-plan",
+    "market-sizing",
+    "pricing",
+    "go-to-market"
+  ]
+}

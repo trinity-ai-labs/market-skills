@@ -70,7 +70,7 @@ and is never restated here.
 14. **Retraction is visible.** A retracted note stays with `status: retracted` and its reason;
     a withdrawn line in the prose is struck through with the reason. Silent deletion lets a dead
     claim return two drafts later with its cause of death erased.
-15. **Lint is a gate, not a report.** The shipped `scripts/vault-lint.sh` runs at Phase 2's
+15. **Lint is a gate, not a report.** The shipped `vault-lint.sh` runs at Phase 2's
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
     not render.
@@ -273,7 +273,7 @@ source and ONE `question` note carrying its `gaps` — what the dimension could 
 a later document leans on. A note per paragraph produces a second corpus nobody maintains.
 
 **Lint at the per-dimension gate, not at the end.** As each dimension returns, run
-`scripts/vault-lint.sh` over the vault before you accept it. A missing `rests_on`, an unknown
+`vault-lint.sh` over the vault before you accept it. A missing `rests_on`, an unknown
 subject term, a duplicate `url_canonical` and a confidence-propagation violation are all silent
 in the file itself and all cheap to fix while the researcher's context is live. Deferred to
 Phase 5, an unknown subject term is unfixable — the only person who knew which existing term it
@@ -385,7 +385,7 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
   price, from what they use today?
 
 **The target list is generated, not read.** Two queries run before the panel is briefed:
-`scripts/vault-lint.sh --unverified`, and every claim that reached the plan carrying
+`vault-lint.sh --unverified`, and every claim that reached the plan carrying
 `confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the
 attack surface each panelist's brief carries in its lens. "Read the plan and object" produces
 objections about whatever a panelist happened to notice; this produces them about what the
@@ -442,7 +442,7 @@ plainly and revise the bet — that IS the job.
 
 ## Phase 5 — Deliverables
 
-**Lint is the release gate, and it runs before the first render.** `scripts/vault-lint.sh` must
+**Lint is the release gate, and it runs before the first render.** `vault-lint.sh` must
 be clean over the whole vault: a plan citing a retracted or superseded source does not ship. The
 failure this stops is the worst one available — a polished PDF asserting flatly what the corpus
 already withdrew, handed to the one reader with no way to check it.

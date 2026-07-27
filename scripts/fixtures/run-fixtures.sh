@@ -6,7 +6,9 @@
 #
 # This is a contributor tool, not shipped tooling, but it is written to the same
 # constraint as the script it tests: POSIX shell, zero dependencies, no test
-# framework. Run it from anywhere.
+# framework. Run it from anywhere. The fixtures stay under scripts/ while the
+# script under test lives in bin/, because bin/ is put on the agent's PATH when
+# the plugin is enabled - test corpora do not belong on a user's PATH.
 #
 # WHY THIS EXISTS
 # Without it, `scripts/fixtures/` is documentation. Every violating note says
@@ -26,7 +28,7 @@
 set -u
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-LINT="$HERE/../vault-lint.sh"
+LINT="$HERE/../../bin/vault-lint.sh"
 [ -x "$LINT" ] || { printf 'run-fixtures: %s is not executable\n' "$LINT" >&2; exit 2; }
 
 # Every check the violating vault is built to trigger. A check that stops firing

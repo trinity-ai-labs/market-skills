@@ -1,0 +1,222 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Every check here is sub-second, so a superseded run has nothing to finish and
+# no reason to hold a runner. Without this, three quick pushes to a PR branch
+# burn three full runs to completion for one useful answer.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # One runner, one checkout. The whole suite is well under two seconds of real
+  # work, so a job per check would spend two minutes of runner time on spin-up
+  # and cloning to answer in one. `if: always()` on every step after the first
+  # keeps the one property a job split gives for free: a red PR reports every
+  # failure it has, not just the first.
+  checks:
+    name: gate, shipped tooling, public-repo hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The repo gate — structure, frontmatter, every reference resolves
+        # scripts/check.mjs is the same command a contributor runs before opening
+        # a PR (.agents/worktree.json declares it as both gate and scopedCheck).
+        # CI runs the contributor's own check rather than a second, drifting copy.
+        run: node scripts/check.mjs
+
+      - name: The shipped lint's own suite
+        if: always()
+        # vault-lint.sh ships to users and runs against their private corpus. Its
+        # regressions are invisible from outside — a check that stops firing and a
+        # check that was deleted look identical — so this suite is the only thing
+        # standing between a silent parser change and a vault that lints clean
+        # while broken.
+        run: sh scripts/fixtures/run-fixtures.sh
+
+      - name: Every shell script holds to the shell its shebang declares
+        if: always()
+        # bin/ runs on a user's machine, so a bashism there is a runtime failure
+        # discovered at the moment of use. shellcheck reads the dialect from the
+        # shebang, so this stays correct if a script ever legitimately needs bash
+        # — the shebang is the contract, and this checks whatever it declares.
+        run: shellcheck -S warning bin/*.sh scripts/fixtures/*.sh
+
+      - name: Skills invoke vault-lint.sh bare, never by path
+        if: always()
+        # This is the invariant the scripts/ -> bin/ move exists to establish, and
+        # prose alone does not hold it. A skill runs inside the USER's project
+        # directory, so any path-prefixed invocation resolves against their tree
+        # and fails at the moment of use — on their machine, never in CI and never
+        # on the author's. bin/ is on the Bash tool's PATH; bare is the only form
+        # that resolves.
+        run: |
+          set -eu
+          if grep -rnE '/vault-lint\.sh' skills --include='*.md'; then
+            echo "::error::a path-prefixed vault-lint.sh in skills/ — invoke it bare"
+            exit 1
+          fi
+          echo "all invocations bare"
+
+      - name: The org name and an author's home directory stay out of public skills
+        if: always()
+        # The skills are public and generic on purpose; the regression to catch is
+        # a real username or the org name landing in one. Generic placeholders are
+        # NOT that regression — `/Users/you/…` and `/Users/example/…` do real
+        # explanatory work in orchestration.md and vault-migration.md, so the
+        # allowlist is the placeholder WORD, anchored to the end of the path
+        # segment. `/Users/dev-wynberg` fails; `/Users/you` passes. The allowlist
+        # sits behind an already-matched leak, so an unanticipated placeholder
+        # fails loudly on the PR that introduces it rather than passing silently.
+        run: |
+          set -eu
+          scanned="$(find skills -name '*.md' | wc -l | tr -d '[:space:]')"
+          [ "$scanned" -gt 0 ] || { echo "::error::no markdown under skills/ — this check scanned nothing"; exit 1; }
+          placeholder='you|your-name|example|username|user|<[a-z-]*>'
+          hits="$(grep -rnoiE 'trinity|/(Users|home)/[A-Za-z0-9._<>-]+' skills --include='*.md' \
+                  | grep -viE ":/(users|home)/($placeholder)\$" || true)"
+          if [ -n "$hits" ]; then
+            printf '%s\n' "$hits" | sed 's/^/::error::identifier or real home path: /'
+            exit 1
+          fi
+          echo "clean across $scanned files"
+
+      - name: Every '## Contents' link points at a real heading
+        if: always()
+        # scripts/check.mjs resolves relative FILE links but deliberately skips
+        # in-page anchors, so a stale TOC entry is the one broken link it cannot
+        # see, and a reader following it lands nowhere.
+        #
+        # Two details are load-bearing. The slug maps each space to its OWN hyphen
+        # — collapsing runs with \s+ breaks every heading containing an em dash,
+        # which GitHub renders as a double hyphen. And a file with a '## Contents'
+        # must yield at least one parsed link: a checker whose regex quietly stops
+        # matching still prints a green summary, which is worse than no check
+        # because it reads as coverage.
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, sys
+
+          def slug(heading):
+              s = re.sub(r'[^\w\s-]', '', heading.strip().lower())
+              return re.sub(r'\s', '-', s).strip('-')
+
+          bad = checked = links = 0
+          for path in sorted(pathlib.Path("skills").rglob("*.md")):
+              text = path.read_text()
+              if "## Contents" not in text:
+                  continue
+              checked += 1
+              headings = {slug(m.group(1)) for m in re.finditer(r'^#{2,4}\s+(.*)$', text, re.M)}
+              # Indented entries are the majority of the real TOC content, and every
+              # em-dash heading lives in one — anchoring to column zero would exercise
+              # the slug rule above on nothing.
+              found = list(re.finditer(r'^\s*- \[.+?\]\(#([^)]+)\)\s*$', text, re.M))
+              if not found:
+                  print(f"::error file={path}::has a '## Contents' but no link this checker can parse")
+                  bad += 1
+              for m in found:
+                  links += 1
+                  if m.group(1) not in headings:
+                      print(f"::error file={path}::broken TOC link #{m.group(1)}")
+                      bad += 1
+
+          if checked == 0:
+              print("::error::no '## Contents' index found under skills/ — this check ran on nothing")
+              sys.exit(1)
+          print(f"checked {links} links across {checked} files")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: The manifest parses and carries what Claude Code needs
+        if: always()
+        # `claude plugin validate --strict` is the authoritative check and catches
+        # things this cannot (unrecognized fields, schema drift), but it needs the
+        # CLI installed. This covers the failure modes that break a published
+        # plugin outright: unparseable JSON, a missing field, a `name` that does
+        # not match the marketplace entry maintained in the orchestration-skills
+        # repo, a version the bump guard below cannot compare, and a bin/ entry
+        # that lands on a user's PATH without its executable bit.
+        run: |
+          set -eu
+          [ -x bin/vault-lint.sh ] || { echo "::error::bin/vault-lint.sh is not executable — a command-not-found mid-run"; exit 1; }
+          python3 - <<'PY'
+          import json, pathlib, re, sys
+
+          plugin = json.loads(pathlib.Path(".claude-plugin/plugin.json").read_text())
+          fail = [
+              f"plugin.json: missing '{field}'"
+              for field in ("name", "description", "author", "version", "license", "repository")
+              if not plugin.get(field)
+          ]
+          if plugin.get("name") != "market":
+              fail.append(
+                  f"plugin.json: name is '{plugin.get('name')}', but the marketplace entry "
+                  "in trinity-ai-labs/orchestration-skills installs 'market'"
+              )
+          if not re.fullmatch(r'\d+\.\d+\.\d+', str(plugin.get("version", ""))):
+              fail.append(f"plugin.json: version '{plugin.get('version')}' is not MAJOR.MINOR.PATCH")
+          for problem in fail:
+              print(f"::error::{problem}")
+          sys.exit(1 if fail else 0)
+          PY
+
+  version-bump:
+    name: shipped content changed ⇒ version bumped
+    runs-on: ubuntu-latest
+    steps:
+      # The one job that needs history: it diffs against the PR base and reads the
+      # manifest as it was at that commit.
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: A shipped change must move the version forward
+        # plugin.json sets `version`, so an installed plugin is PINNED to that
+        # string — pushing new commits under an unchanged version ships nothing
+        # while looking like it worked. This is the guard for that silent failure.
+        #
+        # The list below is what does NOT ship, not what does. An allowlist of
+        # shipped paths fails OPEN: add a commands/ or agents/ directory — the
+        # obvious next step for a plugin — and it is silently exempt, which is
+        # exactly the failure this job exists to catch. Inverted, a new directory
+        # requires a bump by default, and new contributor tooling costs one loud
+        # CI failure and a one-line exemption.
+        run: |
+          set -euo pipefail
+          base="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'HEAD^' }}"
+          git rev-parse --verify "$base" >/dev/null 2>&1 || { echo "no base commit to compare (first commit) — skipping"; exit 0; }
+          exempt='^(scripts/|\.github/|\.agents/|AGENTS\.md|CHANGELOG\.md|\.gitignore)'
+          changed="$(git diff --name-only "$base" HEAD | grep -vE "$exempt" || true)"
+          if [ -z "$changed" ]; then echo "nothing shipped changed — bump not required"; exit 0; fi
+          # The base commit legitimately has no manifest on the PR that introduces
+          # one, and `git show` exits 128 there. Kept OUT of a pipeline and given
+          # its own `|| true`: under `pipefail` a failing `git show` upstream of a
+          # successful `python3` fails the whole substitution, and `set -e` then
+          # kills the job with git's 128 and no output at all. Reading it into a
+          # variable first makes the "no manifest yet" case explicit instead.
+          read_version='import json,sys; raw=sys.stdin.read(); print(json.loads(raw).get("version","") if raw.strip() else "")'
+          base_manifest="$(git show "$base:.claude-plugin/plugin.json" 2>/dev/null || true)"
+          was="$(printf '%s' "$base_manifest" | python3 -c "$read_version")"
+          now="$(python3 -c "$read_version" < .claude-plugin/plugin.json)"
+          echo "shipped content changed:"; echo "$changed" | sed 's/^/  /'
+          echo "version: ${was:-<none>} -> $now"
+          # Compared as numbers, not strings: a REGRESSION (a bad merge dropping
+          # 1.1.0 back to 1.0.0) is not equality, so an inequality test waves it
+          # through and every install pinned at the higher version goes blind.
+          python3 - "$was" "$now" <<'PY'
+          import sys
+          def parse(v):
+              return tuple(int(p) for p in v.split(".")) if v else ()
+          was, now = parse(sys.argv[1]), parse(sys.argv[2])
+          if now <= was:
+              print(f"::error::Shipped content changed but the version did not move forward "
+                    f"({sys.argv[1] or '<none>'} -> {sys.argv[2]}). An install is pinned to that "
+                    f"string, so merging this ships nothing. Bump .claude-plugin/plugin.json.")
+              sys.exit(1)
+          PY
+          grep -qF "## $now" CHANGELOG.md || { echo "::error::CHANGELOG.md has no '## $now' entry"; exit 1; }
+          echo "version moved forward and changelogged"
