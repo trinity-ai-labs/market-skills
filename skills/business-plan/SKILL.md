@@ -845,8 +845,7 @@ three milestones, and where everything landed. Invite pushback on the specific b
   its implied trajectory against the indexed comparable curves at matching months since origin.
   Any excursion — in level, in either direction, or in shape — names the difference defending it.
 - Wherever the price is defended, BOTH lenses are priced: the cost of the alternative the buyer
-  avoids, and the value the product delivers them. One line, not two, because an enumeration that
-  names one of a pair is how the other gets dropped. A price defended on cost alone is unmodelled,
+  avoids, and the value the product delivers them. A price defended on cost alone is unmodelled,
   not conservative — the substitute's cost is a floor under the buyer's alternative, and a plan
   that prices only that side caps itself at the DIY figure while reading as rigour, since the
   substitute number is well-sourced and the output figure nobody computed is simply absent.

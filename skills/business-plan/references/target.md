@@ -234,11 +234,11 @@ balances, and the binding driver is named with the same confidence it would have
 then argues about a constraint that was never theirs.
 
 **The reference class is not a term in any identity, and it is the input every structural driver's
-value rests on.** Which companies are comparable is what sets conversion, the band retention sits in,
-and the multiple at once, one level beneath the arithmetic — so it takes the discipline the drivers take: **named in
-the readout, classified `structural`, homed to `research/growth-curves.md`, and put through the flip
-test.** Left unwritten it is not a neutral background choice; it is the largest unexamined input in
-the method.
+value rests on.** Which companies are comparable is what sets conversion, the band retention sits
+in, and the multiple at once, one level beneath the arithmetic — so it takes the discipline the
+drivers take: **named in the readout, classified `structural`, homed to `research/growth-curves.md`,
+and put through the flip test.** Left unwritten it is not a neutral background choice; it is the
+largest unexamined input in the method.
 
 **A class inferred from the subject's own price point or packaging is downstream of a policy input,
 and it inherits that input's mutability.** The split classifies by who sets the value, and a class
@@ -252,11 +252,10 @@ comparable, and the candidate classes that come back are what the flip test then
 
 **The failure this causes:** a founder decision selects the comparable set, the set fixes
 conversion, retention's band and the multiple together one level beneath the arithmetic, and the
-verdict
-that follows is reported as a property of the market. Repricing then reads as a pricing question
-when it is a reclassification — the one change that moves every structural driver at once — and it
-is never costed as one, because nothing in the readout records that the class was ever downstream of
-a decision the founder controls.
+verdict that follows is reported as a property of the market. Repricing then reads as a pricing
+question when it is a reclassification — the one change that moves every structural driver at once —
+and it is never costed as one, because nothing in the readout records that the class was ever
+downstream of a decision the founder controls.
 
 **Flip the reference class across the alternatives a reasonable person would argue for.** Re-solve
 the identity with each candidate set's values at the months the target counts. Same verdict under
@@ -283,13 +282,12 @@ A worked example, invented end to end:
 > Both classes are defensible from the dossier, so the class is flipped. The target clears under the
 > narrower one and misses under the general one.
 >
-> **Readout:** *undetermined, and what is undetermined is the reference class rather than any driver.
-> Conversion, the band retention sits in, and the multiple all move together between the two
-> classes, which is why no
-> single figure looks wrong under either. The cheapest test is the adoption path in the disclosed
-> deployments: whether the product enters an account through an individual engineer or through a
-> procurement decision. Kill/continue: if the disclosed deployments are predominantly
-> procurement-led, the general class is the right one and the target does not clear.*
+> **Readout:** *undetermined, and what is undetermined is the reference class rather than any
+> driver. Conversion, the band retention sits in, and the multiple all move together between the two
+> classes, which is why no single figure looks wrong under either. The cheapest test is the adoption
+> path in the disclosed deployments: whether the product enters an account through an individual
+> engineer or through a procurement decision. Kill/continue: if the disclosed deployments are
+> predominantly procurement-led, the general class is the right one and the target does not clear.*
 
 **Every company in the indexed set is a survivor, so a driver sourced from it carries the
 survivorship qualifier wherever the value appears.** The set is assembled from companies that got far

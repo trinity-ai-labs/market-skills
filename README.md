@@ -93,16 +93,16 @@ and a range on both is a rectangle solved at its corners rather than averaged to
 get back which corners clear and which do not, so you can see whether it is the value or the date
 that is the problem.
 
-The verdict on that target is **computed from evidenced drivers, not asserted**, and it names
-which driver binds and by how much — "reach binds: the target needs about six times the monthly
-reach your channels evidence at the hours you gave" — because that is the sentence you can act on.
-Where the driver that binds is one **you chose** — your hours, your channel count, the price point
-you picked, or how well what you built holds onto the people it reaches — the answer comes back as
-unreachable *in that configuration*, with the value that variable would have to reach, rather than
-as a verdict on the target: a constraint you could revisit this week reads very differently from
-one the market sets, and you are told which of the two you are looking at. Where the evidence can't carry a verdict at all, it says so and names the
-cheapest test instead of guessing: a confident "no" resting on a guessed conversion rate talks you
-out of something the evidence never spoke to.
+The verdict on that target is **computed from evidenced drivers, not asserted**, and it names which
+driver binds and by how much — "reach binds: the target needs about six times the monthly reach your
+channels evidence at the hours you gave" — because that is the sentence you can act on. Where the
+driver that binds is one **you chose** — your hours, your channel count, the price point you picked,
+or how well what you built holds onto the people it reaches — the answer comes back as unreachable
+*in that configuration*, with the value that variable would have to reach, rather than as a verdict
+on the target: a constraint you could revisit this week reads very differently from one the market
+sets, and you are told which of the two you are looking at. Where the evidence can't carry a verdict
+at all, it says so and names the cheapest test instead of guessing: a confident "no" resting on a
+guessed conversion rate talks you out of something the evidence never spoke to.
 
 That scrutiny runs in **both directions**. A cautious number is a claim about your business
 exactly as an ambitious one is, so every value in the model names what drives it whichever way it
