@@ -75,6 +75,19 @@ _Date · prepared with <slug> market analysis (see sources.md)_
 <Pyramid-first: the bet in one paragraph — whitespace recommendation × unfair advantage.
 Then 3–5 supporting bullets, each tagged [S#]/[F#].>
 
+## Target & verdict
+<The settled target and its date [F#], and the verdict computed against it — the driver that
+binds, and by how much — per
+[target.md](target.md#the-verdict-names-which-driver-binds-and-by-how-much). Where the target
+was renegotiated: the original target, why it did not clear, and what changed to reach the
+settled one — as a `supersedes` / `status: superseded` pair, never `retracted`, per
+[target.md](target.md#the-founder-chooses-and-the-superseded-target-keeps-its-reason) (the
+two-edit mechanics are [vault.md](vault.md#every-note-carries-these-six-fields)'s).
+
+Placed directly after the Thesis, on every track, so no number below is read before the reader
+knows what it was tested against. Omit the section entirely — no placeholder, no "N/A" — when
+the grill returned no target ([grill.md](grill.md#0-target-opens-the-grill) has the rule).>
+
 ## Problem
 <beachhead segment, their words, acuteness evidence [S#]>
 
@@ -114,10 +127,12 @@ roadmap items. Entry sequencing when beachhead-first: the scored beachhead + pre
 expansion pins with unlock conditions (strategy-sim.md §2).>
 
 ## Milestones & roadmap
-<dated 6–12 month milestones: product, validation gates from the plan's validation section,
-the growth-engine build-out items (which automation skill lands in which month), and the
-funding/path gate each milestone feeds. This is the section the operator red-team lens
-attacks.>
+<Dated checkpoints against the solve-backwards trajectory, not milestones sequenced by feel —
+a checkpoint falls in month N because the trajectory says a named driver has to reach a named
+value by then (the failure this prevents is strategy-sim.md §5's). Alongside: validation gates
+from the plan's validation section, the growth-engine build-out items (which automation skill
+lands in which month), and the funding/path gate each milestone feeds. This is the section the
+operator red-team lens attacks.>
 
 ## Financial summary
 <the 5 numbers from financial-model.md: burn, runway, base-case revenue at horizon,
@@ -140,10 +155,15 @@ signal; defensive spin is not.>
 
 **Bootstrap track** replaces Market/Financial summary/The ask with: a lean canvas block,
 a 6–12 month operating plan (monthly cash curve → default-alive date, the ONE channel and its
-90-day checkpoints, time-to-first-dollar), and "what I'm NOT doing" (explicit non-goals).
-Skip TAM/SAM/SOM rigor unless a loan later needs it. **Lender track** expands financials to
-3–5 years and adds use-of-funds down to line items; tone shifts from bet-defense to
-repayment-capacity.
+90-day checkpoints, time-to-first-dollar — the channel's checkpoints dated against the same
+solve-backwards trajectory as Milestones & roadmap above), and "what I'm NOT doing" (explicit
+non-goals). Skip TAM/SAM/SOM rigor unless a loan later needs it. **Target & verdict is not one
+of the swapped sections — it
+stays, in the same place, on every track.** For bootstrap/lifestyle the target is usually the
+fixed income figure itself, so the verdict reads directly against the cash curve just below it.
+**Lender track** expands financials to 3–5 years and adds use-of-funds down to line items; tone
+shifts from bet-defense to repayment-capacity — Target & verdict stays too, read against the
+debt service the financials must cover.
 
 ## `financial-model.md`
 
@@ -209,7 +229,7 @@ is arithmetic rather than observed behaviour, tag it as such and do not call it 
 preference.>
 
 ## Strategy comparison (when a capital-path or sequencing fork was open)
-<the Path Comparison + Trigger table from strategy-sim.md §5: parallel paths off shared unit
+<the Path Comparison + Trigger table from strategy-sim.md §6: parallel paths off shared unit
 economics, dilution ladder per raising path, founder $ at low/base/high exits, and the
 pre-committed switch triggers. Bootstrap paths embed the reinvestment engine (default-alive
 gate, four buckets with the owner-pay floor, channel-unlock milestones, Rule-of-40

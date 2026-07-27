@@ -82,7 +82,43 @@ Monte Carlo only when ≥6–12 months of real usage/cohort data can parameteriz
 never fabricate probability distributions from vibes; its one pre-data use is finding which
 1–2 inputs the outcome is most sensitive to.
 
-## 5. The deliverable — a Path Comparison + Trigger table
+## 5. Solve backwards — the required trajectory, not just a projected one
+
+Everything above still only answers "what might happen if these assumptions hold." Once a
+target is settled (per [target.md](target.md)), the model runs the other direction too: given
+the target and its date, what does each driver have to become, and by when.
+
+- **Same identity, opposite direction.** [target.md](target.md#the-outcome-decomposes-into-drivers-before-any-number-goes-into-it)
+  already wrote the driver identity a verdict rests on — `MRR = paying customers × price`, the
+  customer count as a stock net of churn, or the user-count / salary-replacement variants — and
+  the rules for where each driver's value comes from and what makes it traceable
+  ([target.md](target.md#each-driver-takes-its-value-from-a-named-place-in-the-corpus)). This
+  pass takes that same identity and those same evidenced driver ranges and solves for the
+  values at every month between now and the target date, not only at the date itself; it does
+  not re-derive either rule.
+- **The output is a trajectory, one row per driver per month** — reach, conversion, price, and
+  the standing customer count, each with the value it must hit that month for the target to
+  land on time. A monthly milestone is checked against this row; the forward projection above
+  never produces a monthly required value to check anything against, because it was never
+  solving for one.
+- **Solved at both ends of the evidenced ranges, same as the counter-offer in target.md.** A
+  single-point monthly figure claims a precision the evidence doesn't have. Carry the band
+  through, and a milestone check compares the actual month's number against the band, not a
+  point.
+- **Re-solved whenever a driver's evidenced value moves** — a renegotiated target, an amended
+  pricing claim, a channel underperforming its evidenced throughput. The trajectory is a live
+  output of the current evidence, not a schedule computed once and archived.
+
+**The failure this prevents:** a forward projection alone answers "what might happen," never
+"what has to be true by March" — so nothing in the plan is falsifiable at a date. A milestone
+checked against a projection surfaces a shortfall only once the horizon is reached and the
+cumulative gap is already unrecoverable; a milestone checked against the required trajectory
+reads as slippage the month it happens, while there is still time to act on it.
+
+**Method matched to evidence: §4's rule applies unchanged** — no separate threshold for the
+backward solve.
+
+## 6. The deliverable — a Path Comparison + Trigger table
 
 ```markdown
 ## Strategy comparison  (in financial-model.md)
