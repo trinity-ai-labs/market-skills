@@ -173,6 +173,13 @@ and therefore no exposure, and a claim ledger is what this pays off on immediate
 nothing else in the skill answers the second question. An existing repo is left alone: running
 `git init` over one is a no-op, but a re-scaffold that rewrites its files is not.
 
+**Commit more often than the phase boundaries.** A single research phase writes dozens of files,
+so commit at each meaningful write — a dimension's prose and notes, a batch of grill facts, a
+drafted section — as well as at the boundary. Boundary-only commits make the whole phase the
+unit of loss, and the phase is where the expensive writes are: a crash, a context loss or a bad
+edit mid-phase should cost one file, not a day of research. The boundary commit keeps its own
+job — it is the point where the two generated files below are regenerated.
+
 Two files are **generated**, at scaffold and again at every phase boundary, and committed there:
 
 - **`.gitignore`** — editor and OS state only: `.DS_Store`, and an editor's per-window workspace
@@ -542,9 +549,17 @@ is why it waits for something worth sharing. Collect both halves:
   and is offered as one; what it is not is a default, over a corpus carrying their pricing, their
   runway and their named fear.
 
-**No remote is created without an explicit answer to both, and nothing is ever pushed
-automatically.** A remote inferred from one answer, or a push that follows a phase-boundary
-commit on its own, publishes a private business corpus on a step the founder never took.
+**No remote is created without an explicit answer to both, and with no remote nothing is ever
+pushed.** Local-only is the Phase 0 default and the state a vault stays in unless the founder
+asked otherwise. A remote inferred from one answer — a destination taken as consent to a
+visibility, or a visibility assumed from a destination — publishes a private business corpus on
+a step the founder never took.
+
+**Once the remote exists, every commit is pushed.** The consent gate is on creating and
+configuring the remote, not on using one the founder explicitly asked for: from that point the
+phase-boundary and mid-phase commits go up as they are made. A remote the founder opted into
+that never receives a push is worse than no remote at all — it reads as a backup, so the founder
+believes their corpus is in two places while it is on one laptop.
 
 ## Walk sign-off
 
