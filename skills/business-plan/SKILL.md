@@ -622,7 +622,7 @@ hands every panelist that frame as the ground they attack *from*. A fourth voice
 the others would inherit it too and would arrive at the same moment as three lenses' worth of
 detail objections, too late to change what the panel is pointed at — which is why this runs BEFORE
 any brief is written and its output goes INTO the briefs, exactly as the settled target and the
-binding driver's kind do above. Three steps, in this order:
+binding driver's kind do above. Five steps, in this order:
 
 1. **Write out the revenue model's identity — the chain of terms, ahead of any value in it.**
    `MRR = paying customers × price`, the acquisition-and-retention chain standing under the
@@ -638,11 +638,28 @@ binding driver's kind do above. Three steps, in this order:
    backdrop the curve was drawn on. Zero growth is an assertion that next month's reach, conversion
    and mix are identical to this month's, and it needs a named driver exactly as an inflection
    does.
+4. **Report every input that is unmodelled in the pessimistic direction, naming each one.** The
+   steps above ask what kind an input is and what drives the curve's shape; none of them asks
+   whether a *low* value earned its place, and that is the direction this pass structurally cannot
+   see — a low number reads as the cautious choice rather than as the claim it is, so it passes
+   through the block unremarked and the panel inherits a floor nobody sourced. Run the
+   both-directions test from
+   [references/target.md](references/target.md#every-driver-value-names-its-driver-in-both-directions-and-a-low-one-with-none-is-unmodelled)
+   over every value in the identity and name each one that is unmodelled, not conservative, so a
+   panelist can attack a floor instead of reading it as the plan's margin of safety.
+5. **Test the terms against what the founder said the business is, and report a term the business
+   has that the identity lacks.** Read the identity from step 1 back against the dossier and the
+   grill's `[F#]` facts — every revenue layer, every distinct paying motion the founder stated.
+   Writing the identity out is the right instrument and it is not a test of itself: a business with
+   three revenue layers solved as a single-layer funnel is not a wrong number, it is the wrong
+   identity, and no rule about input *values* can reach it. Name the missing term; adding one sends
+   steps 2–4 back over it, which is the cheap version of the same discovery.
 
-The pass returns a short block every brief carries verbatim: the identity, the label per input, and
-the shape with its driver. A panelist told the flat stretch is an assertion resting on a named
-channel cap can attack the cap; one who is not told reads the flat line as the conservative part of
-the plan and spends the turn somewhere else.
+The pass returns a short block every brief carries verbatim: the identity, the label per input, the
+shape with its driver, the inputs unmodelled in the pessimistic direction, and any term the
+founder's stated business has that the identity lacks. A panelist told the flat stretch is an
+assertion resting on a named channel cap can attack the cap; one who is not told reads the flat line
+as the conservative part of the plan and spends the turn somewhere else.
 
 **The failure this prevents:** a structurally wrong model is the one a panel is unable to attack,
 because every lens is pointed at the plan's contents rather than its shape. The panel returns a
@@ -650,6 +667,12 @@ full objection table, all of it about details, and the plan reads as thoroughly 
 model nobody could attack is not a model nobody could fault. The tell is a red team whose severest
 row argues about a value inside the identity while the identity itself carries a term nobody
 labelled.
+
+**The failure the terms check prevents:** an identity missing a whole revenue layer is internally
+consistent and solves cleanly, so nothing downstream can see the omission — the arithmetic is
+correct about the wrong business, and every value inside it is defensible. The run reports a
+confident verdict on a model of a business the founder is not building, and every input in it
+survives every check, because each one is individually right.
 
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
@@ -786,9 +809,10 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - The plan matches the founder's stated ambition, not a template's default ambition.
 - Red team ran, and its surviving objections are IN the plan and in the vault.
 - Every red-team brief carried the model's identity, its per-input `structural`/`policy` labels,
-  and the curve's shape with its named driver, before the panel was briefed. The panel reasons
-  *from* the plan, so a brief that arrives without these inherits the plan's frame and can only
-  object to details.
+  the curve's shape with its named driver, the inputs unmodelled in the pessimistic direction, and
+  any term the founder's stated business has that the identity lacks — before the panel was
+  briefed. The panel reasons *from* the plan, so a brief that arrives without these inherits the
+  plan's frame and can only object to details.
 - Where the target is an exit, the red team met the acquirer's question: a *named* buyer, the hole
   it patches, and the bidder count. An unnamed acquirer is not a driver value, and a lens that
   accepts "someone would want this" grants the driver the verdict was most sensitive to.
