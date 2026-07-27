@@ -42,6 +42,19 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   founder to consent to the visibility of contents neither party has seen. Past that point every
   commit is pushed, because a remote that was opted into and never receives one reads as a backup
   and is not one.
+- **A dimension is accepted on its file, never on the summary its own author wrote.**
+  `market-analysis` told the conductor it reads summaries rather than raw dumps, which made a
+  ten-line self-report the entire basis on which a dimension's numbers entered the plan. Five
+  parallel researchers writing straight into `research/` are five unreviewed writers, and where a
+  `vault:` path is present they also mint the `source` notes the plan later resolves its citations
+  through — so the door the "read summaries" rule left open led directly to a citable number
+  nothing had ever reviewed. The summary is now triage: it says which file to open first and
+  whether the dimension is worth folding in at all, and the file itself is read before that
+  dimension is cited or its notes are trusted. The context economy the old rule existed for is
+  untouched, because the reading is targeted — one dimension file at the moment it is about to be
+  relied on, not every agent's transcript — and `business-plan`'s per-dimension checkpoint, which
+  already linted the vault while the researcher's context was still live, now gates on the read as
+  well.
 
 ## 1.1.1
 

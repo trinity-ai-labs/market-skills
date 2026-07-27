@@ -73,7 +73,10 @@ and is never restated here.
 15. **Lint is a gate, not a report.** The shipped `vault-lint.sh` runs at Phase 2's
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
-    not render.
+    not render. **That same gate reads the dimension's own file, never the summary its author
+    wrote about it** — the researcher who wrote the prose also minted the notes the plan resolves
+    citations through, so accepting a dimension on its summary is what puts an unreviewed number
+    in the ledger.
 
 **The target** — the driver identity, the binding-driver readout, the confidence ceiling, the
 nearest-reachable solve and the negotiation script are in
@@ -350,8 +353,12 @@ source and ONE `question` note carrying its `gaps` — what the dimension could 
 `covers` once something answers part of it. The prose keeps every argument; the notes hold what
 a later document leans on. A note per paragraph produces a second corpus nobody maintains.
 
-**Lint at the per-dimension gate, not at the end.** As each dimension returns, run
-`vault-lint.sh` over the vault before you accept it. A missing `rests_on`, an unknown
+**Read the dimension and lint the vault at the per-dimension gate, not at the end.** As each
+dimension returns, two things happen before you accept it. Read its `research/<dimension>.md` on
+the terms market-analysis's Phase 2 sets out — the file, not the summary its own author wrote
+about it; accepting a dimension on that summary is what lets an unreviewed writer put a citable
+number into this ledger, since the same researcher minted the `source` notes the plan resolves
+its citations through. Then run `vault-lint.sh` over the vault. A missing `rests_on`, an unknown
 subject term, a duplicate `url_canonical` and a confidence-propagation violation are all silent
 in the file itself and all cheap to fix while the researcher's context is live. Deferred to
 Phase 5, an unknown subject term is unfixable — the only person who knew which existing term it
