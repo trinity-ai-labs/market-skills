@@ -16,7 +16,7 @@ Two agent skills that take a product to market, packaged as one plugin. Both are
   red-team pass, and a growth-engine section that turns GTM into automated per-product agent
   skills (content, screenshots/video, docs-sync).
 
-Both write deterministically to `~/Documents/business/<product-slug>/` (same product → same
+Both write deterministically to `~/Documents/go-to-market/<product-slug>/` (same product → same
 folder, re-runs update in place) and render polished, self-contained HTML + page-verified PDF
 deliverables.
 
@@ -65,7 +65,7 @@ registers nothing. The other thing a clone does not give you is `vault-lint.sh` 
 
 Point either at a repo (most common), a spec/PRD/doc, or just describe the idea. Interactive
 runs open on your target, then grill you on the genuine gaps — the questions research can't
-answer — before spending research tokens. Everything lands in `~/Documents/business/<product-slug>/`,
+answer — before spending research tokens. Everything lands in `~/Documents/go-to-market/<product-slug>/`,
 including `deliverables/*.html` and page-verified `deliverables/*.pdf`.
 
 To force one, name it: `/market:market-analysis` or `/market:business-plan`.
@@ -80,10 +80,18 @@ for it on its own as reliably as the main thread does:
 ## You state a target; the skill tells you whether it is reachable
 
 The entry to `business-plan` is a product and a **target** — a concrete outcome and a date
-(`$20k MRR by June 2027`, `replace a $90k salary in 18 months`) — and the plan is engineered
-backwards from it. Plain language is fine: a direction with no number gets converted into one
-("make this my job" → "what does the job have to pay?"), and "no specific number" is a legitimate
-answer that changes the plan's framing rather than stalling the run.
+(`$20k MRR by June 2027`, `replace a $90k salary in 18 months`, `sell for $30–50M in 3–5 years`)
+— and the plan is engineered backwards from it. Plain language is fine: a direction with no number
+gets converted into one ("make this my job" → "what does the job have to pay?"), and "no specific
+number" is a legitimate answer that changes the plan's framing rather than stalling the run.
+
+An **exit** is a supported shape, not a revenue target in disguise: it decomposes as ARR at the
+sale date times a *multiple band*, and the multiple — set by your growth slope at the moment of
+sale, by which named acquirer has a hole this patches, by how buildable the asset is, and by how
+many buyers have that same hole — is usually what binds. Either axis can be stated as a **range**,
+and a range on both is a rectangle solved at its corners rather than averaged to a midpoint: you
+get back which corners clear and which do not, so you can see whether it is the value or the date
+that is the problem.
 
 The verdict on that target is **computed from evidenced drivers, not asserted**, and it names
 which driver binds and by how much — "reach binds: the target needs about six times the monthly
@@ -98,8 +106,9 @@ out of something the evidence never spoke to.
 
 An unreachable target opens a **negotiation, not a rejection**: the stated target and why it
 doesn't clear, the nearest target reachable on the resources you stated, and the levers — hours,
-capital, price — with what each would have to become. You choose, and the original stays visible
-in the plan as the thing that was tested.
+capital, price, or for an exit the slope, the named acquirer and the date — with what each would
+have to become. You choose, and the original stays visible in the plan as the thing that was
+tested.
 
 The vault is a **git repo** from its first commit, so a claim ledger's retractions, amendments and
 confidence changes become a diffable history. It is local-only by default; once there are
@@ -110,12 +119,12 @@ private preselected, and creates nothing without an explicit answer to both.
 
 ## On disk
 
-`~/Documents/business/<product-slug>/` **is** the vault — there is no `vault/` subdirectory.
+`~/Documents/go-to-market/<product-slug>/` **is** the vault — there is no `vault/` subdirectory.
 The slug directory itself carries `.vault/config.json`, and everything else the skills produce
 lives inside it:
 
 ```
-~/Documents/business/<product-slug>/
+~/Documents/go-to-market/<product-slug>/
 ├── .vault/config.json       # schemaVersion — a directory without it is not a vault
 ├── _vocab.yml               # controlled subject vocabulary
 ├── sources/ facts/ claims/ assumptions/ questions/ decisions/ # one file per note
@@ -148,7 +157,7 @@ This is a summary, not the authority — see
 ## `vault-lint.sh`
 
 The plugin ships one executable. `business-plan` builds a claim vault at
-`~/Documents/business/<product-slug>/` — every load-bearing number traced to a dated
+`~/Documents/go-to-market/<product-slug>/` — every load-bearing number traced to a dated
 source — and `vault-lint.sh` is the read-only whole-corpus check that gates it: dangling edges,
 confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
 still cited.
@@ -157,7 +166,7 @@ Claude Code puts an enabled plugin's `bin/` on the Bash tool's `PATH`, so the sk
 bare, from whatever directory the user happens to be working in:
 
 ```sh
-vault-lint.sh --vault ~/Documents/business/<product-slug>
+vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
 vault-lint.sh --unverified --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```

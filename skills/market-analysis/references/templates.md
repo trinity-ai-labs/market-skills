@@ -1,6 +1,6 @@
 # Output document templates
 
-The exact structure of every file in `~/Documents/business/<product-slug>/`. Keep the headings —
+The exact structure of every file in `~/Documents/go-to-market/<product-slug>/`. Keep the headings —
 downstream consumers (the business-plan skill, the renderer) navigate by them. Prose inside each
 section is yours.
 
@@ -77,6 +77,12 @@ an aligned one.>
 (not what they averaged over their history), the months the fit is supported over, and how well it
 fits. Any company with too few dated points to fit is listed here in those words — "two points, no
 shape" — never folded in as a two-point average.>
+<the ARR buckets the set is read in, declared for this reference class, and every rate tagged with
+the bucket it was measured in — a company crossing a bucket mid-series tagged per stretch, not per
+company. Rates are compared only within a bucket, and this product's own projected rate is checked
+against the bucket it will be in at that month, never against the set as a whole: months since
+origin controls for calendar time, nothing else here controls for scale, and a band pooled across
+buckets is two phenomena on one axis.>
 <companies excluded from the indexed overlay, each with the reason (origin undatable) and its
 calendar series retained — listed, never silently dropped, or the reference class reads tighter
 than the evidence supports.>
@@ -92,6 +98,40 @@ profiled set outgrows its own category are named and defended with a mechanism, 
 hot. Reconciled, never averaged.>
 <rendered as the indexed multi-series exhibit — months since origin on x, the metric on y, one
 line per comparable, this product's own projection overlaid — per rendering.md.>
+
+## Exit comparables & implied multiple (when the target is an exit)
+<the comparable set, one entry per disclosed acquisition in the category: the acquired company,
+its origin event and that event's date, the month since that origin the sale landed at, its stage
+and its growth slope across the months running into the sale, ARR at exit, the ARR bucket that
+figure sits in, and the multiple that ARR and the deal imply. Indexed to slope at the moment of
+sale, the same basis every other series
+here uses, because slope is what the multiple is set by — a sale recorded against a level with no
+slope beside it cannot be read at the month a roadmap puts its own sale.>
+<the consideration split, per comparable: the headline figure and the multiple it implies, then
+what portion was actually received at close and the multiple THAT implies — earnout against
+post-close targets, escrow/holdback, acquirer stock carried at the acquirer's own valuation, and
+retention packages that are compensation for the team rather than price for the company — with the
+source for the split, which is the acquirer's filings and later disclosures, never the
+announcement. The band is drawn on consideration received at close, with the cash-only figure
+recorded beside it. A comparable whose split cannot be found is recorded as "headline-only,
+uncorroborated" and carries that label everywhere it appears, never pooled with decomposed ones:
+announcements publish the headline and disclose the components that reduce it later and elsewhere,
+so a set read off announcements skews high as a class rather than in one bad entry, and naming
+survivorship does not catch that because these deals closed.>
+<the acquirer per comparable, named, with its stated strategic rationale in its own words, quoted
+with source and pull date. A rationale paraphrased into a motive is the analyst's claim wearing
+the acquirer's authority.>
+<the implied-multiple endpoints, each labelled with its comparable, that comparable's ARR at exit
+and bucket, its stage and its slope at sale — never averaged into a single multiple, which
+describes no deal
+that happened. Fewer comparables than a band needs is stated in those words — "two comparables, no
+band" — never a band run through two points.>
+<survivorship, stated outright: the announced acquisitions are the ones that closed, nobody
+publishes the multiple they were offered and refused, and a sale that collapsed in diligence
+leaves no figure to index. The set is what this category paid the sellers who said yes.>
+<rendered onto the indexed exhibit above — each sale marked on its own comparable's line at the
+month it happened, labelled with the multiple received at close and marked as decomposed or
+headline-only — per rendering.md, never as a chart of its own.>
 
 ## Customers & segments
 <segments with sizes; JTBD chain and where current tools break it; beachhead recommendation>

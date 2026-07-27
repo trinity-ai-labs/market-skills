@@ -98,6 +98,39 @@ a hire, an external clock. Every downstream milestone claim inherits it. A roadm
 name its constraint reads as though everything can happen at once, which no reader believes and
 which destroys the credibility of the items that *are* real.
 
+## Rule 7 — for an exit target, an item may move a multiple input rather than a model assumption
+
+Rules 1–6 assume an item earns its place by moving a row in the financial model's assumptions
+table. An exit target breaks that in one direction: `exit value = ARR at exit × multiple`, and the
+assumptions table covers the left term only. An item aimed at the right term — making the product
+legible as the patch for a named acquirer, holding the growth slope through the sale month — moves
+nothing on that table, so Rule 1 files it as maintenance. For a plan whose target is a sale that is
+exactly backwards: it demotes the items aimed at the term the verdict is most sensitive to, and it
+does so quietly, because the table it fails is the right table for every other kind of target.
+
+**So the "assumption moved" column takes a multiple input as a legitimate value**, named from
+[target.md](target.md#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)'s four:
+growth slope at the moment of sale, strategic necessity to a named acquirer, scarcity, and the
+bidder count. Carry each input's `kind` into the column, because it bounds what an item can
+honestly claim — slope and the named acquirer are **policy**, which is what makes them movable by a
+roadmap at all, while scarcity and the bidder count are **structural**, set by the category and the
+buyers in it. An item claiming to move a structural input is claiming the roadmap changes who else
+could build this; that is either a real moat item with the argument written out, or a wish.
+
+| Item | Assumption moved | Direction & size | Confidence |
+|---|---|---|---|
+| Audit-trail export | strategic necessity to named buyer A (**policy**) | closes the compliance hole that buyer files against | M — the hole is named, the buyer's intent is not |
+| Second integration surface | bidder count (**structural**) | 1 → 2 buyers with the same hole | L — the second buyer's hole is inferred, not evidenced |
+| Onboarding rebuild | trial→paid conversion (A-n) | 4% → 6% from M4 | M |
+
+**The slope term is dated to one month, not averaged over the horizon.** An item that lifts the
+level across the plan and leaves the curve flattening by the sale month *lowers* the exit value,
+because the multiple is read at the slope standing on the sale date rather than at the total
+reached by it. This is the one place sequencing-is-projection has a wrong answer that looks right:
+the order maximising 12-month cumulative can be the order that arrives at the sale month
+decelerating, and Rule 3's permutation table will rank it first unless its column is measured at
+the sale month rather than at a fixed twelve.
+
 ## What lands in the plan
 
 - The **assumption-moved table** (Rule 1) in or beside the roadmap section.
@@ -106,9 +139,17 @@ which destroys the credibility of the items that *are* real.
 - The **resource label** per item and the concurrency call that falls out of Rule 4.
 - The **cheap levers**, called out as such.
 - The **binding constraint**, once (Rule 6).
+- For an exit target, the **multiple input** each such item moves and that input's kind (Rule 7),
+  and the permutation table measured at the sale month.
 
 ## What lands in the financial model
 
 Every roadmap item that moves an assumption appears as a **dated change to that assumption's
 row** — not as a separate revenue line. The model's curve is then a consequence of the roadmap
 rather than a parallel story that happens to sit next to it.
+
+An item that moves a **multiple input** has no row here to change — the assumptions table models
+ARR, and the multiple is not in it. It lands instead against the band it moves, in the plan's
+Target & verdict section beside the corner verdicts. Forcing it into the model as a revenue row is
+how an acquirer-legibility item gets credited twice: once as the ARR it does not produce, and again
+as the multiple it does.

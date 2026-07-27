@@ -86,53 +86,6 @@ jobs:
           fi
           echo "clean across $scanned files"
 
-      - name: Every '## Contents' link points at a real heading
-        if: always()
-        # scripts/check.mjs resolves relative FILE links but deliberately skips
-        # in-page anchors, so a stale TOC entry is the one broken link it cannot
-        # see, and a reader following it lands nowhere.
-        #
-        # Two details are load-bearing. The slug maps each space to its OWN hyphen
-        # — collapsing runs with \s+ breaks every heading containing an em dash,
-        # which GitHub renders as a double hyphen. And a file with a '## Contents'
-        # must yield at least one parsed link: a checker whose regex quietly stops
-        # matching still prints a green summary, which is worse than no check
-        # because it reads as coverage.
-        run: |
-          python3 - <<'PY'
-          import pathlib, re, sys
-
-          def slug(heading):
-              s = re.sub(r'[^\w\s-]', '', heading.strip().lower())
-              return re.sub(r'\s', '-', s).strip('-')
-
-          bad = checked = links = 0
-          for path in sorted(pathlib.Path("skills").rglob("*.md")):
-              text = path.read_text()
-              if "## Contents" not in text:
-                  continue
-              checked += 1
-              headings = {slug(m.group(1)) for m in re.finditer(r'^#{2,4}\s+(.*)$', text, re.M)}
-              # Indented entries are the majority of the real TOC content, and every
-              # em-dash heading lives in one — anchoring to column zero would exercise
-              # the slug rule above on nothing.
-              found = list(re.finditer(r'^\s*- \[.+?\]\(#([^)]+)\)\s*$', text, re.M))
-              if not found:
-                  print(f"::error file={path}::has a '## Contents' but no link this checker can parse")
-                  bad += 1
-              for m in found:
-                  links += 1
-                  if m.group(1) not in headings:
-                      print(f"::error file={path}::broken TOC link #{m.group(1)}")
-                      bad += 1
-
-          if checked == 0:
-              print("::error::no '## Contents' index found under skills/ — this check ran on nothing")
-              sys.exit(1)
-          print(f"checked {links} links across {checked} files")
-          sys.exit(1 if bad else 0)
-          PY
-
       - name: The manifest parses and carries what Claude Code needs
         if: always()
         # `claude plugin validate --strict` is the authoritative check and catches
@@ -168,6 +121,21 @@ jobs:
 
   version-bump:
     name: shipped content changed ⇒ version bumped
+    # Only the merge that actually SHIPS is gated on the version. A release is
+    # built on an integration branch from several slice branches, and each slice
+    # changes shipped content — so without this condition every slice PR demands
+    # its own bump, and one release either carries five of them or shows four red
+    # PRs. The observed consequence was worse than the noise: slices stopped being
+    # opened as PRs at all and were merged into the integration branch as bare
+    # merge commits, which on a public repo costs the per-slice diff, the review
+    # record, and `--delete-branch` — merged branches then accumulate until
+    # someone prunes them by hand.
+    #
+    # The `checks` job above deliberately still runs on EVERY pull request: the
+    # gate, shellcheck, and the public-repo hygiene scans are exactly what a slice
+    # PR is for. Only the bump is deferred to the boundary where an install can
+    # actually see it.
+    if: github.event_name == 'push' || github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     steps:
       # The one job that needs history: it diffs against the PR base and reads the

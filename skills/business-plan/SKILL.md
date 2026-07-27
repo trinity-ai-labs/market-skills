@@ -116,7 +116,7 @@ product name, kebab-case; re-runs update in place, never a new folder):
 carries `.vault/config.json`, and everything else lives inside it:
 
 ```
-~/Documents/business/<product-slug>/      # ← this directory is the vault
+~/Documents/go-to-market/<product-slug>/  # ← this directory is the vault
   .vault/config.json        # schemaVersion — a directory without it is not a vault
   _vocab.yml                # controlled subjects, seeded from references/vocabulary.yml
   sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note, <ID>.md
@@ -164,7 +164,7 @@ pass to a tool or an agent brief.
 
 Resolve the slug per market-analysis's slug rule (repo → analyzed directory name, settled
 name wins; for an idea with no name, do NOT write any file — settling the name is the first
-grill turn). Look inside `~/Documents/business/<slug>/` (and `ls` the parent for an existing
+grill turn). Look inside `~/Documents/go-to-market/<slug>/` (and `ls` the parent for an existing
 folder naming the same product). A market analysis already there is prior work: **reuse** if
 the dossier still matches reality and `_Analyzed:` is under ~90 days old in a fast-moving
 category (AI tooling, consumer apps) or ~12 months otherwise; between those, run the
@@ -176,8 +176,11 @@ refresh.
 `vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with its
 `schemaVersion`, and copy [references/vocabulary.yml](references/vocabulary.yml) to
 `<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
-vocabulary it was written under after the skill ships new terms. Extend it by that file's
-governance rule; never delete or redefine a base term.
+vocabulary it was written under after the skill ships new terms. The copy carries the shipped
+file's `vocabulary_version`, which is what makes a vault scaffolded today report no drift on its
+next run. Extend it by that file's governance rule; never delete or redefine a base term on the
+vault's own authority — an amended base definition is adopted only through the reconciliation
+below, after the claims under it have been re-read.
 
 Pass the absolute vault path to every agent and tool: resolution is `--vault` or `VAULT_PATH`
 and nothing else, because an upward search from a repo either walks to the filesystem root or
@@ -186,17 +189,26 @@ existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill do
 understand stops the run rather than being half-read.
 
 **A reused vault's `_vocab.yml` is compared against the shipped
-[references/vocabulary.yml](references/vocabulary.yml), and a base term whose definition has
-changed is reported to the founder.** The copy is what keeps a vault checkable, and it is also
-what freezes it: the lint reads the vault's copy and never the shipped file, so a vault
-scaffolded before an amendment keeps the superseded wording indefinitely and nothing says so.
-This phase is the one point where both files are open, which is what makes the comparison free.
-It is **not** an error and does not stop the run — a vault written under an older definition is
-valid, it is only unreviewed, and erroring would break every existing vault on upgrade, which is
-the failure that makes people stop upgrading. What the report asks for is a re-read: the claims
-already filed under an amended subject are read against the new wording, and where one no longer
-asserts what the amended definition says the subject asserts, it is superseded under the standing
-two-edit rule rather than silently re-filed under a definition it was not written to.
+[references/vocabulary.yml](references/vocabulary.yml), and an amended base definition is
+reported to the founder as a version delta plus the log entries inside it.** The copy is what
+keeps a vault checkable, and it is also what freezes it: the lint reads the vault's copy and
+never the shipped file, so a vault scaffolded before an amendment keeps the superseded wording
+indefinitely and nothing says so. This phase is the one point where both files are open, which is
+what makes the comparison free. Compare the vault's `vocabulary_version` against the shipped one
+— a copy carrying **no** stamp predates it and is older than every entry, never equal to the
+current version — and report each `amendments` entry between them: the term, both framings
+(`was` and `now`), and the `must_assert` test. Reporting only that definitions differ is what
+makes this advisory get skipped: it hands the founder a corpus-wide re-read with no way to size
+it, and a task nobody can size is a task nobody starts, so the drift stays unreconciled and the
+report becomes noise. It is **not** an error and does not stop the run — a vault written under an
+older definition is valid, it is only unreviewed, and erroring would break every existing vault on
+upgrade, which is the failure that makes people stop upgrading. What the report asks for is a
+re-read of the claims filed under each amended subject, bounded by one grep per term: where a
+claim no longer asserts what the amended definition says the subject asserts, it is superseded
+under the standing two-edit rule rather than silently re-filed under a definition it was not
+written to. The procedure, the worked `steady-state-ceiling` example, and the order that makes
+adopting the new wording safe are in
+[references/vault-migration.md](references/vault-migration.md#an-upgraded-vault-enters-here-not-at-stage-1--reconcile-the-claims-an-amended-definition-left-behind).
 
 If the founder already has a corpus from earlier work — research files, a plan citing `[S#]`/
 `[F#]` codes — adopt it instead of scaffolding an empty vault:
@@ -360,14 +372,23 @@ ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: s
   sizing agent, bottom-up only (the venture-scale sniff test still gets stated); else full rigor.
 target: <the outcome the plan is engineered backwards from, and its date | "no specific
   number">  — size at the resolution this needs: a target denominated in customers or MRR makes
-  the bottom-up segment count the load-bearing output, not the top-down category figure.
-provisionalVerdict: <reachable | unreachable | undetermined, the driver it named as binding, and
-  that driver's kind — structural | policy | "none — no target stated">  — pre-research, so it is
-  an assumption and never citable; the driver it names is the one to research hardest, and the
-  kind says what "hardest" means. A structural driver wants better evidence for the value it
-  already has; a policy one wants evidence for what it could be set to — channel throughput, and
-  which comparable strategies at this stage were adoptable at all — which is a different hunt
-  pointed at different sources.
+  the bottom-up segment count the load-bearing output, not the top-down category figure. A range
+  stated on either axis is passed as the range, both ends, never as a midpoint: the verdict is
+  computed at the rectangle's corners, and a fleet handed a point researches one date at one value.
+provisionalVerdict: <reachable | unreachable | undetermined, and the SET of drivers the identity
+  named as binding, each with its own kind — structural | policy. Where either axis was stated as a
+  range that is one entry per corner solved, each naming that corner's binding driver and kind;
+  where the target is an exit it is a set by construction, because the multiple's four inputs carry
+  their own kinds — growth slope at the sale date and the named acquirer are policy, scarcity and
+  the bidder count are structural. | "none — no target stated">  — pre-research, so it is an
+  assumption and never citable; the drivers it names are the ones to research hardest, and each
+  kind says what "hardest" means for that one. A structural driver wants better evidence for the
+  value it already has; a policy one wants evidence for what it could be set to — channel
+  throughput, and which comparable strategies at this stage were adoptable at all — which is a
+  different hunt pointed at different sources. **Emitting one kind for a verdict computed over four
+  drivers picks one hunt and silently drops three**: the fleet comes back thorough on the driver
+  that was named and empty on the one that binds, and the gap is invisible because the dimension it
+  belonged to still returned a file.
 categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
 mustProfile: <competitors the founder named — always profiled, whatever their kind>
 founder brief (verbatim):
@@ -414,6 +435,20 @@ skips the question the error existed to ask.
   still passes. An origin left unnamed makes two series incomparable while they sit on one axis
   looking comparable, and an exclusion left off the list reads as a comparable nobody found rather
   than one whose origin could not be dated.
+- **Where the settled target is an exit**, `market-analysis.md` additionally carries its `## Exit
+  comparables & implied multiple` section: the disclosed acquisitions in the category, each indexed
+  to the acquired company's growth slope at the moment of sale, the multiple each one implies, and
+  the band's two ends traced to the four inputs
+  ([references/target.md](references/target.md#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)
+  homes them). Check that the set is indexed *to slope* rather than merely listed — multiples with
+  no slope beside them cannot be read at this roadmap's slope, so a list of them is a category
+  average wearing a reference class's name, which is the shape a run returns when it looked the
+  question up instead of building the set. Without the section an exit run comes back with the
+  indexed curves, passes every other check on this list, and Phase 3 then solves the exit identity
+  at a multiple nobody sourced — the term the verdict is most sensitive to, and the one the flip
+  test exists to fire on. Naming the artifact is what does this work: the first line's "all
+  contract files exist" is satisfied by a folder listing, and a folder listing cannot tell an exit
+  run from a revenue one.
 - `Coverage` names what was skipped and why; `Risks to this analysis` is non-empty (a market
   analysis with nothing soft in it wasn't done honestly).
 - `Assumptions` is present and non-empty for a dispatched run — each entry states the default,
@@ -529,6 +564,24 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
   why-now weak?) · bootstrap/lifestyle: *default-alive skeptic* (does this reach cash-positive
   before the runway ends?) · lender: *credit officer* (does cash flow service the debt through
   the downside case?).
+
+  **Where the settled target is an exit, this lens asks the acquirer's question instead of the
+  funder's** — not *would an investor put money into this*, but *which named acquirer has a hole
+  this patches, and is the product visibly the patch*. The brief carries the dossier's seam
+  argument and the acquirer set the exit identity was solved against, counted, and the lens attacks
+  the name and the count rather than the ARR. **An unnamed acquirer is not an answer, and neither
+  is a named one whose hole the plan never states.** "Someone in this category would want this"
+  grants the driver the verdict was most sensitive to —
+  [references/target.md](references/target.md) homes strategic necessity to a *named* acquirer and
+  files it as `policy`, so a lens that accepts the unnamed form hands back a clean bill on the term
+  the whole exit rests on. Two follow-ons the lens owes: a single interested buyer is a price
+  **floor** and not a price, so a count of one is reported as one rather than as evidence of
+  demand; and *what stops this acquirer building it itself inside two quarters* is the scarcity
+  input asked from the buyer's side, where the honest answer prices an acquihire instead of an
+  acquisition. **The failure this prevents:** an exit plan collects a full investor-shaped
+  objection table — market size, moat, why-now — and reads as thoroughly attacked while nobody
+  asked who buys it. Fundable and acquirable have different answers often enough that a pass on one
+  says nothing about the other.
 - **Operator** — kill the execution: does the milestone plan survive contact with the team
   size, runway, and the founder's hours?
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
@@ -552,6 +605,42 @@ one told a driver binds without being told it is `policy` grants the configurati
 was computed under — the assumption most worth attacking, and the one no lens is otherwise
 tasked with. Re-run the identity against any objection that survives:
 [references/target.md](references/target.md).
+
+**Read the model's identity before the panel reads its numbers — a pre-pass, not a fourth lens.**
+All three lenses reason from the plan document, so all three inherit its frame: a revenue model
+that assumes a flat curve, or that treats a founder's choice as a fixed property of the business,
+hands every panelist that frame as the ground they attack *from*. A fourth voice briefed alongside
+the others would inherit it too and would arrive at the same moment as three lenses' worth of
+detail objections, too late to change what the panel is pointed at — which is why this runs BEFORE
+any brief is written and its output goes INTO the briefs, exactly as the settled target and the
+binding driver's kind do above. Three steps, in this order:
+
+1. **Write out the revenue model's identity — the chain of terms, ahead of any value in it.**
+   `MRR = paying customers × price`, the acquisition-and-retention chain standing under the
+   customer count, and for an exit target the multiple band on top of it. Terms first, values
+   second: a chain nobody wrote down is one nobody can disagree with a term of, which is the same
+   property that makes the target verdict attackable.
+2. **Label every input `structural` or `policy`** — those two words, per invariant 18, using
+   [references/target.md](references/target.md)'s vocabulary and never a coined variant. A third
+   word ("semi-structural", "market-driven") is a way of not answering that reads as a finer
+   distinction, and it survives review for exactly that reason.
+3. **Name which of the policy inputs the founder could revisit this quarter, and state the model's
+   shape — flat, decaying or compounding — as a claim with a driver behind it** rather than as the
+   backdrop the curve was drawn on. Zero growth is an assertion that next month's reach, conversion
+   and mix are identical to this month's, and it needs a named driver exactly as an inflection
+   does.
+
+The pass returns a short block every brief carries verbatim: the identity, the label per input, and
+the shape with its driver. A panelist told the flat stretch is an assertion resting on a named
+channel cap can attack the cap; one who is not told reads the flat line as the conservative part of
+the plan and spends the turn somewhere else.
+
+**The failure this prevents:** a structurally wrong model is the one a panel is unable to attack,
+because every lens is pointed at the plan's contents rather than its shape. The panel returns a
+full objection table, all of it about details, and the plan reads as thoroughly red-teamed — but a
+model nobody could attack is not a model nobody could fault. The tell is a red team whose severest
+row argues about a value inside the identity while the identity itself carries a term nobody
+labelled.
 
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
@@ -671,8 +760,20 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Every roadmap item names the assumption it moves.
 - The financial model's assumptions table is complete — no number appears in a projection that
   isn't a named assumption row.
+- A ranged target's readout is the set of corner verdicts, with the binding driver and its `kind`
+  named per corner, and the founder's stated range labelled apart from the evidenced range.
+  Collapsed to one verdict or one interval, the finding is destroyed exactly where it matters — a
+  rectangle where three corners clear and one fails reads at its centre as a clean yes, and the
+  failing corner is usually the one the founder was aiming at.
 - The plan matches the founder's stated ambition, not a template's default ambition.
 - Red team ran, and its surviving objections are IN the plan and in the vault.
+- Every red-team brief carried the model's identity, its per-input `structural`/`policy` labels,
+  and the curve's shape with its named driver, before the panel was briefed. The panel reasons
+  *from* the plan, so a brief that arrives without these inherits the plan's frame and can only
+  object to details.
+- Where the target is an exit, the red team met the acquirer's question: a *named* buyer, the hole
+  it patches, and the bidder count. An unnamed acquirer is not a driver value, and a lens that
+  accepts "someone would want this" grants the driver the verdict was most sensitive to.
 - Rendered deliverables verified page-by-page.
 
 ## Common failure modes

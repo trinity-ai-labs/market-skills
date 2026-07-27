@@ -12,7 +12,8 @@
 #   4. Extension — the vault's own `_vocab.yml`
 #   5. Aliasing and near-miss detection
 #   6. Format rules for this file
-#   7. The terms
+#   7. Amending a base term — the version stamp and the amendment log
+#   8. The terms
 #
 # ---------------------------------------------------------------------------------------
 # 1. The two mechanisms this file powers
@@ -132,11 +133,24 @@
 # for an engagement, add a narrower term and point the narrower claim at the broader one
 # with a `scopes` edge — that is the edge's whole purpose.
 #
+# What that bans is a vault redefining a base term on its own authority. Adopting an amendment
+# THIS file made is a different act with a different safeguard, and it is the one sanctioned way
+# a base definition in a vault copy ever changes: the claims filed under the old wording are
+# reconciled first, and the vault's `vocabulary_version` records that it happened. Section 7 has
+# the stamp and the log; `vault-migration.md` has the procedure. Adopting the new wording before
+# reconciling is exactly the silent redefinition the paragraph above bans, so the order is the
+# safeguard rather than a preference.
+#
 # UPGRADING A VAULT ADDS NEW BASE TERMS AND KEEPS LOCAL ONES. If a local term's key
 # collides with a newly shipped base term, the local one is renamed by whoever added it,
 # before the merge. Letting a local term shadow a base term means two engagements use one
 # key for two different subjects, and the shipped definition quietly stops being true of
 # half the corpora that cite it.
+#
+# That merge carries NEW terms and nothing else. An amended definition of a term the vault
+# already has is invisible to it — there is no new key to add, so the vault keeps the superseded
+# wording and every claim under that subject stays filed against it. Section 7 is what makes
+# that visible.
 #
 # ---------------------------------------------------------------------------------------
 # 5. Aliasing and near-miss detection
@@ -191,9 +205,16 @@
 # COERCE NOTHING. Quote anything a YAML parser would read as something other than text —
 # dates, leading zeros, bare `yes` / `no` / `on` / `off` / `null` / `~`, and any value
 # containing a colon followed by a space. A term NAMED `no-code` is fine; a bare VALUE `no`
-# is not. `required: true` is the one intentional non-string in the file, and it stays
+# is not. `required: true` is one of the two intentional non-strings in the file, and it stays
 # unquoted because `true` reads as the same boolean in YAML 1.1 and 1.2 and in every
 # implementation of both — there is no divergence for a reader to be wrong about.
+#
+# The other is the version stamp: `vocabulary_version` and the `amended_at` on each amendment
+# are unadorned decimal integers, which read as the same number under both YAML versions for the
+# same reason. Keeping them numeric is what lets a comparison be `>` rather than a string
+# compare, where `10` sorts under `9` and an upgrade past nine amendments reports no drift at
+# all. `shipped_in` is the opposite case and stays quoted — `1.3` unquoted is a float, and a
+# release string that silently loses a trailing zero cannot be matched to a changelog heading.
 #
 # DEFINITIONS ARE PLAIN MULTI-LINE SCALARS. Continuation lines are indented under the key.
 # A plain scalar cannot contain a colon followed by a space, so definitions are written
@@ -201,7 +222,86 @@
 # scalars and block lists only, and a block scalar would read as an empty value to it.
 #
 # ---------------------------------------------------------------------------------------
-# 7. The terms
+# 7. Amending a base term — the version stamp and the amendment log
+# ---------------------------------------------------------------------------------------
+#
+# AMENDING A BASE DEFINITION BUMPS `vocabulary_version` AND ADDS A LOG ENTRY, in the same edit.
+# A vault is seeded from this file once and then never re-reads it: the lint checks a corpus
+# against the vault's own `_vocab.yml`, which is what keeps a claim checkable against the
+# vocabulary it was written under. The price is drift in exactly one direction — an upgrade
+# picks up new base terms and never an amended definition of a term the vault already has. The
+# business-plan skill's Phase 0 is the one moment both files are open, so that is where the
+# divergence is reported, as an advisory that does not stop the run.
+#
+# THE STAMP IS WHAT MAKES THAT ADVISORY SCOPEABLE. "These definitions differ" hands the founder
+# a corpus-wide re-read with no way to size it, and a task nobody can size is a task nobody
+# starts — so the drift the advisory exists to surface stays unreconciled, and the advisory
+# itself becomes the noise people learn to skip. A version delta plus the matching log entries
+# names the terms to re-read instead, which turns the same work into a grep and an afternoon.
+#
+# `vocabulary_version` IS AN INTEGER OWNED BY THIS FILE, NOT THE PLUGIN VERSION, and it moves
+# only when a base definition is amended. Three reasons it is decoupled. What a vault needs to
+# know is whether the VOCABULARY moved, not whether the plugin shipped. A plugin stamp would
+# make Phase 0 resolve a path to `.claude-plugin/plugin.json`, which it has no reliable handle
+# on — the skill knows its own reference directory and not the manifest above it. And a
+# plugin-version string frozen into a shipped file goes stale at the next unrelated bump, at
+# which point every vault reports drift that never happened, which is the same skipped advisory
+# arriving by the opposite route.
+#
+# ADDING A TERM IS NOT AN AMENDMENT AND DOES NOT BUMP THE VERSION. A new term reaches an
+# upgraded vault through the additive merge in section 4 and invalidates nothing already filed.
+# Bumping on additions would fire the advisory on every release that touched this file and train
+# the founder to dismiss it before the one release where a definition actually moved.
+#
+# A VAULT COPY CARRYING NO `vocabulary_version` PREDATES THE STAMP. It is older than every entry
+# in the log, not equal to the current version, so the report lists every entry rather than
+# none. Reading an absent stamp as "current" would silently exempt exactly the vaults most
+# likely to need reconciling — the oldest ones.
+#
+# EACH LOG ENTRY CARRIES FIVE FIELDS, and the last one is the one that does the work:
+#
+#   term         the base term whose definition changed
+#   amended_at   the `vocabulary_version` this file carried after the amendment
+#   shipped_in   the plugin release that carried it, quoted. A frozen historical fact rather
+#                than a stamp, so unlike a version string in a header it cannot go stale.
+#                Without it the advisory names an integer the founder cannot map to anything
+#                they installed, and the changelog entry explaining the amendment is unfindable
+#   was          the framing the term carried before, in the words it carried
+#   now          the framing it carries now
+#   must_assert  the test to apply to each claim already filed under this subject — what it has
+#                to assert to still be true under `now`
+#
+# `was` and `now` state the delta; `must_assert` is the only field a founder actually applies to
+# a note. A log carrying the two framings alone makes each claim's reader re-derive the test
+# from the diff, and two claims read by the same person on the same afternoon then get judged
+# against two different readings of it — which produces a reconciliation that is itself
+# unreviewable.
+#
+# WHAT TO DO WITH THE CLAIMS is the procedure in `vault-migration.md`, filed under the upgrade
+# entry point rather than the migration stages. The short of it is that a claim which no longer
+# asserts what the amended subject asserts is SUPERSEDED under the standing two-edit rule, never
+# re-filed in place under wording its author never saw.
+
+vocabulary_version: 2
+
+amendments:
+  - term: steady-state-ceiling
+    amended_at: 2
+    shipped_in: "1.3.0"
+    was: The equilibrium the business converges on.
+    now: The equilibrium the modelled CONFIGURATION converges on, with every input labelled
+      structural or policy per invariant 18, and where the binding input is policy the ceiling
+      under one changed value of it stated beside the number.
+    must_assert: The ceiling of the configuration the claim names, never the ceiling of the
+      business, with the inputs that set it labelled structural or policy. A claim written under
+      `was` asserts a property of the business; the same sentence under `now` asserts a property
+      of one configuration among the several the founder could choose. Those are different
+      claims, so a claim that names no configuration — or that labels no input — is superseded
+      rather than re-filed. Left in place it reports a founder's own churn or spend decision as a
+      law of nature, which is the defect invariant 18 exists to prevent.
+
+# ---------------------------------------------------------------------------------------
+# 8. The terms
 # ---------------------------------------------------------------------------------------
 #
 # Each term traces to a research dimension in the market-analysis skill, a section of the
