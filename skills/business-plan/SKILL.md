@@ -179,6 +179,25 @@ nearest-reachable solve and the negotiation script are in
     owned founder input is over — so it reaches the plan as something the conductor happened to
     remember, or not at all.
 
+22. **At every phase boundary, and after any substantive founder exchange, ask what was
+    established in conversation that no note carries.** Invariant 20 governs claims that are
+    already written and holds them open until the prose they name carries them; this one governs
+    what was never written at all — a constraint, a reframing or a disqualification both parties
+    now treat as settled, reasoned from downstream, and existing only in the transcript. The two
+    cannot substitute for each other: 20's worklist is the set of notes, and something that never
+    became a note is not on it. Whatever the sweep surfaces is recorded exactly as invariant 21
+    records a late fact — the next `[F#]`, a `fact` note resting on the interview `source`, an
+    appended row in the brief — and is then subject to 20 like anything else. It is an invariant
+    rather than a step in any one phase because value discovered in dialogue is the default state
+    of a good engagement rather than an exception to it: the sharpest material arrives mid-answer
+    while the conductor is working on something else, in every phase, and compaction re-attaches
+    only the head of this file, so a rule written into one phase body is out of context in the
+    next — which is where the conversation it needed to sweep just happened. **The failure this
+    prevents:** the engagement knows things the corpus does not, and nothing can tell. Every note
+    is correct, the lint is clean, the reconciliation passes, and the missing material has no ID
+    to be missing by. It surfaces at the walk sign-off, when the founder asks why the thing you
+    both agreed three phases ago is not in the plan.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -470,7 +489,8 @@ dispatch, and Phase 2's brief carries it verbatim so F-numbers stay stable every
 **Closing the grill closes the phase, not the channel** (invariant 21). What the founder says in
 Phases 3 and 4 is recorded exactly as what they said here was, and the brief is **appended** to
 rather than rewritten — every `[F#]` already cited keeps its number, which is the whole reason
-the file is written once and only ever grows.
+the file is written once and only ever grows. Crossing out of this phase runs invariant 22's
+sweep, over the grill that just happened.
 
 **Then compute the provisional verdict, before the research fleet spends anything** — the dossier
 and the grill already carry every driver the identity needs, at assumption strength. Put it to the
@@ -906,8 +926,9 @@ corrects or an `assumption` with a `validated_by` step. An objection disposed on
 is one nothing downstream can find. That note is subject to invariant 20 like any other: it is
 finished when the section its `used_in` names carries it, not when the row is disposed — and a
 note minted this late is the likeliest of all to be left sitting in a ledger nobody reads back
-into the prose. If an objection guts the thesis, say so to the founder
-plainly and revise the bet — that IS the job.
+into the prose. If an objection guts the thesis, say so to the founder plainly and revise the
+bet — that IS the job. That is a substantive founder exchange like any other, and it is the last
+one before anything renders: invariant 22's sweep runs over it before this phase closes.
 
 ## Phase 5 — Deliverables
 
