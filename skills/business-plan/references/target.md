@@ -16,6 +16,7 @@ skill file, so a method written inside Phase 3 is not in context when Phase 3 ru
 - [The outcome decomposes into drivers before any number goes into it](#the-outcome-decomposes-into-drivers-before-any-number-goes-into-it)
   - [Each driver takes its value from a named place in the corpus](#each-driver-takes-its-value-from-a-named-place-in-the-corpus)
 - [The verdict names which driver binds, and by how much](#the-verdict-names-which-driver-binds-and-by-how-much)
+- [A binding driver that is policy makes the verdict conditional, not negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative)
 - [A driver that traces to nothing makes the verdict undetermined, not negative](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
 - [A verdict is capped twice and never asserted at high confidence](#a-verdict-is-capped-twice-and-never-asserted-at-high-confidence)
 - [Two verdicts, because a late-only verdict wastes a whole research run](#two-verdicts-because-a-late-only-verdict-wastes-a-whole-research-run)
@@ -116,6 +117,56 @@ driver was named as binding, its evidenced range is wrong, or an assumption the 
 was given a narrower plausible range than it deserved. Each of the three is settled by re-running
 the identity, which is the property that makes the verdict worth attacking at all — an objection
 to a judgement can only be met with a counter-judgement.
+
+## A binding driver that is policy makes the verdict conditional, not negative
+
+**Classify the binding driver before the verdict is written anywhere.** Read its `kind` off the
+driver-home table: **structural**, set by the category and the product, or **policy**, set by the
+founder and re-settable. Reach is the case that decides most runs, because reach is the driver that
+binds most often and reach is policy — channels crossed with hours is a decision, and a decision is
+not a ceiling.
+
+**Where the binding driver is policy, the target is not unreachable — it is unreachable in the
+stated configuration**, and the verdict says so in those words, with the policy variable named. The
+run then goes directly to the counter-offer and the lever table with that variable solved: the
+hours, the channel count or the price point the stated target would need. The readout names the
+kind alongside the driver, so the founder reads *reach binds, and reach is policy* rather than
+*reach binds* and supplies the second half themselves — usually as "so it cannot be done".
+
+**This is the sibling of the rule below it, aimed at a different defect.** A driver that traces to
+nothing makes the verdict *undetermined*, because the verdict would be resting on nothing; a driver
+that is policy makes the verdict *conditional*, because it would be resting on a choice. Both tests
+run before the verdict is stored, and for the same reason: afterwards it is a `claim` note carrying
+a confidence letter, and neither defect is legible from the outside.
+
+**The failure this prevents:** a negative verdict is the single output of this skill most likely to
+make a founder stop, and a policy-bound one stops them over a decision they could revisit this week
+— reported in the same frontmatter, with the same confidence letter, as an observation someone read
+off a page and quoted. "Your target is unreachable" and "your target is unreachable at six hours a
+week across two channels" are indistinguishable in a rendered plan, and only the second one is
+true.
+
+A worked example, invented end to end:
+
+> A founder wants a paying-user count standing before a raise. Solved at the evidenced conversion
+> and retention rates, the count needs roughly three times the monthly reach the founder's named
+> channels support at their stated hours. Reach binds — and reach is **policy**, so the verdict is
+> not that the count is unreachable.
+>
+> **Readout:** *reach binds, and reach is policy. At the channels and hours you stated, the count
+> lands around a third of the way by the date. Conversion and retention are structural and both
+> clear at the category benchmark — nothing about the product or the category is stopping this; the
+> configuration is.*
+>
+> The lever table then carries the hours and the channel count that would close the gap, and what
+> each of them costs.
+
+**Relieving a policy driver is where "re-check the binding driver after any change" pays.** Solve
+the hours lever in that example and reach stops binding; in this run conversion binds next, at a
+value the category benchmark does not support at the stage the target counts. That second verdict
+is **structural**, and it is the one worth telling the founder about. A run that stops at the first
+binding driver hands the founder their own calendar back as if it were a finding about the market,
+and never reaches the constraint they cannot decide their way out of.
 
 ## A driver that traces to nothing makes the verdict undetermined, not negative
 
