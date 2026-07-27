@@ -498,8 +498,9 @@ settled here — so it is fixed before the decision it was read off is final. Th
 has two halves: re-flip it against whatever pricing, packaging and delivery decision is settled at
 the moment the verdict is computed, **and** re-flip it again when a fork settled later in this
 phase — the strategic-fork simulation below runs after this point, not before it — lands on a
-different packaging than the class was inferred from. Either way a changed class re-solves the identity rather than annotating the verdict,
-because every structural driver beneath the class moves together; the rule and its failure are in
+different packaging than the class was inferred from. Either way a changed class re-solves the
+identity rather than annotating the verdict, because every structural driver beneath the class
+moves together; the rule and its failure are in
 [references/target.md](references/target.md#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it).
 A comparison nothing forces is a comparison that gets skipped, which is why this one is attached to
 the single phase where both halves are open.
