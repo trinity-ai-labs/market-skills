@@ -318,6 +318,12 @@ vault: <absolute path to the vault scaffolded in Phase 0>  — emit notes per it
   contract; the research prose is unchanged.
 ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: skip the top-down
   sizing agent, bottom-up only (the venture-scale sniff test still gets stated); else full rigor.
+target: <the outcome the plan is engineered backwards from, and its date | "no specific
+  number">  — size at the resolution this needs: a target denominated in customers or MRR makes
+  the bottom-up segment count the load-bearing output, not the top-down category figure.
+provisionalVerdict: <reachable | unreachable | undetermined, and the driver it named as binding
+  | "none — no target stated">  — pre-research, so it is an assumption and never citable; the
+  driver it names is the one to research hardest.
 categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
 mustProfile: <competitors the founder named — always profiled, whatever their kind>
 founder brief (verbatim):
