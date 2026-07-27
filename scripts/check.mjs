@@ -18,6 +18,18 @@
 //      skill tells the model to load must exist, or the instruction dead-ends
 //   5. Cross-skill references stay inside skills/          — a reference escaping
 //      the repo breaks for anyone who installed only one skill
+//   6. Every dispatched agent brief interpolates its playbook — a brief that
+//      RESTATES its playbook is a second source of truth nothing keeps in sync,
+//      so a rule added to the playbook silently never reaches the agent
+//   7. Every dimension playbook is registered where it gets dispatched from — a
+//      playbook nobody dispatches is a dimension the fleet never runs; a roster
+//      entry with no playbook is a dimension dispatched with no brief
+//   8. Every backtick-quoted `## Heading` resolves to a real heading — one skill
+//      cites another's output sections by literal string, and when the two drift
+//      the citing prose still reads correct while the section is never produced
+//
+// Checks 6-8 each fail when their own source pattern matches NOTHING, because a
+// check that quietly stops matching prints the same green as a check that passed.
 
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -76,6 +88,162 @@ function relativeLinks(text) {
   return out.filter(Boolean);
 }
 
+const ORCHESTRATION = join(SKILLS_DIR, 'market-analysis', 'references', 'orchestration.md');
+const DIMENSIONS = join(SKILLS_DIR, 'market-analysis', 'references', 'dimensions.md');
+const MA_SKILL = join(SKILLS_DIR, 'market-analysis', 'SKILL.md');
+
+/**
+ * The `agent(...)` calls that legitimately interpolate no playbook, keyed by the
+ * static prefix of their `label:`. This table IS the exception mechanism: a new
+ * dispatch either interpolates its playbook or someone writes down here why it
+ * does not, so an exception is a decision on the record rather than a silence.
+ * A key that matches no call is itself a failure — a stale entry is a check
+ * quietly narrowed to fit the code it was supposed to constrain.
+ */
+const PLAYBOOK_EXEMPT = new Map([
+  ['find:', 'discovery sweep — returns a roster against one search lens, authors no dimension content'],
+  ['verify:', 'refutation panel — argues one already-written claim down, writes nothing'],
+  ['critic:', 'completeness critic — reads the research tree and names gaps, writes nothing'],
+  ['close-gap:', "per-gap remediation on the critic's own generated dispatch string — the critic returns {gap, dispatch} naming no dimension, and several gap classes have none to name (an unprofiled competitor is Workflow A's playbook, which B never holds), so a key guessed off the free text would hand some gaps the WRONG playbook — worse than none"],
+]);
+
+/**
+ * Check 6 — every dispatched brief interpolates its playbook.
+ *
+ * Each `agent(` call is read as the prompt text up to its options object's
+ * `label:`, which is where every call in the file puts it. A prompt mentioning
+ * `${playbook…}` receives its playbook by construction; anything else has to be
+ * on the exemption table above.
+ */
+async function checkBriefsInterpolatePlaybooks() {
+  if (!existsSync(ORCHESTRATION)) {
+    fail(ORCHESTRATION, 'wiring', 'no orchestration.md — check 6 ran on nothing');
+    return;
+  }
+  const text = await readFile(ORCHESTRATION, 'utf8');
+  const seen = new Set();
+  let calls = 0;
+
+  for (const m of text.matchAll(/\bagent\(/g)) {
+    const labelAt = text.indexOf('label:', m.index);
+    if (labelAt === -1) {
+      fail(ORCHESTRATION, 'wiring', 'an agent(...) call with no label: — nothing to key an exception on');
+      continue;
+    }
+    calls += 1;
+    const prompt = text.slice(m.index, labelAt);
+    const raw = text.slice(labelAt).match(/label:\s*[`'"]([^`'"]*)/);
+    // `profile:${c.name}` and 'sizing:reconcile' alike reduce to their static prefix.
+    const label = (raw?.[1] ?? '').split('${')[0] || '<unlabelled>';
+    if (prompt.includes('${playbook')) continue;
+    const why = PLAYBOOK_EXEMPT.get(label);
+    if (why) {
+      seen.add(label);
+      continue;
+    }
+    fail(
+      ORCHESTRATION,
+      'wiring',
+      `agent(...) "${label}" interpolates no playbook — interpolate one, or add "${label}" to PLAYBOOK_EXEMPT with the reason`,
+    );
+  }
+
+  if (calls === 0) fail(ORCHESTRATION, 'wiring', 'no agent(...) calls found — check 6 ran on nothing');
+  for (const label of PLAYBOOK_EXEMPT.keys()) {
+    if (!seen.has(label)) {
+      fail(ORCHESTRATION, 'wiring', `PLAYBOOK_EXEMPT has "${label}" but no such agent(...) call — drop the stale exception`);
+    }
+  }
+}
+
+/**
+ * Check 7 — a dimension playbook is registered everywhere it gets dispatched from.
+ *
+ * Three files have to agree: dimensions.md owns the playbook block, SKILL.md's
+ * standard-dimensions table is the roster a conductor reads, and orchestration.md's
+ * `dimensions:` example array is the shape it passes to Workflow B. The array
+ * legitimately omits whatever the file marks `NEVER include` (Workflow A owns
+ * competitors), so that exclusion is read from the file rather than hardcoded.
+ */
+async function checkDimensionsAreRegistered() {
+  for (const f of [DIMENSIONS, MA_SKILL, ORCHESTRATION]) {
+    if (!existsSync(f)) {
+      fail(f, 'wiring', 'missing — check 7 ran on nothing');
+      return;
+    }
+  }
+  const stems = (text, re) => new Set([...text.matchAll(re)].map((m) => m[1]));
+  const dimsText = await readFile(DIMENSIONS, 'utf8');
+  const skillText = await readFile(MA_SKILL, 'utf8');
+  const orchText = await readFile(ORCHESTRATION, 'utf8');
+
+  // `## Growth curves & reference class (`research/growth-curves.md`) — runs after…`
+  const playbooks = stems(dimsText, /^#{2}\s+[^\n]*?\(`research\/([a-z0-9-]+)\.md`\)/gm);
+  // `| Growth curves & reference class | `research/growth-curves.md` | Parallel… |`
+  const roster = stems(skillText, /^\|[^|\n]+\|\s*`research\/([a-z0-9-]+)\.md`\s*\|/gm);
+  // `// dimensions: e.g. ["growth-curves","sizing",…]`
+  const arrayLine = orchText.match(/^\/\/\s*dimensions:[^\n]*$/m);
+  const dispatched = new Set([...(arrayLine?.[0] ?? '').matchAll(/"([a-z0-9-]+)"/g)].map((m) => m[1]));
+  const ownedElsewhere = new Set([...orchText.matchAll(/NEVER include "([a-z0-9-]+)"/g)].map((m) => m[1]));
+
+  if (playbooks.size === 0) fail(DIMENSIONS, 'wiring', 'no dimension playbook headings matched — check 7 ran on nothing');
+  if (roster.size === 0) fail(MA_SKILL, 'wiring', 'no standard-dimensions table rows matched — check 7 ran on nothing');
+  if (dispatched.size === 0) fail(ORCHESTRATION, 'wiring', 'no `dimensions:` example array matched — check 7 ran on nothing');
+
+  for (const d of playbooks) {
+    if (!roster.has(d)) fail(DIMENSIONS, 'wiring', `playbook \`research/${d}.md\` is in no SKILL.md table row — a dimension the fleet never runs`);
+    if (!dispatched.has(d) && !ownedElsewhere.has(d)) {
+      fail(DIMENSIONS, 'wiring', `playbook \`research/${d}.md\` is in no \`dimensions:\` array — a dimension the fleet never runs`);
+    }
+  }
+  for (const d of roster) {
+    if (!playbooks.has(d)) fail(MA_SKILL, 'wiring', `table row \`research/${d}.md\` has no playbook block — a dimension dispatched with no brief`);
+  }
+  for (const d of dispatched) {
+    if (!playbooks.has(d)) fail(ORCHESTRATION, 'wiring', `\`dimensions:\` lists "${d}" with no playbook block — a dimension dispatched with no brief`);
+  }
+}
+
+/**
+ * Check 8 — a cited `## Heading` resolves to a heading something actually writes.
+ *
+ * Two normalisations are load-bearing. These files hard-wrap prose, so a citation
+ * routinely straddles a line break — matching per line reports a wired contract as
+ * unwired, which is the false positive that gets a check switched off. And a
+ * heading may carry a trailing annotation (`## Strategy comparison  (in
+ * financial-model.md)`), so a citation matches a heading it is a prefix of when
+ * the remainder starts with a space or a bracket.
+ *
+ * A citation opening its own paragraph or list item is that file DECLARING the
+ * section — decisions.md's ten literal brief headings are their own only producer
+ * — so only mid-sentence citations, the ones asserting something about a section
+ * someone else writes, are held to resolve.
+ */
+async function checkCitedHeadingsExist() {
+  const headings = new Set();
+  const citations = [];
+  for await (const file of walk(SKILLS_DIR)) {
+    if (!file.endsWith('.md')) continue;
+    const text = await readFile(file, 'utf8');
+    for (const line of text.split('\n')) {
+      const m = line.match(/^#{2,}\s+(.*?)\s*$/);
+      if (m) headings.add(m[1]);
+    }
+    for (const para of text.split(/\n\s*\n/)) {
+      const flat = para.replace(/\s+/g, ' ').trim();
+      for (const m of flat.matchAll(/`#{2,}\s+([^`]+)`/g)) {
+        const lead = flat.slice(0, m.index).replace(/^[-*>\s]*(\*\*)?\s*(\d+[.)]\s*)?(\*\*)?\s*/, '');
+        if (lead !== '') citations.push({ file, cited: m[1].trim() });
+      }
+    }
+  }
+  if (citations.length === 0) fail(SKILLS_DIR, 'wiring', 'no `## Heading` citations found — check 8 ran on nothing');
+  for (const { file, cited } of citations) {
+    const found = [...headings].some((h) => h === cited || (h.startsWith(cited) && /^[\s(]/.test(h.slice(cited.length))));
+    if (!found) fail(file, 'wiring', `cites \`## ${cited}\` but no template writes that heading — the section is never produced`);
+  }
+}
+
 async function main() {
   if (!existsSync(SKILLS_DIR)) {
     fail(SKILLS_DIR, 'structure', 'no skills/ directory');
@@ -125,6 +293,10 @@ async function main() {
       }
     }
   }
+
+  await checkBriefsInterpolatePlaybooks();
+  await checkDimensionsAreRegistered();
+  await checkCitedHeadingsExist();
 
   report();
 }

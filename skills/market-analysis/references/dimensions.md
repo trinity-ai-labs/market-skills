@@ -49,9 +49,19 @@ Hunt:
   migrate and direct for buyers who would** — pick per the dossier's target segment and say
   which rule you applied (this call moves the sizing, so it's never left implicit).
 - Per competitor: what it does (one paragraph), pricing model + actual price points, disclosed
-  traction (ARR, users, downloads — only if stated somewhere citable), funding/investors,
-  positioning claim in their own words, **most likely next move**, and **what they structurally
-  don't cover and why** — the wedge line. Every profile ends with it.
+  traction points (dated — see below), funding/investors, positioning claim in their own words,
+  **most likely next move**, and **what they structurally don't cover and why** — the wedge
+  line. Every profile ends with it.
+- **Traction points are dated, not a single snapshot, and the ask is every point, not a count**:
+  capture every citable dated point found (ARR, users, downloads — only if stated somewhere
+  citable), each tagged with its own date and source. Two is the bare minimum below which no
+  rate can be derived at all — it is not the target. A floor phrased as a quantity gets read as
+  the quantity: a fleet agent that finds six dated points and reports two has followed the rule
+  as written, and the discarded points can't be recovered later without re-running the research.
+  **Record absence as absence**, e.g. "no disclosed traction, checked <date>" — never a silent
+  omission. An omitted competitor and a competitor that disclosed nothing look identical in the
+  growth band below, so skipping the line instead of stating the absence lets the band quietly
+  narrow to whoever happened to publish.
 - **Next-move prediction is signal-counting, not vibes**: job postings lead announcements by
   6–18 months (2+ same-role posts in ~60 days or a leadership hire = signal; one post = noise);
   call a move a prediction only on ≥2 independent signal types (hiring, changelog, pricing
@@ -63,11 +73,122 @@ Hunt:
 - **Category verdict**: does the competitive set confirm the dossier's category boundary, or
   does it pull the product into a different category? Say so explicitly — the conductor adjusts
   the frame on this verdict before the other dimensions run.
+- **Observed growth band**: a named output alongside the category verdict, not folded into it.
+  For each competitor, derive a %/mo rate from its earliest and latest dated point (whatever the
+  full count collected above) and report the slowest-to-fastest range across the profiled set.
+  **Every rate carries the span it was measured over** — the first and last date used, not just
+  the number — because rates measured over different intervals aren't comparable: a band whose
+  endpoints span different intervals ranks companies by how long ago someone published, not by
+  how fast they grow. Label both endpoints — competitor, its dated points and span, and its stage
+  (launch-year, growth, mature) — rather than averaging: a mature company's rate and a
+  launch-year company's rate are both real and mean different things, and collapsing them into
+  one averaged range produces a single number that describes no company in the set. A competitor
+  recorded as having disclosed no traction sits out of the band rather than being folded in as a
+  zero. **The band is a scalar reference range, not a growth curve**: two dated points (or an
+  earliest-to-latest span) discard the shape and decay of a company's growth, so the band is a
+  sanity check on a projection's level, never a substitute for modelling its trajectory — reading
+  it as a curve invites extrapolating one averaged rate flat across a horizon, the same
+  unmodelled-line error the business-plan skill's projection guard exists to catch.
 
 Sources: competitor pricing pages + changelogs + docs (primary), funding databases and press,
 founder interviews/podcasts, G2/Capterra reviews (for weaknesses users actually complain about
 AND invoice-level real-price signals), HN/Reddit launch threads, job boards, Wayback Machine
 pricing-page diffs (restructuring direction).
+
+## Growth curves & reference class (`research/growth-curves.md`) — runs after competitors, in the parallel wave
+
+The reference class for a target with a date on it. It reads the dated traction points the
+competitive dimension already collected and keeps their SHAPE instead of reducing them to a
+level: **the observed growth band is the level check — is a rate plausible at all — and this
+dimension is the shape check — what a comparable was actually doing at month 18**, which is the
+question a dated target asks and a scalar range structurally cannot answer.
+
+Hunt:
+- **Index every series to a common origin, never to calendar time.** Re-base each comparable's
+  dated points onto months-since-origin, where the origin is a stated event — launch, general
+  availability, or the first crossing of a named revenue or user threshold. Plotting by calendar
+  date compares companies founded years apart on the market conditions each was living through,
+  not on their trajectories: two companies that each grew fast in their own funding climate read
+  as one trend line when they are two different markets sampled at two different times.
+- **Name the origin per company, in the file, because the choice moves every comparison.** Write
+  the origin event and its date beside each series. The same company sits at a different month
+  under a launch origin than under a first-crossed-a-revenue-threshold origin, so a set whose
+  origins are unstated looks aligned when it is actually stacked — and nobody downstream can tell
+  which, because the axis label is identical either way.
+- **A company whose origin cannot be dated stays in the corpus and out of the indexed overlay,
+  labelled as such.** Keep its calendar series and its dated points in the file, list it under the
+  exhibit as excluded-from-overlay with the reason. Silently excluding it makes the reference
+  class look tighter than the evidence supports: what the survivors share is a habit of publishing
+  launch dates, which is a disclosure pattern, not a growth pattern.
+- **Fit the decay across the set — never assume a constant rate.** The output is two things: a
+  per-company trajectory over months-since-origin, and a fitted decay across the indexed set with
+  a stated goodness of fit and the months the fit is supported over. That is what lets the
+  deliverable say what comparables were doing at month N instead of what they averaged over their
+  whole history — and an averaged rate is wrong in both directions at once, understating the early
+  months and overstating the current ones while reporting one number for both.
+- **Too few points to fit is a finding, written in those words.** Where a company has fewer dated
+  points than a shape needs, record it against that company as "two points, no shape" (or one, or
+  none) and leave it out of the fit rather than out of the file. A two-point average presented as
+  a trajectory is the exact error this dimension exists to end: on the page it is indistinguishable
+  from a fitted curve, and it carries none of the evidence a curve implies.
+- **Ask how each stretch was grown, and treat the inflections as the target.** A curve gives shape
+  and no mechanism, and a reference class with no mechanism cannot be acted on: the founder learns
+  comparables were at some rate around month 18 and still cannot tell whether that came from a
+  channel they could run this week or from twenty engineers and an audience that already existed.
+  So for every comparable, record what it was doing to grow across each stretch of its own indexed
+  curve — and above all **at the bends**. An inflection in the series with no named driver in the
+  public strategy record is written down as a stated gap, not left silent. This is the identical
+  test `business-plan`'s `plan-template.md` already applies to the subject's own projection, where
+  every inflection and every flat stretch names its operational driver; applying it to the
+  reference class too is what makes the comparison legitimate in both directions, and skipping it
+  here holds the founder's own line to a standard the comparables were never held to.
+- **Date every strategy to the stretch of curve it ran during.** "They did X" is near-useless
+  without when: a company's month-6 strategy and its month-40 strategy belong to two different
+  companies, and the later one is the one that gets written up. An undated strategy record
+  therefore describes the mature company by default and gets read as the origin story — the
+  founder copies a playbook that only works with the distribution the company had by then.
+- **A company's account of its own growth is a `claim`, never a `fact`.** It is retrospective,
+  self-serving, and survivorship-filtered: the accounts that exist are the ones that worked, and
+  nobody publishes the channel that did nothing. Quote the founder's own words rather than
+  paraphrasing them into causation, and tag confidence under the citation contract in `SKILL.md`
+  like any other figure — no parallel scheme. A stated cause is evidence of what they **did**,
+  never proof of what **caused** the curve; recorded as a fact it becomes an unchallengeable
+  mechanism two documents downstream, with the hedge stripped at the first hop.
+- **Filter each strategy to what is actually available to THIS founder, in the two words the plan
+  already uses.** A comparable's strategy the founder could adopt at their grilled hours, channels
+  and capital is **policy** for them and belongs with the levers; one gated on resources,
+  headcount or advantages they do not have is **structural** for them and belongs in risks. The
+  vocabulary is defined in `business-plan`'s `references/plan-template.md` and `references/target.md`
+  — apply it, never coin a variant. Unfiltered, the dimension hands a founder a list of things
+  that worked for companies that were not them, and the structural ones read as choices they are
+  failing to make.
+- **Sector extrapolation is the top-down corroborant — reconcile it, never average it.** Put the
+  fitted set against the category growth from the market-sizing dimension below. Company
+  trajectories that would have the profiled set outgrowing its own category are not automatically
+  wrong, but they need a named and defended mechanism — share taken from a specific incumbent, a
+  category boundary that is itself expanding, a new buyer entering — or the fits are too hot and
+  say so. Same discipline sizing applies to bottom-up vs top-down: a large gap is a mismatch to
+  explain, and averaging the two produces a number that is neither the category's growth nor any
+  company's.
+- **The file states the exhibit it will produce**: an indexed multi-series chart — months since
+  origin on x, the metric on y, one line per comparable, the subject's own projection overlaid —
+  plus the excluded-from-overlay list beneath it. Built per `rendering.md`; an unrendered curve
+  file gets read as a table of numbers and the shape comparison never happens.
+
+Sources: the dated traction points already in `research/profiles/` and `research/competitors.md`
+(primary — never re-derive points that dimension sourced; a second series for the same company
+disagrees with the band and nothing says which is right), founder retrospectives and
+"our first N years" posts, S-1/F-1 and annual filings for pre-IPO series, investor letters and
+conference decks, Wayback Machine snapshots of a customer-count or logo page (the cheapest way to
+date a threshold crossing), category growth from `research/sizing.md` for the top-down bound.
+
+For the strategy record the sources are the ones the fleet is already on for other reasons, asked
+a question they were never asked: founder interviews, podcasts and conference talks (dated by the
+episode, which is what keys them to a stretch of curve), engineering and growth blogs, changelogs
+and launch threads, job boards (a hiring wave dates a channel or a team the founder may not have),
+Wayback pricing-page diffs, and for public companies the filings and investor letters. Reading the
+same page twice costs nothing; discovering at synthesis that nobody asked how the curve was grown
+costs the whole dimension a re-run.
 
 ## Market sizing (`research/sizing.md`)
 
@@ -89,6 +210,11 @@ Hunt:
 - Growth trajectory: compounding, flat, or shrinking, with the driver. Venture-scale sniff
   test: markets under ~1M potential customers or ~10%/yr growth get flagged as sub-venture
   scale (fine for bootstrap tracks — but say it).
+- **This is category growth, not company growth — never let the two merge.** This bullet
+  measures the market expanding; the competitive-landscape dimension's observed growth band
+  measures how fast a company inside that market acquires customers. A category compounding
+  slowly says nothing about how fast a company inside it can acquire — conflating the two lets a
+  slow-category finding justify a flat company projection downstream.
 - TAM / SAM / SOM as ranges, each with the formula and tag. **"TAM × 1%" is a hard-reject
   pattern.** A defensible SOM names (a) the specific beachhead segment, (b) the concrete wedge
   there, (c) the next 2–3 expansion segments. TAM is a ceiling for sanity-checking ambition,
@@ -219,6 +345,6 @@ Hunt:
 - **Ecosystem/API**: platform products — who would build on it, precedent take-rates.
 
 Add-ons have no canned playbook block. The conductor AUTHORS one in the same format as the
-eight standard dimensions above (output file name + Hunt list + sources + the shared skeleton) and
+standard dimensions above (output file name + Hunt list + sources + the shared skeleton) and
 passes it in `playbooks` — never dispatch a dimension whose playbook is empty (the canonical
 workflow script throws on it).

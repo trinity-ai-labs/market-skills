@@ -199,6 +199,7 @@ like: `references/dimensions.md` — load it before dispatching):
 | Dimension | Output file | Runs |
 |---|---|---|
 | Competitive landscape | `research/competitors.md` | First, alone |
+| Growth curves & reference class | `research/growth-curves.md` | Parallel, after competitors |
 | Market sizing (TAM/SAM/SOM) | `research/sizing.md` | Parallel, after competitors |
 | Customers, segments & JTBD | `research/customers.md` | Parallel |
 | Pricing & willingness to pay | `research/pricing.md` | Parallel |

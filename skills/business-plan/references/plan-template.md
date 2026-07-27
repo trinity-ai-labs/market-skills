@@ -86,7 +86,21 @@ two-edit mechanics are [vault.md](vault.md#every-note-carries-these-six-fields)'
 
 Placed directly after the Thesis, on every track, so no number below is read before the reader
 knows what it was tested against. Omit the section entirely — no placeholder, no "N/A" — when
-the grill returned no target ([grill.md](grill.md#0-target-opens-the-grill) has the rule).>
+the grill returned no target ([grill.md](grill.md#0-target-opens-the-grill) has the rule).
+
+THE INDEXED GROWTH-CURVE EXHIBIT LANDS HERE, directly under the verdict: the comparable series
+from research/growth-curves.md plotted on months since each company's stated origin, with this
+plan's own projection overlaid as a dashed path, authored as inline SVG per rendering.md. It
+belongs in this section and not in Market or Financial summary for two reasons. It answers this
+section's own question — the verdict names the driver that binds, and the exhibit shows whether
+the trajectory that verdict rests on is a shape any comparable has ever had, which is the level
+check and the shape check standing side by side where the reader is already asking "can this
+reach X by Y". And Target & verdict is the section that survives every track: Market, Financial
+summary and The ask are SWAPPED OUT on the bootstrap, lifestyle and lender tracks, so an exhibit
+parked in one of those disappears from exactly the tracks whose target is a fixed income figure
+read against a cash curve. Caption it with the companies excluded from the overlay and the months
+the fit is supported over — an exhibit whose supported range is unstated invites reading the
+curve past where the evidence ends, which is the same error the fitted decay exists to prevent.>
 
 ## Problem
 <beachhead segment, their words, acuteness evidence [S#]>
@@ -117,7 +131,22 @@ available (from moats research), what has to be true to earn it, and the honest 
 <motion selected via the three gates: ACV band → buyer type (single-user value capture?) →
 time-to-value (<30 min unassisted aha?). CAC/ACV sanity ≤ ~30–40%. Hybrid is the normal
 steady state. Solo founder: ONE primary channel matched to founder strength, 90-day commit,
-6–9 months to compounding traction — never promise a 90-day breakout.>
+6–9 months to compounding traction — never promise a 90-day breakout.
+
+Then corroborate the selected motion against research/growth-curves.md's strategy record, AFTER
+the three gates and never instead of them. A channel a comparable demonstrably ran across the
+months this plan is at is better evidence than a category-level claim that the channel works,
+because it is dated to a stage rather than asserted about a market — and the record is keyed to
+the stretch of curve it ran during, so a comparable's month-6 play is not read as its month-40
+one. Only strategies that record filed as POLICY for this founder are eligible: adoptable at
+their grilled hours, channels and capital. A STRUCTURAL one goes to Key risks below, not here.
+
+The record proves what those companies DID, never what CAUSED their curve. It is a claim, not a
+fact, and nobody publishes the channel that did nothing — so the accounts that exist are the ones
+that worked, and reading them as causes buys a survivorship artifact at the price of the plan's
+primary motion. Cite it as corroboration for a choice the gates already made, with its confidence
+tag intact; a motion selected BECAUSE a comparable ran it has confused evidence of action with
+proof of mechanism.>
 
 ## Growth engine
 <the automated execution machine, per growth-engine.md: the three per-product skills to build
@@ -144,7 +173,16 @@ CAC payback + LTV:CAC (always paired), the milestone this capital buys>
 ## Key risks & mitigations
 <2–4 real ones, stated plainly (surviving red-team objections land HERE), each with a
 concrete mitigation or an honest open question. Naming your own risks is a credibility
-signal; defensive spin is not.>
+signal; defensive spin is not.
+
+The STRUCTURAL half of research/growth-curves.md's strategy record is routed here: every
+comparable growth strategy that record filed as gated on headcount, capital, an existing
+audience or an advantage this founder does not have. What the comparables had and this founder
+does not is a risk the plan pre-states rather than one a reader discovers by asking how those
+curves were actually grown — and it is the honest counterweight to the exhibit in Target &
+verdict, which shows the shapes without saying what they cost. Same discipline as the policy half
+above: the record is evidence of what those companies HAD, never proof it is what produced their
+curves, so state the gap and its mitigation without conceding the causal claim.>
 
 ## Validation plan
 <every Low-tagged assumption → cheapest real-world test → kill/continue threshold → date>
@@ -181,9 +219,48 @@ Source = [S#] | [F#] | "guess — validate". At least one negative assumption is
 
 ## Revenue build (bottom-up ONLY)
 <channel → spend → CAC → new customers/mo → conversion → price → revenue, as a visible chain.
-NEVER "X% of TAM" as a model input. Every inflection point names its operational driver
-(hire ramp, channel launch, seasonality) — smooth exponential curves read as reverse-
-engineered from a funding target.>
+NEVER "X% of TAM" as a model input.
+
+The shape of the curve is an assumption in BOTH directions, and both directions name a driver.
+Every inflection point names its operational driver (hire ramp, channel launch, seasonality) —
+smooth exponential curves read as reverse-engineered from a funding target. Every flat or
+near-flat stretch names one too: zero growth is not the absence of an assumption, it is the
+assertion that next month's reach, conversion and mix are identical to this month's. That
+needs a driver exactly as an inflection does — a hard channel cap, a fixed-capacity delivery
+model, a deliberate no-growth policy — and with none named the line is UNMODELLED, not
+conservative.
+
+The two directions are not equally dangerous, and the flat one is worse: an over-projection
+gets challenged, an under-projection gets believed. A hockey stick draws a red team; a flat
+line reads as conservative, therefore credible, therefore unexamined — so it is the flat line
+that reaches the founder's decisions with nothing behind it.
+
+Then compute the projection's OWN implied monthly growth rate and place it against the
+`## Observed growth band` section of competitor-analysis.md. Outside the band in EITHER
+direction — faster than the fastest comparable, or slower than the slowest — is stated and
+defended by a named difference (a channel none of them run, a delivery model that caps
+throughput, a segment that buys on a different cycle), or the projection is re-cut. The bottom
+edge is where this bites: take a mature comparable's rate, decay it across the horizon, and it
+still lands far above zero, which is what makes a no-growth model indefensible rather than
+careful. Worked example: a plan projects 40 customers in month 1 and 44 in month 24 — 0.4%/mo
+— against a band running 2–9%/mo whose slow end is an eight-year-old company. That projection
+is not the cautious floor of the band, it is a fifth of it. Asked why, the founder says "there
+are only so many hours in my week" — which is a real driver, a fixed-capacity delivery model,
+and belongs in the model as a stated cap rather than as a curve that quietly flatlines.
+
+That is the LEVEL check. Run the SHAPE check after it: place the projection's implied
+trajectory against the indexed series in research/growth-curves.md at MATCHING MONTHS SINCE
+ORIGIN — month 6 against month 6, month 18 against month 18 — not one averaged rate against
+the band's two endpoints. The level check alone clears a projection that sits mid-band on its
+average and still asserts a shape NO COMPARABLE IN THE SET HAS EVER HAD: flat where every
+comparable decayed, or one rate held across the whole horizon where every comparable's rate
+fell after its first year. The averaging is what hides it — a single rate stated for the whole
+horizon understates the early months and overstates the late ones AT THE SAME TIME, and lands
+inside the band on both. A shape the indexed set does not contain is defended by a named
+difference exactly as a level excursion is, or the curve is re-cut against the fitted decay.
+Where growth-curves.md reports too few points to fit a shape, say the shape check could not
+run — never let it quietly collapse back into the level check while the model reads as though
+both were made.>
 
 ## Scenarios — one engine, three assumption sets
 <Base / Downside / Upside as DELTAS on the assumptions table (downside = a real stress:
@@ -210,7 +287,28 @@ Then check whether any assumption is COHORT-DEPENDENT rather than flat. Churn is
 — if it varies by cohort (multi-seat accounts churning less than solo, annual less than
 monthly), the ceiling changes SHAPE, not just height, and a flat churn row silently averages
 that away. Name any assumption you suspect is cohort-dependent and mark it for post-launch
-measurement.>
+measurement.
+
+Then label every input in the identity structural or policy — those two words, no third:
+
+  structural — set by the market or the product, not by the founder: churn at the rate the
+  evidence supports, the category's conversion benchmark, the price band willingness-to-pay
+  supports.
+  policy — set by a founder decision: how many channels run, hours a week into the business,
+  the price point chosen inside that band, headcount, how much of the growth engine gets built.
+
+A ceiling whose BINDING input is policy is the ceiling of THIS CONFIGURATION, not of the
+business, and is stated that way — with the ceiling under at least one changed policy value
+shown beside it, so a choice reads as a choice. Worked example: the identity solves to 180
+seats, the binding input is trial flow, and trial flow is one channel worked six hours a week.
+The line reads "180 seats at one channel and six hours a week; 360 at two channels and the
+same hours" — the same arithmetic, relabelled, and it moves the founder from "the business
+tops out below my goal" to "this configuration does".
+
+The failure this prevents: the model lets a decision become a law of nature and then reports
+the consequence as physics, and a number reported as physics is one nobody argues with. The
+cohort check above asks whether an input is uniform; this one asks whether it is chosen. Both
+run, and neither answers the other's question.>
 
 ## Cost of the alternative (MANDATORY wherever price is defended)
 <Affordability is not a pricing argument. "X% of what they already spend" says nothing about

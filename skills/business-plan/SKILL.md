@@ -83,9 +83,13 @@ nearest-reachable solve and the negotiation script are in
 [references/target.md](references/target.md). Point at it; never restate it.
 
 16. **A target verdict is computed from evidenced drivers, never asserted, and never at high
-    confidence.** Asserted instead of computed, a verdict is an opinion in the shape of a
-    finding: unarguable, untestable, and carrying the vault's authority into a forecast about a
-    future nobody has run.
+    confidence — and a verdict whose binding driver is `policy` rather than `structural` is
+    negative for the stated configuration only, never for the target.** Asserted instead of
+    computed, a verdict is an opinion in the shape of a finding: unarguable, untestable, and
+    carrying the vault's authority into a forecast about a future nobody has run. Reported
+    without its driver's kind, a policy-bound "unreachable" stops a founder over a decision they
+    could revisit this week, in the same words and at the same confidence as a constraint no
+    decision of theirs can move.
 
 17. **The vault is a git repo (Phase 0): commit at every meaningful write, and where a remote
     exists — the Phase 5 consent gate — push every commit.** Phase boundaries are too coarse a
@@ -94,6 +98,14 @@ nearest-reachable solve and the negotiation script are in
     destination and visibility, and past that an unpushed commit is worse than no remote — it
     reads as a backup, so the founder believes the corpus is in two places while it is on one
     laptop.
+
+18. **Every input to a steady-state ceiling and every target driver is labelled `structural` or
+    `policy` — those two words — and any ceiling or verdict whose binding input is policy is
+    stated as the result of that configuration, with one changed policy value shown beside it.**
+    Unlabelled, the skill lets a founder's decision become a law of nature and reports the
+    consequence as physics, and a number reported as physics is one nobody argues with. The
+    ceiling's half of this is in [references/plan-template.md](references/plan-template.md), the
+    verdict's in [references/target.md](references/target.md).
 
 ## Output contract — deterministic home
 
@@ -172,6 +184,19 @@ and nothing else, because an upward search from a repo either walks to the files
 finds a *different* engagement's vault and reads the wrong corpus with no error at all. An
 existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill does not
 understand stops the run rather than being half-read.
+
+**A reused vault's `_vocab.yml` is compared against the shipped
+[references/vocabulary.yml](references/vocabulary.yml), and a base term whose definition has
+changed is reported to the founder.** The copy is what keeps a vault checkable, and it is also
+what freezes it: the lint reads the vault's copy and never the shipped file, so a vault
+scaffolded before an amendment keeps the superseded wording indefinitely and nothing says so.
+This phase is the one point where both files are open, which is what makes the comparison free.
+It is **not** an error and does not stop the run — a vault written under an older definition is
+valid, it is only unreviewed, and erroring would break every existing vault on upgrade, which is
+the failure that makes people stop upgrading. What the report asks for is a re-read: the claims
+already filed under an amended subject are read against the new wording, and where one no longer
+asserts what the amended definition says the subject asserts, it is superseded under the standing
+two-edit rule rather than silently re-filed under a definition it was not written to.
 
 If the founder already has a corpus from earlier work — research files, a plan citing `[S#]`/
 `[F#]` codes — adopt it instead of scaffolding an empty vault:
@@ -336,9 +361,13 @@ ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: s
 target: <the outcome the plan is engineered backwards from, and its date | "no specific
   number">  — size at the resolution this needs: a target denominated in customers or MRR makes
   the bottom-up segment count the load-bearing output, not the top-down category figure.
-provisionalVerdict: <reachable | unreachable | undetermined, and the driver it named as binding
-  | "none — no target stated">  — pre-research, so it is an assumption and never citable; the
-  driver it names is the one to research hardest.
+provisionalVerdict: <reachable | unreachable | undetermined, the driver it named as binding, and
+  that driver's kind — structural | policy | "none — no target stated">  — pre-research, so it is
+  an assumption and never citable; the driver it names is the one to research hardest, and the
+  kind says what "hardest" means. A structural driver wants better evidence for the value it
+  already has; a policy one wants evidence for what it could be set to — channel throughput, and
+  which comparable strategies at this stage were adoptable at all — which is a different hunt
+  pointed at different sources.
 categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
 mustProfile: <competitors the founder named — always profiled, whatever their kind>
 founder brief (verbatim):
@@ -372,6 +401,19 @@ skips the question the error existed to ask.
 - Every headline number is a range with an H/M/L tag and resolves through `sources.md`.
 - The whitespace recommendation is specific and falsifiable — not a restatement of the product.
 - The competitor set includes the rivals the founder named in Phase 1 (or says why not).
+- `competitor-analysis.md` carries an `## Observed growth band`, both endpoints labelled with
+  their competitor, its two dated traction points and its stage. Without it a run passes every
+  other check on this list and Phase 3's implied-growth test then points at a section that was
+  never produced — a check that silently does nothing is worse than one that was never written.
+- `research/growth-curves.md` exists, and `market-analysis.md` carries its `## Comparable growth
+  curves` section: the series indexed to months since origin, each company's origin event named,
+  and the companies held out of the indexed overlay listed rather than dropped. The band says how
+  fast comparables grew; only the indexed set says *when*, which is what a dated target asks.
+  Without the file Phase 3's shape check has nothing to place a trajectory against and degrades
+  back to the level check it exists to extend — silently, since the level check still runs and
+  still passes. An origin left unnamed makes two series incomparable while they sit on one axis
+  looking comparable, and an exclusion left off the list reads as a comparable nobody found rather
+  than one whose origin could not be dated.
 - `Coverage` names what was skipped and why; `Risks to this analysis` is non-empty (a market
   analysis with nothing soft in it wasn't done honestly).
 - `Assumptions` is present and non-empty for a dispatched run — each entry states the default,
@@ -430,7 +472,24 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   table (source: analysis, founder, or explicit guess), the revenue build is bottom-up, and
   base/downside/upside scenarios move the assumptions — not the conclusions. Fake precision is
   the failure mode; visible formulas are the fix. Every explicit-guess row is an `assumption`
-  note with a `sensitivity`, which is what orders the validation queue.
+  note with a `sensitivity`, which is what orders the validation queue. **The projection's own
+  implied monthly growth rate is then placed against `competitor-analysis.md`'s `## Observed
+  growth band`** — outside it in either direction, faster than the fastest comparable or slower
+  than the slowest, the projection is defended by a named difference or re-cut. The slow end is
+  where this bites: an over-projection draws a red team, an under-projection reads as
+  conservative and reaches the founder's decisions unexamined. **That is the level check, and it
+  is followed by the shape check: the projection's implied trajectory is placed against
+  `research/growth-curves.md`'s indexed set at matching months since origin**, month 6 against
+  month 6 and month 18 against month 18, not its average rate against the band's endpoints. The
+  level check alone passes a projection that sits comfortably inside the band on its average and
+  still asserts a shape no comparable in the set has ever had — flat where every comparable
+  decayed, or holding one rate across the horizon where every comparable's rate fell after its
+  first year. Averaging is what hides it: one rate stated for the whole horizon understates the
+  early months and overstates the late ones at the same time, and lands inside the band on both
+  counts. A shape the set does not contain is defended by a named difference exactly as a level
+  excursion is, or the curve is re-cut against the fitted decay. Where the set was too thin to
+  fit a shape, the curves file says so and the shape check reports that it could not run —
+  it never falls back to the level check while reading as though both ran.
 - **Open strategic forks get simulated, not asserted.** When the capital path (bootstrap vs
   raise) or entry sequencing (beachhead vs broad) is genuinely open after the grill, build
   the paths as parallel copies of one model and compare founder dollars across exit scenarios,
@@ -481,12 +540,18 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
 attack surface each panelist's brief carries in its lens. "Read the plan and object" produces
 objections about whatever a panelist happened to notice; this produces them about what the
 corpus already knows is weak. Every brief also carries the founder's named fear `[F#]`: attack
-this hardest, then name the two risks the founder did NOT name.
+this hardest, then name the two risks the founder did NOT name. The operator and target-customer
+briefs additionally carry the structural half of `research/growth-curves.md`'s strategy record —
+what comparables had that this founder does not — because that is an objection the corpus can
+already evidence rather than one a panelist has to invent.
 
 **The verdict is on the attack surface, not only the plan built on it.** Every brief carries the
-settled target, the verdict, and the driver the verdict named as binding; a panel that attacks
-only the plan grants the number the plan is engineered backwards from. Re-run the identity
-against any objection that survives: [references/target.md](references/target.md).
+settled target, the verdict, the driver the verdict named as binding, and that driver's `kind`;
+a panel that attacks only the plan grants the number the plan is engineered backwards from, and
+one told a driver binds without being told it is `policy` grants the configuration the verdict
+was computed under — the assumption most worth attacking, and the one no lens is otherwise
+tasked with. Re-run the identity against any objection that survives:
+[references/target.md](references/target.md).
 
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
@@ -551,6 +616,19 @@ exemption; it fails verification if it spills to page 2), per
 design, paged-media CSS, toolchain ladder, and the mandatory render → Read the PDF back →
 check every page → fix loop). A deliverable you didn't read back is not done.
 
+**The indexed growth-curve exhibit renders with the plan, and is checked on the read-back like
+every other page.** It is authored into `market-analysis.md`, and nothing on this path renders
+that file — Phase 2 runs the research engine's Phases 1–4 only and skips its deliverables — so an
+exhibit left where it was written reaches the founder as markdown in a file nobody opens, which
+makes it a table of numbers and means the shape comparison the whole dimension exists to make
+never happens. Carry it into `business-plan.md`'s Target & verdict section per
+[references/plan-template.md](references/plan-template.md), author it as the inline SVG
+`rendering.md` specifies, and check it page-by-page with the rest: the projection overlay
+distinguishable from the comparables at print size and in grayscale, every line labelled at its
+own end, and the excluded-from-overlay companies present in the caption. For a plan whose central
+question is whether a target lands on its date, this is the most load-bearing exhibit the
+engagement produces, and it is the one the render path was structurally dropping.
+
 **Once the deliverables exist — and not before — ask about a remote.** The vault has been a local
 repo since Phase 0; this is the separate question of whether it goes anywhere. Asked at scaffold,
 it asks the founder to consent to the visibility of contents neither of you has seen yet, which
@@ -580,7 +658,15 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
 - Every claim cited in a rendered document carries `used_in`; every `required: true` subject
   has a claim under it or a stated gap.
-- The steady-state ceiling is computed and stated, not implied by a 12-month curve.
+- The steady-state ceiling is computed and stated, not implied by a 12-month curve, with every
+  input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
+  the ceiling of that configuration, with one changed policy value beside it.
+- Every stretch of the projection's curve names its operational driver — inflections and flat
+  stretches alike. Zero growth is an assumption, not the absence of one, and unnamed it is
+  unmodelled rather than conservative.
+- The projection's implied monthly growth rate is placed against the observed growth band, and
+  its implied trajectory against the indexed comparable curves at matching months since origin.
+  Any excursion — in level, in either direction, or in shape — names the difference defending it.
 - The cost of the alternative is priced wherever the price is defended.
 - Every roadmap item names the assumption it moves.
 - The financial model's assumptions table is complete — no number appears in a projection that
@@ -599,6 +685,8 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Thesis is the product description reworded | Trace it to the whitespace recommendation + unfair advantage |
 | Low-confidence number promoted to headline | Confidence is derived; tags survive import; validation step instead |
 | Hockey-stick from penetration hand-waving | Bottom-up build; scenarios move assumptions |
+| Flat acquisition line read as conservative | Zero growth is an assumption: name its driver, and place the implied rate against the band |
+| Policy variable reported as a ceiling | Label every input structural or policy; a chosen input caps the configuration, not the business |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |
 | Grilling the founder on what research answers | Grill intent/resources/appetite; research the market |

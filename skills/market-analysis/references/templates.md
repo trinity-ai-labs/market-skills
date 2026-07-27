@@ -68,6 +68,31 @@ verdict that confirmed or moved it>
 ### Reconciled range
 <TAM / SAM / SOM as ranges + tags · growth trajectory and its driver>
 
+## Comparable growth curves
+<the indexed series: one line per comparable — its origin event and that event's date, the metric
+being tracked, and its dated points re-based to months since that origin. The origin is named per
+company because the choice moves every comparison; an unstated origin makes a stacked set read as
+an aligned one.>
+<the fitted decay across the set: the shape, what it says comparables were doing at named months
+(not what they averaged over their history), the months the fit is supported over, and how well it
+fits. Any company with too few dated points to fit is listed here in those words — "two points, no
+shape" — never folded in as a two-point average.>
+<companies excluded from the indexed overlay, each with the reason (origin undatable) and its
+calendar series retained — listed, never silently dropped, or the reference class reads tighter
+than the evidence supports.>
+<the strategy record, per company and keyed to the stretch of curve it ran during: months <a>–<b>
+· what they were doing to grow · the founder's own words, quoted, with source and pull date ·
+policy or structural FOR THIS FOUNDER at their grilled hours, channels and capital. Every bend in
+that company's indexed series is accounted for here or written down as a stated gap — "inflection
+at month <n>, no driver found in the public record" — never left silent. A company's account of
+its own growth is a claim, never a fact: it is evidence of what they did, not proof of what caused
+the curve, and it is tagged accordingly.>
+<the reconciliation against category growth from Market sizing above: trajectories implying the
+profiled set outgrows its own category are named and defended with a mechanism, or flagged as too
+hot. Reconciled, never averaged.>
+<rendered as the indexed multi-series exhibit — months since origin on x, the metric on y, one
+line per comparable, this product's own projection overlaid — per rendering.md.>
+
 ## Customers & segments
 <segments with sizes; JTBD chain and where current tools break it; beachhead recommendation>
 
@@ -123,9 +148,22 @@ _Analyzed: <date>_
 
 ## Profiles
 ### <Competitor> (direct | indirect | adjacent)
-<what it does · pricing · disclosed traction (cited) · funding · their positioning claim ·
-most likely next move · **wedge line: what they don't cover and why**>
+<what it does · pricing · disclosed traction points — dated, every citable point found (two is
+the bare minimum below which no rate can be derived, never the target quantity), each with its
+source (or "no disclosed traction, checked <date>" if none — absence recorded, never omitted) ·
+funding · their positioning claim · most likely next move · **wedge line: what they don't cover
+and why**>
 <...one block per competitor...>
+
+## Observed growth band
+<the %/mo range derived from each competitor's earliest-to-latest dated point, slowest to
+fastest across the profiled set. Each endpoint labelled with its competitor, the span it was
+measured over (first and last date used — spans aren't comparable across different intervals),
+and its stage (launch-year / growth / mature) — never averaged into a single number, which would
+describe no company in the set. Then the per-competitor rate that produced each endpoint, each
+carrying its own span, one line per competitor, including any recorded as having no disclosed
+traction (excluded from the band, not silently dropped). A scalar reference range, not a growth
+curve — a level check for a projection, never a substitute for modelling its trajectory.>
 
 ## Threat ranking
 <who hurts this product most: Impact × Probability × Confidence per threat, with the scenario.

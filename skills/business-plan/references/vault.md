@@ -434,6 +434,22 @@ free-text subjects are the same as no subjects, because two researchers write
 `wtp` and `willingness-to-pay` for the same thing and the collision that would have
 surfaced their disagreement never happens.
 
+**What the copy costs is drift, and the reconciliation is a Phase 0 report rather than a lint
+check.** The lint reads the vault's `_vocab.yml` and never the shipped `vocabulary.yml` — a
+vault has to stay checkable against the vocabulary it was written under, or an amendment to a
+base term retroactively invalidates claims that were correct when they were filed. The price is
+that an *amended* base definition never reaches an existing vault the way a *new* base term does:
+the vault keeps the superseded wording indefinitely, every claim under that subject was written
+against it, and nothing reports the divergence. So Phase 0 reports it, at the one moment both
+files are open — a base term whose definition differs from the shipped one is named to the
+founder as an advisory that does not stop the run, because a vault written under an older
+definition is valid and only unreviewed, and erroring on it would break every existing vault on
+upgrade. Reconciling is per claim and needs judgement: re-read each claim filed under the amended
+subject against the new wording, and where it no longer asserts what that subject now asserts,
+supersede it — two edits, with `supersedes_reason` naming the amendment. Re-filing it silently
+under the new definition is the failure this exists to stop: the claim then reads as though it
+were written under wording its author never saw.
+
 **`stale_after` is declared per claim and never derived from a pull date.** A vendor price
 rots in a quarter; a founder's motivation does not; a regulatory deadline is fixed until it
 moves. Deriving staleness from `pulled` plus a fixed window flags hundreds of durable claims

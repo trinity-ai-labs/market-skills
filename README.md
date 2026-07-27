@@ -88,9 +88,13 @@ answer that changes the plan's framing rather than stalling the run.
 The verdict on that target is **computed from evidenced drivers, not asserted**, and it names
 which driver binds and by how much — "reach binds: the target needs about six times the monthly
 reach your channels evidence at the hours you gave" — because that is the sentence you can act on.
-Where the evidence can't carry a verdict, it says so and names the cheapest test instead of
-guessing: a confident "no" resting on a guessed conversion rate talks you out of something the
-evidence never spoke to.
+Where the driver that binds is one **you chose** — your hours, your channel count, the price point
+you picked — the answer comes back as unreachable *in that configuration*, with the value that
+variable would have to reach, rather than as a verdict on the target: a constraint you could
+revisit this week reads very differently from one the market sets, and you are told which of the
+two you are looking at. Where the evidence can't carry a verdict at all, it says so and names the
+cheapest test instead of guessing: a confident "no" resting on a guessed conversion rate talks you
+out of something the evidence never spoke to.
 
 An unreachable target opens a **negotiation, not a rejection**: the stated target and why it
 doesn't clear, the nearest target reachable on the resources you stated, and the levers — hours,

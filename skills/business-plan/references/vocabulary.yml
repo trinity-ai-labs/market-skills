@@ -565,10 +565,13 @@ terms:
     required: false
 
   steady-state-ceiling:
-    definition: The equilibrium the business converges on, from the identity where new
-      customers equal churned customers, stated as a number against the founder's stated
-      goal. Set by the ratio between the inputs, never by the growth rate, which is why it
-      is a separate subject from revenue-forecast.
+    definition: The equilibrium the modelled configuration converges on, from the identity
+      where new customers equal churned customers, stated as a number against the founder's
+      stated goal with every input labelled structural or policy. Set by the ratio between
+      the inputs, never by the growth rate, which is why it is a separate subject from
+      revenue-forecast. A claim here asserts the ceiling of the configuration it names, never
+      the ceiling of the business — where the binding input is policy it names that input and
+      the ceiling under one changed value of it.
     aliases:
       - ceiling
       - steady-state
