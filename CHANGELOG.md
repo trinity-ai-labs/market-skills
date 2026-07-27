@@ -2,6 +2,15 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.1.1
+
+- **`README.md` catches up to the portable-vault layout.** `1.1.0` removed the `vault/`
+  subdirectory — the engagement folder became the vault — but the README still pointed
+  `vault-lint.sh` at a `vault` path that no longer exists, which would find no
+  `.vault/config.json` and lint nothing. Fixed both stale paths, added an "On disk" section
+  documenting the actual on-disk layout, and renamed the source-tree `## Layout` section to
+  `## Repo layout` so the two don't read as the same thing.
+
 ## 1.1.0
 
 - **The engagement folder IS the vault — the `vault/` subdirectory is gone.** A source with no public URL carries a *vault-relative* path, so anything a `source` note rests on has to be inside the vault or the path resolves to nothing. Research prose is exactly such a source: a competitor ledger or a dimension file frequently *is* the evidence. With the vault one level down, `research/competitors.md` read as vault-relative, resolved nowhere, and linted clean. Moving the boundary up also makes a corpus **portable** — copy the slug directory and every citation, every `rests_on` edge and every research file travels with it. A ledger whose evidence lives outside it is an index, not a ledger.
