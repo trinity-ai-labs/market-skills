@@ -80,10 +80,18 @@ for it on its own as reliably as the main thread does:
 ## You state a target; the skill tells you whether it is reachable
 
 The entry to `business-plan` is a product and a **target** — a concrete outcome and a date
-(`$20k MRR by June 2027`, `replace a $90k salary in 18 months`) — and the plan is engineered
-backwards from it. Plain language is fine: a direction with no number gets converted into one
-("make this my job" → "what does the job have to pay?"), and "no specific number" is a legitimate
-answer that changes the plan's framing rather than stalling the run.
+(`$20k MRR by June 2027`, `replace a $90k salary in 18 months`, `sell for $30–50M in 3–5 years`)
+— and the plan is engineered backwards from it. Plain language is fine: a direction with no number
+gets converted into one ("make this my job" → "what does the job have to pay?"), and "no specific
+number" is a legitimate answer that changes the plan's framing rather than stalling the run.
+
+An **exit** is a supported shape, not a revenue target in disguise: it decomposes as ARR at the
+sale date times a *multiple band*, and the multiple — set by your growth slope at the moment of
+sale, by which named acquirer has a hole this patches, by how buildable the asset is, and by how
+many buyers have that same hole — is usually what binds. Either axis can be stated as a **range**,
+and a range on both is a rectangle solved at its corners rather than averaged to a midpoint: you
+get back which corners clear and which do not, so you can see whether it is the value or the date
+that is the problem.
 
 The verdict on that target is **computed from evidenced drivers, not asserted**, and it names
 which driver binds and by how much — "reach binds: the target needs about six times the monthly
@@ -98,8 +106,9 @@ out of something the evidence never spoke to.
 
 An unreachable target opens a **negotiation, not a rejection**: the stated target and why it
 doesn't clear, the nearest target reachable on the resources you stated, and the levers — hours,
-capital, price — with what each would have to become. You choose, and the original stays visible
-in the plan as the thing that was tested.
+capital, price, or for an exit the slope, the named acquirer and the date — with what each would
+have to become. You choose, and the original stays visible in the plan as the thing that was
+tested.
 
 The vault is a **git repo** from its first commit, so a claim ledger's retractions, amendments and
 confidence changes become a diffable history. It is local-only by default; once there are
