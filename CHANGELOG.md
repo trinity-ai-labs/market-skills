@@ -52,6 +52,43 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   excursion in either direction with a named difference, or re-cuts. Category growth and company
   growth are held apart where both appear, since a slow-category finding was otherwise free to
   justify a flat company projection.
+- **Comparable growth curves are a research dimension with an indexed exhibit, and the plan
+  checks shape as well as level.** The band above is a scalar: it reports a slowest-to-fastest
+  %/mo range and carries no trajectory, so it cannot answer what comparables were doing at
+  *month 18* — which is the only question a target with a date actually asks. Worse, an averaged
+  rate hides growth decay in both directions at once, understating the early months and
+  overstating the late ones and reporting one number for both, so a projection could sit
+  comfortably mid-band on its average while asserting a shape no comparable in the set had ever
+  had: flat where every one of them decayed, or one rate held across the whole horizon. A new
+  Tier-1 dimension emits `research/growth-curves.md` and a `## Comparable growth curves` section,
+  with each company's series re-based to months since a *named* origin event rather than to
+  calendar time — companies founded years apart compared by date compare market conditions, not
+  trajectories — and a decay fitted across the set rather than assumed. Where the points are too
+  few to fit, the dimension says so as a finding; a two-point average presented as a trajectory
+  is the thing it exists to prevent. A company whose origin cannot be dated stays in the corpus
+  with its calendar series and is listed as held out of the indexed overlay, because an unlisted
+  exclusion reads as a comparable nobody found. `business-plan` now runs both checks: the level
+  check against the band, then the shape check placing the projection's implied trajectory
+  against the indexed set at matching months since origin. The driver-home table's `conversion`
+  and `reach` rows can take a reference-class value from that set too — a category benchmark is
+  one figure standing in for every stage at once, which quietly asserts that a company six months
+  from its origin converts like one forty months from it.
+- **An amended base definition is reported when an existing vault is reused.** This release is
+  the first time a base definition in `vocabulary.yml` has ever been amended
+  (`steady-state-ceiling`), and it exposed a gap: upgrading a vault picks up *new* base terms but
+  never an amended definition of a term it already has. `vault-lint.sh` reads the vault's own
+  `_vocab.yml` and never the shipped file, which is deliberate and stays — a vault must remain
+  checkable against the vocabulary it was written under, or an amendment retroactively invalidates
+  claims that were correct when filed. The consequence was that every vault created before this
+  release keeps the superseded wording indefinitely, with every claim under that subject written
+  against it and nothing saying so. Phase 0 already holds both files — it copies `vocabulary.yml`
+  for a new vault and explicitly reuses an existing one — so the comparison is free there and now
+  runs there: a base term whose definition changed is reported to the founder as an advisory that
+  does not stop the run. It is not an error, because a vault written under an older definition is
+  valid and only unreviewed, and erroring would break every existing vault on upgrade — the
+  failure that makes people stop upgrading. The claims already filed under an amended subject are
+  re-read against the new wording and superseded under the standing two-edit rule, rather than
+  silently re-filed under a definition their author never saw.
 
 ## 1.2.0
 
