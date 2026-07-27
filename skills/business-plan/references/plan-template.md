@@ -86,7 +86,21 @@ two-edit mechanics are [vault.md](vault.md#every-note-carries-these-six-fields)'
 
 Placed directly after the Thesis, on every track, so no number below is read before the reader
 knows what it was tested against. Omit the section entirely — no placeholder, no "N/A" — when
-the grill returned no target ([grill.md](grill.md#0-target-opens-the-grill) has the rule).>
+the grill returned no target ([grill.md](grill.md#0-target-opens-the-grill) has the rule).
+
+THE INDEXED GROWTH-CURVE EXHIBIT LANDS HERE, directly under the verdict: the comparable series
+from research/growth-curves.md plotted on months since each company's stated origin, with this
+plan's own projection overlaid as a dashed path, authored as inline SVG per rendering.md. It
+belongs in this section and not in Market or Financial summary for two reasons. It answers this
+section's own question — the verdict names the driver that binds, and the exhibit shows whether
+the trajectory that verdict rests on is a shape any comparable has ever had, which is the level
+check and the shape check standing side by side where the reader is already asking "can this
+reach X by Y". And Target & verdict is the section that survives every track: Market, Financial
+summary and The ask are SWAPPED OUT on the bootstrap, lifestyle and lender tracks, so an exhibit
+parked in one of those disappears from exactly the tracks whose target is a fixed income figure
+read against a cash curve. Caption it with the companies excluded from the overlay and the months
+the fit is supported over — an exhibit whose supported range is unstated invites reading the
+curve past where the evidence ends, which is the same error the fitted decay exists to prevent.>
 
 ## Problem
 <beachhead segment, their words, acuteness evidence [S#]>

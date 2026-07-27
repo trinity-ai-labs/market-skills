@@ -606,6 +606,19 @@ exemption; it fails verification if it spills to page 2), per
 design, paged-media CSS, toolchain ladder, and the mandatory render → Read the PDF back →
 check every page → fix loop). A deliverable you didn't read back is not done.
 
+**The indexed growth-curve exhibit renders with the plan, and is checked on the read-back like
+every other page.** It is authored into `market-analysis.md`, and nothing on this path renders
+that file — Phase 2 runs the research engine's Phases 1–4 only and skips its deliverables — so an
+exhibit left where it was written reaches the founder as markdown in a file nobody opens, which
+makes it a table of numbers and means the shape comparison the whole dimension exists to make
+never happens. Carry it into `business-plan.md`'s Target & verdict section per
+[references/plan-template.md](references/plan-template.md), author it as the inline SVG
+`rendering.md` specifies, and check it page-by-page with the rest: the projection overlay
+distinguishable from the comparables at print size and in grayscale, every line labelled at its
+own end, and the excluded-from-overlay companies present in the caption. For a plan whose central
+question is whether a target lands on its date, this is the most load-bearing exhibit the
+engagement produces, and it is the one the render path was structurally dropping.
+
 **Once the deliverables exist — and not before — ask about a remote.** The vault has been a local
 repo since Phase 0; this is the separate question of whether it goes anywhere. Asked at scaffold,
 it asks the founder to consent to the visibility of contents neither of you has seen yet, which
