@@ -12,8 +12,8 @@
 //   1. Every skills/<name>/ has a SKILL.md                — a skill that silently isn't one
 //   2. SKILL.md frontmatter parses and carries name+description — the fields the
 //      loader dispatches on; a missing description means the skill never triggers
-//   3. Frontmatter `name` matches the directory name       — install.sh maps by
-//      directory, so a mismatch installs a skill under the wrong trigger
+//   3. Frontmatter `name` matches the directory name       — the plugin loader
+//      maps by directory, so a mismatch registers the skill under the wrong trigger
 //   4. Every relative markdown link resolves to a real file — the reference a
 //      skill tells the model to load must exist, or the instruction dead-ends
 //   5. Cross-skill references stay inside skills/          — a reference escaping
@@ -102,7 +102,7 @@ async function main() {
     if (!fm.name) fail(skillMd, 'frontmatter', 'missing `name`');
     if (!fm.description) fail(skillMd, 'frontmatter', 'missing `description` — the field the model triggers on');
     if (fm.name && fm.name !== name) {
-      fail(skillMd, 'frontmatter', `name "${fm.name}" != directory "${name}" — install.sh maps by directory`);
+      fail(skillMd, 'frontmatter', `name "${fm.name}" != directory "${name}" — the plugin loader maps by directory`);
     }
   }
 
