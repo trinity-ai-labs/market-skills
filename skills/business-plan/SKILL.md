@@ -1006,9 +1006,9 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Every claim about the subject's own product was re-verified against source at the current
   commit before the first section was drafted, and each drift landed as a supersession rather
   than an edit in place. This is the bar above at the one point it can be enforced by
-  construction: the product moves while the research fleet spends a week running, so *which*
-  claims fell behind their own evidence is a knowable population here — the subject's own — and
-  a matter of noticing everywhere else.
+  construction: the product moves while the research fleet spends a week running — a capability
+  shipped, a limit was raised, a seam was closed — so *which* claims fell behind their own
+  evidence is a knowable population here, and a matter of noticing everywhere else.
 - Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
   the claim — a claim whose named section does not say what the note says is still open,
   whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
