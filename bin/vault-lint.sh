@@ -28,7 +28,10 @@
 # false positive on every correctly cited claim, dozens deep on a healthy vault.
 # A check that cries wolf gets switched off, and switching it off takes the half
 # that worked along with it. Whether the section agrees with the note is a read
-# over a bounded worklist, not a grep, and it is not this script's job.
+# over a bounded worklist, not a grep, and it is not this script's job - but
+# BOUNDING that read is: --supersession-sweep names the sections a supersession
+# put in doubt, so the read is over that list rather than over every citation in
+# the corpus. A judgment step nobody can size is a judgment step nobody starts.
 #
 # PARSING STRATEGY
 # The frontmatter reader is a subset parser over flat scalars, block lists, and
@@ -76,6 +79,27 @@ vault-lint.sh - read-only checks over a claim vault.
       citation code at all, so matching note IDs against prose would report a
       false positive on every correctly cited claim - and a check that cries
       wolf gets switched off, taking the half that worked with it.
+
+  vault-lint.sh --supersession-sweep [--vault PATH] [--json]
+      Emit the re-read worklist a supersession owes. For every superseded note,
+      the document sections its used_in named - unioned across the corpus and
+      grouped by section, so two superseded notes citing one section are one
+      row naming both rather than two rows for one job. Each row carries the
+      superseded note, the note that replaced it, and the supersedes_reason,
+      which is the only question anyone ever asks about a superseded note.
+
+      A report, not a verdict - it exits 0 whether or not it finds anything.
+      Finding a worklist is the point of asking: supersession is visible in the
+      note and invisible everywhere the note was cited, and a mode that exited
+      non-zero on a healthy vault would train its caller to ignore the exit
+      code the actual checks depend on.
+
+      It reports the row count as well as the rows, because the gate that
+      consumes this is a read and a read is bounded only if its size is visible
+      before it starts. A superseded note whose used_in named nothing is listed
+      as such rather than dropped - it reached no document, which is the good
+      case, and a sweep that omitted it silently would look exactly like one
+      that failed to read it.
 
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
@@ -151,6 +175,11 @@ while [ $# -gt 0 ]; do
 	--used-in)
 		[ "$MODE" = "graph" ] && die "--used-in and graph are separate modes"
 		MODE="used-in"
+		shift
+		;;
+	--supersession-sweep)
+		[ "$MODE" = "graph" ] && die "--supersession-sweep and graph are separate modes"
+		MODE="supersession-sweep"
 		shift
 		;;
 	--depth)
@@ -716,6 +745,9 @@ if [ "$MODE" = "unverified" ]; then
 		$1 == "S" { V[$2, $3] = $4; next }
 		$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
 
+		# One of three identical copies - see the note beside the
+		# --supersession-sweep one for why they stay copies and what would
+		# change that. Change one, change all three.
 		function jesc(s,   i, c, o) {
 			o = ""
 			for (i = 1; i <= length(s); i++) {
@@ -796,12 +828,247 @@ if [ "$MODE" = "unverified" ]; then
 fi
 
 # ----------------------------------------------------------------------------
+# --supersession-sweep - the re-read worklist a supersession owes
+#
+# When B supersedes A, every document section named in A's `used_in` is now
+# suspect and nothing in the corpus says so: supersession is visible IN THE NOTE
+# and invisible everywhere the note was cited. This walks the supersedes edges
+# already in the record stream and emits the union of those targets.
+#
+# A REPORT, NOT A VERDICT. It exits 0 whether or not it finds anything - the
+# same contract --unverified carries, for the same reason. A supersession with a
+# blast radius is the corpus working correctly, not a violation, and a mode that
+# exited non-zero on a healthy vault would train its caller to ignore the exit
+# code that the actual checks depend on.
+#
+# GROUPED BY TARGET AND DEDUPED. The unit of work is re-read this section, so
+# two superseded notes citing one section are ONE row naming both. Repeating the
+# section per note makes a two-item job look like six, and a worklist that
+# overstates its own size is one that gets skipped at the moment it matters.
+#
+# THE SUPERSEDED SET IS BOTH HALVES OF THE TWO-EDIT RULE: every note named by a
+# `supersedes` edge, and every note carrying `status: superseded`. Taking either
+# half alone would make the worklist depend on the supersession being
+# well-formed - and a half-made supersession is exactly the vault where the
+# worklist matters most, because `check` has already found something wrong with
+# the pair and the documents downstream still say the old thing.
+#
+# THE COUNT IS PART OF THE PRODUCT. The gate that consumes this is a read, and a
+# read is bounded only if its size is visible before it starts - a worklist
+# whose length is unknown until it is finished is one that gets skimmed. The row
+# count is also the standing instrument for whether a read-shaped gate is still
+# the right design at all: when it is routinely past what one pass covers, the
+# bounded read has stopped being bounded.
+#
+# A superseded note with no `used_in` is listed rather than dropped. It reached
+# no document, which is the good case - and a sweep that omitted it silently
+# would be indistinguishable from one that failed to read it.
+#
+# LC_ALL=C is pinned for the reason --used-in found the hard way. Every value
+# here is note text and `supersedes_reason` is free prose - the field in the
+# vault likeliest to carry an em dash or a curly quote - and it goes through a
+# byte-at-a-time escaper. macOS awk in a UTF-8 locale aborts the record with
+# `illegal byte sequence` the moment it meets a sequence it cannot decode, which
+# would end the sweep early and print a short worklist as though it were whole.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "supersession-sweep" ]; then
+	LC_ALL=C awk -v vault="$VAULT" -v asjson="$JSON" -F '\t' '
+		BEGIN {
+			DQ = sprintf("%c", 34)
+			BS = sprintf("%c", 92)
+		}
+
+		$1 == "N" { files[++nf] = $2; next }
+		$1 == "S" { V[$2, $3] = $4; next }
+		$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
+
+		# The third copy of the escaper --unverified and render_failures carry,
+		# one character at a time: a gsub replacement holding a backslash is
+		# rescanned by awk and what it does with an unrecognised escape there is
+		# unspecified. Copied rather than hoisted because the trigger the other
+		# two name has not fired - all three are still the same four cases, and
+		# hoisting would mean assembling awk source in a shell variable, which
+		# costs every one of these programs the top-to-bottom readability it has
+		# today. The moment ANY of the three needs a case the others do not, that
+		# is the point to pay that cost. Change one, change all three.
+		function jesc(s,   i, c, o) {
+			o = ""
+			for (i = 1; i <= length(s); i++) {
+				c = substr(s, i, 1)
+				if (c == DQ) o = o BS DQ
+				else if (c == BS) o = o BS BS
+				else if (c == "\t") o = o " "
+				else o = o c
+			}
+			return o
+		}
+
+		# Both renderers take (note, supersession index) and unpack SB
+		# themselves. Unpacking at the four call sites instead would be the same
+		# split line copied four times, and a fifth call site added later would
+		# be one paste away from reading the pair back in the wrong order.
+		function jnote(f, b,   sb) {
+			split(SB[f, b], sb, SUBSEP)
+			printf "{" DQ "id" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "id"])
+			printf DQ "file" DQ ": " DQ "%s" DQ ", ", jesc(f)
+			printf DQ "type" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "type"])
+			printf DQ "title" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "title"])
+			printf DQ "superseded_by" DQ ": " DQ "%s" DQ ", ", jesc(sb[1])
+			printf DQ "supersedes_reason" DQ ": " DQ "%s" DQ "}", jesc(sb[2])
+		}
+
+		# One superseded note, as the reader of the worklist needs it: what it
+		# said, what replaced it, and why. The reason is what stops the row
+		# sending its reader back to the ledger before they can even decide
+		# whether this section is worth opening.
+		function tnote(f, b, pad,   sb) {
+			split(SB[f, b], sb, SUBSEP)
+			printf "%s%s  %s\n", pad, V[f, "id"], V[f, "type"]
+			printf "%s  %s\n", pad, V[f, "title"]
+			if (sb[1] == "")
+				printf "%s  superseded by: nothing - `status: superseded` with no note naming it in `supersedes`, so the record says this was replaced and not by what\n", pad
+			else {
+				printf "%s  superseded by %s\n", pad, sb[1]
+				printf "%s  reason: %s\n", pad, (sb[2] == "" ? "(none recorded - `supersedes_reason` is absent, so why it was replaced is already gone)" : sb[2])
+			}
+		}
+
+		END {
+			for (i = 1; i <= nf; i++) if (V[files[i], "id"] != "") BYID[V[files[i], "id"]] = files[i]
+
+			# Half one: every note a supersedes edge names. Walked from the
+			# superseding side because that is where the edge and the reason both
+			# live - the superseded note records neither. A dangling supersedes
+			# target is skipped rather than reported: a dangling supersedes edge
+			# is already a dangling-edge failure from `check`, and inventing a
+			# worklist row for a note that is not in the vault would name a
+			# re-read nobody can perform.
+			for (i = 1; i <= nf; i++) {
+				f = files[i]
+				k = f SUBSEP "supersedes"
+				for (j = 1; j <= LN[k]; j++) {
+					tgt = LI[k, j]
+					if (!(tgt in BYID)) continue
+					tf = BYID[tgt]
+					SB[tf, ++SN[tf]] = V[f, "id"] SUBSEP V[f, "supersedes_reason"]
+				}
+			}
+
+			# Half two, and the ordering pass for both. Iterating files[] rather
+			# than the edge walk above is what makes the output order the vault
+			# order instead of awk hash order, so two runs over an unchanged
+			# vault produce the same worklist.
+			for (i = 1; i <= nf; i++) {
+				f = files[i]
+				if (V[f, "id"] == "") continue
+				if (SN[f] == 0 && V[f, "status"] != "superseded") continue
+				SUP[++nsup] = f
+				if (SN[f] == 0) SB[f, ++SN[f]] = "" SUBSEP ""
+			}
+
+			for (s = 1; s <= nsup; s++) {
+				f = SUP[s]
+				k = f SUBSEP "used_in"
+				if (LN[k] == 0) { NOUSE[++nnou] = f; continue }
+				for (j = 1; j <= LN[k]; j++) {
+					entry = LI[k, j]
+					# Split and normalised exactly the way --used-in splits it, so
+					# both modes group on the same target. Without the strip, one
+					# note writing ./business-plan.md#why-now and another writing
+					# business-plan.md#why-now would be two rows for one section -
+					# which is the double-counting this mode exists to avoid.
+					p = index(entry, "#")
+					doc = (p > 0) ? substr(entry, 1, p - 1) : entry
+					anc = (p > 0) ? substr(entry, p + 1) : ""
+					sub(/^[ \t]+/, "", doc); sub(/[ \t]+$/, "", doc)
+					sub(/^\.\//, "", doc)
+					sub(/\/+$/, "", doc)
+
+					key = doc SUBSEP anc
+					if (!(key in SEENT)) {
+						SEENT[key] = 1
+						TORDER[++nt] = key
+						TDOC[key] = doc
+						TANC[key] = anc
+						TSHOW[key] = doc (anc == "" ? "" : "#" anc)
+					}
+					# A note that names one section twice is still one re-read of
+					# that section by that note.
+					if ((key SUBSEP f) in SEENR) continue
+					SEENR[key SUBSEP f] = 1
+					ROW[key, ++RN[key]] = f
+				}
+			}
+
+			if (asjson == "1") {
+				printf "{\n  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
+				printf "  " DQ "worklist_count" DQ ": %d,\n", nt
+				printf "  " DQ "superseded_count" DQ ": %d,\n", nsup
+				printf "  " DQ "worklist" DQ ": ["
+				for (t = 1; t <= nt; t++) {
+					key = TORDER[t]
+					printf "%s\n    {", (t == 1 ? "" : ",")
+					printf DQ "target" DQ ": " DQ "%s" DQ ", ", jesc(TSHOW[key])
+					printf DQ "document" DQ ": " DQ "%s" DQ ", ", jesc(TDOC[key])
+					printf DQ "section" DQ ": " DQ "%s" DQ ", ", jesc(TANC[key])
+					printf DQ "notes" DQ ": ["
+					m = 0
+					for (r = 1; r <= RN[key]; r++) {
+						f = ROW[key, r]
+						for (b = 1; b <= SN[f]; b++) {
+							printf "%s\n      ", (++m == 1 ? "" : ",")
+							jnote(f, b)
+						}
+					}
+					printf "%s]}", (m == 0 ? "" : "\n    ")
+				}
+				printf "%s],\n", (nt == 0 ? "" : "\n  ")
+				printf "  " DQ "reached_no_document" DQ ": ["
+				m = 0
+				for (i = 1; i <= nnou; i++) {
+					f = NOUSE[i]
+					for (b = 1; b <= SN[f]; b++) {
+						printf "%s\n    ", (++m == 1 ? "" : ",")
+						jnote(f, b)
+					}
+				}
+				printf "%s]\n}\n", (m == 0 ? "" : "\n  ")
+				exit 0
+			}
+
+			printf "vault-lint supersession-sweep: %d section%s to re-read, from %d superseded note%s\n",
+				nt, (nt == 1 ? "" : "s"), nsup, (nsup == 1 ? "" : "s")
+			printf "  vault: %s\n", vault
+			printf "\n  sections a supersession put in doubt - the note behind each was replaced and the prose was not\n"
+			if (nt == 0) printf "    (none)\n"
+			for (t = 1; t <= nt; t++) {
+				key = TORDER[t]
+				printf "    %s\n", TSHOW[key]
+				for (r = 1; r <= RN[key]; r++) {
+					f = ROW[key, r]
+					for (b = 1; b <= SN[f]; b++) tnote(f, b, "      ")
+				}
+			}
+			printf "\n  superseded notes that reached no document - nothing to re-read, which is the good case\n"
+			if (nnou == 0) printf "    (none)\n"
+			for (i = 1; i <= nnou; i++) {
+				f = NOUSE[i]
+				for (b = 1; b <= SN[f]; b++) tnote(f, b, "    ")
+			}
+		}
+	' "$RECORDS"
+	exit 0
+fi
+
+# ----------------------------------------------------------------------------
 # what the two verdict modes share
 #
 # `check` and `--used-in` both emit failure rows and both carry a verdict out in
 # their exit status, so the date, the path index and the renderer are built once
-# here rather than twice. graph and --unverified have already exited: neither
-# produces a failure row, and the path index costs a find over the whole vault.
+# here rather than twice. graph, --unverified and --supersession-sweep have
+# already exited: none of the three produces a failure row, and the path index
+# costs a find over the whole vault.
 # ----------------------------------------------------------------------------
 
 TODAY=$(date +%Y-%m-%d)
@@ -837,9 +1104,10 @@ render_failures() {
 		# is rescanned by awk, and what it does with an unrecognised escape there is
 		# unspecified - which would produce invalid JSON on exactly the notes whose
 		# text most needs reading.
-		# The same escaper as the --unverified renderer above. Both are short
-		# and stable; if either ever grows a case the other needs, that is the
-		# point to hoist it rather than copy it a third time.
+		# The same escaper as the --unverified and --supersession-sweep
+		# renderers. All three are short, stable, and identical; the moment any
+		# one of them grows a case the others do not, that is the point to hoist
+		# it. Change one, change all three.
 		function jesc(s,   i, c, o) {
 			o = ""
 			for (i = 1; i <= length(s); i++) {
@@ -1035,6 +1303,13 @@ if [ "$MODE" = "used-in" ]; then
 				id = V[f, "id"]
 				for (j = 1; j <= UN[f]; j++) {
 					entry = UI[f, j]
+					# The split below - document, #anchor, and the leading ./ and
+					# trailing / stripped off - is duplicated in the
+					# --supersession-sweep pass, which groups its worklist on the
+					# result. Change one, change the other: if the two stop
+					# agreeing on what counts as the same target, the sweep emits
+					# two rows for a section this mode resolved once, and nothing
+					# fails to say so.
 					p = index(entry, "#")
 					doc = (p > 0) ? substr(entry, 1, p - 1) : entry
 					anchor = (p > 0) ? substr(entry, p + 1) : ""
