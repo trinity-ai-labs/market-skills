@@ -28,10 +28,10 @@ and is never restated here.
    that traces to nothing is narrative wearing evidence; flag it, don't let it stand.
 2. **A claim that the subject "has no X" is unactionable until checked against source.**
    Milestone fields, issue titles and backlog labels are not evidence of absence.
-3. **Names describe conditions, not costs — and neither does a reading.** Enum values, type
-   lists and field names say what raised a thing — never how often, how badly, or at what cost
-   to the user. The instrument's reading is the same: **before a metric is cited as evidence for
-   a mechanism, state what else produces that number.** A count says a thing exists; it never
+3. **Names describe conditions, not costs — and a reading describes one too, never its cause.**
+   Enum values, type lists and field names say what raised a thing — never how often, how badly,
+   or at what cost to the user. An instrument's reading is the same kind of evidence: **before a
+   metric is cited as evidence for a mechanism, state what else produces that number.** A count says a thing exists; it never
    says why. Where the alternative explanation is not excluded the metric is a description and
    not evidence — and a metric chosen *after* the conclusion is a conclusion wearing an
    instrument. That second clause is the one worth writing down: a careful reader supplies the
@@ -136,8 +136,8 @@ nearest-reachable solve and the negotiation script are in
     whether a section still says what the note says. The two lint calls are what keep the read
     bounded and therefore done: a reconciliation stated as "check the plan against the vault" is
     a task nobody can size, and a task nobody can size is a task nobody starts. The gate sits on
-    the dispatch rather than the phase boundary — a panelist already briefed cannot be
-    un-briefed, and the objections come back about the wrong version at full panel cost.
+    the dispatch rather than the phase boundary, because a panelist already briefed cannot be
+    un-briefed.
 
 20. **A claim is not finished when the note is written; it is finished when the prose it names
     carries it.** Writing the note and writing `used_in` are one act, and the claim stays open
