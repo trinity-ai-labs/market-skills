@@ -384,6 +384,10 @@ skips the question the error existed to ask.
 - Every headline number is a range with an H/M/L tag and resolves through `sources.md`.
 - The whitespace recommendation is specific and falsifiable — not a restatement of the product.
 - The competitor set includes the rivals the founder named in Phase 1 (or says why not).
+- `competitor-analysis.md` carries an `## Observed growth band`, both endpoints labelled with
+  their competitor, its two dated traction points and its stage. Without it a run passes every
+  other check on this list and Phase 3's implied-growth test then points at a section that was
+  never produced — a check that silently does nothing is worse than one that was never written.
 - `Coverage` names what was skipped and why; `Risks to this analysis` is non-empty (a market
   analysis with nothing soft in it wasn't done honestly).
 - `Assumptions` is present and non-empty for a dispatched run — each entry states the default,
@@ -442,7 +446,12 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   table (source: analysis, founder, or explicit guess), the revenue build is bottom-up, and
   base/downside/upside scenarios move the assumptions — not the conclusions. Fake precision is
   the failure mode; visible formulas are the fix. Every explicit-guess row is an `assumption`
-  note with a `sensitivity`, which is what orders the validation queue.
+  note with a `sensitivity`, which is what orders the validation queue. **The projection's own
+  implied monthly growth rate is then placed against `competitor-analysis.md`'s `## Observed
+  growth band`** — outside it in either direction, faster than the fastest comparable or slower
+  than the slowest, the projection is defended by a named difference or re-cut. The slow end is
+  where this bites: an over-projection draws a red team, an under-projection reads as
+  conservative and reaches the founder's decisions unexamined.
 - **Open strategic forks get simulated, not asserted.** When the capital path (bootstrap vs
   raise) or entry sequencing (beachhead vs broad) is genuinely open after the grill, build
   the paths as parallel copies of one model and compare founder dollars across exit scenarios,
@@ -592,7 +601,11 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
 - Every claim cited in a rendered document carries `used_in`; every `required: true` subject
   has a claim under it or a stated gap.
-- The steady-state ceiling is computed and stated, not implied by a 12-month curve.
+- The steady-state ceiling is computed and stated, not implied by a 12-month curve, with every
+  input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
+  the ceiling of that configuration, with one changed policy value beside it.
+- The projection's implied monthly growth rate is placed against the observed growth band, and
+  any excursion in either direction names the difference defending it.
 - The cost of the alternative is priced wherever the price is defended.
 - Every roadmap item names the assumption it moves.
 - The financial model's assumptions table is complete — no number appears in a projection that
@@ -611,6 +624,8 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Thesis is the product description reworded | Trace it to the whitespace recommendation + unfair advantage |
 | Low-confidence number promoted to headline | Confidence is derived; tags survive import; validation step instead |
 | Hockey-stick from penetration hand-waving | Bottom-up build; scenarios move assumptions |
+| Flat acquisition line read as conservative | Zero growth is an assumption: name its driver, and place the implied rate against the band |
+| Policy variable reported as a ceiling | Label every input structural or policy; a chosen input caps the configuration, not the business |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |
 | Grilling the founder on what research answers | Grill intent/resources/appetite; research the market |
