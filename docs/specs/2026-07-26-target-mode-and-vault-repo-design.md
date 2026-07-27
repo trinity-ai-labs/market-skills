@@ -113,6 +113,13 @@ number. It makes a counter-offer that opens a conversation:
 3. The levers that would change the answer — hours, capital, price — each with what it would
    have to become.
 
+**"Nearest" is otherwise undefined once hours, capital and price are all movable.** The rule:
+hold the founder's stated resources and the evidenced driver ranges fixed, and solve the same
+identity for the outcome actually achievable by the stated date. That solved outcome is the
+counter-offer. The levers — hours, capital, price — are then presented separately, as explicit
+counterfactuals of what the outcome becomes if each one moves, which is the negotiation itself,
+kept apart from the counter-offer so the two are never confused.
+
 The founder chooses. The plan is then built against the settled target, and the original stays
 visible in the plan as the thing that was tested and failed, with its retraction reason.
 
