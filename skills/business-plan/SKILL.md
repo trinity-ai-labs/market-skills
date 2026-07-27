@@ -122,6 +122,23 @@ nearest-reachable solve and the negotiation script are in
     ceiling's half of this is in [references/plan-template.md](references/plan-template.md), the
     verdict's in [references/target.md](references/target.md).
 
+19. **Nothing is dispatched to the red team until the plan and the vault have been reconciled.**
+    Lint runs at Phase 2's per-dimension checkpoint and again in Phase 5 before rendering;
+    between drafting and the panel there is nothing, and a panel briefed on a plan the ledger has
+    already moved past returns objections about a version nobody is shipping, at full panel cost.
+    Three steps, and the third is the gate — the first two bound it rather than replace it.
+    `vault-lint.sh --used-in` **fails**: a citation resolving to a file or a section that is not
+    there is not a judgment call. `vault-lint.sh --supersession-sweep` **emits the worklist** —
+    every section a supersession put in doubt. Then **the read**: every `current` claim whose
+    `used_in` names a plan document is reconciled against that document, and every superseded
+    claim's `used_in` targets are re-read. It is a read and not a grep, because plan prose cites
+    `[S#]` and `[F#]` codes while a claim carries no code at all, so nothing mechanical can tell
+    whether a section still says what the note says. The two lint calls are what keep the read
+    bounded and therefore done: a reconciliation stated as "check the plan against the vault" is
+    a task nobody can size, and a task nobody can size is a task nobody starts. The gate sits on
+    the dispatch rather than the phase boundary — a panelist already briefed cannot be
+    un-briefed, and the objections come back about the wrong version at full panel cost.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -614,6 +631,11 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   and reconcile every number against it — the ask, the SOM range, the price. A one-pager
   number that disagrees with the model it fronts is the commonest credibility kill.
 
+**The phase closes on invariant 19's reconciliation, not on the last section being written.**
+The documents are the phase's output; whether the ledger underneath them still agrees is the
+phase's exit condition, and it is checked here because Phase 4 spends its most expensive
+attention on whatever this hands it.
+
 ## Phase 4 — Red team
 
 Before the plan is done, it gets attacked. Dispatch a panel — one agent per lens, parallel
@@ -646,9 +668,12 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
   price, from what they use today?
 
-**The target list is generated, not read.** Two queries run before the panel is briefed:
-`vault-lint.sh --unverified`, and every claim that reached the plan carrying
-`confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the
+**The target list is generated, not read.** Invariant 19's reconciliation runs before any of
+this and gates the dispatch — its two lint calls, `vault-lint.sh --used-in` and
+`vault-lint.sh --supersession-sweep`, belong beside the query below rather than in a block of
+their own, and no brief is written until the read behind them is done. Two further queries then
+run before the panel is briefed: `vault-lint.sh --unverified`, and every claim that reached the
+plan carrying `confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the
 attack surface each panelist's brief carries in its lens. "Read the plan and object" produces
 objections about whatever a panelist happened to notice; this produces them about what the
 corpus already knows is weak. Every brief also carries the founder's named fear `[F#]`: attack
@@ -888,6 +913,11 @@ three milestones, and where everything landed. Invite pushback on the specific b
   rectangle where three corners clear and one fails reads at its centre as a clean yes, and the
   failing corner is usually the one the founder was aiming at.
 - The plan matches the founder's stated ambition, not a template's default ambition.
+- Nothing was dispatched to the red team until the plan and the vault were reconciled: the
+  `--used-in` pass clean, the `--supersession-sweep` worklist read to its end, and every
+  superseded claim's citation sites re-read. The panel is the most expensive read the plan gets,
+  and a panelist already briefed cannot be un-briefed — the objections come back about a version
+  nobody is shipping and are paid for in full.
 - Red team ran, and its surviving objections are IN the plan and in the vault.
 - Every red-team brief carried the model's identity, its per-input `structural`/`policy` labels,
   the curve's shape with its named driver, the inputs unmodelled in the pessimistic direction, and
