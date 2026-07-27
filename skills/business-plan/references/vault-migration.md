@@ -43,7 +43,7 @@ They cite them.
 One grep gives the manifest:
 
 ```sh
-cd ~/Documents/business/<product-slug>
+cd ~/Documents/go-to-market/<product-slug>
 
 # The distinct codes the plan leans on. This is the manifest.
 grep -ohE '\[[SF][0-9]+\]' one-pager.md business-plan.md financial-model.md | sort -u
@@ -622,19 +622,19 @@ Run the shipped lint over the migrated vault. It is read-only, takes the vault p
 `--vault` or `VAULT_PATH`, and never searches upward for one:
 
 ```sh
-vault-lint.sh --vault ~/Documents/business/<product-slug>
+vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
 ```
 
 Clean looks like this, and exits 0:
 
 ```
-vault-lint: clean - /Users/example/Documents/business/example-product
+vault-lint: clean - /Users/example/Documents/go-to-market/example-product
 ```
 
 Failures are grouped by file, each naming the check and the failure it prevents, and exit 1:
 
 ```
-vault-lint: 5 failures under /Users/example/Documents/business/example-product
+vault-lint: 5 failures under /Users/example/Documents/go-to-market/example-product
 
 _vocab.yml
   [coverage-gap] no claim carries the required subject `price-anchor`. The note schema cannot

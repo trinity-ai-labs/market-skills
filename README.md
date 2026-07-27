@@ -16,7 +16,7 @@ Two agent skills that take a product to market, packaged as one plugin. Both are
   red-team pass, and a growth-engine section that turns GTM into automated per-product agent
   skills (content, screenshots/video, docs-sync).
 
-Both write deterministically to `~/Documents/business/<product-slug>/` (same product → same
+Both write deterministically to `~/Documents/go-to-market/<product-slug>/` (same product → same
 folder, re-runs update in place) and render polished, self-contained HTML + page-verified PDF
 deliverables.
 
@@ -65,7 +65,7 @@ registers nothing. The other thing a clone does not give you is `vault-lint.sh` 
 
 Point either at a repo (most common), a spec/PRD/doc, or just describe the idea. Interactive
 runs open on your target, then grill you on the genuine gaps — the questions research can't
-answer — before spending research tokens. Everything lands in `~/Documents/business/<product-slug>/`,
+answer — before spending research tokens. Everything lands in `~/Documents/go-to-market/<product-slug>/`,
 including `deliverables/*.html` and page-verified `deliverables/*.pdf`.
 
 To force one, name it: `/market:market-analysis` or `/market:business-plan`.
@@ -110,12 +110,12 @@ private preselected, and creates nothing without an explicit answer to both.
 
 ## On disk
 
-`~/Documents/business/<product-slug>/` **is** the vault — there is no `vault/` subdirectory.
+`~/Documents/go-to-market/<product-slug>/` **is** the vault — there is no `vault/` subdirectory.
 The slug directory itself carries `.vault/config.json`, and everything else the skills produce
 lives inside it:
 
 ```
-~/Documents/business/<product-slug>/
+~/Documents/go-to-market/<product-slug>/
 ├── .vault/config.json       # schemaVersion — a directory without it is not a vault
 ├── _vocab.yml               # controlled subject vocabulary
 ├── sources/ facts/ claims/ assumptions/ questions/ decisions/ # one file per note
@@ -148,7 +148,7 @@ This is a summary, not the authority — see
 ## `vault-lint.sh`
 
 The plugin ships one executable. `business-plan` builds a claim vault at
-`~/Documents/business/<product-slug>/` — every load-bearing number traced to a dated
+`~/Documents/go-to-market/<product-slug>/` — every load-bearing number traced to a dated
 source — and `vault-lint.sh` is the read-only whole-corpus check that gates it: dangling edges,
 confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
 still cited.
@@ -157,7 +157,7 @@ Claude Code puts an enabled plugin's `bin/` on the Bash tool's `PATH`, so the sk
 bare, from whatever directory the user happens to be working in:
 
 ```sh
-vault-lint.sh --vault ~/Documents/business/<product-slug>
+vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
 vault-lint.sh --unverified --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
