@@ -185,11 +185,16 @@ jobs:
         # exactly the failure this job exists to catch. Inverted, a new directory
         # requires a bump by default, and new contributor tooling costs one loud
         # CI failure and a one-line exemption.
+        #
+        # docs/ is exempt for the same reason: a design spec ships nothing to a
+        # user by itself, so it must not demand a version bump on its own. It
+        # earns one only when the implementation PR it describes lands alongside
+        # it and changes something that does ship.
         run: |
           set -euo pipefail
           base="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'HEAD^' }}"
           git rev-parse --verify "$base" >/dev/null 2>&1 || { echo "no base commit to compare (first commit) — skipping"; exit 0; }
-          exempt='^(scripts/|\.github/|\.agents/|AGENTS\.md|CHANGELOG\.md|\.gitignore)'
+          exempt='^(scripts/|\.github/|\.agents/|AGENTS\.md|CHANGELOG\.md|docs/|\.gitignore)'
           changed="$(git diff --name-only "$base" HEAD | grep -vE "$exempt" || true)"
           if [ -z "$changed" ]; then echo "nothing shipped changed — bump not required"; exit 0; fi
           # The base commit legitimately has no manifest on the PR that introduces
