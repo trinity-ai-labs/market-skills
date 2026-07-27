@@ -760,8 +760,20 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Every roadmap item names the assumption it moves.
 - The financial model's assumptions table is complete — no number appears in a projection that
   isn't a named assumption row.
+- A ranged target's readout is the set of corner verdicts, with the binding driver and its `kind`
+  named per corner, and the founder's stated range labelled apart from the evidenced range.
+  Collapsed to one verdict or one interval, the finding is destroyed exactly where it matters — a
+  rectangle where three corners clear and one fails reads at its centre as a clean yes, and the
+  failing corner is usually the one the founder was aiming at.
 - The plan matches the founder's stated ambition, not a template's default ambition.
 - Red team ran, and its surviving objections are IN the plan and in the vault.
+- Every red-team brief carried the model's identity, its per-input `structural`/`policy` labels,
+  and the curve's shape with its named driver, before the panel was briefed. The panel reasons
+  *from* the plan, so a brief that arrives without these inherits the plan's frame and can only
+  object to details.
+- Where the target is an exit, the red team met the acquirer's question: a *named* buyer, the hole
+  it patches, and the bidder count. An unnamed acquirer is not a driver value, and a lens that
+  accepts "someone would want this" grants the driver the verdict was most sensitive to.
 - Rendered deliverables verified page-by-page.
 
 ## Common failure modes

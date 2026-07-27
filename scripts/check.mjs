@@ -29,7 +29,10 @@
 //      the citing prose still reads correct while the section is never produced
 //   9. Every `#anchor` in a markdown link resolves to a heading in the file it
 //      points at — these references are navigated by their Contents blocks, and
-//      a link whose heading was renamed or deleted lands the reader nowhere
+//      a link whose heading was renamed or deleted lands the reader nowhere.
+//      A file carrying a `## Contents` heading must offer at least one list-item
+//      anchor link, so an index rewritten out of link form cannot go unchecked
+//      while the rest of the file keeps this green
 //
 // Checks 6-9 each fail when their own source pattern matches NOTHING, because a
 // check that quietly stops matching prints the same green as a check that passed.
@@ -120,10 +123,10 @@ function relativeLinks(text) {
  * `killed_because` code span, and a slugger that eats the underscore reports
  * that working link as broken.
  *
- * This mirrors, character for character, the slug rule in ci.yml's
- * "Every '## Contents' link points at a real heading" step. Two checkers with
- * two sluggers is worse than one checker, because they drift and both get
- * trusted.
+ * This is the one place the rule lives, and every anchor check resolves through
+ * it. A second copy of it anywhere — another language, another file — drifts
+ * from this one silently, and both copies get trusted; a check that needs a slug
+ * calls this rather than writing its own.
  *
  * No file here has two headings that slug alike, so the `-1`/`-2` suffixes
  * GitHub appends to a repeated heading have nothing to model.
@@ -328,7 +331,8 @@ async function checkAnchorsResolve() {
   let anchors = 0;
   for await (const file of walk(SKILLS_DIR)) {
     if (!file.endsWith('.md')) continue;
-    for (const target of localLinks(await readFile(file, 'utf8'))) {
+    const text = await readFile(file, 'utf8');
+    for (const target of localLinks(text)) {
       const hash = target.indexOf('#');
       if (hash === -1) continue;
       const path = target.slice(0, hash);
@@ -343,6 +347,21 @@ async function checkAnchorsResolve() {
         const where = dest === file ? 'this file' : relative(ROOT, dest);
         fail(file, 'link', `dead anchor -> ${target} — no heading in ${where} slugs to "${anchor}"`);
       }
+    }
+
+    // The index itself, guarded separately from the links above: a `## Contents`
+    // block that offers no list-item anchor link. Written as plain text, or as
+    // raw <a href="#…"> HTML, it drops out of the check while the rest of the
+    // file keeps this green — and an index nobody validates is one readers
+    // follow into nothing. Neither looser form of the guard closes that: the
+    // repo-wide count below only speaks when EVERY file has gone silent, and
+    // asking for an anchor merely SOMEWHERE in the file lets body links stand in
+    // for the index — decisions.md carries 8 outside its Contents block, enough
+    // to mask a gutted one on their own. Indented entries count; they are most
+    // of the real index.
+    const body = stripFences(text);
+    if (/^##\s+Contents\s*$/m.test(body) && !/^\s*- \[.+?\]\(#[^)]+\)\s*$/m.test(body)) {
+      fail(file, 'link', 'has a `## Contents` heading but no list-item anchor link — its index is unchecked');
     }
   }
   if (anchors === 0) fail(SKILLS_DIR, 'link', 'no #anchor links found — check 9 ran on nothing');
