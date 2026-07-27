@@ -223,8 +223,13 @@ already answers. Full question bank with per-question defaults:
 [references/grill.md](references/grill.md) — load it now. The areas that gate everything
 downstream:
 
-- **Pointers & background** — opens the grill: anything to point the research at (docs, prior
-  research, competitor lists, community threads) and any background the source can't show.
+- **Target** — opens the grill: the concrete outcome and the date the plan is engineered
+  backwards from, asked first because every other answer is read against it. A direction with no
+  number is converted, not accepted ("make this my job" → "what does the job have to pay?"), and
+  "no specific number" is a legitimate answer that gets recorded as one. What is computed from
+  it: [references/target.md](references/target.md).
+- **Pointers & background** — anything to point the research at (docs, prior research,
+  competitor lists, community threads) and any background the source can't show.
 - **Ambition** — lifestyle business, bootstrapped-profitable, or venture-scale? Changes every
   downstream recommendation; never assume.
 - **Value-hypothesis defense** — the per-VH test questions from the Phase 0 dossier (the
@@ -284,6 +289,12 @@ Close the grill by writing `research/founder-brief.md` — the numbered fact tab
 in the plan resolves through, exactly as `[S#]` resolves through `sources.md`. `[F#]` stays the
 human-readable citation; the `fact` note ID is what a query reaches. It's written BEFORE any
 dispatch, and Phase 2's brief carries it verbatim so F-numbers stay stable everywhere.
+
+**Then compute the provisional verdict, before the research fleet spends anything** — the dossier
+and the grill already carry every driver the identity needs, at assumption strength. Put it to the
+founder as the "want to talk about this now, or should I go find out properly?" turn, which is
+only cheap while nothing has been spent. Method and note type:
+[references/target.md](references/target.md).
 
 ## Phase 2 — Run the market analysis
 
@@ -372,6 +383,12 @@ Four query results are resolved BEFORE a section is written, never after:
 - **`status: unverified`** — asserted with nothing behind it. Each needs a validation step in
   the plan, or it does not get asserted.
 
+**The evidence-backed verdict is computed after those queries and before the first section is
+drafted**, as the `claim` note [references/target.md](references/target.md) specifies — and where
+it is negative, the negotiation turn happens HERE, before drafting, per that same file. A plan
+drafted against a target still being argued about is re-cut section by section when the target
+settles, and the milestones written under the old number are the ones that quietly survive.
+
 Write `one-pager.md` FIRST (it forces the clarity everything else inherits), then
 `business-plan.md` in the track's shape, then `financial-model.md` — all per
 [references/plan-template.md](references/plan-template.md). Drafting is YOUR work — it needs the
@@ -440,6 +457,11 @@ attack surface each panelist's brief carries in its lens. "Read the plan and obj
 objections about whatever a panelist happened to notice; this produces them about what the
 corpus already knows is weak. Every brief also carries the founder's named fear `[F#]`: attack
 this hardest, then name the two risks the founder did NOT name.
+
+**The verdict is on the attack surface, not only the plan built on it.** Every brief carries the
+settled target, the verdict, and the driver the verdict named as binding; a panel that attacks
+only the plan grants the number the plan is engineered backwards from. Re-run the identity
+against any objection that survives: [references/target.md](references/target.md).
 
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
