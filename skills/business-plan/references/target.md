@@ -49,18 +49,25 @@ results is well-formed.
   by the reinvestment the plan already commits to — owner pay is a named bucket in
   [strategy-sim.md](strategy-sim.md), never the residual. Solving for revenue equal to the salary
   is the standard version of this mistake, and it understates the target by the whole cost base.
+- **An exit target** — an outcome stated as an acquisition or a company valuation —
+  is `exit value = ARR at exit × multiple`. The left term is one of the identities above, solved
+  at the sale date rather than at the target date, so those shapes are a *term* of this one and
+  never a substitute for it. **The multiple enters as a band and never as a scalar.** Written as
+  one number it reads as a property of the category and the verdict inherits a precision nobody
+  evidenced; written as a band it carries its own uncertainty into the answer, which is the only
+  thing that lets the flip test fire on the term that decides the answer. The band's ends come
+  from the four inputs in [the multiple's own driver-home
+  table](#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr), and the verdict is
+  solved at both of them — [the multiple usually
+  binds](#the-multiple-usually-binds-and-it-is-always-the-least-evidenced-driver).
 
-**An exit target is a shape this file does not yet decompose, and it is the one the list above
-will swallow.** An outcome stated as a company valuation or an acquisition does not reduce to the
-revenue identity, because its dominant term is a multiple and a multiple is not a constant: it is
-a range set by the growth slope at the moment of sale, by how strategically necessary and how
-hard to rebuild the asset is to a *named* acquirer, and by a window that can close. Forced into
-the revenue identity, every one of those disappears into an assumed ARR figure at a multiple
-nobody evidenced or even wrote down, and the verdict comes back confident about a quantity that
-was never the constraint. Until the identity is written, record the exit target as stated and
-return **undetermined**, naming the missing decomposition as what is missing — which is
-[a driver that traces to nothing](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
-applied one level up, to the identity rather than to a value inside it.
+**Forcing an exit into the revenue identity is the substitution this shape exists to stop, and it
+is silent.** Reduced to revenue, an exit target's dominant term disappears: the growth slope at
+the moment of sale, the strategic necessity of the asset to a *named* acquirer, how hard it is to
+rebuild, and whether a second buyer exists all collapse into an assumed ARR figure at a multiple
+nobody evidenced or even wrote down. The verdict then comes back confident about a quantity that
+was never the constraint. The tell is a readout naming a revenue driver as binding on a target
+whose stated outcome is a sale.
 
 **The failure the identity prevents:** without it, "can we get to this number" is answered by
 judgement about the number as a whole, and judgement about a whole number is unarguable. Nobody
