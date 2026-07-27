@@ -501,7 +501,7 @@ Run the shipped lint over the migrated vault. It is read-only, takes the vault p
 `--vault` or `VAULT_PATH`, and never searches upward for one:
 
 ```sh
-scripts/vault-lint.sh --vault ~/Documents/business/<product-slug>/vault
+vault-lint.sh --vault ~/Documents/business/<product-slug>/vault
 ```
 
 Clean looks like this, and exits 0:
@@ -543,7 +543,7 @@ Everything else must be zero. That makes the acceptance test a **census of check
 exit code:
 
 ```sh
-scripts/vault-lint.sh --vault "$VAULT_PATH" --json |
+vault-lint.sh --vault "$VAULT_PATH" --json |
   grep -o '"check": "[a-z-]*"' | sort | uniq -c
 ```
 
@@ -568,11 +568,11 @@ Two closing checks the census does not cover:
 ```sh
 # The validation queue the migration just created: every assumption written in stage 4,
 # plus everything carried at Low confidence. A target list, not a verdict - it exits 0.
-scripts/vault-lint.sh --unverified --vault "$VAULT_PATH"
+vault-lint.sh --unverified --vault "$VAULT_PATH"
 
 # One chain, end to end. Pick a sentence in the plan, take the claim it cites, and confirm
 # the graph reaches a source note with a real quote in it.
-scripts/vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
+vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
 The census proves the corpus is well-formed. The `graph` spot-check on two or three of the
