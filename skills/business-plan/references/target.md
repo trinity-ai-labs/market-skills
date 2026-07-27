@@ -6,10 +6,11 @@ judging one — how the outcome decomposes into drivers, where each driver's val
 what the verdict says, what it says when the evidence cannot carry a verdict at all, and what
 happens when the answer is no.
 
-It sits behind invariant 16 exactly as [vault.md](vault.md) sits behind invariants 7–15: the head
-of `SKILL.md` carries the rule, this file carries the detail, and the phases point here rather
-than restating any of it. That split is not tidiness. Compaction re-attaches only the head of a
-skill file, so a method written inside Phase 3 is not in context when Phase 3 runs.
+It sits behind invariant 16, and carries the verdict half of invariant 18, exactly as
+[vault.md](vault.md) sits behind invariants 7–15: the head of `SKILL.md` carries the rule, this
+file carries the detail, and the phases point here rather than restating any of it. That split
+is not tidiness. Compaction re-attaches only the head of a skill file, so a method written
+inside Phase 3 is not in context when Phase 3 runs.
 
 ## Contents
 
