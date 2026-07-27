@@ -330,6 +330,20 @@ person who knew is gone. And writing `supersedes` **without flipping the target'
 which is indistinguishable from an unresolved contradiction to both the checker and a reader.
 Supersession is always two edits.
 
+**Both edits land in the vault, and the documents the old note reached hear nothing.** That is
+the third cost of a supersession and the one no field on either note records: a superseded claim
+that was cited into three plan sections leaves those three sections asserting the old value, with
+`status: superseded` sitting in a file nobody rereads. `vault-lint.sh --supersession-sweep` is
+what says so out loud — it walks every superseded note, unions the `used_in` targets behind them,
+and prints one row per document section with the notes that reached it, their replacements and
+each `supersedes_reason`. One row per *section* rather than per note, because the work is
+re-reading the section once however many superseded notes point at it. It is a **report and not a
+verdict: it exits 0 whether or not it finds anything**, so it is safe to run on every pass — a
+supersession with a blast radius is the corpus working, and a mode that failed a healthy vault
+would train you to ignore the exit code the actual checks depend on. The row count it prints
+first is what makes the follow-up read something you can size before starting instead of a
+corpus-wide re-read nobody begins.
+
 ### The source note keeps the quote that outlives the URL
 
 ```yaml
@@ -476,7 +490,9 @@ is checked for the file alone, which is the shape to use when a claim reaches a 
 sections it does not name. **The mode stops at whether the target resolves and never asks whether
 the section carries the claim** — the prose cites `[S#]` and `[F#]` codes rather than note IDs,
 so matching IDs against prose would report every correctly cited claim as broken. Whether the
-section still agrees with the note is a read over the worklist this mode produces, not a grep.
+section still agrees with the note is a read, not a grep, and `--supersession-sweep` is the mode
+that bounds it: it names the sections a supersession put in doubt, so the read is over that list
+rather than over every citation in the corpus.
 
 ### The assumption note is what you would believe with no evidence
 
