@@ -23,6 +23,7 @@ inside Phase 3 is not in context when Phase 3 runs.
   - [Each driver takes its value from a named place in the corpus](#each-driver-takes-its-value-from-a-named-place-in-the-corpus)
   - [The multiple's inputs have homes too, and not one of them is ARR](#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)
   - [A structural driver may be sourced from the reference class; a policy driver may only be checked by it](#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it)
+- [Every driver value names its driver in both directions, and a low one with none is unmodelled](#every-driver-value-names-its-driver-in-both-directions-and-a-low-one-with-none-is-unmodelled)
 - [The verdict names which driver binds, and by how much](#the-verdict-names-which-driver-binds-and-by-how-much)
 - [A binding driver that is policy makes the verdict conditional, not negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative)
 - [A driver that traces to nothing makes the verdict undetermined, not negative](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
@@ -258,6 +259,60 @@ both-directions defect wearing the opposite sign — an unaudited bias in a valu
 sourced. Replacing a pessimistic default nobody challenged with an optimistic one nobody challenged
 moves the error; it does not remove it, and it is harder to catch in the second position because the
 number now has a citation behind it.
+
+## Every driver value names its driver in both directions, and a low one with none is unmodelled
+
+A value is a claim about the world in whichever direction it points. **Every value that enters an
+identity — each driver, each of the multiple's four inputs, every rate and share the chain
+multiplies — names the driver behind it in both directions.** A figure near the top of its plausible
+range names why it is that high; a figure near the bottom names why it is that low. Neither direction
+is the default one and neither is exempt. The curve rule in [plan-template.md](plan-template.md) is
+this rule applied to the shape of a projection; this is the general form, and it applies one level
+up, to the numbers the shape is built from.
+
+**A low value with no driver behind it is `unmodelled`, not conservative, and the readout says so in
+that word.** "Conservative" is a compliment the figure has not earned. It describes a value set below
+the evidence *on purpose*, for a stated reason — a hard channel cap, a deliberate ceiling, a known
+constraint. A value that is merely low, picked because low felt safe, has no reason attached at all,
+and it is doing exactly as much unexamined work in the arithmetic as a hockey stick would.
+
+**Run this test before the flip test, on every driver, and do not expect the flip test to cover
+it.** [The flip test](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
+re-solves at both ends of an assumption's plausible range and asks whether the verdict moves. A
+pessimistic value with no driver behind it is a perfectly well-formed `assumption` note carrying a
+`value` and a `sensitivity`, and it passes clean — because the band it was given is a band drawn
+around the wrong centre. The flip test audits how wide the uncertainty is; this test audits whether
+the number was ever pointed anywhere on purpose.
+
+**The failure this prevents:** skepticism that fires in one direction is not skepticism, it is a
+filter. Challenging an aggressive figure reads as rigour and challenging a conservative one reads as
+advocacy, so the low class is the one nobody audits — and in a multiplicative chain it is the class
+that silently compounds, because each member of it is individually defensible and the product of them
+is never examined as a choice. What arrives is a verdict carrying the authority of a disciplined
+process that was only ever pointed one way, reported as a property of the market rather than as a
+stack of decisions nobody wrote down.
+
+A worked example, invented end to end:
+
+> A founder's paying-user target decomposes into seven multiplied terms: monthly reach, conversion to
+> signup, activation, conversion to paid, monthly retention, referral share, and a seasonal drag.
+> Each was filled at the low end to be safe — reach at the bottom of what the named channel supports,
+> both conversion steps a few points under the sourced rate, referral share at zero, the drag applied
+> to every month rather than to the two months it was evidenced in. Every one of the seven is
+> defensible on its own, and every one sits at roughly half of what the evidence carries. Multiplied,
+> they return the target as short by about two orders of magnitude, and the readout names a
+> structural driver as binding.
+>
+> Run the both-directions test and five of the seven name no driver in either direction.
+>
+> **Readout:** *five inputs are unmodelled, not conservative — activation, referral share, the
+> seasonal drag and both conversion steps. No verdict is computed until each one names its driver or
+> takes its value from a home. The two that do name one stand: reach, at the channels and hours the
+> founder stated, and retention, at the sourced category rate.*
+>
+> Re-solved with the five given homes, the same target clears at the cheapest corner. Nothing about
+> the market changed between the two runs. The chain had been pointed one way seven times, and the
+> first readout reported the product of those seven choices as a finding about the category.
 
 ## The verdict names which driver binds, and by how much
 
@@ -692,16 +747,21 @@ number a founder is most likely to want re-litigated later.
    `stale_after` and a `validated_by` kill test. Only what the set cannot speak to becomes an
    `assumption` with its `value` and `sensitivity`, and none of them enters the identity as though it
    were sourced.
-6. **Run the flip test** at both ends of every assumption's plausible range — evidence
+6. **Run the both-directions test on every value in the identity**, before the flip test and
+   whichever way the value points: each names the driver behind it in the direction it sits. A low
+   figure with none named is labelled **unmodelled, not conservative**, and takes a driver or a home
+   before anything is solved. The flip test does not catch these — a pessimistic value with no driver
+   is a well-formed `assumption` and passes it clean.
+7. **Run the flip test** at both ends of every assumption's plausible range — evidence
    uncertainty only, never the target's own stated range. If the verdict flips, stop: return
    *undetermined* plus the cheapest test that settles it, and name the threshold.
-7. **Solve for the required value of each driver** at the target date, and name the one that
+8. **Solve for the required value of each driver** at the target date, and name the one that
    binds — with the size of its gap, its kind, and with the drivers that clear stated too. Where
    either axis was stated as a range, solve at the rectangle's corners and report which clear,
    with the binding driver named per corner; never solve at a midpoint.
-8. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
+9. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
    below.
-9. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
-   with the date held, as a band — then build the lever table separately.
-10. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
+10. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
+    with the date held, as a band — then build the lever table separately.
+11. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
     verdict rather than editing it.
