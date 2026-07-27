@@ -84,6 +84,14 @@ nearest-reachable solve and the negotiation script are in
     finding: unarguable, untestable, and carrying the vault's authority into a forecast about a
     future nobody has run.
 
+17. **The vault is a git repo (Phase 0): commit at every meaningful write, and where a remote
+    exists — the Phase 5 consent gate — push every commit.** Phase boundaries are too coarse a
+    unit of loss for a phase that writes dozens of files: a crash mid-phase should cost one file,
+    not a day of research. A remote is created only on the founder's explicit answer to both
+    destination and visibility, and past that an unpushed commit is worse than no remote — it
+    reads as a backup, so the founder believes the corpus is in two places while it is on one
+    laptop.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -166,19 +174,16 @@ If the founder already has a corpus from earlier work — research files, a plan
 `[F#]` codes — adopt it instead of scaffolding an empty vault:
 [references/vault-migration.md](references/vault-migration.md).
 
-**The vault is a git repo from its first commit.** Run `git init` at the slug directory — the
-vault root, never a subdirectory of it — and commit at every phase boundary. There is no remote
-and therefore no exposure, and a claim ledger is what this pays off on immediately:
-`vault-lint.sh` says what the corpus asserts now, `git diff` says what it stopped asserting, and
-nothing else in the skill answers the second question. An existing repo is left alone: running
-`git init` over one is a no-op, but a re-scaffold that rewrites its files is not.
+**The vault is a git repo from its first commit** (invariant 17). Run `git init` at the slug
+directory — the vault root, never a subdirectory of it. There is no remote and therefore no
+exposure, and a claim ledger is what this pays off on immediately: `vault-lint.sh` says what the
+corpus asserts now, `git diff` says what it stopped asserting, and nothing else in the skill
+answers the second question. An existing repo is left alone: running `git init` over one is a
+no-op, but a re-scaffold that rewrites its files is not.
 
-**Commit more often than the phase boundaries.** A single research phase writes dozens of files,
-so commit at each meaningful write — a dimension's prose and notes, a batch of grill facts, a
-drafted section — as well as at the boundary. Boundary-only commits make the whole phase the
-unit of loss, and the phase is where the expensive writes are: a crash, a context loss or a bad
-edit mid-phase should cost one file, not a day of research. The boundary commit keeps its own
-job — it is the point where the two generated files below are regenerated.
+**What counts as a meaningful write**: a dimension's prose and notes, a batch of grill facts, a
+drafted section. The phase-boundary commit keeps its own job on top of those — it is the point
+where the two generated files below are regenerated.
 
 Two files are **generated**, at scaffold and again at every phase boundary, and committed there:
 
@@ -549,17 +554,12 @@ is why it waits for something worth sharing. Collect both halves:
   and is offered as one; what it is not is a default, over a corpus carrying their pricing, their
   runway and their named fear.
 
-**No remote is created without an explicit answer to both, and with no remote nothing is ever
-pushed.** Local-only is the Phase 0 default and the state a vault stays in unless the founder
-asked otherwise. A remote inferred from one answer — a destination taken as consent to a
-visibility, or a visibility assumed from a destination — publishes a private business corpus on
-a step the founder never took.
-
-**Once the remote exists, every commit is pushed.** The consent gate is on creating and
-configuring the remote, not on using one the founder explicitly asked for: from that point the
-phase-boundary and mid-phase commits go up as they are made. A remote the founder opted into
-that never receives a push is worse than no remote at all — it reads as a backup, so the founder
-believes their corpus is in two places while it is on one laptop.
+**No remote is created without an explicit answer to both.** The gate is on creating and
+configuring the remote, not on using one the founder asked for — past that point invariant 17's
+push applies to every commit. Local-only is the Phase 0 default and the state a vault stays in
+unless the founder asked otherwise. A remote inferred from one answer — a destination taken as
+consent to a visibility, or a visibility assumed from a destination — publishes a private
+business corpus on a step the founder never took.
 
 ## Walk sign-off
 

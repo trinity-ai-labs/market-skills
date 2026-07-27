@@ -60,12 +60,12 @@ registers nothing. The other thing a clone does not give you is `vault-lint.sh` 
 ## Use
 
 - "Run a market analysis on this repo" / "analyze the market for <idea>" → **market-analysis**
-- "Build me a business plan for this" / "how do I take this to market" → **business-plan**
-  (which dispatches market-analysis itself)
+- "Build me a business plan for this" / "how do I take this to market" / "can I get this to $20k
+  MRR by next June?" → **business-plan** (which dispatches market-analysis itself)
 
 Point either at a repo (most common), a spec/PRD/doc, or just describe the idea. Interactive
-runs will grill you on the genuine gaps — the questions research can't answer — before
-spending research tokens. Everything lands in `~/Documents/business/<product-slug>/`,
+runs open on your target, then grill you on the genuine gaps — the questions research can't
+answer — before spending research tokens. Everything lands in `~/Documents/business/<product-slug>/`,
 including `deliverables/*.html` and page-verified `deliverables/*.pdf`.
 
 To force one, name it: `/market:market-analysis` or `/market:business-plan`.
@@ -74,6 +74,33 @@ When dispatching sub-agents, name the skill as an explicit first step — a sub-
 for it on its own as reliably as the main thread does:
 
 > Step 0: invoke the `market:business-plan` skill.
+
+---
+
+## You state a target; the skill tells you whether it is reachable
+
+The entry to `business-plan` is a product and a **target** — a concrete outcome and a date
+(`$20k MRR by June 2027`, `replace a $90k salary in 18 months`) — and the plan is engineered
+backwards from it. Plain language is fine: a direction with no number gets converted into one
+("make this my job" → "what does the job have to pay?"), and "no specific number" is a legitimate
+answer that changes the plan's framing rather than stalling the run.
+
+The verdict on that target is **computed from evidenced drivers, not asserted**, and it names
+which driver binds and by how much — "reach binds: the target needs about six times the monthly
+reach your channels evidence at the hours you gave" — because that is the sentence you can act on.
+Where the evidence can't carry a verdict, it says so and names the cheapest test instead of
+guessing: a confident "no" resting on a guessed conversion rate talks you out of something the
+evidence never spoke to.
+
+An unreachable target opens a **negotiation, not a rejection**: the stated target and why it
+doesn't clear, the nearest target reachable on the resources you stated, and the levers — hours,
+capital, price — with what each would have to become. You choose, and the original stays visible
+in the plan as the thing that was tested.
+
+The vault is a **git repo** from its first commit, so a claim ledger's retractions, amendments and
+confidence changes become a diffable history. It is local-only by default; once there are
+deliverables worth sharing it asks where a remote should live and whether it is public or private,
+private preselected, and creates nothing without an explicit answer to both.
 
 ---
 
