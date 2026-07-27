@@ -104,6 +104,19 @@ two you are looking at. Where the evidence can't carry a verdict at all, it says
 cheapest test instead of guessing: a confident "no" resting on a guessed conversion rate talks you
 out of something the evidence never spoke to.
 
+That scrutiny runs in **both directions**. A cautious number is a claim about your business
+exactly as an ambitious one is, so every value in the model names what drives it whichever way it
+points, and a low one with nothing behind it comes back *unmodelled, not conservative* rather than
+passing as prudence — half a dozen individually defensible low guesses multiplied together move a
+verdict by orders of magnitude and arrive looking like a finding about your market. The set of
+companies you are measured against is an input too, named and tested like any other: where two
+defensible comparison sets disagree about whether the target clears, you get *undetermined* and
+the cheapest test that settles which one you are in. And not having launched yet is not held
+against you — a driver the market sets, with no data of your own behind it, takes its value from
+that indexed set with the shelf life and kill test that come with it, instead of being filed as a
+guess that drags the whole plan's confidence down for a reason that is routing rather than
+evidence.
+
 An unreachable target opens a **negotiation, not a rejection**: the stated target and why it
 doesn't clear, the nearest target reachable on the resources you stated, and the levers — hours,
 capital, price, or for an exit the slope, the named acquirer and the date — with what each would
