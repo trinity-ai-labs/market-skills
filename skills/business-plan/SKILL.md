@@ -606,6 +606,42 @@ was computed under — the assumption most worth attacking, and the one no lens 
 tasked with. Re-run the identity against any objection that survives:
 [references/target.md](references/target.md).
 
+**Read the model's identity before the panel reads its numbers — a pre-pass, not a fourth lens.**
+All three lenses reason from the plan document, so all three inherit its frame: a revenue model
+that assumes a flat curve, or that treats a founder's choice as a fixed property of the business,
+hands every panelist that frame as the ground they attack *from*. A fourth voice briefed alongside
+the others would inherit it too and would arrive at the same moment as three lenses' worth of
+detail objections, too late to change what the panel is pointed at — which is why this runs BEFORE
+any brief is written and its output goes INTO the briefs, exactly as the settled target and the
+binding driver's kind do above. Three steps, in this order:
+
+1. **Write out the revenue model's identity — the chain of terms, ahead of any value in it.**
+   `MRR = paying customers × price`, the acquisition-and-retention chain standing under the
+   customer count, and for an exit target the multiple band on top of it. Terms first, values
+   second: a chain nobody wrote down is one nobody can disagree with a term of, which is the same
+   property that makes the target verdict attackable.
+2. **Label every input `structural` or `policy`** — those two words, per invariant 18, using
+   [references/target.md](references/target.md)'s vocabulary and never a coined variant. A third
+   word ("semi-structural", "market-driven") is a way of not answering that reads as a finer
+   distinction, and it survives review for exactly that reason.
+3. **Name which of the policy inputs the founder could revisit this quarter, and state the model's
+   shape — flat, decaying or compounding — as a claim with a driver behind it** rather than as the
+   backdrop the curve was drawn on. Zero growth is an assertion that next month's reach, conversion
+   and mix are identical to this month's, and it needs a named driver exactly as an inflection
+   does.
+
+The pass returns a short block every brief carries verbatim: the identity, the label per input, and
+the shape with its driver. A panelist told the flat stretch is an assertion resting on a named
+channel cap can attack the cap; one who is not told reads the flat line as the conservative part of
+the plan and spends the turn somewhere else.
+
+**The failure this prevents:** a structurally wrong model is the one a panel is unable to attack,
+because every lens is pointed at the plan's contents rather than its shape. The panel returns a
+full objection table, all of it about details, and the plan reads as thoroughly red-teamed — but a
+model nobody could attack is not a model nobody could fault. The tell is a red team whose severest
+row argues about a value inside the identity while the identity itself carries a term nobody
+labelled.
+
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
 plan document under-describes the product — so a panel will reliably assert the product lacks
