@@ -85,14 +85,16 @@ lives inside it:
 
 ```
 ~/Documents/business/<product-slug>/
-├── .vault/config.json      # schemaVersion — a directory without it is not a vault
-├── _vocab.yml              # controlled subject vocabulary
-├── sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note
-├── research/           # all prose — market-analysis dimensions, product-dossier.md,
-│                        #   founder-brief.md — untouched by the vault machinery
-├── sources.md           # the [S#] index
-├── one-pager.md  business-plan.md  financial-model.md  red-team.md   # plan documents
-└── deliverables/        # rendered business-plan.html/.pdf, one-pager.html/.pdf
+├── .vault/config.json       # schemaVersion — a directory without it is not a vault
+├── _vocab.yml               # controlled subject vocabulary
+├── sources/ facts/ claims/ assumptions/ questions/ decisions/ # one file per note
+├── research/                # all prose — market-analysis dimensions, product-dossier.md,
+│                            #   founder-brief.md — untouched by the vault machinery
+├── sources.md               # the [S#] index
+├── one-pager.md  business-plan.md  financial-model.md  red-team.md # plan documents
+├── deliverables/            # rendered business-plan.html/.pdf, one-pager.html/.pdf
+├── market-analysis.md       # market-analysis's output —
+└── competitor-analysis.md   #   owned by that skill, not business-plan
 ```
 
 Why the boundary sits at the slug directory and not one level down: a source with no public
