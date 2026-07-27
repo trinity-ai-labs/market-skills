@@ -205,6 +205,23 @@ the readout, classified `structural`, homed to `research/growth-curves.md`, and 
 test.** Left unwritten it is not a neutral background choice; it is the largest unexamined input in
 the method.
 
+**A class inferred from the subject's own price point or packaging is downstream of a policy input,
+and it inherits that input's mutability.** The split classifies by who sets the value, and a class
+read off the subject's own price point and delivery shape was set by the founder rather than by the
+market — so the class still describes the category and stays `structural`, but the choice that put
+the subject inside it is a configuration the founder can change tomorrow. Filing it `structural` on
+the strength of where it landed hides that. A class derived that way therefore says what it was
+inferred from wherever it is named, and it is re-flipped when that input settles differently: a
+repricing, a repackaging or a change in how the product is delivered re-opens which companies are
+comparable, and the candidate classes that come back are what the flip test then runs over.
+
+**The failure this causes:** a founder decision selects the comparable set, the set fixes
+conversion, retention and the multiple together one level beneath the arithmetic, and the verdict
+that follows is reported as a property of the market. Repricing then reads as a pricing question
+when it is a reclassification — the one change that moves every structural driver at once — and it
+is never costed as one, because nothing in the readout records that the class was ever downstream of
+a decision the founder controls.
+
 **Flip the reference class across the alternatives a reasonable person would argue for.** Re-solve
 the identity with each candidate set's values at the months the target counts. Same verdict under
 both and it stands, with the readout naming which class it stood on. Verdict moves and there is no
@@ -755,13 +772,19 @@ number a founder is most likely to want re-litigated later.
 7. **Run the flip test** at both ends of every assumption's plausible range — evidence
    uncertainty only, never the target's own stated range. If the verdict flips, stop: return
    *undetermined* plus the cheapest test that settles it, and name the threshold.
-8. **Solve for the required value of each driver** at the target date, and name the one that
+8. **Re-flip the class where the input it was inferred from has settled differently** — a class
+   read off the subject's own price point, packaging or delivery is re-flipped against whatever
+   pricing, packaging and delivery decision is settled at verdict time, and again when a decision
+   settled later lands on a different packaging than the class was inferred from. A changed class
+   is never annotated onto the verdict: the drivers it sources are re-filled at step 4 and the
+   identity is solved again from there.
+9. **Solve for the required value of each driver** at the target date, and name the one that
    binds — with the size of its gap, its kind, and with the drivers that clear stated too. Where
    either axis was stated as a range, solve at the rectangle's corners and report which clear,
    with the binding driver named per corner; never solve at a midpoint.
-9. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
-   below.
-10. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
+10. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
+    below.
+11. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
     with the date held, as a band — then build the lever table separately.
-11. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
+12. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
     verdict rather than editing it.
