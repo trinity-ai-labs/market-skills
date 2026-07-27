@@ -245,11 +245,11 @@ states** (the fields are named below). Neither is hand-edited.
   working notes and none of the output.
 - **`README.md`** at the vault root — what the product is; what this corpus is and which skill
   produced it; the note-type map (the six types and what each asserts); where to start reading
-  (`one-pager.md`, then `business-plan.md`); the current target and its verdict status; and the
-  `vault-lint.sh` invocation for checking the corpus. Its last line states that it is generated
-  and regenerated rather than hand-edited. Without it a shared vault is a directory of
-  `CLAIM-AS23SD44.md`-style filenames — deliberately bare IDs, legible to this skill and opaque
-  to a human opening the repo cold.
+  (`one-pager.md`, then `business-plan.md`); the current target and its verdict status; which
+  phase the corpus is in; and the `vault-lint.sh` invocation for checking the corpus. Its last
+  line states that it is generated and regenerated rather than hand-edited. Without it a shared
+  vault is a directory of `CLAIM-AS23SD44.md`-style filenames — deliberately bare IDs, legible to
+  this skill and opaque to a human opening the repo cold.
 
   **Four of the things it states move while a phase is running, and a write that changes one of
   them regenerates the README in its own commit:** the current target, its verdict status, which
