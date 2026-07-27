@@ -357,9 +357,11 @@ the recording, and every line of it is the grill's own procedure applied unchang
 - **The next `[F#]` in the sequence.** Never a renumber, never a sub-number like `[F12a]`. The
   plan cites `[F#]` by number, so a renumber silently repoints every citation already written,
   and a sub-number is a code nothing else in the corpus produces or resolves.
-- **An appended row in `research/founder-brief.md`**, carrying the date the fact arrived and the
-  phase it arrived in. Appending is what keeps every earlier row's number where the plan expects
-  it; the date is what tells a later reader that a fact postdates the section citing it.
+- **An appended row in `research/founder-brief.md`**, with the date it arrived and the phase it
+  arrived in written into the row's `Note` column — the table's shape is
+  [plan-template.md](plan-template.md)'s and does not change. Appending is what keeps every
+  earlier row's number where the plan expects it; the date is what tells a later reader that a
+  fact postdates the section citing it, which the file's single `_Grilled:_ ` date cannot say.
 - **The same propagation obligation** as any other claim — finished when the prose it names
   carries it, which at this point is nearly always a section already drafted.
 
