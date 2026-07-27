@@ -16,6 +16,7 @@ skill file, so a method written inside Phase 3 is not in context when Phase 3 ru
 - [The outcome decomposes into drivers before any number goes into it](#the-outcome-decomposes-into-drivers-before-any-number-goes-into-it)
   - [Each driver takes its value from a named place in the corpus](#each-driver-takes-its-value-from-a-named-place-in-the-corpus)
 - [The verdict names which driver binds, and by how much](#the-verdict-names-which-driver-binds-and-by-how-much)
+- [A binding driver that is policy makes the verdict conditional, not negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative)
 - [A driver that traces to nothing makes the verdict undetermined, not negative](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
 - [A verdict is capped twice and never asserted at high confidence](#a-verdict-is-capped-twice-and-never-asserted-at-high-confidence)
 - [Two verdicts, because a late-only verdict wastes a whole research run](#two-verdicts-because-a-late-only-verdict-wastes-a-whole-research-run)
@@ -55,12 +56,22 @@ attack is one nobody can trust either.
 A driver value is only a driver value if you can say where it came from. Every one of them has a
 home, and the home is not the same for all four:
 
-| driver | where its value comes from |
-|---|---|
-| price | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
-| conversion | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts |
-| retention | the same, and it is per-period, so the period is part of the value |
-| reach | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput |
+| driver | kind | where its value comes from |
+|---|---|---|
+| price | policy within a structural band | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
+| conversion | structural | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts |
+| retention | structural | the same, and it is per-period, so the period is part of the value |
+| reach | policy | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput |
+
+**`kind` records who sets the value, and it is what a negative verdict is later allowed to
+conclude.** A **structural** driver is set by the category and the product: conversion and
+retention are what they are at the stage the target counts, and no decision the founder takes this
+week moves them. A **policy** driver is a value the founder chose and could choose differently —
+reach is channels × hours, which is a decision, and price is a point the founder picks inside a
+band the willingness-to-pay evidence sets, so the point is policy and the band is structural.
+[A binding driver that is policy makes the verdict conditional, not
+negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative) is the test
+that runs on this column.
 
 **Where the founder's instinct and the evidenced range disagree, record the divergence — never
 average them.** The midpoint of a founder's hope and a benchmark is a number neither of them
@@ -116,6 +127,56 @@ driver was named as binding, its evidenced range is wrong, or an assumption the 
 was given a narrower plausible range than it deserved. Each of the three is settled by re-running
 the identity, which is the property that makes the verdict worth attacking at all — an objection
 to a judgement can only be met with a counter-judgement.
+
+## A binding driver that is policy makes the verdict conditional, not negative
+
+**Classify the binding driver before the verdict is written anywhere.** Read its `kind` off the
+driver-home table: **structural**, set by the category and the product, or **policy**, set by the
+founder and re-settable. Reach is the case that decides most runs, because reach is the driver that
+binds most often and reach is policy — channels crossed with hours is a decision, and a decision is
+not a ceiling.
+
+**Where the binding driver is policy, the target is not unreachable — it is unreachable in the
+stated configuration**, and the verdict says so in those words, with the policy variable named. The
+run then goes directly to the counter-offer and the lever table with that variable solved: the
+hours, the channel count or the price point the stated target would need. The readout names the
+kind alongside the driver, so the founder reads *reach binds, and reach is policy* rather than
+*reach binds* and supplies the second half themselves — usually as "so it cannot be done".
+
+**This is the sibling of the rule below it, aimed at a different defect.** A driver that traces to
+nothing makes the verdict *undetermined*, because the verdict would be resting on nothing; a driver
+that is policy makes the verdict *conditional*, because it would be resting on a choice. Both tests
+run before the verdict is stored, and for the same reason: afterwards it is a `claim` note carrying
+a confidence letter, and neither defect is legible from the outside.
+
+**The failure this prevents:** a negative verdict is the single output of this skill most likely to
+make a founder stop, and a policy-bound one stops them over a decision they could revisit this week
+— reported in the same frontmatter, with the same confidence letter, as an observation someone read
+off a page and quoted. "Your target is unreachable" and "your target is unreachable at six hours a
+week across two channels" are indistinguishable in a rendered plan, and only the second one is
+true.
+
+A worked example, invented end to end:
+
+> A founder wants a paying-user count standing before a raise. Solved at the evidenced conversion
+> and retention rates, the count needs roughly three times the monthly reach the founder's named
+> channels support at their stated hours. Reach binds — and reach is **policy**, so the verdict is
+> not that the count is unreachable.
+>
+> **Readout:** *reach binds, and reach is policy. At the channels and hours you stated, the count
+> lands around a third of the way by the date. Conversion and retention are structural and both
+> clear at the category benchmark — nothing about the product or the category is stopping this; the
+> configuration is.*
+>
+> The lever table then carries the hours and the channel count that would close the gap, and what
+> each of them costs.
+
+**Relieving a policy driver is where "re-check the binding driver after any change" pays.** Solve
+the hours lever in that example and reach stops binding; in this run conversion binds next, at a
+value the category benchmark does not support at the stage the target counts. That second verdict
+is **structural**, and it is the one worth telling the founder about. A run that stops at the first
+binding driver hands the founder their own calendar back as if it were a finding about the market,
+and never reaches the constraint they cannot decide their way out of.
 
 ## A driver that traces to nothing makes the verdict undetermined, not negative
 
@@ -272,15 +333,18 @@ number a founder is most likely to want re-litigated later.
 1. **Write the identity** for the target's shape, in full, before any value goes into it.
 2. **Fill each driver from its named home** — price, conversion, retention, reach — and record
    any founder-instinct divergence rather than averaging it.
-3. **Write every unsourced driver as an `assumption`** with its `value` and `sensitivity`. None of
+3. **Classify each driver `structural` or `policy`** from the table's `kind` column, before any
+   verdict is written. A verdict whose binding driver turns out to be policy is negative for the
+   stated configuration only, and is written in those words.
+4. **Write every unsourced driver as an `assumption`** with its `value` and `sensitivity`. None of
    them enters the identity as though it were sourced.
-4. **Run the flip test** at both ends of every assumption's plausible range. If the verdict flips,
+5. **Run the flip test** at both ends of every assumption's plausible range. If the verdict flips,
    stop: return *undetermined* plus the cheapest test that settles it, and name the threshold.
-5. **Solve for the required value of each driver** at the target date, and name the one that
-   binds — with the size of its gap, and with the drivers that clear stated too.
-6. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
+6. **Solve for the required value of each driver** at the target date, and name the one that
+   binds — with the size of its gap, its kind, and with the drivers that clear stated too.
+7. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
    below.
-7. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
+8. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
    with the date held, as a band — then build the lever table separately.
-8. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
+9. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
    verdict rather than editing it.
