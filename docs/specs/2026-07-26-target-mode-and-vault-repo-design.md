@@ -55,6 +55,36 @@ Two properties fall out of the existing invariants rather than needing new machi
 
 No new note type, no `schemaVersion` bump, and no change to `vault-lint.sh`.
 
+## A verdict is computed from a driver identity, never asserted
+
+**The verdict is computed from a driver identity, never asserted.** The target outcome is
+decomposed into the drivers that produce it — for a revenue target, `MRR = paying customers ×
+price`, with paying customers in turn a function of reach, conversion and retention; for a
+user-count target, the equivalent chain. Each driver takes its value from evidence: price from
+the pricing/willingness-to-pay dimension, conversion and retention from category benchmarks
+carrying their source, reach from what the founder's actual channels support at their stated
+hours and budget (the resource facts from the grill).
+
+**The verdict names the binding driver, not just a yes or no.** The useful output is which
+driver fails and by how much — "the target needs roughly 220 paying customers by month 12; the
+channel you would actually run supports about 40 at 6 hours a week on the evidenced conversion
+rate" — because that is the sentence a founder can act on. A bare "unreachable" is not
+actionable and is also unfalsifiable.
+
+**A driver with no evidence makes the verdict undetermined, not negative.** Any driver value
+not traceable to a source is an `assumption` note carrying its sensitivity. If flipping that
+assumption within a plausible range flips the verdict, the run returns "undetermined — and this
+is the cheapest thing to test" with the test named, rather than a verdict. A confident "no"
+resting on a guessed conversion rate talks a founder out of something the evidence never
+actually spoke to, and the vault's formality makes that guess look researched.
+
+**A verdict also carries a confidence ceiling, on top of invariant 11's derivation.** A verdict
+is a forecast about an unrun future, not a citation of an observed quantity, so it carries two
+limits: invariant 11 caps it at its weakest input, and on top of that a verdict is never
+asserted at high confidence at all. Without that second ceiling the vault renders a forecast
+and a cited market size in the same shape, and a projection silently inherits the authority of
+an observation.
+
 ## Two verdicts, because a late-only verdict wastes a whole research run
 
 **The provisional verdict** runs right after the dossier and the grill, before the research fleet
