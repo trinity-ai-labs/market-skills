@@ -73,7 +73,27 @@ and is never restated here.
 15. **Lint is a gate, not a report.** The shipped `vault-lint.sh` runs at Phase 2's
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
-    not render.
+    not render. **That same gate reads the dimension's own file, never the summary its author
+    wrote about it** — the researcher who wrote the prose also minted the notes the plan resolves
+    citations through, so accepting a dimension on its summary is what puts an unreviewed number
+    in the ledger.
+
+**The target** — the driver identity, the binding-driver readout, the confidence ceiling, the
+nearest-reachable solve and the negotiation script are in
+[references/target.md](references/target.md). Point at it; never restate it.
+
+16. **A target verdict is computed from evidenced drivers, never asserted, and never at high
+    confidence.** Asserted instead of computed, a verdict is an opinion in the shape of a
+    finding: unarguable, untestable, and carrying the vault's authority into a forecast about a
+    future nobody has run.
+
+17. **The vault is a git repo (Phase 0): commit at every meaningful write, and where a remote
+    exists — the Phase 5 consent gate — push every commit.** Phase boundaries are too coarse a
+    unit of loss for a phase that writes dozens of files: a crash mid-phase should cost one file,
+    not a day of research. A remote is created only on the founder's explicit answer to both
+    destination and visibility, and past that an unpushed commit is worse than no remote — it
+    reads as a backup, so the founder believes the corpus is in two places while it is on one
+    laptop.
 
 ## Output contract — deterministic home
 
@@ -157,6 +177,35 @@ If the founder already has a corpus from earlier work — research files, a plan
 `[F#]` codes — adopt it instead of scaffolding an empty vault:
 [references/vault-migration.md](references/vault-migration.md).
 
+**The vault is a git repo from its first commit** (invariant 17). Run `git init` at the slug
+directory — the vault root, never a subdirectory of it. There is no remote and therefore no
+exposure, and a claim ledger is what this pays off on immediately: `vault-lint.sh` says what the
+corpus asserts now, `git diff` says what it stopped asserting, and nothing else in the skill
+answers the second question. An existing repo is left alone: running `git init` over one is a
+no-op, but a re-scaffold that rewrites its files is not.
+
+**What counts as a meaningful write**: a dimension's prose and notes, a batch of grill facts, a
+drafted section. The phase-boundary commit keeps its own job on top of those — it is the point
+where the two generated files below are regenerated.
+
+Two files are **generated**, at scaffold and again at every phase boundary, and committed there:
+
+- **`.gitignore`** — editor and OS state only: `.DS_Store`, and an editor's per-window workspace
+  file (Obsidian rewrites `.obsidian/workspace.json` on every open, so unignored it makes each
+  commit noise and buries the ledger changes the history exists to show). Never ignore a dotfile
+  wholesale: `.vault/config.json` is what makes the directory a vault, and a clone without it is
+  not one. **Rendered `deliverables/*.pdf` are committed, not ignored** — they are the artifact a
+  shared vault exists to share, and a repo whose deliverables are ignored hands a recipient the
+  working notes and none of the output.
+- **`README.md`** at the vault root — what the product is; what this corpus is and which skill
+  produced it; the note-type map (the six types and what each asserts); where to start reading
+  (`one-pager.md`, then `business-plan.md`); the current target and its verdict status; and the
+  `vault-lint.sh` invocation for checking the corpus. Its last line states that it is generated
+  and regenerated rather than hand-edited. Without it a shared vault is a directory of
+  `CLAIM-AS23SD44.md`-style filenames — deliberately bare IDs, legible to this skill and opaque
+  to a human opening the repo cold. Regenerating it every phase is what keeps it from drifting:
+  a stale README on a shared repo is worse than none, because it reads as current.
+
 Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
 dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet —
 writing it to `research/product-dossier.md` (vault-relative — the slug directory is the vault). The grill needs the dossier's value
@@ -189,8 +238,13 @@ already answers. Full question bank with per-question defaults:
 [references/grill.md](references/grill.md) — load it now. The areas that gate everything
 downstream:
 
-- **Pointers & background** — opens the grill: anything to point the research at (docs, prior
-  research, competitor lists, community threads) and any background the source can't show.
+- **Target** — opens the grill: the concrete outcome and the date the plan is engineered
+  backwards from, asked first because every other answer is read against it. A direction with no
+  number is converted, not accepted ("make this my job" → "what does the job have to pay?"), and
+  "no specific number" is a legitimate answer that gets recorded as one. What is computed from
+  it: [references/target.md](references/target.md).
+- **Pointers & background** — anything to point the research at (docs, prior research,
+  competitor lists, community threads) and any background the source can't show.
 - **Ambition** — lifestyle business, bootstrapped-profitable, or venture-scale? Changes every
   downstream recommendation; never assume.
 - **Value-hypothesis defense** — the per-VH test questions from the Phase 0 dossier (the
@@ -251,6 +305,12 @@ in the plan resolves through, exactly as `[S#]` resolves through `sources.md`. `
 human-readable citation; the `fact` note ID is what a query reaches. It's written BEFORE any
 dispatch, and Phase 2's brief carries it verbatim so F-numbers stay stable everywhere.
 
+**Then compute the provisional verdict, before the research fleet spends anything** — the dossier
+and the grill already carry every driver the identity needs, at assumption strength. Put it to the
+founder as the "want to talk about this now, or should I go find out properly?" turn, which is
+only cheap while nothing has been spent. Method and note type:
+[references/target.md](references/target.md).
+
 ## Phase 2 — Run the market analysis
 
 The research engine is the **market-analysis skill**, run brief+skill style: load its SKILL.md
@@ -273,6 +333,12 @@ vault: <absolute path to the vault scaffolded in Phase 0>  — emit notes per it
   contract; the research prose is unchanged.
 ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: skip the top-down
   sizing agent, bottom-up only (the venture-scale sniff test still gets stated); else full rigor.
+target: <the outcome the plan is engineered backwards from, and its date | "no specific
+  number">  — size at the resolution this needs: a target denominated in customers or MRR makes
+  the bottom-up segment count the load-bearing output, not the top-down category figure.
+provisionalVerdict: <reachable | unreachable | undetermined, and the driver it named as binding
+  | "none — no target stated">  — pre-research, so it is an assumption and never citable; the
+  driver it names is the one to research hardest.
 categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
 mustProfile: <competitors the founder named — always profiled, whatever their kind>
 founder brief (verbatim):
@@ -287,8 +353,12 @@ source and ONE `question` note carrying its `gaps` — what the dimension could 
 `covers` once something answers part of it. The prose keeps every argument; the notes hold what
 a later document leans on. A note per paragraph produces a second corpus nobody maintains.
 
-**Lint at the per-dimension gate, not at the end.** As each dimension returns, run
-`vault-lint.sh` over the vault before you accept it. A missing `rests_on`, an unknown
+**Read the dimension and lint the vault at the per-dimension gate, not at the end.** As each
+dimension returns, two things happen before you accept it. Read its `research/<dimension>.md` on
+the terms market-analysis's Phase 2 sets out — the file, not the summary its own author wrote
+about it; accepting a dimension on that summary is what lets an unreviewed writer put a citable
+number into this ledger, since the same researcher minted the `source` notes the plan resolves
+its citations through. Then run `vault-lint.sh` over the vault. A missing `rests_on`, an unknown
 subject term, a duplicate `url_canonical` and a confidence-propagation violation are all silent
 in the file itself and all cheap to fix while the researcher's context is live. Deferred to
 Phase 5, an unknown subject term is unfixable — the only person who knew which existing term it
@@ -337,6 +407,12 @@ Four query results are resolved BEFORE a section is written, never after:
 - **Stale claims** — `stale_after` already passed. Re-check or downgrade before citing.
 - **`status: unverified`** — asserted with nothing behind it. Each needs a validation step in
   the plan, or it does not get asserted.
+
+**The evidence-backed verdict is computed after those queries and before the first section is
+drafted**, as the `claim` note [references/target.md](references/target.md) specifies — and where
+it is negative, the negotiation turn happens HERE, before drafting, per that same file. A plan
+drafted against a target still being argued about is re-cut section by section when the target
+settles, and the milestones written under the old number are the ones that quietly survive.
 
 Write `one-pager.md` FIRST (it forces the clarity everything else inherits), then
 `business-plan.md` in the track's shape, then `financial-model.md` — all per
@@ -407,6 +483,11 @@ objections about whatever a panelist happened to notice; this produces them abou
 corpus already knows is weak. Every brief also carries the founder's named fear `[F#]`: attack
 this hardest, then name the two risks the founder did NOT name.
 
+**The verdict is on the attack surface, not only the plan built on it.** Every brief carries the
+settled target, the verdict, and the driver the verdict named as binding; a panel that attacks
+only the plan grants the number the plan is engineered backwards from. Re-run the identity
+against any objection that survives: [references/target.md](references/target.md).
+
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
 plan document under-describes the product — so a panel will reliably assert the product lacks
@@ -469,6 +550,23 @@ exemption; it fails verification if it spills to page 2), per
 `~/.claude/skills/market-analysis/references/rendering.md` (the shared rendering system —
 design, paged-media CSS, toolchain ladder, and the mandatory render → Read the PDF back →
 check every page → fix loop). A deliverable you didn't read back is not done.
+
+**Once the deliverables exist — and not before — ask about a remote.** The vault has been a local
+repo since Phase 0; this is the separate question of whether it goes anywhere. Asked at scaffold,
+it asks the founder to consent to the visibility of contents neither of you has seen yet, which
+is why it waits for something worth sharing. Collect both halves:
+
+- **Destination** — which account or organization.
+- **Visibility** — private preselected. Public is a real choice some founders make deliberately
+  and is offered as one; what it is not is a default, over a corpus carrying their pricing, their
+  runway and their named fear.
+
+**No remote is created without an explicit answer to both.** The gate is on creating and
+configuring the remote, not on using one the founder asked for — past that point invariant 17's
+push applies to every commit. Local-only is the Phase 0 default and the state a vault stays in
+unless the founder asked otherwise. A remote inferred from one answer — a destination taken as
+consent to a visibility, or a visibility assumed from a destination — publishes a private
+business corpus on a step the founder never took.
 
 ## Walk sign-off
 

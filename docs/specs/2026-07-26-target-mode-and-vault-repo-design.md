@@ -48,10 +48,13 @@ Two properties fall out of the existing invariants rather than needing new machi
   A verdict resting on a low-confidence sizing figure cannot be asserted as a confident
   "impossible". The rule that already prevents a hedge from being laundered into a headline
   claim prevents it here too.
-- **Renegotiation stays auditable** (invariant 14, retraction is visible). When a target is
-  renegotiated, the superseded target fact stays with `status: retracted` and its reason, and a
-  new target fact is minted. "Wanted $50k, settled on $12k, and here is why" remains in the
-  ledger instead of being overwritten by the number that won.
+- **Renegotiation stays auditable** (invariant 14, a withdrawn note stays visible). A
+  renegotiated target is a *supersession*, not a retraction, and takes the vault's standing
+  two-edit form: the new target fact carries `supersedes` and `supersedes_reason` naming the old
+  one, and the old one flips to `status: superseded`. `retracted` is reserved for a note nothing
+  replaces — a target abandoned outright, with no successor. Using it for a renegotiation severs
+  the link between the two numbers, and turns "wanted $50k, settled on $12k, and here is why"
+  into an archaeology exercise instead of one query.
 
 No new note type, no `schemaVersion` bump, and no change to `vault-lint.sh`.
 
@@ -121,7 +124,9 @@ counterfactuals of what the outcome becomes if each one moves, which is the nego
 kept apart from the counter-offer so the two are never confused.
 
 The founder chooses. The plan is then built against the settled target, and the original stays
-visible in the plan as the thing that was tested and failed, with its retraction reason.
+visible in the plan as the thing that was tested and failed, with its `supersedes_reason`. A
+founder who instead abandons the idea of a target altogether leaves nothing behind it to
+supersede, and that is the case `retracted` is for.
 
 Report-and-stop was considered and rejected: it leaves a founder with a "no" and no path, which
 is the opposite of what the skill is for. Planning against the stated number with a caveat
@@ -141,7 +146,8 @@ end.
 ## The vault is a git repo from the start, and gets a remote only when asked
 
 **Local, automatic, at scaffold.** Phase 0 runs `git init` at the slug directory and commits at
-each phase boundary. This has no exposure — there is no remote — and it is worth doing by default
+each meaningful write — a dimension's output, a batch of notes — as well as at each phase
+boundary, so a crash mid-phase costs a file rather than a phase. This has no exposure — there is no remote — and it is worth doing by default
 for a claim ledger specifically: retractions, amendments and confidence changes become a diffable
 history, which is what a ledger is for. `vault-lint.sh` and `git diff` answer different questions
 about the same corpus.
@@ -203,7 +209,7 @@ check that catches any other broken cross-reference.
 | `skills/business-plan/references/grill.md` | The target as the opening question, with its conversion rule for unquantified answers |
 | `skills/business-plan/references/strategy-sim.md` | The solve-backwards pass |
 | `skills/business-plan/references/plan-template.md` | The verdict section, and dated checkpoints |
-| `skills/market-analysis/SKILL.md` | Receives the target as context only, so sizing is done at the resolution the target needs |
+| `skills/market-analysis/SKILL.md` | The dispatched brief contract gains `target` and `provisionalVerdict`, both as context only: sizing is done at the resolution the target needs, and the driver the verdict named as binding is the one researched hardest. Both are forwarded to the per-dimension briefs, since a researcher never reads `SKILL.md` |
 | `README.md` | A section covering target mode and the vault-repo question — see below |
 | `.claude-plugin/plugin.json`, `CHANGELOG.md` | Minor bump; this is shipped behavior |
 
@@ -223,6 +229,11 @@ of record.
 - No new vault note type and no `schemaVersion` change. The target and the verdict fit the
   existing `fact` / `claim` / `assumption` types, and anything that forced a schema change would
   also force a `vault-lint.sh` change and a migration.
-- No change to how `market-analysis` researches. It gains the target as context and nothing else;
-  it stays usable on its own, where no target exists.
-- No automatic pushing, and no remote created without an explicit answer to both questions.
+- No change to how `market-analysis` researches. It gains the target and the provisional verdict
+  as context — the first setting the resolution its sizing is reported at, the second naming the
+  driver to research hardest — and neither changes its method or its dimensions. It stays usable
+  on its own, where no target exists.
+- No remote created without an explicit answer to both questions. The consent gate is on
+  creating the remote, not on using it: with no remote configured nothing is ever pushed, and
+  once a remote exists because the founder asked for one, every commit is pushed. A remote that
+  was opted into and never pushed to reads as a backup and is not one.

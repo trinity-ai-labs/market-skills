@@ -2,6 +2,60 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.2.0
+
+- **The target is the input the plan is engineered backwards from.** `business-plan` had no
+  destination in it: `ambition` is a category and `timeline` asks only when the first dollar needs
+  to arrive, so nothing in a plan could be measured against where the founder was actually trying
+  to get, and the skill could not answer the question they came with — *will this get me there?*
+  The grill now opens on a concrete outcome and a date, before every other question, because
+  every other answer is read against it. A direction stated without a number is converted rather
+  than accepted, since an unquantified target cannot be tested and an untestable target turns the
+  verdict below into an opinion; "no specific number" is recorded as the answer it is.
+- **The verdict on that target is computed from evidenced drivers, and names the driver that
+  binds.** The target is decomposed into the identity that produces it — customers × price, and
+  what each of those in turn rests on — with every driver taking its value from the research
+  rather than from judgement. The output is which driver fails and by how much, not a bare yes or
+  no: "unreachable" on its own is neither actionable nor falsifiable. It runs twice —
+  provisionally after the grill, before the research fleet spends anything and while changing the
+  target is still free, then again on the evidence before the plan drafts, free to overturn the
+  first in either direction.
+- **A driver with no evidence makes the verdict undetermined, not negative.** Where flipping an
+  unevidenced driver within a plausible range flips the answer, the run returns "undetermined —
+  and this is the cheapest thing to test", with the test named. A confident "no" resting on a
+  guessed conversion rate talks a founder out of something the evidence never spoke to, and the
+  vault's formality makes that guess look researched.
+- **An unreachable target opens a negotiation, and is never silently swapped.** The run returns
+  the nearest target reachable on the founder's stated resources, then hours, capital and price as
+  separate counterfactuals of what the outcome becomes if each one moves. The founder chooses, and
+  the original stays in the plan as the thing that was tested and failed, carrying its
+  `supersedes_reason` — a renegotiated target is a supersession, not a retraction, or "wanted
+  $50k, settled on $12k, and here is why" becomes an archaeology exercise instead of one query.
+- **The vault is a git repo from its first commit, and gets a remote only when asked.** `git init`
+  runs at scaffold and every meaningful write is committed, not only every phase boundary: a
+  single research phase writes dozens of files, so the phase is the wrong unit of loss for a crash
+  or a bad edit. It also gives a claim ledger the history it was missing — `vault-lint.sh` says
+  what the corpus asserts now, `git diff` says what it stopped asserting, and nothing else
+  answered the second question. Once there are deliverables worth sharing, the skill asks for a
+  destination and a visibility with private preselected, and
+  creates a remote only on an explicit answer to both; asked at scaffold it would be asking a
+  founder to consent to the visibility of contents neither party has seen. Past that point every
+  commit is pushed, because a remote that was opted into and never receives one reads as a backup
+  and is not one.
+- **A dimension is accepted on its file, never on the summary its own author wrote.**
+  `market-analysis` told the conductor it reads summaries rather than raw dumps, which made a
+  ten-line self-report the entire basis on which a dimension's numbers entered the plan. Five
+  parallel researchers writing straight into `research/` are five unreviewed writers, and where a
+  `vault:` path is present they also mint the `source` notes the plan later resolves its citations
+  through — so the door the "read summaries" rule left open led directly to a citable number
+  nothing had ever reviewed. The summary is now triage: it says which file to open first and
+  whether the dimension is worth folding in at all, and the file itself is read before that
+  dimension is cited or its notes are trusted. The context economy the old rule existed for is
+  untouched, because the reading is targeted — one dimension file at the moment it is about to be
+  relied on, not every agent's transcript — and `business-plan`'s per-dimension checkpoint, which
+  already linted the vault while the researcher's context was still live, now gates on the read as
+  well.
+
 ## 1.1.1
 
 - **`README.md` catches up to the portable-vault layout.** `1.1.0` removed the `vault/`

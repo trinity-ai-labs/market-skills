@@ -33,11 +33,36 @@ must refuse to start without: `MODE: dispatched` · `slug` · `outDir` (absolute
 answers as numbered facts · any category-boundary decision already made · `mustProfile`
 (competitors the founder named — always profiled) · `ambition` (venture | bootstrap |
 lifestyle | lender — bootstrap/lifestyle skips the top-down sizing agent and runs bottom-up
-only, while still stating the venture-scale sniff test) · which of your phases to run (a
-conductor that ran your Phase 0 itself and renders its own deliverables will say "Phases 1–4
-only, no deliverables, no user-facing close"). One optional field: `vault` (absolute path). When
-it is present the fleet also emits notes per the **vault note contract** below; when it is
-absent nothing about the research changes and no notes are written.
+only, while still stating the venture-scale sniff test) · `target` (the outcome the dispatching
+plan is engineered backwards from and its date, or `no specific number`) ·
+`provisionalVerdict` (that skill's pre-research verdict — reachable | unreachable |
+undetermined — and the driver it named as binding, or `none — no target stated`) · which of
+your phases to run (a conductor that ran your Phase 0 itself and renders its own deliverables
+will say "Phases 1–4 only, no deliverables, no user-facing close"). One optional field: `vault`
+(absolute path). When it is present the fleet also emits notes per the **vault note contract**
+below; when it is absent nothing about the research changes and no notes are written. What a
+`vault:` path adds is a review obligation, not just an extra output: the `source` notes the fleet
+mints are what the dispatching plan resolves its later citations through, so your read of the
+dimension file (Phase 2) is the only thing standing between an unreviewed agent and a citable
+number in a document that never re-derives it.
+
+**The target sets the resolution of the sizing, not the research method.** Size at the
+resolution the target is denominated in: a target in paying customers or in MRR makes the
+bottom-up segment count — reachable buyers, and what they already pay — the load-bearing
+output, with the top-down category figure kept as the sanity check on it. A category figure in
+billions cannot be divided down into a specific customer count, so a report that leads with one
+forces the dispatching skill to re-run the dimension for a number it can actually put in an
+identity. `no specific number` restores the ordinary balance — size the category and the
+segment as you normally would.
+
+**The provisional verdict names the driver to research hardest.** Whichever driver it calls
+binding — price, conversion, retention, or reach — is the dimension to pin down first and to
+return with the narrowest range you can actually evidence, because that is the number the
+verdict is re-computed against once you are done. A binding driver returned as a wide unsourced
+band leaves the verdict undetermined and wastes the research run that existed to settle it. The
+verdict itself is an assumption made before any evidence: never cite it, and report what you
+found even when it contradicts the verdict outright — that contradiction is the most valuable
+thing the run can return.
 
 ## Output contract — deterministic home
 
@@ -220,9 +245,22 @@ the strongest model in the session, never delegated.
 
 Every brief carries: the dossier (inline, it's short), the category boundary, the dimension
 playbook from `references/dimensions.md`, the citation contract (below), the vault note contract
-(below) whenever the run carries a `vault:` path, and the exact output file path. Research
-agents WRITE their own `research/<dimension>.md` and return a compact summary — you read
-summaries, not raw dumps.
+(below) whenever the run carries a `vault:` path, the `target` and the `provisionalVerdict`'s
+binding driver whenever the dispatching brief carried them, and the exact output file path. A
+researcher never reads this file, so a target that stops at the conductor changes nothing about
+what comes back: the sizing agent returns a category figure because nobody told it the target
+was denominated in customers. Research agents WRITE their own `research/<dimension>.md` and
+return a compact summary.
+
+**The summary is triage, not the review.** It tells you which file to open first and whether the
+dimension is worth folding in at all; it is never the basis on which that dimension's output
+enters the plan. The dimension's file is read — the file, not its summary — before that
+dimension's numbers are cited or the notes it minted are trusted. Five agents writing straight
+into `research/` are five unreviewed writers, and a conductor that judges each one by the summary
+that same writer wrote about its own work has reproduced its worst failure mode five times in
+parallel. The economy the fan-out exists for survives intact, because the reading is targeted
+rather than exhaustive: one dimension file at the moment that dimension is about to be relied on,
+never a raw dump of every agent's transcript.
 
 **Citation contract (goes in every brief, verbatim):** every external claim carries its source
 URL, the date pulled, and the exact figure or quote used. Numbers need **two independent

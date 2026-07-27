@@ -29,7 +29,8 @@ later questions exist at all.
   - [Guided posture asks fewer questions, not more](#guided-posture-asks-fewer-questions-not-more)
   - [Six forks earn a brief; everything else stays a question with a default](#six-forks-earn-a-brief-everything-else-stays-a-question-with-a-default)
   - [Record the posture as a fact, because it changes how every later answer is read](#record-the-posture-as-a-fact-because-it-changes-how-every-later-answer-is-read)
-- [0. Pointers & background](#0-pointers--background-opens-the-grill)
+- [0. Target](#0-target-opens-the-grill)
+- [0a. Pointers & background](#0a-pointers--background)
 - [0b. The two stories](#0b-the-two-stories--ask-these-openly-before-any-targeted-probe)
 - [0c. Entity — what is the company](#0c-entity--what-is-the-company-and-is-this-product-all-of-it)
 - [1. Ambition & audience](#1-ambition--audience-selects-the-artifact)
@@ -172,16 +173,37 @@ rests_on:
 me?" is the evidence for the posture; a paraphrase — "founder seemed unfamiliar with the
 options" — is a judgement nobody can re-check, and re-checking is the whole point of recording it.
 
-## 0. Pointers & background (opens the grill)
+## 0. Target (opens the grill)
+
+- **"What's the concrete outcome, and by when — a revenue figure, a salary replaced, a user
+  count, or a funding-readiness bar?"** Asked first, before the two stories below and before
+  anything pointed, because every other answer in this bank is read against it: the plan is
+  engineered backwards from this number and the verdict is judged against it, not the other
+  way round. **Default:** pre-answer it from the repo/doc/context the same way every other
+  question does — a stated revenue goal, a roadmap milestone, a funding ask already on
+  record — and present that as the number to confirm. Where nothing is on record, no number
+  is invented on the founder's behalf — this is the one question in the bank a guessed
+  default would defeat outright.
+  **A direction with no number is converted, not accepted.** "Make this my job" is answered
+  with "what does the job have to pay?"; "get some users" becomes "how many, and by when
+  would that count as working?" State the reason when you push: an unquantified target
+  cannot be tested, so a verdict computed from one isn't a verdict — it's an opinion wearing
+  the plan's arithmetic.
+  **"No specific number" is a legitimate answer, not a refusal.** Record it as one, and the
+  plan is then framed without a verdict section, rather than tested against a number nobody
+  actually stated. What the settled answer feeds — the driver decomposition, the verdict,
+  and the negotiation if it doesn't clear: [target.md](target.md).
+
+## 0a. Pointers & background
 
 - **"Anything you want to point me at, or background I should have?"** — docs, prior
   research, competitor lists, community threads, a spec; history, pivots, why now, who this
   is really for. One open ask, offered as an invitation, not a requirement — default: proceed
   on the dossier alone. Every pointer gets read before the dispatch that touches its topic;
   named competitors join `mustProfile`; background lands as `[F#]` facts. This is a check-in
-  shape (an open door, not a decision), so it's the one question that may open the grill
-  without a recommended answer. For an idea with no settled name, the naming question still
-  comes before everything — this follows it.
+  shape (an open door, not a decision), so it's a question that may proceed without a
+  recommended answer. For an idea with no settled name, the naming question still comes
+  before everything — this follows it.
 
 ## 0b. The two stories — ASK THESE OPENLY, BEFORE ANY TARGETED PROBE
 
