@@ -384,16 +384,16 @@ reasoning in public and then never mention it, because to them it isn't news; th
 commercial half out because it does not occur to them that it counts as theirs to offer. It
 counts most. A thesis stated in a dated report to a paying client — addressed to a third party,
 with money attached to being right, and usually predating the product by years — is categorically
-stronger evidence than the same thesis on a blog, and the current sweep cannot reach it. Skipping
-this sweep means grilling for things already written down and, worse, missing the founder's own
-framing of why the product is shaped as it is. Anything public lands as `[F#]` with its URL, and
-as a `source` note carrying that URL. **A client document lands as what it establishes and never
-as the file:** these are confidential by default, so the corpus carries the claim and its date
-with a provenance note naming the document's kind and year — never the text, never the client,
-never a copy. The handling rule is stated here, in the paragraph that creates the exposure,
-because the vault is a git repo from this phase and is offered a remote in Phase 5: omit it and
-the sweep's own success is what puts a client's confidential document into a corpus built to be
-shared.
+stronger evidence than the same thesis on a blog. Skipping this sweep means grilling for things
+already written down and, worse, missing the founder's own framing of why the product is shaped
+as it is. Anything public lands as `[F#]` with its URL, and as a `source` note carrying that URL.
+**A client document lands as what it establishes and never as the file:** these are confidential
+by default, so what enters the corpus is the claim and its date, resting on a
+[source with no public URL](references/vault.md#the-source-note-keeps-the-quote-that-outlives-the-url)
+whose provenance names the document's kind and its year — never the text, never the client, never
+a copy in the vault. That rule is stated in the paragraph that creates the exposure, because the
+vault is a git repo from this phase and is offered a remote in Phase 5: omit it and the sweep's
+own success is what puts a client's confidential document into a corpus built to be shared.
 
 **The dossier is the plan's product-truth spine — thinness here propagates everywhere.** A
 dossier that is *true but small* is more dangerous than one that is wrong, because nothing in
