@@ -350,8 +350,12 @@ source and ONE `question` note carrying its `gaps` — what the dimension could 
 `covers` once something answers part of it. The prose keeps every argument; the notes hold what
 a later document leans on. A note per paragraph produces a second corpus nobody maintains.
 
-**Lint at the per-dimension gate, not at the end.** As each dimension returns, run
-`vault-lint.sh` over the vault before you accept it. A missing `rests_on`, an unknown
+**Read the dimension and lint the vault at the per-dimension gate, not at the end.** As each
+dimension returns, two things happen before you accept it. Read its `research/<dimension>.md` on
+the terms market-analysis's Phase 2 sets out — the file, not the summary its own author wrote
+about it; accepting a dimension on that summary is what lets an unreviewed writer put a citable
+number into this ledger, since the same researcher minted the `source` notes the plan resolves
+its citations through. Then run `vault-lint.sh` over the vault. A missing `rests_on`, an unknown
 subject term, a duplicate `url_canonical` and a confidence-propagation violation are all silent
 in the file itself and all cheap to fix while the researcher's context is live. Deferred to
 Phase 5, an unknown subject term is unfixable — the only person who knew which existing term it
