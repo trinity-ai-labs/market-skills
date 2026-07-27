@@ -1,6 +1,6 @@
 # market-skills
 
-Two agent skills that take a product to market, packaged as a standalone, installable repo:
+Two agent skills that take a product to market, packaged as one plugin. Both are **model-invoked** — Claude reaches for them on its own from the frontmatter `description`, so you rarely type them.
 
 - **`market-analysis`** — heavy, evidence-first market research for a product (a code repo, a
   spec/doc, or an idea): value-hypothesis extraction, multi-agent competitor discovery and
@@ -20,50 +20,44 @@ Both write deterministically to `~/Documents/business/<product-slug>/` (same pro
 folder, re-runs update in place) and render polished, self-contained HTML + page-verified PDF
 deliverables.
 
-This repo is the single source of truth for the skills. Edit here; every machine that
-installed via symlink picks changes up automatically.
-
-| Piece | Lives at (after install) | What it is |
-|---|---|---|
-| `skills/market-analysis/` | `~/.claude/skills/market-analysis/` | The research engine skill |
-| `skills/business-plan/` | `~/.claude/skills/business-plan/` | The plan conductor skill |
-| both | `~/.agents/skills/…` | Same skills under the generic `~/.agents` convention |
-
 The pair is designed to run **workflow-heavy**: research fans out to fleets of sub-agents
 (multi-modal competitor discovery, per-competitor profiling, refutation panels, a completeness
 critic) with explicit model/effort tiering per stage — cheap models for the fleet, strong
 models only for reconciliation and synthesis. See
 `skills/market-analysis/references/orchestration.md` for the canonical workflow script.
 
+`business-plan` dispatches `market-analysis` itself and shares its rendering reference — they
+ship as a pair, always, which is why one plugin holds both.
+
 ---
 
 ## Install
 
-```bash
-git clone git@github.com:trinity-ai-labs/market-skills.git
-cd market-skills
-./install.sh
+```
+/plugin marketplace add trinity-ai-labs/orchestration-skills
+/plugin install market@trinity-ai-labs
 ```
 
-`install.sh` **symlinks** both skills into both skill homes (`~/.claude/skills/`,
-`~/.agents/skills/`), so a later `git pull` updates the live skills everywhere with no re-run.
-Use `./install.sh --copy` for independent copies (re-run after each edit to sync).
+Then enable auto-update: `/plugin` → **Marketplaces** → `trinity-ai-labs` → **Enable auto-update**. It is off by default for third-party marketplaces.
 
-The script is idempotent and self-healing: it wipes whatever is at each destination first,
-then re-links.
+⚠️ Updates land on a **version bump**, not on a push. `plugin.json` declares `version`, so an install is pinned to that string — CI fails the build if shipped content changes without bumping it, so this can't happen silently. See [CHANGELOG.md](CHANGELOG.md).
 
-Verify:
+**To develop these skills**, clone and link each one into your skills directory instead — edits then apply live, no release step:
 
 ```bash
-ls -la ~/.claude/skills/market-analysis   # -> .../market-skills/skills/market-analysis
-ls -la ~/.claude/skills/business-plan     # -> .../market-skills/skills/business-plan
+git clone https://github.com/trinity-ai-labs/market-skills
+ln -s "$PWD/market-skills/skills/market-analysis" ~/.claude/skills/market-analysis
+ln -s "$PWD/market-skills/skills/business-plan"   ~/.claude/skills/business-plan
 ```
+
+Link the two skill directories, not the repo: Claude Code loads `~/.claude/skills/<name>/SKILL.md`,
+so cloning the whole repo into that directory buries both `SKILL.md`s a level too deep and
+registers nothing. The other thing a clone does not give you is `vault-lint.sh` on the agent's
+`PATH` — that happens only for an installed plugin, so invoke it by path while developing.
 
 ---
 
 ## Use
-
-In Claude Code (or any `~/.agents`-aware agent):
 
 - "Run a market analysis on this repo" / "analyze the market for <idea>" → **market-analysis**
 - "Build me a business plan for this" / "how do I take this to market" → **business-plan**
@@ -74,25 +68,62 @@ runs will grill you on the genuine gaps — the questions research can't answer 
 spending research tokens. Everything lands in `~/Documents/business/<product-slug>/`,
 including `deliverables/*.html` and page-verified `deliverables/*.pdf`.
 
+To force one, name it: `/market:market-analysis` or `/market:business-plan`.
+
+When dispatching sub-agents, name the skill as an explicit first step — a sub-agent won't reach
+for it on its own as reliably as the main thread does:
+
+> Step 0: invoke the `market:business-plan` skill.
+
+---
+
+## `vault-lint.sh`
+
+The plugin ships one executable. `business-plan` builds a claim vault under
+`~/Documents/business/<product-slug>/vault/` — every load-bearing number traced to a dated
+source — and `vault-lint.sh` is the read-only whole-corpus check that gates it: dangling edges,
+confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
+still cited.
+
+Claude Code puts an enabled plugin's `bin/` on the Bash tool's `PATH`, so the skills invoke it
+bare, from whatever directory the user happens to be working in:
+
+```sh
+vault-lint.sh --vault ~/Documents/business/<product-slug>/vault
+vault-lint.sh --unverified --vault "$VAULT_PATH"
+vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
+```
+
+It is POSIX `/bin/sh` with zero dependencies — no Node, no Python, no jq. A tool that reads an
+entire private business corpus should not carry a transitive dependency tree, and a runtime
+prerequisite discovered at the moment of use is a broken product.
+
+---
+
 ## Layout
 
 ```
-skills/
-  market-analysis/
-    SKILL.md                      # the conductor: phases, run modes, quality bars
-    references/
-      dimensions.md               # per-dimension research playbooks (what to hunt, sources, return shape)
-      templates.md                # exact output document templates
-      orchestration.md            # canonical Workflow script for the research fleet
-      rendering.md                # HTML+PDF design system, paged-media CSS, toolchain, verify loop
-  business-plan/
-    SKILL.md                      # the conductor: grill → dispatch → draft → red team → render
-    references/
-      grill.md                    # the founder question bank, with defaults and stance
-      plan-template.md            # artifact-by-track templates + financial model rules
-      strategy-sim.md             # competing capital/GTM paths as parallel models; reinvestment engine
-      growth-engine.md            # the automated GTM machine: content/visual/docs skills + weekly loop
+.
+├── .claude-plugin/plugin.json
+├── .github/workflows/ci.yml   # each step's comment names the failure it prevents
+├── bin/
+│   └── vault-lint.sh          # SHIPPED — on the agent's PATH, POSIX sh only
+├── scripts/                   # contributor-only, never loaded
+│   ├── check.mjs              # the repo gate
+│   └── fixtures/              # vault-lint's own suite: run-fixtures.sh + its corpora
+└── skills/
+    ├── market-analysis/
+    │   ├── SKILL.md           # the conductor: phases, run modes, quality bars
+    │   └── references/        # dimensions · templates · orchestration · rendering
+    └── business-plan/
+        ├── SKILL.md           # grill → dispatch → draft → red team → render
+        └── references/        # grill · plan-template · strategy-sim · growth-engine · vault
 ```
 
-`business-plan` references `market-analysis`'s rendering.md and dispatches the skill itself —
-they install as a pair, always.
+Contributing: see [AGENTS.md](AGENTS.md).
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
