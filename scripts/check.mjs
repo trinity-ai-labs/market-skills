@@ -122,10 +122,10 @@ function relativeLinks(text) {
  * `killed_because` code span, and a slugger that eats the underscore reports
  * that working link as broken.
  *
- * This mirrors, character for character, the slug rule in ci.yml's
- * "Every '## Contents' link points at a real heading" step. Two checkers with
- * two sluggers is worse than one checker, because they drift and both get
- * trusted.
+ * This is now the repo's only slugger. ci.yml carried a second one in an inline
+ * Python step until check 9 covered every link it did; two checkers in two
+ * languages with two sluggers is worse than one, because they drift and both
+ * get trusted.
  *
  * No file here has two headings that slug alike, so the `-1`/`-2` suffixes
  * GitHub appends to a repeated heading have nothing to model.
