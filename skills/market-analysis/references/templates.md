@@ -93,6 +93,26 @@ hot. Reconciled, never averaged.>
 <rendered as the indexed multi-series exhibit — months since origin on x, the metric on y, one
 line per comparable, this product's own projection overlaid — per rendering.md.>
 
+## Exit comparables & implied multiple (when the target is an exit)
+<the comparable set, one entry per disclosed acquisition in the category: the acquired company,
+its origin event and that event's date, the month since that origin the sale landed at, its stage
+and its growth slope across the months running into the sale, ARR at exit, and the multiple that
+ARR and the deal imply. Indexed to slope at the moment of sale, the same basis every other series
+here uses, because slope is what the multiple is set by — a sale recorded against a level with no
+slope beside it cannot be read at the month a roadmap puts its own sale.>
+<the acquirer per comparable, named, with its stated strategic rationale in its own words, quoted
+with source and pull date. A rationale paraphrased into a motive is the analyst's claim wearing
+the acquirer's authority.>
+<the implied-multiple endpoints, each labelled with its comparable, that comparable's ARR at exit,
+its stage and its slope at sale — never averaged into a single multiple, which describes no deal
+that happened. Fewer comparables than a band needs is stated in those words — "two comparables, no
+band" — never a band run through two points.>
+<survivorship, stated outright: the announced acquisitions are the ones that closed, nobody
+publishes the multiple they were offered and refused, and a sale that collapsed in diligence
+leaves no figure to index. The set is what this category paid the sellers who said yes.>
+<rendered onto the indexed exhibit above — each sale marked on its own comparable's line at the
+month it happened, labelled with its multiple — per rendering.md, never as a chart of its own.>
+
 ## Customers & segments
 <segments with sizes; JTBD chain and where current tools break it; beachhead recommendation>
 

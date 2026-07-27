@@ -170,10 +170,43 @@ Hunt:
   say so. Same discipline sizing applies to bottom-up vs top-down: a large gap is a mismatch to
   explain, and averaging the two produces a number that is neither the category's growth nor any
   company's.
+- **Where the target is an exit, the disclosed acquisitions in the category are a second series on
+  the same axis.** Index them the way this dimension indexes anything else — to the acquired
+  company's growth slope at the moment of sale, at its month since its own stated origin — so a
+  sale lands at a month and a slope rather than at a date. Per comparable, hunt **ARR at exit, the
+  multiple that implies, the acquirer, the acquirer's stated strategic rationale in its own quoted
+  words, and the company's stage and slope at sale**. The multiple is the term an exit verdict is
+  most sensitive to and the one nobody sources: the founder cannot supply it — it is set by buyers
+  they have not met, at a moment that has not happened — so a run without this set solves the exit
+  at an assumed multiple and returns *undetermined* on the driver that decided the answer.
+  `business-plan`'s `references/target.md` names this set as the cheapest test that settles it,
+  which is why the indexing basis has to be the same one: an exit indexed to anything but slope
+  cannot be read at the month the roadmap puts the sale.
+- **The set IS the reference class — label the endpoints, never average them into a multiple.**
+  The same discipline the observed growth band already runs under: each endpoint carries its
+  company, its ARR at exit, its stage, its slope at sale and the deal's date. A mean multiple
+  across the set describes no deal that happened, and it is the figure that ends up in the
+  identity precisely because it is the only one shaped like an answer.
+- **Too few comparables to bound a band is a stated finding, written in those words.** Where the
+  category has one or two disclosed exits, record "two comparables, no band" against the set and
+  leave the band undrawn rather than running a line through the pair. A band drawn through two
+  points is indistinguishable on the page from one bounded across twelve and carries none of the
+  evidence a band implies — the two-point-average error again, one term further down the identity
+  where it moves the verdict far more.
+- **Name survivorship outright, in the file, beside the band.** Announced acquisitions are the
+  ones that closed: nobody publishes the multiple they were offered and refused, and a sale that
+  collapsed in diligence leaves no figure to index. The set is therefore what this category paid
+  the sellers who said yes, which is a narrower statement than what this category pays — and left
+  unstated the reader makes the wider one, because a labelled band reads as a property of the
+  category rather than of the handful of deals that reached an announcement.
 - **The file states the exhibit it will produce**: an indexed multi-series chart — months since
   origin on x, the metric on y, one line per comparable, the subject's own projection overlaid —
-  plus the excluded-from-overlay list beneath it. Built per `rendering.md`; an unrendered curve
-  file gets read as a table of numbers and the shape comparison never happens.
+  plus the excluded-from-overlay list beneath it. Where the exit set ran, each sale is marked on
+  its own company's line at the month it happened, carrying its implied multiple: slope is what
+  sets the multiple, so the multiple rides the curve rather than sitting in an exhibit of its own,
+  where a reader has to carry a month across two charts and stops doing it after the second
+  comparable. Built per `rendering.md`; an unrendered curve file gets read as a table of numbers
+  and the shape comparison never happens.
 
 Sources: the dated traction points already in `research/profiles/` and `research/competitors.md`
 (primary — never re-derive points that dimension sourced; a second series for the same company
@@ -189,6 +222,12 @@ and launch threads, job boards (a hiring wave dates a channel or a team the foun
 Wayback pricing-page diffs, and for public companies the filings and investor letters. Reading the
 same page twice costs nothing; discovering at synthesis that nobody asked how the curve was grown
 costs the whole dimension a re-run.
+
+For the exit set the sources are the acquirer's own disclosures rather than the coverage of them:
+the acquisition announcement and the acquirer's investor communications around it (the stated
+rationale, quoted rather than paraphrased into a motive), the acquired company's last disclosed
+traction points already in `research/profiles/` (ARR at exit and the slope running into the sale,
+never re-derived), and category M&A trackers to find the deals at all.
 
 ## Market sizing (`research/sizing.md`)
 
