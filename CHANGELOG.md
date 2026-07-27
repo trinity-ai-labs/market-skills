@@ -2,6 +2,119 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.8.0
+
+- **A citation is now opened, not just recorded.** `vault-lint.sh --used-in` reads the document
+  every note's `used_in` names and checks that the file is there and the `#anchor` names a real
+  heading. Nothing did that before: the default run reads the six note directories and stops at
+  the vault's edge, so a document renamed after the claim was cited into it, or a heading cut
+  while the note went on naming it, left the note reading as cited into a section nobody can
+  find. The moment that costs the most is the one where it helps least — when a `stale_after`
+  fires, the re-check it demands has nowhere to go. Two failures, named apart because they want
+  different fixes: `used-in-missing-file` when nothing exists at the named path, and
+  `used-in-dead-anchor` when the document is there and no heading slugs to the fragment. It is a
+  verdict rather than a report and exits 1 on either. **What it deliberately does not check is
+  the part worth writing down**: it asserts that a citation *resolves*, never that the named
+  section *carries* the claim. The corpus resolves prose to a note for two of the three types a
+  plan cites — `[S#]` through the source index, `[F#]` through the founder brief — and for the
+  third it does not, because a claim is stated in the author's own words with no code to grep
+  for. A scan matching note IDs against prose would fire on every correctly cited claim in the
+  vault, and a check that cries wolf gets switched off, which takes the working half with it.
+- **`--supersession-sweep` prints the re-read worklist a supersession owes, because replacing a
+  note tells the note and nothing else.** When B supersedes A, every document section A's
+  `used_in` named is now in doubt, and the supersession is visible on the note and invisible
+  everywhere the note was cited. The sweep walks every superseded note and emits the union of
+  those targets, **grouped one row per section** however many notes point at it — the unit of
+  work is *re-read this section*, and a list repeating the section once per note makes a two-item
+  job look like six — with the **row count printed first**, because the gate that consumes it is
+  a read and a read is bounded only if its size is visible before it starts. It is a report and
+  not a verdict: it exits 0 whether or not it finds anything, the contract `--unverified` already
+  carries. A supersession with a blast radius is the corpus doing its job, and a mode that went
+  red on a healthy vault would teach a reader to ignore the exit code the real checks depend on.
+- **Invariant 19 — nothing is dispatched to the red team until the plan and the vault have been
+  reconciled, and invariant 20 is what it reads for.** Lint ran at the per-dimension checkpoint
+  and again before rendering; between drafting and the panel there was nothing. A panel briefed
+  on a plan the ledger has already moved past returns objections about a version nobody is
+  shipping, at full panel cost, and it cannot be walked back — a panelist already briefed cannot
+  be un-briefed, which is why the gate sits on the dispatch rather than on the phase boundary.
+  Three steps, and **the third is the gate**: `--used-in` fails, `--supersession-sweep` emits the
+  worklist, and then a conductor *reads* every named section against the note behind it. The two
+  lint calls bound that read rather than replace it, and bounding is what makes it happen at all
+  — "check the plan against the vault" is a task nobody can size, and a task nobody can size is a
+  task nobody starts. Invariant 20 states what the read is looking for: **a claim is finished
+  when the prose it names carries it, not when the note is written.** Writing the note and
+  writing `used_in` are one act, and the claim stays open until the section says what the note
+  says. That is an invariant rather than a Phase 3 step because the obligation outlives Phase 3 —
+  the vault keeps growing through drafting and into the panel, and a claim minted while the panel
+  is running is subject to it exactly as one minted while the plan was being written. Written
+  into the drafting phase, the rule would stop applying at the moment the vault is most likely to
+  move, and a note minted from a disposed objection is the likeliest of all to sit in the ledger
+  unread. The failure both close: a corpus where every note is individually correct and the
+  documents built on them have quietly stopped agreeing.
+- **Invariant 15 — the Phase 5 release gate is three calls, not one.** The default run never opens
+  a citation target, so a plan clears the bare gate while carrying a citation to a document that
+  was renamed or a section that was cut, and the next thing that happens is a rendered PDF
+  asserting it to the one reader with no way to check. The render gate now runs the default
+  check, then `--used-in`, then `--supersession-sweep`, and the sweep is in that set for a
+  specific reason: Phase 4's dispositions mint supersessions *after* invariant 19's sweep has
+  already run, which makes the render the only point they would be read at all. **Phase 2's
+  checkpoint stays the bare run** — no note carries `used_in` until drafting cites it, so
+  `--used-in` there checks an empty set, and running it anyway teaches the mode as cadence-wide
+  when it belongs to one gate.
+- **Invariant 21 — the grill closes as a phase, not as a channel.** Founder input arriving after
+  Phase 1 is normal rather than exceptional, and it gets exactly what anything said during the
+  grill gets: the same `fact` note resting on the interview source, the next `[F#]` in the
+  existing sequence, an appended row in the founder brief, and invariant 20's propagation
+  obligation like any other claim. The brief is appended to rather than rewritten, because `[F#]`
+  codes are cited from the plan by number and a renumber silently repoints every citation already
+  written. The failure this prevents: what a founder volunteers late is the evidence nobody
+  thought to ask for, which makes it the least redundant material in the corpus and exactly what
+  a model with no channel for it drops. It arrives conversationally mid-drafting and lands
+  nowhere — no code, no note, no propagation obligation, because the phase that owned founder
+  input is over — so it reaches the plan as something the conductor happened to remember, or not
+  at all.
+- **Invariant 3 — before a metric is cited as evidence for a mechanism, state what else produces
+  that number.** A count says a thing exists; it never says why. Where the alternative explanation
+  is not excluded the metric is a description and not evidence — and **a metric chosen after the
+  conclusion is a conclusion wearing an instrument.** That second clause is the one worth writing
+  down: a careful reader supplies the alternative explanation anyway, while an instrument selected
+  to fit a thesis already reached leaves every step downstream of it locally sound, so there is
+  nothing further along to catch it. The tell is a second metric introduced to confirm the first;
+  chosen after the thesis, it tests the thesis's fit to the instrument rather than the mechanism,
+  and it reads as corroboration. The rule bites hardest at the red team, where a matching quality
+  bar now applies: a panelist handed a number reads it as the evidenced part of the brief and
+  spends the turn elsewhere, so an unexcluded alternative explanation reaches the panel as settled
+  ground and comes back unattacked.
+- **Phase 3 opens by re-verifying product claims against source at the current commit, and the
+  direction is the whole point.** The dossier is the product truth the plan inherits, and it was
+  written before the research fleet spent a week running — the product moved underneath it. **A
+  plan that only re-checks numbers that look too good drifts pessimistic, and every drift reads as
+  rigour.** A capability that shipped, a limit that was raised, a seam that was closed: each one
+  now reads as the plan being careful. The skill's existing skepticism fires in one direction only
+  — strong rules against unmodelled optimism, a both-directions test on input values — so an
+  understated product claim clears every other bar on the list and reaches an acquirer or an
+  investor as a fabricated weakness, one the founder then has to argue their own plan out of. The
+  four queries that already run before a section is drafted cannot reach it: a claim stale because
+  the world moved is what `stale_after` catches, and a claim stale because the product moved has
+  no shelf life on it at all. A drift lands as a supersession, not an edit in place, naming the
+  release that moved it — edited in place, the plan reads as though it were written against a
+  product state its author never saw.
+- **The decision that a `claim` note does not get a citation code yet is written down, with the
+  trigger that would reopen it** — `docs/specs/2026-07-27-claim-citation-codes.md`. Giving claims
+  a code and an index would make the agreement check above mechanical, and would also change what
+  every plan document looks like and what every migration into the vault has to produce: a design
+  surface that earns its own pass rather than arriving as the implementation detail that made one
+  check convenient to write. So the read is bounded instead, and what that costs is stated rather
+  than discovered mid-release by whoever writes the gate — a lint either runs or it does not,
+  while a read is a judgment step a person can skip under pressure. That is why the agreement rule
+  lands as a numbered invariant in the head block rather than as a line inside the phase's own
+  step: compaction re-attaches only the head of a long skill file, so a rule stated in a phase
+  body is out of context by the time that phase runs, and a gate that is out of context when its
+  phase runs is a gate that does not run. The sweep's own reported count is the instrument for the
+  reopen — when the worklist routinely runs past what a conductor will read in one pass, the
+  bounded read is spent and the mechanical resolution is worth the design pass it was deferred
+  pending.
+
 ## 1.7.0
 
 - **A price is now defended on two lenses, and `value-delivered` is the one that was missing.**
