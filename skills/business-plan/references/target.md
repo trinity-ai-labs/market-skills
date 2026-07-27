@@ -60,9 +60,9 @@ home, and the home is not the same for all four:
 | driver | kind | where its value comes from |
 |---|---|---|
 | price | policy within a structural band | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
-| conversion | structural | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts |
+| conversion | structural | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts; where `research/growth-curves.md` indexes a comparable that discloses it, the reference-class value at the month since origin the target counts is preferred to the benchmark, and a divergence between the two is recorded rather than averaged |
 | retention | structural | the same, and it is per-period, so the period is part of the value |
-| reach | policy | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput |
+| reach | policy | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput; where the indexed set covers the same months, a comparable's reach at that month since origin is the reference-class check on that figure — it does not replace it, because reach is this founder's channels and hours |
 
 **`kind` records who sets the value, and it is what a negative verdict is later allowed to
 conclude.** A **structural** driver is set by the category and the product: conversion and
@@ -77,6 +77,15 @@ that runs on this column.
 **Where the founder's instinct and the evidenced range disagree, record the divergence — never
 average them.** The midpoint of a founder's hope and a benchmark is a number neither of them
 asserts, and it enters the identity carrying the authority of both.
+
+**A category benchmark is a level with no trajectory behind it, and the target has a date.** One
+benchmark figure stands in for every stage at once, so a driver filled from it quietly asserts
+that a company six months from its origin converts and reaches like one forty months from it —
+against a target whose whole question is what is true at a stated month. The indexed set in
+`research/growth-curves.md` carries the month, which is what lets a driver take its value at the
+month the target counts instead of at no month in particular. Where both exist, the reference-class
+value is the one with a trajectory under it; where only the benchmark exists, the driver still
+takes it and the readout says which of the two it stood on.
 
 **Reach is the driver a sizing figure will happily impersonate, and that substitution is the
 single commonest way an unreachable target clears.** SAM is not reach. Reach is how many of the
