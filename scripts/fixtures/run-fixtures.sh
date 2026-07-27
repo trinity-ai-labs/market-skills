@@ -22,8 +22,10 @@
 # WHAT IT ASSERTS
 #   1. The clean vault reports nothing and exits 0.
 #   2. The violating vault fires every check in EXPECTED below, and exits 1.
-#   3. Both JSON outputs are well-formed enough to slice by field.
-#   4. The two refusal paths refuse, and exit 2.
+#   3. --used-in resolves every target in the clean vault and fires both of its
+#      checks in the violating one, on both sides and both exit codes.
+#   4. Both JSON outputs are well-formed enough to slice by field.
+#   5. The two refusal paths refuse, and exit 2.
 
 set -u
 
@@ -59,8 +61,11 @@ no() {
 }
 
 # Run the lint and report its exit status without tripping set -u or aborting.
+# The optional second argument is a mode flag, so a mode's exit code - which is
+# half of what a verdict mode promises - is asserted the same way as `check`'s.
 run_status() {
-	"$LINT" --vault "$1" >/dev/null 2>&1 && printf '0\n' || printf '%s\n' "$?"
+	"$LINT" ${2:+"$2"} --vault "$1" >/dev/null 2>&1
+	printf '%s\n' "$?"
 }
 
 printf 'run-fixtures: %s\n\n' "$LINT"
@@ -110,6 +115,15 @@ VIOL_STATUS=$(run_status "$HERE/violations")
 # re-parse of every fixture note each time.
 VJSON=$("$LINT" --vault "$HERE/violations" --json 2>/dev/null)
 
+# The same document from the separate mode. EXPECTED and FIRED below stay the
+# `check` census and deliberately do not merge it - `check` and `--used-in` are
+# separate modes and a check name that moved between them should turn something
+# red. The per-file `Violates:` contract in 2b is the opposite case: it is a
+# promise made by one note about one check, and which mode reports it is not the
+# note's business, so that assertion reads both documents.
+UJSON=$("$LINT" --used-in --vault "$HERE/violations" --json 2>/dev/null)
+UI_VIOL_STATUS=$?
+
 FIRED=$(printf '%s\n' "$VJSON" |
 	awk -F'"check": "' 'NF > 1 { split($2, a, "\""); print a[1] }' |
 	LC_ALL=C sort -u)
@@ -145,7 +159,7 @@ done <"$PAIRS_FILE.got"
 # resolution order that has stopped resolving. Every violating note declares its
 # own checks on a `Violates:` line, and each is asserted against that file.
 printf '\nper-file expectations\n'
-PAIRS=$(printf '%s\n' "$VJSON" |
+PAIRS=$(printf '%s\n%s\n' "$VJSON" "$UJSON" |
 	awk -F'"file": "' 'NF > 1 {
 		split($2, a, "\"")
 		split($0, b, "\"check\": \"")
@@ -223,6 +237,40 @@ for note in DECISION-DR07KK21 DECISION-MG18QW42; do
 	esac
 done
 
+# --- 2d. used_in targets resolve, both sides ---------------------------------
+# Which note each --used-in failure lands on is already asserted, in both
+# directions, by the per-file machinery above: PAIRS reads the mode's JSON too,
+# so CLAIM-GONE0011 and CLAIM-ANCH0012 have to fire what they declare, and
+# CLAIM-STAL0006 - whose target resolves - fails the suite the moment the mode
+# reports it. Written out here is only what a separate mode owns and that
+# machinery cannot see: its exit codes, its clean side, and its failure COUNT.
+#
+# The count is the assertion with teeth. A slug rule that reported every heading
+# as dead would still fire both check names on the violating vault and pass a
+# name census; what catches it is the clean vault staying silent and the
+# violating one reporting two failures rather than five. Two of CLAIM-ANCH0012's
+# three entries resolve - one through an em-dash heading that slugs to a doubled
+# hyphen, one through an accented heading - so the count is what asserts that
+# whitespace runs are not collapsed and that non-ASCII letters survive.
+printf '\nused_in targets\n'
+
+UI_CLEAN=$("$LINT" --used-in --vault "$HERE/clean" 2>&1)
+UI_CLEAN_STATUS=$?
+[ "$UI_CLEAN_STATUS" = "0" ] && ok "--used-in exits 0 on the clean vault" ||
+	no "--used-in exits 0 on the clean vault (got $UI_CLEAN_STATUS)"
+case "$UI_CLEAN" in
+*clean*) ok "--used-in resolves every clean target, anchored and bare" ;;
+*) no "--used-in did not report the clean vault clean (got: $UI_CLEAN)" ;;
+esac
+
+[ "$UI_VIOL_STATUS" = "1" ] && ok "--used-in exits 1 on the violating vault" ||
+	no "--used-in exits 1 on the violating vault (got $UI_VIOL_STATUS)"
+
+case "$UJSON" in
+*'"failure_count": 2'*) ok "--used-in reports exactly the two planted failures" ;;
+*) no "--used-in failure_count is not 2 - a resolving target was reported dead, or a broken one was not" ;;
+esac
+
 # --- 3. JSON is well-formed enough to slice ---------------------------------
 printf '\njson\n'
 for v in clean violations; do
@@ -236,6 +284,16 @@ for v in clean violations; do
 	*) no "$v --json has no failure_count" ;;
 	esac
 done
+
+# A verdict mode with nothing to report still owes a document: a caller that
+# slices --used-in --json cannot tell an empty result from a mode that printed
+# nothing at all, and the difference is whether the vault is clean or the
+# invocation was wrong.
+UI=$("$LINT" --used-in --vault "$HERE/clean" --json 2>/dev/null)
+case "$UI" in
+'{'*'"failure_count": 0'*'}'*) ok "clean --used-in --json is a JSON object carrying failure_count" ;;
+*) no "clean --used-in --json is not a sliceable object (got: $UI)" ;;
+esac
 
 U=$("$LINT" --unverified --vault "$HERE/clean" --json 2>/dev/null)
 case "$U" in
