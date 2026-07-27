@@ -665,7 +665,7 @@ with nothing recording that it died.
 ## Layout: one directory per type, one file per note
 
 ```
-<user-vault>/                     # e.g. ~/Documents/business/<product-slug>/
+<user-vault>/                     # e.g. ~/Documents/go-to-market/<product-slug>/
   .vault/                         # THE ENGAGEMENT FOLDER IS THE VAULT — no `vault/` subdir
     config.json                   # schemaVersion — the migration gate
   sources/

@@ -1,6 +1,6 @@
 # Output document templates
 
-The exact structure of every file in `~/Documents/business/<product-slug>/`. Keep the headings —
+The exact structure of every file in `~/Documents/go-to-market/<product-slug>/`. Keep the headings —
 downstream consumers (the business-plan skill, the renderer) navigate by them. Prose inside each
 section is yours.
 

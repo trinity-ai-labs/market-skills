@@ -24,7 +24,7 @@ job, on its own strongest-model turn, after reading everything.
 ```js
 Workflow({ script: <Workflow A below>, args: {
   date: "2026-07-25",
-  outDir: "<absolute, e.g. /Users/you/Documents/business/acme-cli>",
+  outDir: "<absolute, e.g. /Users/you/Documents/go-to-market/acme-cli>",
   dossier: "<full product-dossier.md content, inline>",
   boundary: "<the category boundary paragraph>",
   citation: "<the citation contract from SKILL.md, verbatim — including the no-web-access refusal clause>",

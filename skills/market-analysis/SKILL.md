@@ -69,7 +69,7 @@ thing the run can return.
 All output lands in one stable folder per product:
 
 ```
-~/Documents/business/<product-slug>/
+~/Documents/go-to-market/<product-slug>/
   product-dossier.md        # what the product IS (Phase 0)
   market-analysis.md        # the main report (Phase 4)
   competitor-analysis.md    # deep competitive landscape (Phase 4)
@@ -86,7 +86,7 @@ monorepo: the analyzed package's directory, not the repo root) is the fallback o
 product name is established. Normalize exactly: lowercase → replace every run of non-`[a-z0-9]`
 with a single `-` → trim leading/trailing `-`. An idea with no name yet gets NO files written
 until the name settles — settling it is the first grill turn (interactive) or comes from the
-brief (dispatched). Before minting a folder, `ls ~/Documents/business/` and reuse any existing
+brief (dispatched). Before minting a folder, `ls ~/Documents/go-to-market/` and reuse any existing
 folder whose dossier names the same product. Record the slug as a `slug:` line in the
 dossier's front matter. Same product → same folder, on every run, forever. A re-run **updates
 files in place** — never a `-v2` folder, never a timestamped copy; prior research is context

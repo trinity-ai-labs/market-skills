@@ -12,7 +12,7 @@ Worked examples in the skills are generic by construction. A rule illustrated wi
 naming a real product, and doesn't leak a strategy.
 
 **2. State lives OUTSIDE the skill.** The skills read and write
-`~/Documents/business/<product-slug>/` — the engagement folder IS the vault, and the
+`~/Documents/go-to-market/<product-slug>/` — the engagement folder IS the vault, and the
 research and outputs it produces live inside that same folder. **This repo holds
 method and tools only, never user data.** Scripts are stateless: they take a path and
 operate on it. That separation is what lets the skills be public while the work stays

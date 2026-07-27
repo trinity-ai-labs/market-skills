@@ -116,7 +116,7 @@ product name, kebab-case; re-runs update in place, never a new folder):
 carries `.vault/config.json`, and everything else lives inside it:
 
 ```
-~/Documents/business/<product-slug>/      # ← this directory is the vault
+~/Documents/go-to-market/<product-slug>/  # ← this directory is the vault
   .vault/config.json        # schemaVersion — a directory without it is not a vault
   _vocab.yml                # controlled subjects, seeded from references/vocabulary.yml
   sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note, <ID>.md
@@ -164,7 +164,7 @@ pass to a tool or an agent brief.
 
 Resolve the slug per market-analysis's slug rule (repo → analyzed directory name, settled
 name wins; for an idea with no name, do NOT write any file — settling the name is the first
-grill turn). Look inside `~/Documents/business/<slug>/` (and `ls` the parent for an existing
+grill turn). Look inside `~/Documents/go-to-market/<slug>/` (and `ls` the parent for an existing
 folder naming the same product). A market analysis already there is prior work: **reuse** if
 the dossier still matches reality and `_Analyzed:` is under ~90 days old in a fast-moving
 category (AI tooling, consumer apps) or ~12 months otherwise; between those, run the
