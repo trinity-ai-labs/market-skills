@@ -91,13 +91,19 @@ nearest-reachable solve and the negotiation script are in
     could revisit this week, in the same words and at the same confidence as a constraint no
     decision of theirs can move.
 
-17. **The vault is a git repo (Phase 0): commit at every meaningful write, and where a remote
-    exists — the Phase 5 consent gate — push every commit.** Phase boundaries are too coarse a
-    unit of loss for a phase that writes dozens of files: a crash mid-phase should cost one file,
-    not a day of research. A remote is created only on the founder's explicit answer to both
-    destination and visibility, and past that an unpushed commit is worse than no remote — it
-    reads as a backup, so the founder believes the corpus is in two places while it is on one
-    laptop.
+17. **The vault is a git repo (Phase 0): commit at every meaningful write, regenerate the vault's
+    `README.md` in the commit that changes a fact it states, and where a remote exists — the
+    Phase 5 consent gate — push every commit.** Phase boundaries are too coarse a unit of loss for
+    a phase that writes dozens of files: a crash mid-phase should cost one file, not a day of
+    research. They are the same wrong unit for the generated README, which states the current
+    target and its verdict status while both move *inside* Phase 3 — so pinned to the boundary it
+    spends most of a phase asserting what the ledger beneath it has already superseded, and it
+    reads as current because its last line says it is generated rather than hand-edited. The
+    fields whose change triggers a regeneration are named in the output contract below, so the
+    rule is decidable at commit time without re-reading the file. A remote is created only on the
+    founder's explicit answer to both destination and visibility, and past that an unpushed commit
+    is worse than no remote — it reads as a backup, so the founder believes the corpus is in two
+    places while it is on one laptop.
 
 18. **Every input to a steady-state ceiling and every target driver is labelled `structural` or
     `policy` — those two words — and any ceiling or verdict whose binding input is policy is
@@ -222,10 +228,13 @@ answers the second question. An existing repo is left alone: running `git init` 
 no-op, but a re-scaffold that rewrites its files is not.
 
 **What counts as a meaningful write**: a dimension's prose and notes, a batch of grill facts, a
-drafted section. The phase-boundary commit keeps its own job on top of those — it is the point
-where the two generated files below are regenerated.
+drafted section. The phase-boundary commit keeps its own job on top of those — it is where
+`.gitignore` is regenerated, and it is one of the points where `README.md` is.
 
-Two files are **generated**, at scaffold and again at every phase boundary, and committed there:
+Two files are **generated** at scaffold, and their cadences part after that, because only one of
+them tracks what the corpus asserts: **`.gitignore` is regenerated at every phase boundary and
+committed there; `README.md` is regenerated in the same commit as any write that changes a fact it
+states** (the fields are named below). Neither is hand-edited.
 
 - **`.gitignore`** — editor and OS state only: `.DS_Store`, and an editor's per-window workspace
   file (Obsidian rewrites `.obsidian/workspace.json` on every open, so unignored it makes each
@@ -236,12 +245,28 @@ Two files are **generated**, at scaffold and again at every phase boundary, and 
   working notes and none of the output.
 - **`README.md`** at the vault root — what the product is; what this corpus is and which skill
   produced it; the note-type map (the six types and what each asserts); where to start reading
-  (`one-pager.md`, then `business-plan.md`); the current target and its verdict status; and the
-  `vault-lint.sh` invocation for checking the corpus. Its last line states that it is generated
-  and regenerated rather than hand-edited. Without it a shared vault is a directory of
-  `CLAIM-AS23SD44.md`-style filenames — deliberately bare IDs, legible to this skill and opaque
-  to a human opening the repo cold. Regenerating it every phase is what keeps it from drifting:
-  a stale README on a shared repo is worse than none, because it reads as current.
+  (`one-pager.md`, then `business-plan.md`); the current target and its verdict status; which
+  phase the corpus is in; and the `vault-lint.sh` invocation for checking the corpus. Its last
+  line states that it is generated and regenerated rather than hand-edited. Without it a shared
+  vault is a directory of `CLAIM-AS23SD44.md`-style filenames — deliberately bare IDs, legible to
+  this skill and opaque to a human opening the repo cold.
+
+  **Four of the things it states move while a phase is running, and a write that changes one of
+  them regenerates the README in its own commit:** the current target, its verdict status, which
+  phase the corpus is in, and the note-type map when the corpus starts asserting a type it did not
+  carry before. They are named rather than left as "anything the README says" so the rule is
+  decidable at commit time: an agent about to commit checks its own write against those four, and
+  a rule that instead required re-reading the generated file before every commit is one that gets
+  skipped. Nothing else the file carries — the product description, the reading order, the
+  `vault-lint.sh` invocation — moves after scaffold, so most commits touch none of the four and
+  leave the README alone. That floor is the point: a README rewritten on every commit buries the
+  ledger changes the history exists to show, which is the failure `.gitignore` above exists to
+  prevent. The phase boundary stays a regeneration point — crossing one changes which phase the
+  corpus is in — but it is no longer the only one. Between boundaries is where the damage was: a
+  target renegotiated mid-Phase 3 and a verdict re-solved by the reference-class re-flip each move
+  one of the first two fields, so under the old cadence the file spent most of a phase stating a
+  settled-looking target the ledger underneath it had already superseded, with nothing marking the
+  disagreement. A stale README on a shared repo is worse than none, because it reads as current.
 
 Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
 dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet —
@@ -489,7 +514,9 @@ Four query results are resolved BEFORE a section is written, never after:
 drafted**, as the `claim` note [references/target.md](references/target.md) specifies — and where
 it is negative, the negotiation turn happens HERE, before drafting, per that same file. A plan
 drafted against a target still being argued about is re-cut section by section when the target
-settles, and the milestones written under the old number are the ones that quietly survive.
+settles, and the milestones written under the old number are the ones that quietly survive. The
+solved verdict and a target the negotiation settles differently both land mid-phase, so each is
+one of the writes whose commit regenerates the vault's `README.md` (invariant 17).
 
 **A reference class inferred from the subject's own price point or packaging is re-flipped in this
 phase, and the trigger fires in both directions.** The class is named back in Phase 2 from the
