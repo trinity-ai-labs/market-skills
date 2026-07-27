@@ -339,6 +339,24 @@ dossier-building pass (explore agents on a repo; drafting from a doc/idea), no r
 writing it to `research/product-dossier.md` (vault-relative — the slug directory is the vault). The grill needs the dossier's value
 hypotheses to exist; nothing else of market-analysis runs yet.
 
+**Inventory the founder's own artifacts before the grill, and measure them rather than asking
+about them.** Not a question — a worklist: every repo the founder has written (not only the
+subject), every repo they have worked in for someone else, every document produced for a client
+(proposals, audits, strategic reports, statements of work), every product in this category they
+have personally used, and anything they have published. Establish what exists, then open it —
+what an artifact is measured on lands as a primary observation resting on that artifact as its
+`source`, exactly as the sweep below records what it finds. **A founder's own artifacts are the
+only evidence in an engagement that is simultaneously free, primary, checkable and unavailable
+to a competitor**, and market research is none of the four. Measuring rather than asking is the
+whole of it: asking returns the founder's recollection of an artifact, which is commentary and
+tags `L` like everything else they say, while opening it returns an observation anyone can
+re-check against the same file. The two arrive in the same words and only one is evidence. **The
+failure this prevents:** the grill asks what the founder's unfair advantages are and gets an
+adjective the plan then carries unsupported, while the repo that would have proved it, the dated
+report that predates the plan's own thesis, and the category tool they used for two years and
+abandoned all sit unopened. The sweep below is one entry on this list, and nothing has ever asked
+for the rest.
+
 **Sweep for founder-authored writing before the grill — it is the cheapest context you will
 ever get.** Blog, changelog, README, docs, talks, launch threads, issue bodies. Founders
 routinely explain their own reasoning in public and then never mention it, because to them it
