@@ -31,14 +31,14 @@ and is never restated here.
 3. **Names describe conditions, not costs — and a reading describes one too, never its cause.**
    Enum values, type lists and field names say what raised a thing — never how often, how badly,
    or at what cost to the user. An instrument's reading is the same kind of evidence: **before a
-   metric is cited as evidence for a mechanism, state what else produces that number.** A count says a thing exists; it never
-   says why. Where the alternative explanation is not excluded the metric is a description and
-   not evidence — and a metric chosen *after* the conclusion is a conclusion wearing an
-   instrument. That second clause is the one worth writing down: a careful reader supplies the
-   alternative explanation anyway, while an instrument selected to fit a thesis already reached
-   leaves every step downstream of it locally sound. The tell is a second metric introduced to
-   confirm the first; chosen after the thesis, it tests the thesis's fit to the instrument
-   rather than the mechanism.
+   metric is cited as evidence for a mechanism, state what else produces that number.** A count says
+   a thing exists; it never says why. Where the alternative explanation is not excluded the metric
+   is a description and not evidence — and a metric chosen *after* the conclusion is a conclusion
+   wearing an instrument. That second clause is the one worth writing down: a careful reader
+   supplies the alternative explanation anyway, while an instrument selected to fit a thesis already
+   reached leaves every step downstream of it locally sound. The tell is a second metric introduced
+   to confirm the first; chosen after the thesis, it tests the thesis's fit to the instrument rather
+   than the mechanism.
 4. **Evaluate the bundle, not the columns.** A product whose thesis is integration always
    scores as commodity on a per-capability grid, so the matrix gets supplemented, never trusted
    alone.
@@ -726,19 +726,19 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
   price, from what they use today?
 
-**The target list is generated, not read.** Invariant 19's reconciliation runs before any of
-this and gates the dispatch — its two lint calls, `vault-lint.sh --used-in` and
-`vault-lint.sh --supersession-sweep`, belong beside the query below rather than in a block of
-their own, and no brief is written until the read behind them is done. Two further queries then
-run before the panel is briefed: `vault-lint.sh --unverified`, and every claim that reached the
-plan carrying `confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the
-attack surface each panelist's brief carries in its lens. "Read the plan and object" produces
-objections about whatever a panelist happened to notice; this produces them about what the
-corpus already knows is weak. Every brief also carries the founder's named fear `[F#]`: attack
-this hardest, then name the two risks the founder did NOT name. The operator and target-customer
-briefs additionally carry the structural half of `research/growth-curves.md`'s strategy record —
-what comparables had that this founder does not — because that is an objection the corpus can
-already evidence rather than one a panelist has to invent.
+**The target list is generated, not read.** Invariant 19's reconciliation runs before any of this
+and gates the dispatch — its two lint calls, `vault-lint.sh --used-in` and `vault-lint.sh
+--supersession-sweep`, belong beside the query below rather than in a block of their own, and no
+brief is written until the read behind them is done. Two further queries then run before the panel
+is briefed: `vault-lint.sh --unverified`, and every claim that reached the plan carrying
+`confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the attack
+surface each panelist's brief carries in its lens. "Read the plan and object" produces objections
+about whatever a panelist happened to notice; this produces them about what the corpus already knows
+is weak. Every brief also carries the founder's named fear `[F#]`: attack this hardest, then name
+the two risks the founder did NOT name. The operator and target-customer briefs additionally carry
+the structural half of `research/growth-curves.md`'s strategy record — what comparables had that
+this founder does not — because that is an objection the corpus can already evidence rather than
+one a panelist has to invent.
 
 **A metric that enters a brief as evidence for a mechanism enters with what else produces it**,
 per invariant 3. This is where that rule bites hardest: a panelist handed a number reads it as
@@ -1008,7 +1008,7 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Low-confidence number promoted to headline | Confidence is derived; tags survive import; validation step instead |
 | Hockey-stick from penetration hand-waving | Bottom-up build; scenarios move assumptions |
 | Flat acquisition line read as conservative | Zero growth is an assumption: name its driver, and place the implied rate against the band |
-| Product claim gone stale in the pessimistic direction | Re-verify every product claim against source at the current commit before drafting; a drift is a supersession, not an edit |
+| Product claim gone stale in the pessimistic direction | Re-verify against source at the commit; a drift is a supersession, not an edit |
 | Policy variable reported as a ceiling | Label every input structural or policy; a chosen input caps the configuration, not the business |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |
