@@ -95,21 +95,51 @@ home, and the home is not the same for all four:
 |---|---|---|
 | price | policy within a structural band | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
 | conversion | structural | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts; where `research/growth-curves.md` indexes a comparable that discloses it, the reference-class value at the month since origin the target counts is preferred to the benchmark, and a divergence between the two is recorded rather than averaged |
-| retention | structural | the same, and it is per-period, so the period is part of the value |
+| retention | policy within a structural band | the **band** from the same places conversion takes its value, and it is per-period, so the period is part of the value. The **position inside the band** is homed to the product — the depth of what it does, whether the valuable thing is reachable unassisted, and the friction between the two — as a `claim` carrying a sourced base with its magnitude labelled `measured`, `reference-class` or `assumed`, and an `assumed` one taking the both-directions test like any other input |
 | reach | policy | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput; where the indexed set covers the same months, a comparable's reach at that month since origin is the reference-class check on that figure — it does not replace it, because reach is this founder's channels and hours |
 
 **`kind` records who sets the value, and it decides two things: where that value is allowed to come
 from, and what a negative verdict is later allowed to conclude.** A **structural** driver is set by
-the category and the product: conversion and retention are what they are at the stage the target
-counts, and no decision the founder takes this week moves them. A **policy** driver is a value the
-founder chose and could choose differently — reach is channels × hours, which is a decision, and
-price is a point the founder picks inside a band the willingness-to-pay evidence sets, so the point
-is policy and the band is structural. Two tests run on this column at two moments: [a structural
+the category: conversion is what it is at the stage the target counts, and no decision the founder
+takes this week moves it. A **policy** driver is a value the founder chose and could choose
+differently — reach is channels × hours, which is a decision. **Two drivers are split**, and they
+take the same construction: price is a point the founder picks inside a band the
+willingness-to-pay evidence sets, and retention is a position the product holds inside a band the
+category sets. In both, the point is policy and the band is structural. Two tests run on this column
+at two moments: [a structural
 driver may be sourced from the reference class; a policy driver may only be checked by
 it](#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it)
 at fill time, and [a binding driver that is policy makes the verdict conditional, not
 negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative) at verdict
 time.
+
+**What places the product inside the retention band is the value it delivers.** A consumer utility
+does not retain like an ERP, and that is the band. Inside it, three things move the position and all
+three are built rather than found: how deep the thing the product does actually is, whether the
+valuable part of it is reachable by the buyer unassisted, and how much friction sits between the
+two. The plan states them where the price is defended, in [plan-template.md](plan-template.md)'s
+`## Value delivered (MANDATORY wherever price is defended)` section, and that section names
+retention as its channel into the arithmetic — which is what stops a delivered-value argument from
+being a paragraph that moves no number.
+
+**A retention claim therefore carries a base and a label, and an improvement claim carries them
+harder.** The band is sourced; the position is a `claim` with a sourced base and its magnitude
+labelled `measured`, `reference-class` or `assumed`, and an `assumed` one takes [the
+both-directions
+test](#every-driver-value-names-its-driver-in-both-directions-and-a-low-one-with-none-is-unmodelled).
+**The failure that guard prevents:** churn is the divisor of the steady-state identity, so halving
+it roughly doubles the equilibrium — an unguarded improvement claim moves the answer further than
+any other input in the model, and it does so while flattering the thing the founder built, which is
+what makes it easy to write and hard to challenge. Unguarded, the split is a licence to model churn
+down to whatever the target needs.
+
+**`conversion` is not split, and the line is drawn there deliberately.** Onboarding quality moves
+activation and trial-to-paid too, so the argument above reaches for conversion next. It stops.
+Conversion is a funnel property of the category measured at a stage; retention is where a product's
+own value shows up over time. **The failure splitting it as well would cause:** reach is policy,
+price is split, retention is split — split conversion too and the identity keeps no structural term
+at all, every negative verdict becomes conditional on something the founder could change this week,
+and the method loses the one output it exists to be able to produce, which is telling a founder no.
 
 **Where the founder's instinct and the evidenced range disagree, record the divergence — never
 average them.** The midpoint of a founder's hope and a benchmark is a number neither of them
@@ -180,8 +210,13 @@ what the founder said their own channels do. Stated as a principle:
 driver is the founder's own configuration, so a comparable's value is evidence about a different
 company's choices and can only ever be a check.**
 
-Conversion and retention are what the category does at a stage, and a comparable measured at that
-stage is measuring the same quantity — the set speaks to them directly. Reach is this founder's
+Conversion is what the category does at a stage, and a comparable measured at that stage is
+measuring the same quantity — the set speaks to it directly. **Retention is split, and the rule
+covers it unchanged rather than needing an exception:** the band is a property of the category, so
+the set sources it; the position inside the band is this product's own, so the set may only check
+it. A comparable retaining better is reporting a different product's depth and reachability, and
+pasting that figure in replaces the product under test with somebody else's — which is the same
+substitution the reach row makes, arriving one level down. Reach is this founder's
 channels at this founder's hours; a comparable that put ten times as many people in front of its
 product a month is reporting a different budget and a different audience, and pasting that figure in
 replaces the configuration under test with somebody else's. The same reading runs down the exit
@@ -199,8 +234,8 @@ balances, and the binding driver is named with the same confidence it would have
 then argues about a constraint that was never theirs.
 
 **The reference class is not a term in any identity, and it is the input every structural driver's
-value rests on.** Which companies are comparable is what sets conversion, retention and the multiple
-at once, one level beneath the arithmetic — so it takes the discipline the drivers take: **named in
+value rests on.** Which companies are comparable is what sets conversion, the band retention sits in,
+and the multiple at once, one level beneath the arithmetic — so it takes the discipline the drivers take: **named in
 the readout, classified `structural`, homed to `research/growth-curves.md`, and put through the flip
 test.** Left unwritten it is not a neutral background choice; it is the largest unexamined input in
 the method.
@@ -216,7 +251,8 @@ repricing, a repackaging or a change in how the product is delivered re-opens wh
 comparable, and the candidate classes that come back are what the flip test then runs over.
 
 **The failure this causes:** a founder decision selects the comparable set, the set fixes
-conversion, retention and the multiple together one level beneath the arithmetic, and the verdict
+conversion, retention's band and the multiple together one level beneath the arithmetic, and the
+verdict
 that follows is reported as a property of the market. Repricing then reads as a pricing question
 when it is a reclassification — the one change that moves every structural driver at once — and it
 is never costed as one, because nothing in the readout records that the class was ever downstream of
@@ -248,7 +284,8 @@ A worked example, invented end to end:
 > narrower one and misses under the general one.
 >
 > **Readout:** *undetermined, and what is undetermined is the reference class rather than any driver.
-> Conversion, retention and the multiple all move together between the two classes, which is why no
+> Conversion, the band retention sits in, and the multiple all move together between the two
+> classes, which is why no
 > single figure looks wrong under either. The cheapest test is the adoption path in the disclosed
 > deployments: whether the product enters an account through an individual engineer or through a
 > procurement decision. Kill/continue: if the disclosed deployments are predominantly
@@ -325,7 +362,8 @@ A worked example, invented end to end:
 > **Readout:** *five inputs are unmodelled, not conservative — activation, referral share, the
 > seasonal drag and both conversion steps. No verdict is computed until each one names its driver or
 > takes its value from a home. The two that do name one stand: reach, at the channels and hours the
-> founder stated, and retention, at the sourced category rate.*
+> founder stated, and retention, at the low end of the sourced category band, placed there because
+> the product's valuable step still needs a call to reach.*
 >
 > Re-solved with the five given homes, the same target clears at the cheapest corner. Nothing about
 > the market changed between the two runs. The chain had been pointed one way seven times, and the
@@ -375,10 +413,11 @@ to a judgement can only be met with a counter-judgement.
 ## A binding driver that is policy makes the verdict conditional, not negative
 
 **Classify the binding driver before the verdict is written anywhere.** Read its `kind` off the
-driver-home table: **structural**, set by the category and the product, or **policy**, set by the
-founder and re-settable. Reach is the case that decides most runs, because reach is the driver that
-binds most often and reach is policy — channels crossed with hours is a decision, and a decision is
-not a ceiling.
+driver-home table: **structural**, set by the category, **policy**, set by the founder and
+re-settable, or **policy within a structural band**, where the band is structural and the position
+inside it is not. Reach is the case that decides most runs, because reach is the driver that binds
+most often and reach is policy — channels crossed with hours is a decision, and a decision is not a
+ceiling.
 
 **Where the binding driver is policy, the target is not unreachable — it is unreachable in the
 stated configuration**, and the verdict says so in those words, with the policy variable named. The
@@ -386,6 +425,15 @@ run then goes directly to the counter-offer and the lever table with that variab
 hours, the channel count or the price point the stated target would need. The readout names the
 kind alongside the driver, so the founder reads *reach binds, and reach is policy* rather than
 *reach binds* and supplies the second half themselves — usually as "so it cannot be done".
+
+**A split driver makes the verdict conditional on where in its band the product sits, and the words
+change with it.** Where retention binds, the finding is *this product as built does not retain well
+enough for that target*, with the target under one changed position stated beside it — never *this
+market does not retain*. The band is the market's half of the answer and it stands; the position is
+the product's, and the plan's roadmap is the instrument that moves it. Price behaves the same way
+one row up. **The failure this prevents:** filed as structural, a retention-bound miss reports a
+category floor where a product outcome belongs, and the founder is told to leave a market when what
+they were shown is the cost of shipping a shallower product than the target needs.
 
 **This is the sibling of the rule below it, aimed at a different defect.** A driver that traces to
 nothing makes the verdict *undetermined*, because the verdict would be resting on nothing; a driver
@@ -408,8 +456,10 @@ A worked example, invented end to end:
 > not that the count is unreachable.
 >
 > **Readout:** *reach binds, and reach is policy. At the channels and hours you stated, the count
-> lands around a third of the way by the date. Conversion and retention are structural and both
-> clear at the category benchmark — nothing about the product or the category is stopping this; the
+> lands around a third of the way by the date. Conversion is structural and clears at the category
+> benchmark. Retention clears too, and it is policy within a structural band — the band is the
+> category's, and the product sits mid-band because the valuable step is reachable unassisted but
+> the second one is not. Nothing about the product or the category is stopping this; the
 > configuration is.*
 >
 > The lever table then carries the hours and the channel count that would close the gap, and what
@@ -421,6 +471,18 @@ value the category benchmark does not support at the stage the target counts. Th
 is **structural**, and it is the one worth telling the founder about. A run that stops at the first
 binding driver hands the founder their own calendar back as if it were a finding about the market,
 and never reaches the constraint they cannot decide their way out of.
+
+**Retention is now among the drivers a solve may relieve, and it is the one the roadmap acts on
+directly.** Reach is relieved by hours and channels, price by a chosen point in its band —
+neither is something the product team builds. Retention's position is: it moves when the product
+gets deeper, when the valuable part becomes reachable unassisted, or when the friction between
+those two comes down, and those are roadmap items with owners and dates. So a retention-bound
+verdict routes to the roadmap rather than to the calendar, and the lever it carries is a shipped
+change with a stated size, guarded like any other input — a sourced base, a magnitude labelled
+`measured`, `reference-class` or `assumed`, and the both-directions test on an `assumed` one. **The
+failure the guard prevents here specifically:** churn is the divisor, so the retention lever is the
+cheapest-looking row in any lever table, and an unguarded one lets the run solve the target by
+choosing the improvement the target needs.
 
 ## A driver that traces to nothing makes the verdict undetermined, not negative
 
@@ -751,17 +813,20 @@ number a founder is most likely to want re-litigated later.
    what it was inferred from as part of naming it, and where it was read off the subject's own price
    point, packaging or delivery, that dependency is named wherever the class is named, because it is
    what makes step 8 fire.
-3. **Classify each driver `structural` or `policy`** from the table's `kind` column, before any
-   verdict is written. That column decides two things: where the value may come from — the indexed
-   set sources a structural driver and only checks a policy one — and what a negative verdict may
-   conclude, since a verdict whose binding driver turns out to be policy is negative for the stated
-   configuration only and is written in those words. For an exit target it runs over the multiple's
-   four inputs too: slope and the named acquirer are policy, scarcity and the bidder count are
-   structural.
+3. **Classify each driver from the table's `kind` column** — `structural`, `policy`, or `policy
+   within a structural band` — before any verdict is written. That column decides two things: where
+   the value may come from — the indexed set sources a structural driver and only checks a policy
+   one, and on a split driver it sources the band and checks the position — and what a negative
+   verdict may conclude, since a verdict whose binding driver turns out to be policy is negative for
+   the stated configuration only and is written in those words. Price and retention are the two
+   split drivers, and a split one binding is conditional on the position, never on the band. For an
+   exit target it runs over the multiple's four inputs too: slope and the named acquirer are policy,
+   scarcity and the bidder count are structural.
 4. **Fill each driver from its named home** — price, conversion, retention, reach — recording any
    founder-instinct divergence rather than averaging it, and any disagreement between a
-   broad-population figure and a named-company value the same way. Every value taken from the indexed
-   set carries the survivorship qualifier wherever it is reported.
+   broad-population figure and a named-company value the same way. A split driver is filled twice,
+   band then position, and the position names what in the built product places it there. Every value
+   taken from the indexed set carries the survivorship qualifier wherever it is reported.
 5. **Try the reference class before degrading** — a structural driver with no subject instrument
    that the indexed set reaches at the target's month is a `claim` resting on that set, with its
    `stale_after` and a `validated_by` kill test. Only what the set cannot speak to becomes an
@@ -771,7 +836,12 @@ number a founder is most likely to want re-litigated later.
    whichever way the value points: each names the driver behind it in the direction it sits. A low
    figure with none named is labelled **unmodelled, not conservative**, and takes a driver or a home
    before anything is solved. The flip test does not catch these — a pessimistic value with no driver
-   is a well-formed `assumption` and passes it clean.
+   is a well-formed `assumption` and passes it clean. **An optimistic value gets the mirror of the
+   same test**, and the two it fires on hardest are a delivered-value figure and a retention
+   improvement: each carries a sourced base and a magnitude labelled `measured`, `reference-class` or
+   `assumed`, and an `assumed` one is solved at both ends of its range like any other. Both flatter
+   the thing the founder built, which is what makes them easy to write and hard to challenge, and
+   the retention one moves the answer furthest because churn is the divisor.
 7. **Run the flip test** at both ends of every assumption's plausible range — evidence
    uncertainty only, never the target's own stated range. If the verdict flips, stop: return
    *undetermined* plus the cheapest test that settles it, and name the threshold.
