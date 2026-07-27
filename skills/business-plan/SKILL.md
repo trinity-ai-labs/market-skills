@@ -507,12 +507,21 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   table (source: analysis, founder, or explicit guess), the revenue build is bottom-up, and
   base/downside/upside scenarios move the assumptions — not the conclusions. Fake precision is
   the failure mode; visible formulas are the fix. Every explicit-guess row is an `assumption`
-  note with a `sensitivity`, which is what orders the validation queue. **The projection's own
-  implied monthly growth rate is then placed against `competitor-analysis.md`'s `## Observed
-  growth band`** — outside it in either direction, faster than the fastest comparable or slower
-  than the slowest, the projection is defended by a named difference or re-cut. The slow end is
-  where this bites: an over-projection draws a red team, an under-projection reads as
-  conservative and reaches the founder's decisions unexamined. **That is the level check, and it
+  note with a `sensitivity`, which is what orders the validation queue. **Every input to the
+  revenue build then takes the both-directions test, whichever way the value points**: each
+  names the driver behind it in the direction it sits, and a low one with none is unmodelled,
+  not conservative — it takes a driver or a home before anything is solved with it. The two
+  checks below run on the curve, its rate and then its shape, and neither of them reaches this:
+  a chain filled at the low end at every term produces a rate inside the band and a shape the
+  set contains, at a scale nobody chose. The test, and why the flip test does not cover it, is
+  in
+  [references/target.md](references/target.md#every-driver-value-names-its-driver-in-both-directions-and-a-low-one-with-none-is-unmodelled).
+  **The projection's own implied monthly growth rate is then placed against
+  `competitor-analysis.md`'s `## Observed growth band`** — outside it in either direction,
+  faster than the fastest comparable or slower than the slowest, the projection is defended by a
+  named difference or re-cut. The slow end is where this bites: an over-projection draws a red
+  team, an under-projection reads as conservative and reaches the founder's decisions
+  unexamined. **That is the level check, and it
   is followed by the shape check: the projection's implied trajectory is placed against
   `research/growth-curves.md`'s indexed set at matching months since origin**, month 6 against
   month 6 and month 18 against month 18, not its average rate against the band's endpoints. The
