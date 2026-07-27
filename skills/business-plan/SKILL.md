@@ -176,8 +176,11 @@ refresh.
 `vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with its
 `schemaVersion`, and copy [references/vocabulary.yml](references/vocabulary.yml) to
 `<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
-vocabulary it was written under after the skill ships new terms. Extend it by that file's
-governance rule; never delete or redefine a base term.
+vocabulary it was written under after the skill ships new terms. The copy carries the shipped
+file's `vocabulary_version`, which is what makes a vault scaffolded today report no drift on its
+next run. Extend it by that file's governance rule; never delete or redefine a base term on the
+vault's own authority — an amended base definition is adopted only through the reconciliation
+below, after the claims under it have been re-read.
 
 Pass the absolute vault path to every agent and tool: resolution is `--vault` or `VAULT_PATH`
 and nothing else, because an upward search from a repo either walks to the filesystem root or
@@ -186,17 +189,26 @@ existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill do
 understand stops the run rather than being half-read.
 
 **A reused vault's `_vocab.yml` is compared against the shipped
-[references/vocabulary.yml](references/vocabulary.yml), and a base term whose definition has
-changed is reported to the founder.** The copy is what keeps a vault checkable, and it is also
-what freezes it: the lint reads the vault's copy and never the shipped file, so a vault
-scaffolded before an amendment keeps the superseded wording indefinitely and nothing says so.
-This phase is the one point where both files are open, which is what makes the comparison free.
-It is **not** an error and does not stop the run — a vault written under an older definition is
-valid, it is only unreviewed, and erroring would break every existing vault on upgrade, which is
-the failure that makes people stop upgrading. What the report asks for is a re-read: the claims
-already filed under an amended subject are read against the new wording, and where one no longer
-asserts what the amended definition says the subject asserts, it is superseded under the standing
-two-edit rule rather than silently re-filed under a definition it was not written to.
+[references/vocabulary.yml](references/vocabulary.yml), and an amended base definition is
+reported to the founder as a version delta plus the log entries inside it.** The copy is what
+keeps a vault checkable, and it is also what freezes it: the lint reads the vault's copy and
+never the shipped file, so a vault scaffolded before an amendment keeps the superseded wording
+indefinitely and nothing says so. This phase is the one point where both files are open, which is
+what makes the comparison free. Compare the vault's `vocabulary_version` against the shipped one
+— a copy carrying **no** stamp predates it and is older than every entry, never equal to the
+current version — and report each `amendments` entry between them: the term, both framings
+(`was` and `now`), and the `must_assert` test. Reporting only that definitions differ is what
+makes this advisory get skipped: it hands the founder a corpus-wide re-read with no way to size
+it, and a task nobody can size is a task nobody starts, so the drift stays unreconciled and the
+report becomes noise. It is **not** an error and does not stop the run — a vault written under an
+older definition is valid, it is only unreviewed, and erroring would break every existing vault on
+upgrade, which is the failure that makes people stop upgrading. What the report asks for is a
+re-read of the claims filed under each amended subject, bounded by one grep per term: where a
+claim no longer asserts what the amended definition says the subject asserts, it is superseded
+under the standing two-edit rule rather than silently re-filed under a definition it was not
+written to. The procedure, the worked `steady-state-ceiling` example, and the order that makes
+adopting the new wording safe are in
+[references/vault-migration.md](references/vault-migration.md#an-upgraded-vault-enters-here-not-at-stage-1--reconcile-the-claims-an-amended-definition-left-behind).
 
 If the founder already has a corpus from earlier work — research files, a plan citing `[S#]`/
 `[F#]` codes — adopt it instead of scaffolding an empty vault:
