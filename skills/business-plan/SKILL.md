@@ -75,6 +75,15 @@ and is never restated here.
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
     not render.
 
+**The target** — the driver identity, the binding-driver readout, the confidence ceiling, the
+nearest-reachable solve and the negotiation script are in
+[references/target.md](references/target.md). Point at it; never restate it.
+
+16. **A target verdict is computed from evidenced drivers, never asserted, and never at high
+    confidence.** Asserted instead of computed, a verdict is an opinion in the shape of a
+    finding: unarguable, untestable, and carrying the vault's authority into a forecast about a
+    future nobody has run.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
