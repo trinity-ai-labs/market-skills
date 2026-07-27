@@ -119,7 +119,34 @@ audience are both true at once; only one of them is in the identity.
 downstream of the verdict — feeding its output back in makes the verdict a check on its own
 arithmetic, which it will always pass.
 
-## The verdict names which driver binds, and by how much
+### The multiple's inputs have homes too, and not one of them is ARR
+
+The multiple in an exit identity is a driver like any other, so it takes its value from named
+places rather than from a feel for the category. It has four inputs, and the reason to write them
+down separately is that **none of them is ARR**: the revenue term is the one an exit verdict is
+least sensitive to, and the second term is what decides the answer.
+
+| driver | kind | where its value comes from |
+|---|---|---|
+| growth slope at the moment of sale — **not the level reached** | policy | `research/growth-curves.md`'s indexed set, read at the month the sale lands. A company growing fast at a smaller ARR prices above a larger one that has flattened, which is why the level term cannot stand in for this one. The exit multiple and the indexed curve are the same instrument read at different moments, which is why they share an exhibit rather than each getting one |
+| strategic necessity to a **named** acquirer | policy | the dossier's seam argument — what is true only because these parts sit in one system. The question is not "is this valuable" but *which acquirer has a hole this patches, and is the product visibly the patch*. An unnamed acquirer is not a driver value; it is a blank the identity accepts without complaint. Which acquirer the roadmap is aimed at is a decision, and that is what makes this policy |
+| scarcity, and how buildable the asset is | structural | the moats dimension, with `power = benefit + barrier` asked of the buyer rather than of a competitor. If the acquirer ships it itself in two quarters the price collapses to an acquihire, and nothing the founder decides this week moves that |
+| a bidding dynamic | structural | the same named-acquirer set, counted rather than argued: how many buyers have the same hole. One interested party is a price **floor**, not a price — a single bidder pays what it has to, and what it has to pay is whatever the founder's next-best alternative is worth |
+
+**`kind` means the same thing here as above — who sets the value, and what a negative verdict is
+allowed to conclude.** Slope and the acquirer aimed at are policy, so an exit value the multiple
+will not carry at the roadmap's current slope is unreachable *in the stated configuration*, and
+[A binding driver that is policy makes the verdict conditional, not
+negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative) is the rule
+that fires. Scarcity and the bidder count are structural: they are set by the category and by the
+buyers in it, and a verdict binding on either is a finding about the business rather than about
+the plan. Reporting a slope-bound exit as structural tells a founder their company cannot be sold
+for that, when what is true is that this roadmap cannot sell it for that.
+
+**The band's ends are those four inputs at their plausible extremes, never a range typed in from
+memory.** A band whose ends trace to nothing is a scalar with error bars painted on, and it fails
+in the direction that hides: it *passes* the flip test, because ends chosen close together give
+the same verdict at both, and the run then reports a verdict that rests on the width of a guess.
 
 The verdict is not a yes or a no. It is: the value each driver has to reach for the target to
 land on its date, the value the evidence actually supports, and the ratio between them — with the
