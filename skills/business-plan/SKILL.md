@@ -507,12 +507,21 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   table (source: analysis, founder, or explicit guess), the revenue build is bottom-up, and
   base/downside/upside scenarios move the assumptions — not the conclusions. Fake precision is
   the failure mode; visible formulas are the fix. Every explicit-guess row is an `assumption`
-  note with a `sensitivity`, which is what orders the validation queue. **The projection's own
-  implied monthly growth rate is then placed against `competitor-analysis.md`'s `## Observed
-  growth band`** — outside it in either direction, faster than the fastest comparable or slower
-  than the slowest, the projection is defended by a named difference or re-cut. The slow end is
-  where this bites: an over-projection draws a red team, an under-projection reads as
-  conservative and reaches the founder's decisions unexamined. **That is the level check, and it
+  note with a `sensitivity`, which is what orders the validation queue. **Every input to the
+  revenue build then takes the both-directions test, whichever way the value points**: each
+  names the driver behind it in the direction it sits, and a low one with none is unmodelled,
+  not conservative — it takes a driver or a home before anything is solved with it. The two
+  checks below run on the curve, its rate and then its shape, and neither of them reaches this:
+  a chain filled at the low end at every term produces a rate inside the band and a shape the
+  set contains, at a scale nobody chose. The test, and why the flip test does not cover it, is
+  in
+  [references/target.md](references/target.md#every-driver-value-names-its-driver-in-both-directions-and-a-low-one-with-none-is-unmodelled).
+  **The projection's own implied monthly growth rate is then placed against
+  `competitor-analysis.md`'s `## Observed growth band`** — outside it in either direction,
+  faster than the fastest comparable or slower than the slowest, the projection is defended by a
+  named difference or re-cut. The slow end is where this bites: an over-projection draws a red
+  team, an under-projection reads as conservative and reaches the founder's decisions
+  unexamined. **That is the level check, and it
   is followed by the shape check: the projection's implied trajectory is placed against
   `research/growth-curves.md`'s indexed set at matching months since origin**, month 6 against
   month 6 and month 18 against month 18, not its average rate against the band's endpoints. The
@@ -613,7 +622,7 @@ hands every panelist that frame as the ground they attack *from*. A fourth voice
 the others would inherit it too and would arrive at the same moment as three lenses' worth of
 detail objections, too late to change what the panel is pointed at — which is why this runs BEFORE
 any brief is written and its output goes INTO the briefs, exactly as the settled target and the
-binding driver's kind do above. Three steps, in this order:
+binding driver's kind do above. Five steps, in this order:
 
 1. **Write out the revenue model's identity — the chain of terms, ahead of any value in it.**
    `MRR = paying customers × price`, the acquisition-and-retention chain standing under the
@@ -629,11 +638,28 @@ binding driver's kind do above. Three steps, in this order:
    backdrop the curve was drawn on. Zero growth is an assertion that next month's reach, conversion
    and mix are identical to this month's, and it needs a named driver exactly as an inflection
    does.
+4. **Report every input that is unmodelled in the pessimistic direction, naming each one.** The
+   steps above ask what kind an input is and what drives the curve's shape; none of them asks
+   whether a *low* value earned its place, and that is the direction this pass structurally cannot
+   see — a low number reads as the cautious choice rather than as the claim it is, so it passes
+   through the block unremarked and the panel inherits a floor nobody sourced. Run the
+   both-directions test from
+   [references/target.md](references/target.md#every-driver-value-names-its-driver-in-both-directions-and-a-low-one-with-none-is-unmodelled)
+   over every value in the identity and name each one that is unmodelled, not conservative, so a
+   panelist can attack a floor instead of reading it as the plan's margin of safety.
+5. **Test the terms against what the founder said the business is, and report a term the business
+   has that the identity lacks.** Read the identity from step 1 back against the dossier and the
+   grill's `[F#]` facts — every revenue layer, every distinct paying motion the founder stated.
+   Writing the identity out is the right instrument and it is not a test of itself: a business with
+   three revenue layers solved as a single-layer funnel is not a wrong number, it is the wrong
+   identity, and no rule about input *values* can reach it. Name the missing term; adding one sends
+   steps 2–4 back over it, which is the cheap version of the same discovery.
 
-The pass returns a short block every brief carries verbatim: the identity, the label per input, and
-the shape with its driver. A panelist told the flat stretch is an assertion resting on a named
-channel cap can attack the cap; one who is not told reads the flat line as the conservative part of
-the plan and spends the turn somewhere else.
+The pass returns a short block every brief carries verbatim: the identity, the label per input, the
+shape with its driver, the inputs unmodelled in the pessimistic direction, and any term the
+founder's stated business has that the identity lacks. A panelist told the flat stretch is an
+assertion resting on a named channel cap can attack the cap; one who is not told reads the flat line
+as the conservative part of the plan and spends the turn somewhere else.
 
 **The failure this prevents:** a structurally wrong model is the one a panel is unable to attack,
 because every lens is pointed at the plan's contents rather than its shape. The panel returns a
@@ -641,6 +667,12 @@ full objection table, all of it about details, and the plan reads as thoroughly 
 model nobody could attack is not a model nobody could fault. The tell is a red team whose severest
 row argues about a value inside the identity while the identity itself carries a term nobody
 labelled.
+
+**The failure the terms check prevents:** an identity missing a whole revenue layer is internally
+consistent and solves cleanly, so nothing downstream can see the omission — the arithmetic is
+correct about the wrong business, and every value inside it is defensible. The run reports a
+confident verdict on a model of a business the founder is not building, and every input in it
+survives every check, because each one is individually right.
 
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
@@ -752,7 +784,16 @@ three milestones, and where everything landed. Invite pushback on the specific b
   the ceiling of that configuration, with one changed policy value beside it.
 - Every stretch of the projection's curve names its operational driver — inflections and flat
   stretches alike. Zero growth is an assumption, not the absence of one, and unnamed it is
-  unmodelled rather than conservative.
+  unmodelled, not conservative.
+- Every model input names its driver in both directions, and a low one with none is unmodelled,
+  not conservative. Skepticism that fires in one direction only is a filter: each pessimistic
+  input is defensible alone, the chain multiplies them, and their product reaches the founder as
+  a property of the market rather than as a stack of choices nobody wrote down.
+- A structural driver with no subject instrument is sourced from the indexed set — a `claim`
+  resting on `research/growth-curves.md`, carrying that set's `stale_after`, a `validated_by`
+  kill test and the survivorship qualifier — and is never filed as an `assumption`. Filed that
+  way, invariant 11 caps it at its weakest input, and every plan for a company that has not
+  launched reads as unjustified for a reason that is routing rather than evidence.
 - The projection's implied monthly growth rate is placed against the observed growth band, and
   its implied trajectory against the indexed comparable curves at matching months since origin.
   Any excursion — in level, in either direction, or in shape — names the difference defending it.
@@ -768,9 +809,10 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - The plan matches the founder's stated ambition, not a template's default ambition.
 - Red team ran, and its surviving objections are IN the plan and in the vault.
 - Every red-team brief carried the model's identity, its per-input `structural`/`policy` labels,
-  and the curve's shape with its named driver, before the panel was briefed. The panel reasons
-  *from* the plan, so a brief that arrives without these inherits the plan's frame and can only
-  object to details.
+  the curve's shape with its named driver, the inputs unmodelled in the pessimistic direction, and
+  any term the founder's stated business has that the identity lacks — before the panel was
+  briefed. The panel reasons *from* the plan, so a brief that arrives without these inherits the
+  plan's frame and can only object to details.
 - Where the target is an exit, the red team met the acquirer's question: a *named* buyer, the hole
   it patches, and the bidder count. An unnamed acquirer is not a driver value, and a lens that
   accepts "someone would want this" grants the driver the verdict was most sensitive to.
