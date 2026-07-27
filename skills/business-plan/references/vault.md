@@ -330,6 +330,20 @@ person who knew is gone. And writing `supersedes` **without flipping the target'
 which is indistinguishable from an unresolved contradiction to both the checker and a reader.
 Supersession is always two edits.
 
+**Both edits land in the vault, and the documents the old note reached hear nothing.** That is
+the third cost of a supersession and the one no field on either note records: a superseded claim
+that was cited into three plan sections leaves those three sections asserting the old value, with
+`status: superseded` sitting in a file nobody rereads. `vault-lint.sh --supersession-sweep` is
+what says so out loud — it walks every superseded note, unions the `used_in` targets behind them,
+and prints one row per document section with the notes that reached it, their replacements and
+each `supersedes_reason`. One row per *section* rather than per note, because the work is
+re-reading the section once however many superseded notes point at it. It is a **report and not a
+verdict: it exits 0 whether or not it finds anything**, so it is safe to run on every pass — a
+supersession with a blast radius is the corpus working, and a mode that failed a healthy vault
+would train you to ignore the exit code the actual checks depend on. The row count it prints
+first is what makes the follow-up read something you can size before starting instead of a
+corpus-wide re-read nobody begins.
+
 ### The source note keeps the quote that outlives the URL
 
 ```yaml
@@ -465,6 +479,20 @@ everyone to ignore the flag, and then it stops working for the claims that actua
 `stale_after` passing tells you a claim needs re-checking but not which paragraph of which
 artifact is now standing on it — so the re-check gets deferred, because nobody can size it.
 Write it when the claim is first cited; omit the key until then.
+
+**`vault-lint.sh --used-in` is what keeps those entries honest.** It opens every target and
+exits 1 when the document is missing (`used-in-missing-file`) or the `#anchor` names no heading
+in it (`used-in-dead-anchor`) — the two ways a citation rots without anything else noticing, a
+renamed document and a renamed section. The anchor is matched against the heading's GitHub slug,
+so the entry is written as the reader's own link: `"business-plan.md#why-now"` for `## Why now`,
+resolved against the vault root and not against the note's own directory. An entry with no `#`
+is checked for the file alone, which is the shape to use when a claim reaches a document whose
+sections it does not name. **The mode stops at whether the target resolves and never asks whether
+the section carries the claim** — the prose cites `[S#]` and `[F#]` codes rather than note IDs,
+so matching IDs against prose would report every correctly cited claim as broken. Whether the
+section still agrees with the note is a read, not a grep, and `--supersession-sweep` is the mode
+that bounds it: it names the sections a supersession put in doubt, so the read is over that list
+rather than over every citation in the corpus.
 
 ### The assumption note is what you would believe with no evidence
 
@@ -802,9 +830,11 @@ grep -rnE '^[a-z_]+: \[' "$VAULT_PATH"
 ```
 
 Whole-corpus aggregation — required-field checks, confidence-propagation violations, dangling
-`rests_on` targets, near-miss vocabulary terms — belongs to the `vault-lint.sh` script in this
-repository's `scripts/` directory, not to the agent. Code is reliable at counting; an agent is
-reliable at authoring one good note. Splitting them that way is what keeps both honest.
+`rests_on` targets, near-miss vocabulary terms, and the `used_in` targets `--used-in` opens —
+belongs to `vault-lint.sh`, not to the agent. It ships from this repository's `bin/` directory,
+which Claude Code puts on the Bash tool's `PATH`, so it is invoked bare from wherever you are.
+Code is reliable at counting; an agent is reliable at authoring one good note. Splitting them
+that way is what keeps both honest.
 
 ## A worked chain from source to decision
 

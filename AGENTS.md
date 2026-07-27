@@ -186,9 +186,32 @@ CHANGELOG.md                  what each pinned version actually changed
 
 `vault-lint.sh` ships to users and runs read-only against a vault path: no arguments beyond
 `--vault` (or `VAULT_PATH`) for the checks, `--json` for an agent consumer, `--unverified`
-for the notes asserted with nothing behind them, and `graph <ID>` for one note's
-neighbourhood. Rule 3 above has the reasoning for why `bin/` and `scripts/` sit under
-different constraints.
+for the notes asserted with nothing behind them, `--used-in` for whether each note's
+citation target still resolves, `--supersession-sweep` for the document sections a
+supersession put in doubt, and `graph <ID>` for one note's neighbourhood. This sentence is
+exhaustive on purpose, so **a new flag lands here in the same PR that adds it** — an
+enumeration that has gone stale reads exactly like one that is complete. Rule 3 above has
+the reasoning for why `bin/` and `scripts/` sit under different constraints.
+
+`--used-in` is a mode rather than part of `check` because it reads documents outside the six
+note directories, and it is a verdict rather than a report: it exits 1 when a target file is
+missing or a `#anchor` names no heading. **Its boundary is deliberate and belongs in any change
+to it** — it asserts that the citation resolves, never that the named section carries the claim.
+Plan prose cites `[S#]` and `[F#]` codes and a claim note carries no citation code at all, so a
+scan matching note IDs against prose fires on every correctly cited claim; a check that cries
+wolf gets switched off, and switching it off takes the working half with it.
+
+`--supersession-sweep` is the other half of that boundary and is a **report, not a verdict — it
+exits 0 whether or not it finds anything**, the contract `--unverified` carries. It answers the
+question `--used-in` deliberately leaves open, by naming the sections somebody has to re-read:
+when B supersedes A, every document section in A's `used_in` is now suspect, and supersession is
+visible in the note and invisible everywhere the note was cited. Two properties are load-bearing
+in any change to it. It **groups by section and dedupes**, because the unit of work is *re-read
+this section* and a list repeating the section per note makes a two-item job look like six. And
+it **reports the row count**, because the gate that consumes it is a read and a read is bounded
+only if its size is visible before it starts — that count is also the instrument
+`docs/specs/2026-07-27-claim-citation-codes.md` names as the trigger that would reopen its
+decision, so it is part of the product rather than a nicety.
 
 **Every invocation in `skills/` is bare — `vault-lint.sh …`, never a path**, and CI rejects
 the path form. The pre-plugin layout used a relative path, which resolves against the

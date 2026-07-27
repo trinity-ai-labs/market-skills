@@ -195,8 +195,24 @@ bare, from whatever directory the user happens to be working in:
 ```sh
 vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
 vault-lint.sh --unverified --vault "$VAULT_PATH"
+vault-lint.sh --used-in --vault "$VAULT_PATH"
+vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
+
+`--used-in` is the one that leaves the vault: a claim records the document and section it was
+cited into, and this opens each one to check the file is there and the `#anchor` names a real
+heading, exiting 1 when it does not. It stops at whether the citation **resolves** — whether the
+section still *carries* the claim is a read, and `--help` says why a tool cannot do it.
+
+`--supersession-sweep` is what makes that read a short one. Replacing a note is recorded on the
+note, and nothing tells the documents that were built on the old one — so this walks every
+superseded note and prints the document sections its citations reached, grouped one row per
+section however many notes point at it, each row naming the note, its replacement and the reason
+it was replaced. It prints the row count first, because a list you can size before you start is
+one that gets read. It is a **report and not a verdict: it exits 0 whether or not it finds
+anything**, since a supersession with a blast radius is the corpus doing its job — a mode that
+went red on a healthy vault would teach you to ignore the exit code the real checks depend on.
 
 It is POSIX `/bin/sh` with zero dependencies — no Node, no Python, no jq. A tool that reads an
 entire private business corpus should not carry a transitive dependency tree, and a runtime

@@ -597,6 +597,19 @@ which is invariant 18's failure exactly. Rewrite the sentence to the replacement
 assertion. A ledger reconciled under a document that was not is a ledger nobody's reader ever
 sees.
 
+**Get that paragraph list from the lint rather than by hand:**
+
+```sh
+vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
+```
+
+One row per document section, however many superseded claims reached it, each naming the claim,
+its replacement and the `supersedes_reason` — which is the whole rewrite list for the amendment
+you just reconciled, sized by the count it prints first. Deriving it by hand means one `grep` per
+superseded claim and then merging the results, which is the step that gets shortened to "the ones
+I remember". It exits 0 whether or not it finds anything, so it is a target list rather than
+another census entry to clear.
+
 **Adopt the amended definition last, and stamp the copy.** Once every claim under the term is
 reconciled, replace that one term's `definition` in the vault's `_vocab.yml` with the shipped
 wording and set `vocabulary_version` to the shipped value. Three ways this goes wrong, each with
@@ -684,12 +697,24 @@ end.** After stage 1 it is every source orphaned plus every required subject gap
 to the subjects the plan genuinely has no position on. Running the lint only once, at the end,
 means every mistake you made in stage 1 is discovered three hundred notes later.
 
-Two closing checks the census does not cover:
+Three closing checks the census does not cover:
 
 ```sh
+# Every used_in entry stage 3 wrote, opened. A migration takes its citation sites from a
+# grep over documents that already exist, so a heading renamed since - or a document the
+# manifest named under its old filename - lands in the vault as a citation to nothing.
+# A verdict, not a target list: it exits 1 on a missing file or a dead #anchor.
+vault-lint.sh --used-in --vault "$VAULT_PATH"
+
 # The validation queue the migration just created: every assumption written in stage 4,
 # plus everything carried at Low confidence. A target list, not a verdict - it exits 0.
 vault-lint.sh --unverified --vault "$VAULT_PATH"
+
+# The sections a supersession put in doubt. A migration that imported prose saying
+# "superseded by F38" wrote those edges in stage 3, and the documents the old notes were
+# cited into still carry the old assertion. One row per section, with the reason, and a
+# count so the re-read can be sized. A target list, not a verdict - it exits 0.
+vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 
 # One chain, end to end. Pick a sentence in the plan, take the claim it cites, and confirm
 # the graph reaches a source note with a real quote in it.

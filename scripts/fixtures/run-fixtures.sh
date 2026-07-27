@@ -22,8 +22,12 @@
 # WHAT IT ASSERTS
 #   1. The clean vault reports nothing and exits 0.
 #   2. The violating vault fires every check in EXPECTED below, and exits 1.
-#   3. Both JSON outputs are well-formed enough to slice by field.
-#   4. The two refusal paths refuse, and exit 2.
+#   3. --used-in resolves every target in the clean vault and fires both of its
+#      checks in the violating one, on both sides and both exit codes.
+#   4. --supersession-sweep emits its worklist over both vaults and exits 0 over
+#      both, deduped by section.
+#   5. Both JSON outputs are well-formed enough to slice by field.
+#   6. The two refusal paths refuse, and exit 2.
 
 set -u
 
@@ -59,8 +63,11 @@ no() {
 }
 
 # Run the lint and report its exit status without tripping set -u or aborting.
+# The optional second argument is a mode flag, so a mode's exit code - which is
+# half of what a verdict mode promises - is asserted the same way as `check`'s.
 run_status() {
-	"$LINT" --vault "$1" >/dev/null 2>&1 && printf '0\n' || printf '%s\n' "$?"
+	"$LINT" ${2:+"$2"} --vault "$1" >/dev/null 2>&1
+	printf '%s\n' "$?"
 }
 
 printf 'run-fixtures: %s\n\n' "$LINT"
@@ -110,6 +117,15 @@ VIOL_STATUS=$(run_status "$HERE/violations")
 # re-parse of every fixture note each time.
 VJSON=$("$LINT" --vault "$HERE/violations" --json 2>/dev/null)
 
+# The same document from the separate mode. EXPECTED and FIRED below stay the
+# `check` census and deliberately do not merge it - `check` and `--used-in` are
+# separate modes and a check name that moved between them should turn something
+# red. The per-file `Violates:` contract in 2b is the opposite case: it is a
+# promise made by one note about one check, and which mode reports it is not the
+# note's business, so that assertion reads both documents.
+UJSON=$("$LINT" --used-in --vault "$HERE/violations" --json 2>/dev/null)
+UI_VIOL_STATUS=$?
+
 FIRED=$(printf '%s\n' "$VJSON" |
 	awk -F'"check": "' 'NF > 1 { split($2, a, "\""); print a[1] }' |
 	LC_ALL=C sort -u)
@@ -145,7 +161,7 @@ done <"$PAIRS_FILE.got"
 # resolution order that has stopped resolving. Every violating note declares its
 # own checks on a `Violates:` line, and each is asserted against that file.
 printf '\nper-file expectations\n'
-PAIRS=$(printf '%s\n' "$VJSON" |
+PAIRS=$(printf '%s\n%s\n' "$VJSON" "$UJSON" |
 	awk -F'"file": "' 'NF > 1 {
 		split($2, a, "\"")
 		split($0, b, "\"check\": \"")
@@ -223,6 +239,146 @@ for note in DECISION-DR07KK21 DECISION-MG18QW42; do
 	esac
 done
 
+# --- 2d. used_in targets resolve, both sides ---------------------------------
+# Which note each --used-in failure lands on is already asserted, in both
+# directions, by the per-file machinery above: PAIRS reads the mode's JSON too,
+# so CLAIM-GONE0011 and CLAIM-ANCH0012 have to fire what they declare, and
+# CLAIM-STAL0006 - whose target resolves - fails the suite the moment the mode
+# reports it. Written out here is only what a separate mode owns and that
+# machinery cannot see: its exit codes, its clean side, and its failure COUNT.
+#
+# The count is the assertion with teeth. A slug rule that reported every heading
+# as dead would still fire both check names on the violating vault and pass a
+# name census; what catches it is the clean vault staying silent and the
+# violating one reporting two failures rather than five. Two of CLAIM-ANCH0012's
+# three entries resolve - one through an em-dash heading that slugs to a doubled
+# hyphen, one through an accented heading - so the count is what asserts that
+# whitespace runs are not collapsed and that non-ASCII letters survive.
+printf '\nused_in targets\n'
+
+UI_CLEAN=$("$LINT" --used-in --vault "$HERE/clean" 2>&1)
+UI_CLEAN_STATUS=$?
+[ "$UI_CLEAN_STATUS" = "0" ] && ok "--used-in exits 0 on the clean vault" ||
+	no "--used-in exits 0 on the clean vault (got $UI_CLEAN_STATUS)"
+case "$UI_CLEAN" in
+*clean*) ok "--used-in resolves every clean target, anchored and bare" ;;
+*) no "--used-in did not report the clean vault clean (got: $UI_CLEAN)" ;;
+esac
+
+[ "$UI_VIOL_STATUS" = "1" ] && ok "--used-in exits 1 on the violating vault" ||
+	no "--used-in exits 1 on the violating vault (got $UI_VIOL_STATUS)"
+
+case "$UJSON" in
+*'"failure_count": 2'*) ok "--used-in reports exactly the two planted failures" ;;
+*) no "--used-in failure_count is not 2 - a resolving target was reported dead, or a broken one was not" ;;
+esac
+
+# --- 2e. the supersession sweep, on both vaults ------------------------------
+# The sweep is a REPORT and its defining property is that it is not a failure,
+# so the assertion with teeth is the pair: it names a worklist AND the vault it
+# named it over is still clean and still exits 0 from the default `check`
+# (section 1 above). A mode that went non-zero on a healthy vault would train
+# its caller to ignore the exit code the actual checks depend on, and nothing
+# else in this suite would notice.
+#
+# It stays out of the EXPECTED/FIRED census and out of PAIRS deliberately. Both
+# of those are the `check`-and-`--used-in` FAILURE census, keyed on a note's own
+# `Violates:` line - and a superseded note has violated nothing. Folding a
+# report into a violations ledger would mean every fixture note declaring a
+# check it does not fail, which is the census losing its meaning to reuse a
+# loop.
+printf '\nsupersession sweep\n'
+
+SWEEP_CLEAN=$("$LINT" --supersession-sweep --vault "$HERE/clean" 2>&1)
+SWEEP_CLEAN_STATUS=$?
+[ "$SWEEP_CLEAN_STATUS" = "0" ] && ok "--supersession-sweep exits 0 on the clean vault" ||
+	no "--supersession-sweep exits 0 on the clean vault (got $SWEEP_CLEAN_STATUS)"
+
+# The seeded pair is complete and well-formed - `check` is silent on it - which
+# is exactly the supersession nothing else in the corpus tells the document
+# about. The row has to carry the reason too: a worklist that omits it sends its
+# reader back to the ledger before they can size a single row.
+case "$SWEEP_CLEAN" in
+*'business-plan.md#why-now'*) ok "the clean vault's row names the section the superseded note reached" ;;
+*) no "the clean vault's row does not name business-plan.md#why-now (got: $SWEEP_CLEAN)" ;;
+esac
+case "$SWEEP_CLEAN" in
+*CLAIM-TR58WQ03*CLAIM-HV21ND76*) ok "the row names the superseded note and the note that replaced it" ;;
+*) no "the row does not name both halves of the pair" ;;
+esac
+case "$SWEEP_CLEAN" in
+*'the flattening point moves out by a year'*) ok "the row carries supersedes_reason" ;;
+*) no "the row does not carry supersedes_reason" ;;
+esac
+
+SC=$("$LINT" --supersession-sweep --vault "$HERE/clean" --json 2>/dev/null)
+case "$SC" in
+'{'*'"worklist_count": 1'*'}'*) ok "clean --supersession-sweep --json is one row, sliceable by field" ;;
+*) no "clean --supersession-sweep --json is not a one-row sliceable object (got: $SC)" ;;
+esac
+
+SJSON=$("$LINT" --supersession-sweep --vault "$HERE/violations" --json 2>/dev/null)
+SWEEP_VIOL_STATUS=$?
+[ "$SWEEP_VIOL_STATUS" = "0" ] && ok "--supersession-sweep exits 0 on the violating vault too" ||
+	no "--supersession-sweep exits 0 on the violating vault (got $SWEEP_VIOL_STATUS)"
+
+case "$SJSON" in
+*'"worklist_count": 2'*) ok "the violating vault reports its two sections" ;;
+*) no "the violating vault's worklist_count is not 2" ;;
+esac
+case "$SJSON" in
+*'"superseded_count": 3'*) ok "the count spans both halves of the two-edit rule" ;;
+*) no "superseded_count is not 3 - a supersedes edge or a superseded status was missed" ;;
+esac
+
+# The dedup assertion, stated generally rather than against one target: the unit
+# of work is re-read this section, so a section reached by two superseded notes
+# is one row naming both. A row per note would make a two-item job look like
+# three here and like dozens on a real vault, and an overstated worklist is one
+# that gets skipped at the moment it matters.
+printf '%s\n' "$SJSON" |
+	awk -F'"target": "' 'NF > 1 { split($2, a, "\""); print a[1] }' >"$PAIRS_FILE.targets"
+ROWS=$(grep -c . <"$PAIRS_FILE.targets")
+UNIQ=$(LC_ALL=C sort -u <"$PAIRS_FILE.targets" | grep -c .)
+[ "$ROWS" = "$UNIQ" ] && ok "every target appears exactly once in the worklist" ||
+	no "the worklist repeats a target ($ROWS rows, $UNIQ distinct)"
+
+# And that the shared row genuinely carries BOTH notes rather than whichever one
+# was seen first - dedup that dropped a note would also pass the count above.
+WHYNOW=$(printf '%s\n' "$SJSON" |
+	awk '/"target": "business-plan.md#why-now"/ { inrow = 1 } inrow { print } inrow && /\]\}/ { exit }')
+case "$WHYNOW" in
+*CLAIM-STAL0006*DECISION-BLOK0001*) ok "the shared section is one row naming both superseded notes" ;;
+*) no "the shared section's row lost one of its two notes (got: $WHYNOW)" ;;
+esac
+
+# The report does not depend on the supersession being well-formed, on either
+# half. DECISION-SUPS0002 carries no supersedes_reason, and the row says so
+# rather than dropping the note that a broken pair left pointing at a document.
+case "$SJSON" in
+*'"superseded_by": "DECISION-SUPS0002", "supersedes_reason": ""'*)
+	ok "a supersession with no reason still reports, with the reason empty" ;;
+*) no "a supersession with no supersedes_reason was dropped or mis-reported" ;;
+esac
+
+# A superseded note that reached no document is the good case, and reporting it
+# is what makes it distinguishable from a note the sweep failed to read.
+case "$SJSON" in
+*'"reached_no_document": ['*CLAIM-UNKN0001*) ok "a superseded note with no used_in is reported, not dropped" ;;
+*) no "a superseded note with no used_in was dropped" ;;
+esac
+
+# A vault with no supersessions still owes a document: a caller slicing the JSON
+# cannot otherwise tell an empty worklist from an invocation that went wrong.
+SN=$("$LINT" --supersession-sweep --vault "$HERE/no-vocab" --json 2>/dev/null)
+SN_STATUS=$?
+[ "$SN_STATUS" = "0" ] && ok "a vault with no supersessions exits 0" ||
+	no "a vault with no supersessions exits 0 (got $SN_STATUS)"
+case "$SN" in
+'{'*'"worklist_count": 0'*'"worklist": []'*'}'*) ok "an empty worklist is still a sliceable object" ;;
+*) no "an empty worklist is not a sliceable object (got: $SN)" ;;
+esac
+
 # --- 3. JSON is well-formed enough to slice ---------------------------------
 printf '\njson\n'
 for v in clean violations; do
@@ -236,6 +392,16 @@ for v in clean violations; do
 	*) no "$v --json has no failure_count" ;;
 	esac
 done
+
+# A verdict mode with nothing to report still owes a document: a caller that
+# slices --used-in --json cannot tell an empty result from a mode that printed
+# nothing at all, and the difference is whether the vault is clean or the
+# invocation was wrong.
+UI=$("$LINT" --used-in --vault "$HERE/clean" --json 2>/dev/null)
+case "$UI" in
+'{'*'"failure_count": 0'*'}'*) ok "clean --used-in --json is a JSON object carrying failure_count" ;;
+*) no "clean --used-in --json is not a sliceable object (got: $UI)" ;;
+esac
 
 U=$("$LINT" --unverified --vault "$HERE/clean" --json 2>/dev/null)
 case "$U" in
