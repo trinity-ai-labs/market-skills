@@ -185,6 +185,19 @@ finds a *different* engagement's vault and reads the wrong corpus with no error 
 existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill does not
 understand stops the run rather than being half-read.
 
+**A reused vault's `_vocab.yml` is compared against the shipped
+[references/vocabulary.yml](references/vocabulary.yml), and a base term whose definition has
+changed is reported to the founder.** The copy is what keeps a vault checkable, and it is also
+what freezes it: the lint reads the vault's copy and never the shipped file, so a vault
+scaffolded before an amendment keeps the superseded wording indefinitely and nothing says so.
+This phase is the one point where both files are open, which is what makes the comparison free.
+It is **not** an error and does not stop the run — a vault written under an older definition is
+valid, it is only unreviewed, and erroring would break every existing vault on upgrade, which is
+the failure that makes people stop upgrading. What the report asks for is a re-read: the claims
+already filed under an amended subject are read against the new wording, and where one no longer
+asserts what the amended definition says the subject asserts, it is superseded under the standing
+two-edit rule rather than silently re-filed under a definition it was not written to.
+
 If the founder already has a corpus from earlier work — research files, a plan citing `[S#]`/
 `[F#]` codes — adopt it instead of scaffolding an empty vault:
 [references/vault-migration.md](references/vault-migration.md).
@@ -388,6 +401,15 @@ skips the question the error existed to ask.
   their competitor, its two dated traction points and its stage. Without it a run passes every
   other check on this list and Phase 3's implied-growth test then points at a section that was
   never produced — a check that silently does nothing is worse than one that was never written.
+- `research/growth-curves.md` exists, and `market-analysis.md` carries its `## Comparable growth
+  curves` section: the series indexed to months since origin, each company's origin event named,
+  and the companies held out of the indexed overlay listed rather than dropped. The band says how
+  fast comparables grew; only the indexed set says *when*, which is what a dated target asks.
+  Without the file Phase 3's shape check has nothing to place a trajectory against and degrades
+  back to the level check it exists to extend — silently, since the level check still runs and
+  still passes. An origin left unnamed makes two series incomparable while they sit on one axis
+  looking comparable, and an exclusion left off the list reads as a comparable nobody found rather
+  than one whose origin could not be dated.
 - `Coverage` names what was skipped and why; `Risks to this analysis` is non-empty (a market
   analysis with nothing soft in it wasn't done honestly).
 - `Assumptions` is present and non-empty for a dispatched run — each entry states the default,
@@ -451,7 +473,19 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   growth band`** — outside it in either direction, faster than the fastest comparable or slower
   than the slowest, the projection is defended by a named difference or re-cut. The slow end is
   where this bites: an over-projection draws a red team, an under-projection reads as
-  conservative and reaches the founder's decisions unexamined.
+  conservative and reaches the founder's decisions unexamined. **That is the level check, and it
+  is followed by the shape check: the projection's implied trajectory is placed against
+  `research/growth-curves.md`'s indexed set at matching months since origin**, month 6 against
+  month 6 and month 18 against month 18, not its average rate against the band's endpoints. The
+  level check alone passes a projection that sits comfortably inside the band on its average and
+  still asserts a shape no comparable in the set has ever had — flat where every comparable
+  decayed, or holding one rate across the horizon where every comparable's rate fell after its
+  first year. Averaging is what hides it: one rate stated for the whole horizon understates the
+  early months and overstates the late ones at the same time, and lands inside the band on both
+  counts. A shape the set does not contain is defended by a named difference exactly as a level
+  excursion is, or the curve is re-cut against the fitted decay. Where the set was too thin to
+  fit a shape, the curves file says so and the shape check reports that it could not run —
+  it never falls back to the level check while reading as though both ran.
 - **Open strategic forks get simulated, not asserted.** When the capital path (bootstrap vs
   raise) or entry sequencing (beachhead vs broad) is genuinely open after the grill, build
   the paths as parallel copies of one model and compare founder dollars across exit scenarios,
@@ -605,7 +639,8 @@ three milestones, and where everything landed. Invite pushback on the specific b
   input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
   the ceiling of that configuration, with one changed policy value beside it.
 - The projection's implied monthly growth rate is placed against the observed growth band, and
-  any excursion in either direction names the difference defending it.
+  its implied trajectory against the indexed comparable curves at matching months since origin.
+  Any excursion — in level, in either direction, or in shape — names the difference defending it.
 - The cost of the alternative is priced wherever the price is defended.
 - Every roadmap item names the assumption it moves.
 - The financial model's assumptions table is complete — no number appears in a projection that
