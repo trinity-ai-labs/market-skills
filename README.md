@@ -142,6 +142,11 @@ confidence changes become a diffable history. It is local-only by default; once 
 deliverables worth sharing it asks where a remote should live and whether it is public or private,
 private preselected, and creates nothing without an explicit answer to both.
 
+The run also inventories and measures your own artifacts — repos you've written or worked in,
+documents you produced for clients, products in the category you've used — rather than only
+asking about them. Where those documents are confidential, the corpus records what they
+establish with a provenance note, never the file itself.
+
 ---
 
 ## On disk
