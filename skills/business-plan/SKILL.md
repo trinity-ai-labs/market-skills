@@ -139,6 +139,19 @@ nearest-reachable solve and the negotiation script are in
     the dispatch rather than the phase boundary — a panelist already briefed cannot be
     un-briefed, and the objections come back about the wrong version at full panel cost.
 
+20. **A claim is not finished when the note is written; it is finished when the prose it names
+    carries it.** Writing the note and writing `used_in` are one act, and the claim stays open
+    until the section `used_in` names actually says what the note says — invariant 19 is where
+    that gets read. This is an invariant rather than a Phase 3 step because the obligation
+    outlives Phase 3: the vault keeps growing through drafting and into the red team, and a
+    claim minted while the panel is running is subject to it exactly as one minted while the
+    plan was being written. Written into the drafting phase, the rule would stop applying at
+    the moment the vault is most likely to move. Without the loop, carrying a new claim into the
+    prose becomes something the conductor has to remember rather than something the phase
+    requires, and what gets remembered is whatever was minted most recently — leaving a corpus
+    that knows something its own documents do not say, where every note is individually correct
+    and the plan is quietly out of date.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -565,7 +578,10 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
 
 - **Write `used_in` at the moment of citation** — `"business-plan.md#why-now"` on every claim
   the draft leans on. Without it a stale claim tells you it needs re-checking but not which
-  paragraph is standing on it, so the re-check gets deferred because nobody can size it.
+  paragraph is standing on it, so the re-check gets deferred because nobody can size it. The
+  same field is what closes the claim: per invariant 20 it stays open until the named section
+  carries it, and a claim minted after that section was drafted is subject to that exactly as
+  one minted while it was being written.
 - **The thesis traces.** The plan's core bet restates the analysis's whitespace recommendation,
   sharpened by the founder's unfair advantages — traceably, not vibes-first.
 - **Cite by code, and there is no third kind.** `[S#]` resolves through `sources.md`, `[F#]`
@@ -799,7 +815,10 @@ Fold: fix what's fixable; every row disposed "moved to Risks" appears in the pla
 section by its number — a plan that pre-states its best objections beats one that hides them.
 **A surviving objection also lands in the vault**, as a `claim` that `supersedes` what it
 corrects or an `assumption` with a `validated_by` step. An objection disposed only in the table
-is one nothing downstream can find. If an objection guts the thesis, say so to the founder
+is one nothing downstream can find. That note is subject to invariant 20 like any other: it is
+finished when the section its `used_in` names carries it, not when the row is disposed — and a
+note minted this late is the likeliest of all to be left sitting in a ledger nobody reads back
+into the prose. If an objection guts the thesis, say so to the founder
 plainly and revise the bet — that IS the job.
 
 ## Phase 5 — Deliverables
@@ -862,8 +881,9 @@ three milestones, and where everything landed. Invite pushback on the specific b
   second metric picked to confirm the first tests the thesis's fit to the instrument, which reads
   as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
-- Every claim cited in a rendered document carries `used_in`; every `required: true` subject
-  has a claim under it or a stated gap.
+- Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
+  the claim — a claim whose named section does not say what the note says is still open,
+  whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
 - The steady-state ceiling is computed and stated, not implied by a 12-month curve, with every
   input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
   the ceiling of that configuration, with one changed policy value beside it.
