@@ -936,7 +936,11 @@ three milestones, and where everything landed. Invite pushback on the specific b
   Unexcluded, the alternative explanation ships as the evidenced part of the argument — and a
   second metric picked to confirm the first tests the thesis's fit to the instrument, which reads
   as corroboration and is the shape nobody stops to check.
-- Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
+- Lint is clean over the whole vault at the per-dimension gate, and the render gate ran
+  invariant 15's full set: the default check clean, `--used-in` clean, and the
+  `--supersession-sweep` worklist read to its end. The default run is a strict subset of the
+  checks that exist, so a plan clears it while citing a document nobody can open — and the last
+  thing standing between that citation and a rendered PDF is this gate.
 - Every claim about the subject's own product was re-verified against source at the current
   commit before the first section was drafted, and each drift landed as a supersession rather
   than an edit in place. The rest of the skill's skepticism fires on optimism, so a claim that
