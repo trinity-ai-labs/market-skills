@@ -82,7 +82,19 @@ and is never restated here.
 15. **Lint is a gate, not a report.** The shipped `vault-lint.sh` runs at Phase 2's
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
-    not render. **That same gate reads the dimension's own file, never the summary its author
+    not render. **Phase 5's run is three calls, not one** — `vault-lint.sh`, then
+    `vault-lint.sh --used-in`, then `vault-lint.sh --supersession-sweep`. `--used-in` is a
+    separate mode, so the default run never opens a citation target: a plan clears the bare gate
+    while carrying a citation to a document that was renamed or a section that was cut, and the
+    next thing that happens is a rendered PDF asserting it to the one reader with no way to
+    check. The sweep is the report half and fails nothing; it is here because Phase 4's
+    dispositions mint supersessions *after* invariant 19's sweep has already run, which makes
+    the render the only point they are read at all — the worklist is read to its end before the
+    first render, or the deliverable ships the version the panel corrected while `red-team.md`
+    records that row as fixed. **Phase 2's checkpoint stays the bare run**: no note carries
+    `used_in` until drafting cites it, so `--used-in` there checks an empty set, and running it
+    anyway teaches the mode as cadence-wide when it belongs to one gate.
+    **That same gate reads the dimension's own file, never the summary its author
     wrote about it** — the researcher who wrote the prose also minted the notes the plan resolves
     citations through, so accepting a dimension on its summary is what puts an unreviewed number
     in the ledger.
@@ -865,10 +877,12 @@ plainly and revise the bet — that IS the job.
 
 ## Phase 5 — Deliverables
 
-**Lint is the release gate, and it runs before the first render.** `vault-lint.sh` must
-be clean over the whole vault: a plan citing a retracted or superseded source does not ship. The
-failure this stops is the worst one available — a polished PDF asserting flatly what the corpus
-already withdrew, handed to the one reader with no way to check it.
+**Lint is the release gate, and it runs before the first render.** Invariant 15 names the calls
+this gate makes and what each one is for; it is the whole set, never the default run alone. The
+vault comes back clean or nothing renders: a plan citing a retracted or superseded source does
+not ship, and neither does one whose citation names a document that was renamed or a section
+that was cut. The failure this stops is the worst one available — a polished PDF asserting
+flatly what the corpus already withdrew, handed to the one reader with no way to check it.
 
 Render `business-plan.md` (+ the financial model) into ONE polished, self-contained
 `deliverables/business-plan.html` and a print-quality `deliverables/business-plan.pdf`, and
@@ -922,7 +936,11 @@ three milestones, and where everything landed. Invite pushback on the specific b
   Unexcluded, the alternative explanation ships as the evidenced part of the argument — and a
   second metric picked to confirm the first tests the thesis's fit to the instrument, which reads
   as corroboration and is the shape nobody stops to check.
-- Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
+- Lint is clean over the whole vault at the per-dimension gate, and the render gate ran
+  invariant 15's full set: the default check clean, `--used-in` clean, and the
+  `--supersession-sweep` worklist read to its end. The default run is a strict subset of the
+  checks that exist, so a plan clears it while citing a document nobody can open — and the last
+  thing standing between that citation and a rendered PDF is this gate.
 - Every claim about the subject's own product was re-verified against source at the current
   commit before the first section was drafted, and each drift landed as a supersession rather
   than an edit in place. The rest of the skill's skepticism fires on optimism, so a claim that
