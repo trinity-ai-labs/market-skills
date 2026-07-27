@@ -1008,7 +1008,7 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Low-confidence number promoted to headline | Confidence is derived; tags survive import; validation step instead |
 | Hockey-stick from penetration hand-waving | Bottom-up build; scenarios move assumptions |
 | Flat acquisition line read as conservative | Zero growth is an assumption: name its driver, and place the implied rate against the band |
-| Product claim gone stale in the pessimistic direction | Re-verify against source at the commit; a drift is a supersession, not an edit |
+| Product claim gone stale in the pessimistic direction | Re-verify against source at the current commit; a drift is a supersession |
 | Policy variable reported as a ceiling | Label every input structural or policy; a chosen input caps the configuration, not the business |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |
