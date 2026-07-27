@@ -426,6 +426,20 @@ skips the question the error existed to ask.
   still passes. An origin left unnamed makes two series incomparable while they sit on one axis
   looking comparable, and an exclusion left off the list reads as a comparable nobody found rather
   than one whose origin could not be dated.
+- **Where the settled target is an exit**, `market-analysis.md` additionally carries its `## Exit
+  comparables & implied multiple` section: the disclosed acquisitions in the category, each indexed
+  to the acquired company's growth slope at the moment of sale, the multiple each one implies, and
+  the band's two ends traced to the four inputs
+  ([references/target.md](references/target.md#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)
+  homes them). Check that the set is indexed *to slope* rather than merely listed — multiples with
+  no slope beside them cannot be read at this roadmap's slope, so a list of them is a category
+  average wearing a reference class's name, which is the shape a run returns when it looked the
+  question up instead of building the set. Without the section an exit run comes back with the
+  indexed curves, passes every other check on this list, and Phase 3 then solves the exit identity
+  at a multiple nobody sourced — the term the verdict is most sensitive to, and the one the flip
+  test exists to fire on. Naming the artifact is what does this work: the first line's "all
+  contract files exist" is satisfied by a folder listing, and a folder listing cannot tell an exit
+  run from a revenue one.
 - `Coverage` names what was skipped and why; `Risks to this analysis` is non-empty (a market
   analysis with nothing soft in it wasn't done honestly).
 - `Assumptions` is present and non-empty for a dispatched run — each entry states the default,
