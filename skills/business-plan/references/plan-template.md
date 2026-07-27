@@ -84,6 +84,39 @@ settled one — as a `supersedes` / `status: superseded` pair, never `retracted`
 [target.md](target.md#the-founder-chooses-and-the-superseded-target-keeps-its-reason) (the
 two-edit mechanics are [vault.md](vault.md#every-note-carries-these-six-fields)'s).
 
+WHERE EITHER AXIS WAS STATED AS A RANGE, THIS SECTION CARRIES THE CORNER VERDICTS — plural, as a
+table — not one verdict: which corners clear and which do not, with the binding driver and that
+driver's kind named per corner, per
+[target.md](target.md#a-stated-range-on-either-axis-is-a-rectangle-solved-at-its-corners).
+Rendering "the verdict" as a single value destroys the finding exactly where it is worth most: a
+rectangle where three corners clear and one does not reads at its centre as a clean yes, and the
+corner that fails is usually the one the founder was aiming at. Invented shape:
+
+| Corner | Verdict | Binding driver | Kind |
+|---|---|---|---|
+| low value · late date | clears | — (price and conversion both clear) | — |
+| low value · early date | clears at the band's lower end | reach | policy |
+| high value · late date | undetermined — flips across the multiple's band | multiple | — |
+| high value · early date | does not clear | growth slope at the sale date | policy |
+
+KEEP THE FOUNDER'S STATED RANGE AND THE EVIDENCE'S RANGE VISIBLY APART — two labelled rows, never
+one interval. Both arrive as the same shape, an interval with two ends, and merged the founder
+reads the whole width as their own ambition being narrowed when half of it is the evidence
+admitting what it does not know. The corner structure goes with it, so nobody can then tell which
+end of the ambition the analysis actually reached. Label them in those words — "stated (intent)"
+and "evidenced (uncertainty)" — because the two are settled differently: one is the founder's to
+change and the other is research's to narrow.
+
+FOR AN EXIT TARGET the section additionally carries the MULTIPLE BAND, both ends with the four
+inputs each end traces to, and the band's WINDOW SENSITIVITY: the `stale_after` on the multiple's
+claim, written here as a date rather than left inside the note. That date lands inside the plan's
+own horizon by construction, and a plan that does not surface it reports the cheapest corner — low
+value at the late date — as the safest one, which is the reverse of what is true. The late corner
+is cheaper on ARR, because the reference-class decay has more months to compound, and MORE exposed
+on the multiple, because the window under the band closes on a schedule nothing in the plan
+touches. A founder who widened the date to make the target easier bought ARR headroom with window
+risk, and this is the only place the trade is visible.
+
 Placed directly after the Thesis, on every track, so no number below is read before the reader
 knows what it was tested against. Omit the section entirely — no placeholder, no "N/A" — when
 the grill returned no target ([grill.md](grill.md#0-target-opens-the-grill) has the rule).
@@ -190,6 +223,28 @@ curves, so state the gap and its mitigation without conceding the causal claim.>
 ## The ask
 <amount, runway it buys, the specific milestone it reaches>
 ```
+
+**Where the settled target is an exit, the venture memo keeps its sections and changes their
+question.** The bet it defends returns at the sale rather than at the next round, and three
+sections change subject:
+
+- **The ask** names the milestone the capital buys in the exit identity's terms — the growth slope
+  it holds *through* the sale month, or the roadmap items that make the product visibly the patch
+  for a named acquirer — not a revenue level. ARR is the term an exit verdict is least sensitive
+  to, so an ask sized against it answers a question the target did not pose, and it reads as
+  complete because the number in it is real.
+- **Competition & moat** asks its "what stops <biggest threat> from shipping this next quarter"
+  paragraph of the BUYER instead of the rival. Same sentence, different subject, different stake:
+  a rival shipping it costs share, an acquirer shipping it collapses the price to an acquihire —
+  and that is the scarcity input of the multiple, read from the buyer's side.
+- **Financial summary** extends its horizon to the sale date. A 24–36 month memo horizon against a
+  four-year exit stops before the target does, and the plan then defends a trajectory nobody
+  carried to the month that prices it.
+
+The part that gets softened is the name. "Strategic acquirers in this category" states no driver
+value at all — [target.md](target.md) files an unnamed acquirer as a blank the identity accepts
+without complaint, so the memo reads as having answered the question that decides the verdict
+while leaving it open.
 
 **Bootstrap track** replaces Market/Financial summary/The ask with: a lean canvas block,
 a 6–12 month operating plan (monthly cash curve → default-alive date, the ONE channel and its

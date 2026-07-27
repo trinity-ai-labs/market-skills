@@ -372,14 +372,23 @@ ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: s
   sizing agent, bottom-up only (the venture-scale sniff test still gets stated); else full rigor.
 target: <the outcome the plan is engineered backwards from, and its date | "no specific
   number">  — size at the resolution this needs: a target denominated in customers or MRR makes
-  the bottom-up segment count the load-bearing output, not the top-down category figure.
-provisionalVerdict: <reachable | unreachable | undetermined, the driver it named as binding, and
-  that driver's kind — structural | policy | "none — no target stated">  — pre-research, so it is
-  an assumption and never citable; the driver it names is the one to research hardest, and the
-  kind says what "hardest" means. A structural driver wants better evidence for the value it
-  already has; a policy one wants evidence for what it could be set to — channel throughput, and
-  which comparable strategies at this stage were adoptable at all — which is a different hunt
-  pointed at different sources.
+  the bottom-up segment count the load-bearing output, not the top-down category figure. A range
+  stated on either axis is passed as the range, both ends, never as a midpoint: the verdict is
+  computed at the rectangle's corners, and a fleet handed a point researches one date at one value.
+provisionalVerdict: <reachable | unreachable | undetermined, and the SET of drivers the identity
+  named as binding, each with its own kind — structural | policy. Where either axis was stated as a
+  range that is one entry per corner solved, each naming that corner's binding driver and kind;
+  where the target is an exit it is a set by construction, because the multiple's four inputs carry
+  their own kinds — growth slope at the sale date and the named acquirer are policy, scarcity and
+  the bidder count are structural. | "none — no target stated">  — pre-research, so it is an
+  assumption and never citable; the drivers it names are the ones to research hardest, and each
+  kind says what "hardest" means for that one. A structural driver wants better evidence for the
+  value it already has; a policy one wants evidence for what it could be set to — channel
+  throughput, and which comparable strategies at this stage were adoptable at all — which is a
+  different hunt pointed at different sources. **Emitting one kind for a verdict computed over four
+  drivers picks one hunt and silently drops three**: the fleet comes back thorough on the driver
+  that was named and empty on the one that binds, and the gap is invisible because the dimension it
+  belonged to still returned a file.
 categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
 mustProfile: <competitors the founder named — always profiled, whatever their kind>
 founder brief (verbatim):
