@@ -2,6 +2,93 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.9.0
+
+- **Phase 0 now inventories the founder's own artifacts before the grill, and measures them
+  rather than asking about them.** The skill treated the founder as a source of *intent* and the
+  market as a source of *fact*, and never treated the founder's own work as a source of
+  *evidence* — so the one body of material in an engagement that is simultaneously free, primary,
+  checkable and unavailable to a competitor went unopened, and market research is none of those
+  four. It is a worklist rather than a question: every repo the founder has written, every repo
+  they have worked in for someone else, every document produced for a client, every product in
+  the category they have personally used, anything they have published. Establish what exists,
+  then open it — what an artifact is measured on lands as a primary observation resting on that
+  artifact. **Measuring rather than asking is the whole of it**: asking returns the founder's
+  recollection of an artifact, which is commentary and enters at the confidence everything else
+  they say enters at, while opening it returns an observation anyone can re-check against the
+  same file. The two arrive in the same words and only one is evidence. The failure this
+  prevents: the grill asks what the founder's unfair advantages are and gets an adjective the
+  plan then carries unsupported, while the repo that would have proved it, the dated report that
+  predates the plan's own thesis, and the category tool they used for years and abandoned all sit
+  unopened.
+- **The founder-writing sweep now reaches the commercial half — what the founder wrote for a
+  paying client — and carries it by what it establishes rather than by the file.** The sweep read
+  blog, changelog, README, docs, talks, launch threads and issue bodies: all public, all
+  marketing-shaped, and missing the class that outweighs them — proposals, audits, strategic
+  reports, statements of work, post-mortems. A thesis stated in a dated report to a paying client
+  is addressed to a third party, has money attached to being right, and usually predates the
+  product by years, which makes it categorically stronger evidence than the same thesis on a
+  blog; founders leave it out because it does not occur to them that it counts as theirs to
+  offer. **The handling rule ships in the same paragraph, because that paragraph is what creates
+  the exposure.** These documents are confidential by default, and the vault is a git repo from
+  this phase and is offered a remote in Phase 5 — so without the rule the sweep's own success is
+  what puts a client's document into a corpus built to be shared. What enters is the claim and
+  its date, resting on a source with **no public URL** whose provenance names the document's kind
+  and its year: never the text, never the client, never a copy. Naming that existing shape is
+  what makes the rule enforceable rather than advisory — a provenance note pointing at a path
+  outside the vault fails the lint by construction, so a rule that said only "a provenance note"
+  left two ways to comply and the reachable one was copying the client's document in, which is
+  exactly what the rule exists to stop.
+- **The grill now interviews the founder as a *user* of the category, and asks for the failure
+  rather than the verdict.** Competitor research reads docs, changelogs and pricing pages — every
+  one written by the company being profiled, none of them recording the thing that made someone
+  leave. The founder is usually the only person in the engagement who has been a *customer*
+  here, and nothing in the question bank asked them what they had used and what broke, so the
+  only first-hand category evidence available was never collected. **Both halves arrive in the
+  same sentence and only one is admissible**: a verdict on a competitor rests on nothing a reader
+  can re-check and enters as commentary, never promoted on the strength of who said it, while an
+  account of a specific failure the founder hit themselves is dated, specific and primary —
+  worth more than any feature matrix, because a matrix records what a product claims to do and
+  this records what it did. Filed as one fact the verdict borrows the failure's confidence, and a
+  section drafted months later cites a sweeping claim about the incumbents to a single remembered
+  incident; so they are filed apart, at their own confidences. The failure then rides into the
+  competitor profile as a question rather than a finding — structural, or a defect someone fixes
+  next quarter — and only the structural kind is a wedge. **"I haven't used any of them" is
+  itself a load-bearing answer**: it says the value hypotheses rest on a category the founder has
+  read about rather than lived in, which raises what the research has to establish. It is
+  recorded as a fact, never let pass as a question that got skipped. The area is also named in
+  the grill's gating list, because that list is the checklist an agent works from, and a question
+  living only in the interpolated playbook is one that never gets asked.
+- **The plan states the strongest claim its evidence supports, and a claim weaker than its
+  evidence is an error of the same class as one stronger.** Every other bar on the list fires on
+  optimism, so a claim falling short of its own evidence clears all of them and reads as rigour —
+  to the founder, to the panel, and to the reader who acts on it — and the only person who can
+  catch it is the one who re-opens the source. **Understatement is not caution: an overclaim gets
+  challenged, an understatement gets believed.** The bar generalises 1.8.0's pessimistic-drift
+  rule, which was this principle scoped to one population at one phase; that rule now points here
+  instead of restating the reasoning, because two overlapping bars in one block leave a reader
+  unable to tell which governs — while keeping its worked examples, because an abstraction is
+  what makes a bar unreadable at the moment it is being applied. The boundary with the
+  neighbouring bar is stated rather than left to inference: the both-directions test governs the
+  *values* in the model, and this governs what the prose asserts.
+- **Invariant 22 — at every phase boundary, and after any substantive founder exchange, ask what
+  was established in conversation that no note carries.** Invariant 20 governs claims that are
+  already written and holds them open until the prose they name carries them; 22 governs what was
+  never written at all — a constraint, a reframing or a disqualification both parties now treat
+  as settled, reasoned from downstream, existing only in the transcript. Neither can substitute
+  for the other: 20's worklist is the set of notes, and something that never became a note is not
+  on it. Whatever the sweep surfaces is recorded exactly as invariant 21 records a late fact —
+  the next `[F#]`, a `fact` note resting on the interview `source`, an appended row in the brief
+  — and is then subject to 20 like anything else. It is an invariant rather than a step in one
+  phase because value discovered in dialogue is the default state of a good engagement rather
+  than an exception to it, and because compaction re-attaches only the head of a long skill file:
+  a rule written into a phase body is out of context by the next phase, which is where the
+  conversation it needed to sweep just happened. **The failure this prevents:** the engagement
+  knows things the corpus does not, and nothing can tell. Every note is correct, the lint is
+  clean, the reconciliation passes, and the missing material has no ID to be missing by — it
+  surfaces at the walk sign-off, when the founder asks why the thing you both agreed three phases
+  ago is not in the plan.
+
 ## 1.8.0
 
 - **A citation is now opened, not just recorded.** `vault-lint.sh --used-in` reads the document
