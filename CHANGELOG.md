@@ -2,6 +2,111 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.5.0
+
+- **Every driver value names its driver in both directions, and a low one with none is
+  `unmodelled, not conservative`.** Skepticism fired on optimistic inputs and not on pessimistic
+  ones: a low number entered the model with nothing behind it and read as rigour, because
+  challenging a conservative figure looks like advocacy while challenging an aggressive one looks
+  like discipline. In a multiplicative chain that is not a rounding error: seven multiplied terms,
+  each filled at roughly half of what the evidence carries and every one of them defensible on its
+  own, return the target short by about two orders of magnitude — and the readout names a
+  structural driver as binding rather than the stack of unexamined choices that produced it. The
+  rule that would have caught it existed, but only for the projection *curve*: a flat stretch had
+  to name its operational driver while the numbers the curve was built from did not. It now
+  generalises to every model input and every driver value — each of the multiple's four inputs,
+  every rate and share the chain multiplies — a conservative figure needs a source exactly as much
+  as an aggressive one, and a low value with none takes the same label the flat-curve rule already
+  used. The flip test does not cover this and is not asked to: it re-solves at both ends of an
+  assumption's plausible range and asks whether the *verdict* moves, so a pessimistic value with
+  no driver is a well-formed `assumption` carrying a `value` and a `sensitivity` and passes clean,
+  because the band it was given is drawn around a centre nobody chose. The flip test audits how
+  wide the uncertainty is; the new one, which runs first and on every value, audits whether the
+  number was ever pointed anywhere on purpose.
+- **A structural driver may be sourced from the reference class; a policy driver may only be
+  checked by it.** The driver-home table already handed the same instrument two different
+  authorities — `research/growth-curves.md` *sets* conversion and only *checks* reach — and stated
+  the reason for neither, which left the split reading as a per-row accident rather than a
+  principle. The principle: a structural driver is a property of the category, so the indexed set
+  can source it; a policy driver is the founder's own configuration, so a comparable's value is
+  evidence about a different company's choices and can only ever be a check. Sourcing a policy
+  driver from a comparable is neither conservative nor aggressive — it answers a different
+  question, and the answer comes back well-formed: the figure carries a citation, the identity
+  balances, the binding driver is named with the confidence it would have had, and the founder's
+  stated hours never entered the arithmetic at all. So `kind` now decides two things at two
+  moments — at fill time where a value may come from, at verdict time what a negative verdict may
+  conclude — and the target checklist classifies every driver *before* it fills any of them. The
+  exit table moves with it: the growth slope at the sale month is a commitment this roadmap makes,
+  so it is stated configuration with the indexed set as the check on it, never the plan's own
+  projection fed back in.
+- **A structural driver with no instrument of its own tries the reference class before it degrades
+  to an assumption.** The ladder has three rungs — subject instrument, then the reference class
+  where the driver is structural and the indexed set reaches it at the month the target counts,
+  then `assumption`. The middle rung produces a `claim` resting on `research/growth-curves.md`,
+  carrying that set's `stale_after` and a `validated_by` naming the kill test that would overturn
+  it. The failure skipping it causes: invariant 11 caps a claim at its weakest input, so routing
+  the only legitimate evidence a pre-launch company has through an `assumption` makes every driver
+  weak by construction — and every plan for a company that has not launched then reads as
+  unjustified, which is every company at the moment the plan is worth writing. `market-analysis`
+  builds the indexed class precisely so a driver can take its value at a stated month; declining
+  to let it is the skill refusing its own instrument, and the founder is told the evidence is thin
+  when what is thin is the routing. Only what the set genuinely cannot speak to degrades: every
+  policy driver, and any structural one the set does not index at the month in question.
+- **The reference class is itself an input — named, classified and flip-tested like a driver.**
+  Making it load-bearing changed the failure mode rather than removing it: a wrong class used to
+  produce a visibly-hedged `assumption` and would now produce a confident `claim`. So which
+  companies the subject is compared against is named in the readout, classified `structural`,
+  homed to `research/growth-curves.md`, and put through the flip test — re-solved against each
+  candidate set a reasonable person would argue for. A verdict that moves between two defensible
+  classes is *undetermined*, with both classes named and the cheapest test that settles which one
+  the subject belongs to. Left unwritten it is the largest unexamined input in the method, because
+  it sets conversion, retention and the multiple at once, one level beneath the arithmetic: the
+  whole verdict shifts without a single figure in it looking wrong, and the founder is handed a
+  categorisation wearing the authority of the indexed set it was only ever assumed into.
+- **A value the indexed set sourced carries the survivorship qualifier wherever it is reported.**
+  Every company in that set got far enough to be written about, so the ones that posted the same
+  early numbers and then stopped are absent by construction — a property of the set rather than of
+  any member, and one that makes a structural driver sourced from it systematically optimistic.
+  That is the defect above wearing the opposite sign, and it is harder to catch in this position
+  because the number now has a citation behind it; replacing a pessimistic default nobody
+  challenged with an optimistic one nobody challenged moves the error rather than removing it. The
+  qualifier travels with the value into the readout and into any exhibit that renders it, in the
+  same words each time, rather than sitting as a footnote on the research file, which is not where
+  the number is read. And where a broad-population figure and a named-company value both exist for
+  the same metric, the disagreement is recorded rather than averaged or picked by feel: the two
+  routinely differ by most of an order of magnitude, because the named companies are the ones that
+  worked, and a run that quietly took the higher of them has sized the plan against a population
+  the subject is not in yet. The plan document now says which of the three a driver value came
+  from — measured on the subject's own instrument, read off a sourced benchmark, or taken from the
+  indexed class at a stated month — because rendered identically, a value extrapolated from
+  comparables and one measured on this product are indistinguishable, and the founder acts on both
+  equally.
+- **Phase 3's both-directions check reaches the model's inputs, not only its curve.** The two
+  checks that already ran on the projection read the curve rather than what it was built from: the
+  level check places the implied monthly growth *rate* against the observed band, and the shape
+  check places the implied *trajectory* against the indexed curves at matching months since
+  origin. A chain filled at the low end at every term clears both — in band and in shape, at a
+  scale nobody chose. Every input to the revenue build now takes the both-directions test before
+  either of those two runs.
+- **Phase 4's pre-pass tests the identity it writes.** It grew from three steps to five. It now
+  names every input that is unmodelled in the *pessimistic* direction — the direction it
+  structurally could not see, since a low number reads as the cautious choice rather than as the
+  claim it is, so it passed through the block unremarked and the panel inherited a floor nobody
+  sourced. And it reads the terms it wrote back against what the founder stated the business is,
+  reporting a term the business has that the identity lacks. Writing the identity out is the right
+  instrument and it is not a test of itself: a business with three revenue layers solved as a
+  single-layer funnel is internally consistent and solves cleanly, so the arithmetic is correct
+  about the wrong business while every value inside it is individually defensible, and no rule
+  about input *values* can reach it. Both additions travel in the block every red-team brief
+  carries verbatim, and the verification checklist names them there rather than leaving them to
+  the paragraph that describes them.
+- **Two of the rules above earn a quality bar, because prose in a reference file is not a
+  producer.** A rule reaches an agent only when it is interpolated into a brief or performed by
+  the conductor in a phase, so a rule stated once in a reference file reads correct on the page
+  while nothing runs it. The both-directions test on every model input, and the reference-class
+  rung that keeps a pre-launch structural driver out of the `assumption` pile, are each on the
+  list that says what may not ship.
+
 ## 1.4.0
 
 - **An exit target has its own identity, and its dominant term is a band.** An outcome stated as
