@@ -77,7 +77,7 @@ Three things the manifest buys beyond the list itself:
   count — see [the cost section](#budget-a-day-per-hundred-notes-and-finish-a-stage-or-revert-it).
 
 **The manifest is a checklist file, not a mental note.** Write it to
-`vault/research/migration-manifest.md` and tick codes off as you go. "Where did I stop" is the
+`research/migration-manifest.md` and tick codes off as you go. "Where did I stop" is the
 question a resumed migration has to answer, and a half-migrated corpus with no answer to it is
 the state this whole document exists to prevent.
 
@@ -162,7 +162,10 @@ above it automatically, which is the correct outcome: a chain standing on an unv
 should not read as confident.
 
 **A source with no public URL sets both `url` and `url_canonical` to the vault-relative research
-path** — `"research/founder-brief.md"` for the founder interview, `"research/product-dossier.md"`
+path — and since the engagement folder IS the vault, that covers the market-analysis dimension
+files and `sources.md` too, not only the brief and the dossier. A path that genuinely points
+*outside* the vault needs an explicit `prefix:` marker, and a bare `host/path` needs its scheme;
+the `unresolved-local-source` check reports both. Vault-relative research paths** — `"research/founder-brief.md"` for the founder interview, `"research/product-dossier.md"`
 for the dossier. Write these in stage 1 even though they are not rows in `sources.md`; the
 sources table is not the whole source set, and stage 2's `[F#]` facts have nothing to rest on
 without them. One source note per file that records a conversation.
@@ -170,7 +173,7 @@ without them. One source note per file that records a conversation.
 ### Stage 2 — Facts, because the table rows are already notes
 
 Two inputs, both already atomic: the `Claim / figure` column of `sources.md`, and the numbered
-`[F#]` table in `vault/research/founder-brief.md`. A row states one value with one provenance,
+`[F#]` table in `research/founder-brief.md`. A row states one value with one provenance,
 which is the definition of a fact note, so this is the cheapest stage per note in the migration.
 
 - `title` is the row's figure or statement, unchanged. Do not improve the wording — the plan
@@ -501,19 +504,19 @@ Run the shipped lint over the migrated vault. It is read-only, takes the vault p
 `--vault` or `VAULT_PATH`, and never searches upward for one:
 
 ```sh
-vault-lint.sh --vault ~/Documents/business/<product-slug>/vault
+vault-lint.sh --vault ~/Documents/business/<product-slug>
 ```
 
 Clean looks like this, and exits 0:
 
 ```
-vault-lint: clean - /Users/example/Documents/business/example-product/vault
+vault-lint: clean - /Users/example/Documents/business/example-product
 ```
 
 Failures are grouped by file, each naming the check and the failure it prevents, and exit 1:
 
 ```
-vault-lint: 5 failures under /Users/example/Documents/business/example-product/vault
+vault-lint: 5 failures under /Users/example/Documents/business/example-product
 
 _vocab.yml
   [coverage-gap] no claim carries the required subject `price-anchor`. The note schema cannot

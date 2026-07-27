@@ -781,9 +781,18 @@ fi
 
 TODAY=$(date +%Y-%m-%d)
 
-awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields="$EDGE_FIELDS" -F '\t' '
+# Every path that exists inside the vault, relative to its root. Read once into
+# an array rather than shelling out per note: a source with no public URL carries
+# a vault-relative path, and the only way to know it resolves is to look.
+PATHIDX="$TMP/paths"
+( cd "$VAULT" && find . -mindepth 1 2>/dev/null | sed 's|^\./||' ) >"$PATHIDX" 2>/dev/null || : >"$PATHIDX"
+
+awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields="$EDGE_FIELDS" -v pathidx="$PATHIDX" -F '\t' '
 	BEGIN {
 		BS = sprintf("%c", 92)
+
+		while ((getline pl < pathidx) > 0) EXISTS[pl] = 1
+		close(pathidx)
 
 		common = "id type title status confidence created"
 		req["source"]     = "url url_canonical pulled quote"
@@ -1100,6 +1109,20 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 			if (ty == "source" && V[f, "url_canonical"] != "") {
 				u = V[f, "url_canonical"]
 				URLMEM[u, ++URLN[u]] = f
+			}
+
+			# --- vault-relative source paths that resolve to nothing --------
+			# A source with no public URL carries a vault-relative path. That
+			# is indistinguishable from a path pointing outside the vault, and
+			# a missing file is not a malformed field - so without this check
+			# the note passes every other test while its evidence is absent.
+			# Anything carrying a scheme or a `host:`/`prefix:` marker is
+			# deliberately not vault-relative and is skipped.
+			if (ty == "source" && V[f, "url"] != "" && V[f, "url"] !~ /:/) {
+				lp = V[f, "url"]
+				sub(/\/+$/, "", lp)
+				if (lp != "" && !(lp in EXISTS))
+					report(f, "unresolved-local-source", id, "url `" V[f, "url"] "` has no scheme, so it reads as vault-relative - and nothing exists at that path inside the vault. Either the file belongs in the vault, or the path points outside it and needs a marker (`slug:research/file.md`) so it is not read as vault-relative. A missing file is not a malformed field, so every other check passes while the evidence is absent")
 			}
 
 			k = f SUBSEP "rests_on"
