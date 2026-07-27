@@ -3,7 +3,7 @@
 Two agent skills that take a product to market. Read this before changing anything;
 `README.md` covers what the skills do, this covers how to work on them.
 
-## The three rules that are not negotiable
+## The four rules that are not negotiable
 
 **1. This repo is PUBLIC.** Never commit engagement specifics — no client or subject
 names, no real figures from a live plan, no roadmap items, no identifying detail.
@@ -49,6 +49,12 @@ The repo gate stays on Node rather than moving to Python for a narrower reason:
 `command -v` on both macOS and Windows and then fails anyway — an Xcode trampoline stub
 on macOS, a Store alias stub on Windows. A runtime that fails honestly is preferable to
 one that lies.
+
+**4. Docs ship in the same PR as the behavior they describe.** v1.1.0 changed the
+on-disk vault layout and left `README.md` describing the old one — including a
+`vault-lint.sh` invocation pointing at a directory that had stopped existing — and
+v1.1.1 exists only to fix that. A behavior change and its documentation belong in one
+PR; a docs-only follow-up release means the first thing a new user read was wrong.
 
 ## The gate
 
