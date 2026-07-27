@@ -179,6 +179,25 @@ nearest-reachable solve and the negotiation script are in
     owned founder input is over — so it reaches the plan as something the conductor happened to
     remember, or not at all.
 
+22. **At every phase boundary, and after any substantive founder exchange, ask what was
+    established in conversation that no note carries.** Invariant 20 governs claims that are
+    already written and holds them open until the prose they name carries them; this one governs
+    what was never written at all — a constraint, a reframing or a disqualification both parties
+    now treat as settled, reasoned from downstream, and existing only in the transcript. The two
+    cannot substitute for each other: 20's worklist is the set of notes, and something that never
+    became a note is not on it. Whatever the sweep surfaces is recorded exactly as invariant 21
+    records a late fact — the next `[F#]`, a `fact` note resting on the interview `source`, an
+    appended row in the brief — and is then subject to 20 like anything else. It is an invariant
+    rather than a step in any one phase because value discovered in dialogue is the default state
+    of a good engagement rather than an exception to it: the sharpest material arrives mid-answer
+    while the conductor is working on something else, in every phase, and compaction re-attaches
+    only the head of this file, so a rule written into one phase body is out of context in the
+    next — which is where the conversation it needed to sweep just happened. **The failure this
+    prevents:** the engagement knows things the corpus does not, and nothing can tell. Every note
+    is correct, the lint is clean, the reconciliation passes, and the missing material has no ID
+    to be missing by. It surfaces at the walk sign-off, when the founder asks why the thing you
+    both agreed three phases ago is not in the plan.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -339,12 +358,42 @@ dossier-building pass (explore agents on a repo; drafting from a doc/idea), no r
 writing it to `research/product-dossier.md` (vault-relative — the slug directory is the vault). The grill needs the dossier's value
 hypotheses to exist; nothing else of market-analysis runs yet.
 
+**Inventory the founder's own artifacts before the grill, and measure them rather than asking
+about them.** Not a question — a worklist: every repo the founder has written (not only the
+subject), every repo they have worked in for someone else, every document produced for a client
+(proposals, audits, strategic reports, statements of work), every product in this category they
+have personally used, and anything they have published. Establish what exists, then open it —
+what an artifact is measured on lands as a primary observation resting on that artifact as its
+`source`, exactly as the sweep below records what it finds. **A founder's own artifacts are the
+only evidence in an engagement that is simultaneously free, primary, checkable and unavailable
+to a competitor**, and market research is none of the four. Measuring rather than asking is the
+whole of it: asking returns the founder's recollection of an artifact, which is commentary and
+tags `L` like everything else they say, while opening it returns an observation anyone can
+re-check against the same file. The two arrive in the same words and only one is evidence. **The
+failure this prevents:** the grill asks what the founder's unfair advantages are and gets an
+adjective the plan then carries unsupported, while the repo that would have proved it, the dated
+report that predates the plan's own thesis, and the category tool they used for two years and
+abandoned all sit unopened. The sweep below is one entry on this list, and nothing has ever asked
+for the rest.
+
 **Sweep for founder-authored writing before the grill — it is the cheapest context you will
-ever get.** Blog, changelog, README, docs, talks, launch threads, issue bodies. Founders
-routinely explain their own reasoning in public and then never mention it, because to them it
-isn't news. Skipping this sweep means grilling for things already written down and, worse,
-missing the founder's own framing of why the product is shaped as it is. Anything found lands
-as `[F#]` with its URL, and as a `source` note carrying that URL.
+ever get.** Blog, changelog, README, docs, talks, launch threads, issue bodies — and the class
+that outweighs all of those, what the founder wrote for a paying client: proposals, audits,
+strategic reports, statements of work, post-mortems. Founders routinely explain their own
+reasoning in public and then never mention it, because to them it isn't news; they leave the
+commercial half out because it does not occur to them that it counts as theirs to offer. It
+counts most. A thesis stated in a dated report to a paying client — addressed to a third party,
+with money attached to being right, and usually predating the product by years — is categorically
+stronger evidence than the same thesis on a blog. Skipping this sweep means grilling for things
+already written down and, worse, missing the founder's own framing of why the product is shaped
+as it is. Anything public lands as `[F#]` with its URL, and as a `source` note carrying that URL.
+**A client document lands as what it establishes and never as the file:** these are confidential
+by default, so what enters the corpus is the claim and its date, resting on a
+[source with no public URL](references/vault.md#the-source-note-keeps-the-quote-that-outlives-the-url)
+whose provenance names the document's kind and its year — never the text, never the client, never
+a copy in the vault. That rule is stated in the paragraph that creates the exposure, because the
+vault is a git repo from this phase and is offered a remote in Phase 5: omit it and the sweep's
+own success is what puts a client's confidential document into a corpus built to be shared.
 
 **The dossier is the plan's product-truth spine — thinness here propagates everywhere.** A
 dossier that is *true but small* is more dangerous than one that is wrong, because nothing in
@@ -384,6 +433,10 @@ downstream:
 - **Resources** — team, runway (months, not dollars, if they prefer), hours/week, capital
   available or sought.
 - **Unfair advantages** — distribution, audience, domain expertise, tech head start.
+- **Category usage** — which products in this category the founder has personally used, and what
+  specifically broke. A named failure they hit themselves is a primary observation and outranks
+  any feature matrix; their verdict on a competitor is commentary. Both arrive in one sentence,
+  so file them apart.
 - **Constraints & appetite** — geography, compliance lines, will they do sales calls, content,
   paid ads?
 - **Automation appetite** — how much of the growth engine gets automated, and the founder's
@@ -436,7 +489,8 @@ dispatch, and Phase 2's brief carries it verbatim so F-numbers stay stable every
 **Closing the grill closes the phase, not the channel** (invariant 21). What the founder says in
 Phases 3 and 4 is recorded exactly as what they said here was, and the brief is **appended** to
 rather than rewritten — every `[F#]` already cited keeps its number, which is the whole reason
-the file is written once and only ever grows.
+the file is written once and only ever grows. Crossing out of this phase runs invariant 22's
+sweep, over the grill that just happened.
 
 **Then compute the provisional verdict, before the research fleet spends anything** — the dossier
 and the grill already carry every driver the identity needs, at assumption strength. Put it to the
@@ -872,8 +926,9 @@ corrects or an `assumption` with a `validated_by` step. An objection disposed on
 is one nothing downstream can find. That note is subject to invariant 20 like any other: it is
 finished when the section its `used_in` names carries it, not when the row is disposed — and a
 note minted this late is the likeliest of all to be left sitting in a ledger nobody reads back
-into the prose. If an objection guts the thesis, say so to the founder
-plainly and revise the bet — that IS the job.
+into the prose. If an objection guts the thesis, say so to the founder plainly and revise the
+bet — that IS the job. That is a substantive founder exchange like any other, and it is the last
+one before anything renders: invariant 22's sweep runs over it before this phase closes.
 
 ## Phase 5 — Deliverables
 
@@ -941,12 +996,19 @@ three milestones, and where everything landed. Invite pushback on the specific b
   `--supersession-sweep` worklist read to its end. The default run is a strict subset of the
   checks that exist, so a plan clears it while citing a document nobody can open — and the last
   thing standing between that citation and a rendered PDF is this gate.
+- The plan states the strongest claim its evidence supports, and a claim weaker than its evidence
+  is an error of the same class as one stronger. Understatement is not caution: an overclaim gets
+  challenged, an understatement gets believed. Every other bar on this list fires on optimism, so
+  a claim falling short of its own evidence clears all of them and reads as rigour — to the
+  founder, to the panel, and to the reader who acts on it — and the only person who can catch it
+  is the one who re-opens the source. The both-directions test below governs the *values* in the
+  model; this governs what the prose asserts, whatever the evidence behind it was.
 - Every claim about the subject's own product was re-verified against source at the current
   commit before the first section was drafted, and each drift landed as a supersession rather
-  than an edit in place. The rest of the skill's skepticism fires on optimism, so a claim that
-  went stale in the *pessimistic* direction — a capability that shipped, a limit that was raised
-  — clears every other bar on this list and reads as conservatism the whole way to the reader
-  who acts on it.
+  than an edit in place. This is the bar above at the one point it can be enforced by
+  construction: the product moves while the research fleet spends a week running — a capability
+  shipped, a limit was raised, a seam was closed — so *which* claims fell behind their own
+  evidence is a knowable population here, and a matter of noticing everywhere else.
 - Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
   the claim — a claim whose named section does not say what the note says is still open,
   whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
