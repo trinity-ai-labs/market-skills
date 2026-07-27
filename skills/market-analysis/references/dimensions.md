@@ -49,9 +49,16 @@ Hunt:
   migrate and direct for buyers who would** — pick per the dossier's target segment and say
   which rule you applied (this call moves the sizing, so it's never left implicit).
 - Per competitor: what it does (one paragraph), pricing model + actual price points, disclosed
-  traction (ARR, users, downloads — only if stated somewhere citable), funding/investors,
-  positioning claim in their own words, **most likely next move**, and **what they structurally
-  don't cover and why** — the wedge line. Every profile ends with it.
+  traction points (dated — see below), funding/investors, positioning claim in their own words,
+  **most likely next move**, and **what they structurally don't cover and why** — the wedge
+  line. Every profile ends with it.
+- **Traction points are dated, not a single snapshot**: at least two per competitor where
+  available (ARR, users, downloads — only if stated somewhere citable), each tagged with its own
+  date and source, so a monthly growth rate is derivable from the pair. **Record absence as
+  absence**, e.g. "no disclosed traction, checked <date>" — never a silent omission. An omitted
+  competitor and a competitor that disclosed nothing look identical in the growth band below, so
+  skipping the line instead of stating the absence lets the band quietly narrow to whoever
+  happened to publish.
 - **Next-move prediction is signal-counting, not vibes**: job postings lead announcements by
   6–18 months (2+ same-role posts in ~60 days or a leadership hire = signal; one post = noise);
   call a move a prediction only on ≥2 independent signal types (hiring, changelog, pricing
@@ -63,6 +70,14 @@ Hunt:
 - **Category verdict**: does the competitive set confirm the dossier's category boundary, or
   does it pull the product into a different category? Say so explicitly — the conductor adjusts
   the frame on this verdict before the other dimensions run.
+- **Observed growth band**: a named output alongside the category verdict, not folded into it.
+  Derive a %/mo rate from each competitor's dated traction pair (above) and report the
+  slowest-to-fastest range across the profiled set. Label both endpoints — competitor, its two
+  dated points, and its stage (launch-year, growth, mature) — rather than averaging: a mature
+  company's rate and a launch-year company's rate are both real and mean different things, and
+  collapsing them into one averaged range produces a single number that describes no company in
+  the set. A competitor recorded as having disclosed no traction sits out of the band rather than
+  being folded in as a zero.
 
 Sources: competitor pricing pages + changelogs + docs (primary), funding databases and press,
 founder interviews/podcasts, G2/Capterra reviews (for weaknesses users actually complain about
@@ -89,6 +104,11 @@ Hunt:
 - Growth trajectory: compounding, flat, or shrinking, with the driver. Venture-scale sniff
   test: markets under ~1M potential customers or ~10%/yr growth get flagged as sub-venture
   scale (fine for bootstrap tracks — but say it).
+- **This is category growth, not company growth — never let the two merge.** This bullet
+  measures the market expanding; the competitive-landscape dimension's observed growth band
+  measures how fast a company inside that market acquires customers. A category compounding
+  slowly says nothing about how fast a company inside it can acquire — conflating the two lets a
+  slow-category finding justify a flat company projection downstream.
 - TAM / SAM / SOM as ranges, each with the formula and tag. **"TAM × 1%" is a hard-reject
   pattern.** A defensible SOM names (a) the specific beachhead segment, (b) the concrete wedge
   there, (c) the next 2–3 expansion segments. TAM is a ceiling for sanity-checking ambition,
