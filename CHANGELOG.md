@@ -2,6 +2,33 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.6.0
+
+- **A reference class inferred from the subject's own price point or packaging is downstream of a
+  policy input, and it inherits that input's mutability.** 1.5.0 made the class a first-class
+  input — named, classified `structural`, homed to `research/growth-curves.md` and flip-tested —
+  but left unsaid what the class may be *derived from*. `kind` classifies by who sets the value,
+  and a class read off the subject's own price point and delivery shape was selected by a founder
+  decision rather than by the market; filing it `structural` on the strength of where it landed
+  hides that. It stays `structural` — there is no third kind — but it now says what it was
+  inferred from wherever it is named, and it is re-flipped when that input settles differently.
+  Without it a founder decision selects the comparable set, the set fixes conversion, retention
+  and the multiple together one level beneath the arithmetic, and the verdict that follows is
+  reported as a property of the market: repricing reads as a pricing question when it is a
+  reclassification, and the one change that moves every structural driver at once is never costed.
+- **The re-flip now has a moment to fire in, and the trigger fires in both directions.** The class
+  is named in Phase 2 from the dossier, while the pricing and capital forks that settle the
+  subject's packaging are simulated and settled inside Phase 3 — so the class was fixed before the
+  decision it was inferred from was final, and the re-flip was missed by construction on every run
+  rather than occasionally. It is attached to Phase 3, the one phase where both halves are open,
+  and it covers both gaps: re-flip against whatever pricing, packaging and delivery decision is
+  settled at the moment the verdict is computed, **and** re-flip again when a fork settled later in
+  that phase — the strategic-fork simulation runs after the verdict, not before it — lands on a
+  different packaging than the class was read off. A changed class re-solves the identity rather
+  than annotating the verdict, because every structural driver beneath it moves together. The
+  verdict checklist carries the re-flip as its own step immediately before the solve step, which is
+  where it fires in time, and a quality bar makes it checkable rather than merely stated.
+
 ## 1.5.0
 
 - **Every driver value names its driver in both directions, and a low one with none is
