@@ -28,8 +28,17 @@ and is never restated here.
    that traces to nothing is narrative wearing evidence; flag it, don't let it stand.
 2. **A claim that the subject "has no X" is unactionable until checked against source.**
    Milestone fields, issue titles and backlog labels are not evidence of absence.
-3. **Names describe conditions, not costs.** Enum values, type lists and field names say what
-   raised a thing — never how often, how badly, or at what cost to the user.
+3. **Names describe conditions, not costs — and neither does a reading.** Enum values, type
+   lists and field names say what raised a thing — never how often, how badly, or at what cost
+   to the user. The instrument's reading is the same: **before a metric is cited as evidence for
+   a mechanism, state what else produces that number.** A count says a thing exists; it never
+   says why. Where the alternative explanation is not excluded the metric is a description and
+   not evidence — and a metric chosen *after* the conclusion is a conclusion wearing an
+   instrument. That second clause is the one worth writing down: a careful reader supplies the
+   alternative explanation anyway, while an instrument selected to fit a thesis already reached
+   leaves every step downstream of it locally sound. The tell is a second metric introduced to
+   confirm the first; chosen after the thesis, it tests the thesis's fit to the instrument
+   rather than the mechanism.
 4. **Evaluate the bundle, not the columns.** A product whose thesis is integration always
    scores as commodity on a per-capability grid, so the matrix gets supplemented, never trusted
    alone.
@@ -648,6 +657,11 @@ briefs additionally carry the structural half of `research/growth-curves.md`'s s
 what comparables had that this founder does not — because that is an objection the corpus can
 already evidence rather than one a panelist has to invent.
 
+**A metric that enters a brief as evidence for a mechanism enters with what else produces it**,
+per invariant 3. This is where that rule bites hardest: a panelist handed a number reads it as
+the evidenced part of the brief and spends the turn elsewhere, so an unexcluded alternative
+explanation reaches the panel as settled ground and comes back unattacked.
+
 **The verdict is on the attack surface, not only the plan built on it.** Every brief carries the
 settled target, the verdict, the driver the verdict named as binding, and that driver's `kind`;
 a panel that attacks only the plan grants the number the plan is engineered backwards from, and
@@ -817,6 +831,11 @@ three milestones, and where everything landed. Invite pushback on the specific b
 ## Quality bars — non-negotiable
 
 - Every market fact traces to `sources.md` or the founder brief; confidence tags survive import.
+- Wherever the plan or the red team reasons from a count to a cause, the metric states what else
+  produces that number, and a metric introduced after the conclusion it supports is named as one.
+  Unexcluded, the alternative explanation ships as the evidenced part of the argument — and a
+  second metric picked to confirm the first tests the thesis's fit to the instrument, which reads
+  as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
 - Every claim cited in a rendered document carries `used_in`; every `required: true` subject
   has a claim under it or a stated gap.
