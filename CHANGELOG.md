@@ -2,6 +2,80 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.7.0
+
+- **A price is now defended on two lenses, and `value-delivered` is the one that was missing.**
+  All three pricing lenses were cost-side — affordability banned as an argument,
+  `alternative-cost` mandatory wherever a price is defended, `switching-cost` pricing the move
+  away — so nothing in the vocabulary named what the buyer *produces* with the product.
+  Substitute pricing has a ceiling at the cost of the substitute, so a method mandating only that
+  side anchors the price under the DIY figure, and it does so invisibly: the substitute number is
+  well-sourced and reads as rigour, while the output figure nobody computed is simply absent from
+  the page rather than visibly missing. The new term prices what the buyer can produce that they
+  could not before, in the buyer's own currency, and excludes the three adjacent terms from both
+  sides — `alternative-cost` was amended to declare the same boundary from its side, because a
+  boundary stated once is the near-miss the vocabulary exists to kill and existing corpora already
+  carry output-value claims filed there for want of anywhere else to put them. It is
+  `required: false` on purpose: the output delta is not expressible in the buyer's currency for
+  every product, and a required row there produces a fabricated figure to close a coverage gap.
+  The obligation is conditional and lives where its condition is visible — the plan template's new
+  `## Value delivered` section, fired wherever a price is defended, sibling to
+  `## Cost of the alternative` and bound to it in both directions so an agent reading either knows
+  both fire.
+- **Retention is `policy within a structural band`, the construction `price` already used.** The
+  driver-home table filed it `structural`, and the sentence beneath it said what that meant:
+  conversion and retention are what they are at the stage the target counts, and no decision the
+  founder takes this week moves them. Half of that is right. A consumer utility does not retain
+  like an ERP — that band is the category's and it stands — but the position inside the band is
+  the product's: the depth of what it does, whether the valuable part is reachable unassisted, and
+  the friction between the two. Because the construction already existed for `price`, the change
+  needs no new vocabulary and the existing rule
+  `## A structural driver may be sourced from the reference class; a policy driver may only be checked by it`
+  covers it unedited — the class sources the band and may only *check* the position. What moves is
+  what a verdict may conclude: a retention-bound miss now reads *this product as built does not
+  retain* with the target under one changed position beside it, never *this market does not
+  retain*, and it routes to the roadmap rather than to the founder's calendar. Filed `structural`,
+  a research pass could identify the coupling exactly — where value compounds per additional
+  teammate the multi-seat cohort churns lower, so one improvement moves seats-per-account and
+  churn together and moves the ceiling multiplicatively — write it down, and have the label keep it
+  out of the arithmetic anyway. That is a labelling bug, which is why the fix is a `kind` column
+  and not a new section.
+- **The two ends are one change, because the cross-link is what makes either work.** Delivered
+  value is the input and retention is where it becomes observable in the arithmetic: churn is the
+  divisor of the steady-state identity, so halving it roughly doubles the equilibrium and with it
+  the price the ceiling will carry. Price on delivered value with no retention channel and the
+  value claim never touches a number — it sits in a pricing paragraph and the model is unmoved.
+  Model retention as product-movable with no value rule behind it and you have a lever with no
+  driver. So the template's `## Value delivered` names retention as its channel into the model,
+  the retention work names delivered value as what places the product inside its band, and
+  `roadmap-sequencing.md` carries the consequence: churn is a term of the identity like any other,
+  an item moving it compounds with items moving the numerator, and two items both aimed at
+  retention compete rather than add.
+- **One guard, applied at both ends, and it is what makes the change shippable.** A claim about
+  delivered value or about a retention improvement carries a sourced base and labels its magnitude
+  `measured`, `reference-class` or `assumed`, with an `assumed` one taking the both-directions test
+  like any other input. Both are the optimistic mirror of the 1.5.0 rule, which only ever fired on
+  pessimistic inputs, and both flatter the thing the founder built — which is exactly what makes
+  them easy to write and hard to challenge. The guard binds harder at the retention end because
+  churn is the divisor: an unguarded improvement claim moves the answer faster than any other input
+  in the model, and unguarded the reclassification is a licence to model churn down to whatever the
+  target needs. Three quality bars make it checkable rather than merely stated, including one on
+  silence — a plan whose roadmap improves the product states what that does to retention or states
+  that it does not and why, because silence read as "no effect" is a claim nobody made.
+- **`conversion` stays `structural`, and the reason is recorded next to the `kind` column.**
+  Onboarding quality moves activation and trial-to-paid too, so the argument above reaches for
+  conversion next. It stops there deliberately: conversion is a funnel property of the category
+  measured at a stage, while retention is where a product's own value shows up over time. If reach
+  is policy, price is split, retention is split and conversion is split as well, the identity keeps
+  no structural term at all, every negative verdict becomes conditional on something the founder
+  could change this week, and the skill loses the one output it exists to be able to produce, which
+  is telling a founder no.
+- `vocabulary_version` 2 → **3**, with two entries in the amendment log — `alternative-cost` and
+  `churn` — both at `amended_at: 3` and `shipped_in: "1.7.0"`. `churn`'s `must_assert` supersedes a
+  bare rate carrying no band and no determinant; `alternative-cost`'s keeps a claim pricing the
+  substitute's total cost and re-files one asserting what the buyer produces. One version step, one
+  advisory for a founder to act on, one reconciliation pass per vault.
+
 ## 1.6.1
 
 - **The vault's generated `README.md` is regenerated by what changed, not by which phase ended.**

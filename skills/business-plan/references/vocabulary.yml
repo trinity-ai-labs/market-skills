@@ -282,7 +282,7 @@
 # asserts what the amended subject asserts is SUPERSEDED under the standing two-edit rule, never
 # re-filed in place under wording its author never saw.
 
-vocabulary_version: 2
+vocabulary_version: 3
 
 amendments:
   - term: steady-state-ceiling
@@ -299,6 +299,41 @@ amendments:
       claims, so a claim that names no configuration — or that labels no input — is superseded
       rather than re-filed. Left in place it reports a founder's own churn or spend decision as a
       law of nature, which is the defect invariant 18 exists to prevent.
+
+  - term: alternative-cost
+    amended_at: 3
+    shipped_in: "1.7.0"
+    was: Total cost of the substitute the buyer would otherwise assemble, bounded against
+      affordability and switching-cost only.
+    now: The same total, with the boundary against value-delivered declared from this side as
+      well. This term prices what the substitute costs the buyer, never what the buyer produces
+      with the product.
+    must_assert: A cost the buyer avoids by not assembling the substitute. A claim under this
+      subject asserting instead what the buyer GAINS — hours returned, output added, a revenue
+      figure the product unlocks — is re-filed under value-delivered rather than left to stand.
+      It was filed here because until now no term accepted it, and the cost lens has been
+      absorbing the whole pricing argument as a result. Left here it anchors the price under the
+      substitute's cost while reading as rigour, because the substitute figure is well-sourced
+      and the output figure nobody computed is simply absent.
+
+  - term: churn
+    amended_at: 3
+    shipped_in: "1.7.0"
+    was: The rate at which customers or revenue leave, per period, and whether it varies by
+      cohort. A property of the category at the stage the plan counts.
+    now: The same rate, carried as a position inside a structural band. The band is the
+      category's — a consumer utility does not retain like an ERP — and the position inside it is
+      the product's own, set by the depth of what the product does, whether the valuable thing is
+      reachable unassisted, and the friction between the two.
+    must_assert: A band, a position inside that band, and what in the built product places it
+      there. A bare rate carrying none of the three is superseded rather than re-filed, because
+      under `was` it asserts a property of the category and under `now` it asserts a property of
+      this product inside the category, and those are different claims. A claim asserting an
+      IMPROVEMENT additionally carries a sourced base and labels its magnitude measured,
+      reference-class or assumed, with an assumed one taking the both-directions test. Churn is
+      the divisor of the steady-state identity, so an improvement claim resting on nothing moves
+      the ceiling further than any other input in the model, and it arrives flattering the thing
+      the founder built, which is what makes it easy to write and hard to challenge.
 
 # ---------------------------------------------------------------------------------------
 # 8. The terms
@@ -464,7 +499,11 @@ terms:
   alternative-cost:
     definition: Total cost of the substitute the buyer would otherwise assemble, including
       the fraction of a person who maintains it. Distinct from affordability, which is a
-      ratio and not an argument, and from switching-cost, which prices the move away.
+      ratio and not an argument; from switching-cost, which prices the move away; and from
+      value-delivered, which prices what the buyer produces with the product rather than what
+      the substitute costs them. A claim asserting the buyer's own output belongs under
+      value-delivered, and filing it here anchors the price under the substitute's cost
+      while reading as rigour.
     aliases:
       - tco
       - diy-cost
@@ -508,6 +547,26 @@ terms:
       - ability-to-pay
       - price-tolerance
     required: true
+
+  value-delivered:
+    definition: What the buyer can produce with the product that they could not before, priced
+      in the buyer's own currency. A claim here carries a sourced base — a real wage or output
+      figure, tagged — and labels its throughput claim measured, reference-class or assumed,
+      where an assumed one takes the both-directions test like any other input. Distinct from
+      alternative-cost, which prices the substitute rather than the output; from affordability,
+      which is a ratio and not an argument; from time-to-value, which measures latency to the
+      first result rather than the magnitude of it; and from willingness-to-pay, which is what
+      the segment pays rather than what they get. Not required, because the output delta is not
+      expressible in the buyer's currency for every product, and a required row there produces a
+      fabricated figure to close a coverage gap. The obligation is conditional and lives in the
+      plan template, where its condition — a price being defended — is visible.
+    aliases:
+      - value-created
+      - economic-value
+      - buyer-outcome
+      - output-value
+      - value-to-buyer
+    required: false
 
   free-tier:
     definition: Whether the product offers a free tier or a trial, which one, and the
@@ -618,6 +677,13 @@ terms:
     definition: The rate at which customers or revenue leave, per period, and whether it
       varies by cohort. The model's mandatory negative assumption and the divisor in the
       steady-state identity, which is why it is required even when the number is a guess.
+      A claim carries three things — the structural band the category supports, the position
+      the product holds inside that band, and what in the built product places it there — since
+      the band is the category's and the position is the product's. A claim asserting an
+      improvement carries a sourced base and labels its magnitude measured, reference-class or
+      assumed, and an assumed one takes the both-directions test. Without that base an
+      improvement claim moves the ceiling further than any other input in the model, because
+      churn is the divisor.
     aliases:
       - churn-rate
       - retention

@@ -93,22 +93,29 @@ and a range on both is a rectangle solved at its corners rather than averaged to
 get back which corners clear and which do not, so you can see whether it is the value or the date
 that is the problem.
 
-The verdict on that target is **computed from evidenced drivers, not asserted**, and it names
-which driver binds and by how much — "reach binds: the target needs about six times the monthly
-reach your channels evidence at the hours you gave" — because that is the sentence you can act on.
-Where the driver that binds is one **you chose** — your hours, your channel count, the price point
-you picked — the answer comes back as unreachable *in that configuration*, with the value that
-variable would have to reach, rather than as a verdict on the target: a constraint you could
-revisit this week reads very differently from one the market sets, and you are told which of the
-two you are looking at. Where the evidence can't carry a verdict at all, it says so and names the
-cheapest test instead of guessing: a confident "no" resting on a guessed conversion rate talks you
-out of something the evidence never spoke to.
+The verdict on that target is **computed from evidenced drivers, not asserted**, and it names which
+driver binds and by how much — "reach binds: the target needs about six times the monthly reach your
+channels evidence at the hours you gave" — because that is the sentence you can act on. Where the
+driver that binds is one **you chose** — your hours, your channel count, the price point you picked,
+or how well what you built holds onto the people it reaches — the answer comes back as unreachable
+*in that configuration*, with the value that variable would have to reach, rather than as a verdict
+on the target: a constraint you could revisit this week reads very differently from one the market
+sets, and you are told which of the two you are looking at. Where the evidence can't carry a verdict
+at all, it says so and names the cheapest test instead of guessing: a confident "no" resting on a
+guessed conversion rate talks you out of something the evidence never spoke to.
 
 That scrutiny runs in **both directions**. A cautious number is a claim about your business
 exactly as an ambitious one is, so every value in the model names what drives it whichever way it
 points, and a low one with nothing behind it comes back *unmodelled, not conservative* rather than
 passing as prudence — half a dozen individually defensible low guesses multiplied together move a
-verdict by orders of magnitude and arrive looking like a finding about your market. The set of
+verdict by orders of magnitude and arrive looking like a finding about your market. It points the
+other way too, at the numbers that flatter what you built, and that is the harder half: a claim
+that your product holds onto people better than the rest of the category, or that it is worth more
+to a buyer than what they would otherwise assemble, comes with the real figure it was worked out
+from and says whether the size of the effect was measured on actual users, taken from comparable
+companies, or simply assumed — and an assumed one gets checked at both ends of its range like any
+other number in the model. Those are the easiest figures in a plan to write and the hardest to push
+back on, because pushing back on them sounds like pushing back on the product. The set of
 companies you are measured against is an input too, named and tested like any other: where two
 defensible comparison sets disagree about whether the target clears, you get *undetermined* and
 the cheapest test that settles which one you are in. And not having launched yet is not held
@@ -116,6 +123,13 @@ against you — a driver the market sets, with no data of your own behind it, ta
 that indexed set with the shelf life and kill test that come with it, instead of being filed as a
 guess that drags the whole plan's confidence down for a reason that is routing rather than
 evidence.
+
+A price is held to the same standard, and it is argued from **both sides** rather than one: what
+the buyer would otherwise have to assemble — the tools, the integrations and the fraction of a
+person who keeps the whole thing working — and what the buyer can produce with your product that
+they could not before. Argued from the substitute's cost alone, the price ends up anchored to
+whichever side somebody happened to add up, and that is almost always the cheaper one, because a
+substitute is easy to total and an outcome is not.
 
 An unreachable target opens a **negotiation, not a rejection**: the stated target and why it
 doesn't clear, the nearest target reachable on the resources you stated, and the levers — hours,
