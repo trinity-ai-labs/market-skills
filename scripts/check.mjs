@@ -123,10 +123,10 @@ function relativeLinks(text) {
  * `killed_because` code span, and a slugger that eats the underscore reports
  * that working link as broken.
  *
- * This is now the repo's only slugger. ci.yml carried a second one in an inline
- * Python step until check 9 covered every link it did; two checkers in two
- * languages with two sluggers is worse than one, because they drift and both
- * get trusted.
+ * This is the one place the rule lives, and every anchor check resolves through
+ * it. A second copy of it anywhere — another language, another file — drifts
+ * from this one silently, and both copies get trusted; a check that needs a slug
+ * calls this rather than writing its own.
  *
  * No file here has two headings that slug alike, so the `-1`/`-2` suffixes
  * GitHub appends to a repeated heading have nothing to model.
@@ -350,14 +350,15 @@ async function checkAnchorsResolve() {
     }
 
     // The index itself, guarded separately from the links above: a `## Contents`
-    // block whose entries have stopped being list-item anchor links. Rewritten
-    // into plain text or into raw <a href="#…"> HTML, the block drops out of the
-    // check while the rest of the file keeps it green — and an index nobody
-    // validates is one readers follow into nothing. The repo-wide guard below is
-    // no help, since it only speaks when EVERY file has gone silent. Asking
-    // merely for an anchor SOMEWHERE in the file is no help either: decisions.md
-    // carries 8 outside its Contents block, enough to mask a gutted index on
-    // their own. Indented entries count — they are most of the real index.
+    // block that offers no list-item anchor link. Written as plain text, or as
+    // raw <a href="#…"> HTML, it drops out of the check while the rest of the
+    // file keeps this green — and an index nobody validates is one readers
+    // follow into nothing. Neither looser form of the guard closes that: the
+    // repo-wide count below only speaks when EVERY file has gone silent, and
+    // asking for an anchor merely SOMEWHERE in the file lets body links stand in
+    // for the index — decisions.md carries 8 outside its Contents block, enough
+    // to mask a gutted one on their own. Indented entries count; they are most
+    // of the real index.
     const body = stripFences(text);
     if (/^##\s+Contents\s*$/m.test(body) && !/^\s*- \[.+?\]\(#[^)]+\)\s*$/m.test(body)) {
       fail(file, 'link', 'has a `## Contents` heading but no list-item anchor link — its index is unchecked');
