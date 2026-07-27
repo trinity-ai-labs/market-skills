@@ -356,11 +356,22 @@ measurement.
 
 Then label every input in the identity structural or policy — those two words, no third:
 
-  structural — set by the market or the product, not by the founder: churn at the rate the
-  evidence supports, the category's conversion benchmark, the price band willingness-to-pay
-  supports.
+  structural — set by the market, not by the founder: the category's conversion benchmark, the
+  price band willingness-to-pay supports, the churn BAND the category supports.
   policy — set by a founder decision: how many channels run, hours a week into the business,
-  the price point chosen inside that band, headcount, how much of the growth engine gets built.
+  the price point chosen inside that band, the product's POSITION inside the churn band,
+  headcount, how much of the growth engine gets built.
+
+CHURN IS THE INPUT MOST OFTEN MISLABELLED, and it is the one that costs the most. A consumer
+utility does not retain like an ERP — that band is structural and it stands. Where the product
+sits inside it is not: the depth of what the product does, whether the valuable part is
+reachable unassisted, and the friction between the two are what place it, and all three are
+built. Label the whole rate structural and the divisor of this identity becomes a category
+floor, which sets the ceiling. State the band, state the position, and state what in the built
+product puts it there. A claim that the position improves carries a sourced base and labels its
+size measured, reference-class or assumed — an assumed one is solved at both ends of its range
+before it enters. Unguarded, churn is the one input a plan can move until the answer comes out
+right, because halving it roughly doubles the equilibrium.
 
 A ceiling whose BINDING input is policy is the ceiling of THIS CONFIGURATION, not of the
 business, and is stated that way — with the ceiling under at least one changed policy value
@@ -389,7 +400,47 @@ bury.
 Then check the inversion: is the buyer most able to self-build also the most expensive to
 have doing it? If so, say it — it is usually the strongest sentence available. If the evidence
 is arithmetic rather than observed behaviour, tag it as such and do not call it revealed
-preference.>
+preference.
+
+This section and Value delivered below it are one argument with two halves and BOTH fire
+wherever a price is defended. This one prices what the buyer avoids; that one prices what the
+buyer produces. Written alone, this one caps the price at the substitute's cost — and it does
+so invisibly, because a well-sourced substitute figure reads as rigour while the output figure
+nobody computed is simply absent from the page.>
+
+## Value delivered (MANDATORY wherever price is defended)
+<The substitute's cost is a floor under the buyer's alternative, not a ceiling on your price.
+Price what the buyer can PRODUCE with the product that they could not before, in the buyer's
+own currency: output added, hours returned at a real loaded wage, error or rework avoided,
+revenue unlocked. A price defended on cost alone is unmodelled, not conservative.
+
+Every figure here carries a SOURCED BASE and a LABELLED MAGNITUDE — the two are separate and
+both are required:
+  - the base is the wage, output or volume figure the delta is computed against, tagged [S#]
+    or [F#] like any other fact;
+  - the magnitude is how much the product moves it, labelled `measured` (instrumented on real
+    users), `reference-class` (a comparable disclosed it), or `assumed`.
+An `assumed` magnitude is solved at both ends of its plausible range before anything downstream
+of it is stated, exactly as a pessimistic input is. The reason this rule needs writing down is
+that it fires on an OPTIMISTIC input, which nothing else in the method does: challenging a
+generous figure about the founder's own product reads as advocacy, so a base-free value claim
+is the easiest number in the plan to write and the hardest to argue with.
+
+STATE THE CHANNEL INTO THE MODEL, or this section is a paragraph that moves no number. Delivered
+value reaches the arithmetic through RETENTION: a buyer who gets more out of the product leaves
+less often, churn is the divisor of the steady-state identity above, and a lower divisor raises
+the equilibrium and with it the price the ceiling will carry. So this section names, in one
+line, which churn row it moves and by how much — and that claim takes the same base-and-label
+guard as everything else here, because churn moves the answer further than any other input.
+Where the delta genuinely is not expressible in the buyer's currency, say that in one line and
+say what the argument rests on instead; a fabricated figure written to fill this section is the
+exact failure the guard exists to prevent.
+
+Worked example, invented end to end: a product that shortens a weekly reconciliation from four
+hours to one. Base — the loaded hourly cost of the person who does it today [S#]. Magnitude —
+three hours a week, `measured` on a pilot cohort. Channel — the accounts using it weekly retain
+at the top of the category band rather than the middle, because the saved hours recur; the
+model's churn row carries that as a cohort split, not as a flat improvement.>
 
 ## Strategy comparison (when a capital-path or sequencing fork was open)
 <the Path Comparison + Trigger table from strategy-sim.md §6: parallel paths off shared unit
@@ -411,7 +462,10 @@ Floors (venture & bootstrap tracks): SaaS ≥3:1 & payback ≤12 mo; prosumer/co
 payback, LTV $40–120 at $5–15/mo. A product straddling both: pick by the grilled price point —
 single-user pricing under ~$25/mo is judged on the prosumer floor, team pricing on the SaaS
 floor; if the model carries both plans, show both floors against their own segments. Show the
-cohort retention curve assumption behind LTV — the ratio is gameable, the curve is not.>
+cohort retention curve assumption behind LTV, and what places it where it sits — the category
+band it lies in, the product's position inside that band, and the delivered value that puts it
+there. The ratio is gameable, the curve is not, and a curve stated with no position under it is
+a category floor doing a product's job.>
 
 ## Runway & milestone
 <burn, months of runway, and the specific milestone (not "more revenue") this period buys;

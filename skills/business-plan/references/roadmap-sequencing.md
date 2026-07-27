@@ -18,14 +18,27 @@ maintenance line, not in a plan a reader is asked to believe.
 |---|---|---|---|
 | New-platform GA | trial volume (A-n) | +X% trials from M6 | M — bound, not a date |
 | Team-invite flow | seats per account (A-n) | 1.0 → 1.4 | L — mechanism shipped, untested |
+| Unassisted setup for the core job | monthly churn (A-n) | 4.0% → 3.2%, mid-band to upper | L — `assumed`, base is the assisted cohort's rate |
 | Internal refactor | — | none | **not a roadmap item** |
 
 Write the table. If a majority of items have an empty middle column, the roadmap is a backlog
 wearing a plan's clothes, and the honest move is to say so to the founder rather than pad the
 model.
 
+**Churn is a legitimate value in the middle column, and it is the one that needs its base stated
+in the row.** A roadmap item that makes the product deeper or its valuable part reachable
+unassisted moves where the product sits inside the category's retention band, which is a position
+the product owns rather than a floor the category sets. So the row carries three things a trial-
+volume row does not need: the band, the position it moves from and to, and the label on the size —
+`measured`, `reference-class` or `assumed`, with an `assumed` one solved at both ends of its range.
+**The failure that prevents:** churn is the divisor in Rule 2's identity, so a retention row is
+worth more per unit of effort than any other row in the table, and a row with no base under it lets
+the roadmap credit whatever improvement the target happens to need.
+
 **Corollary:** an item whose assumption is already at its ceiling moves nothing. Check the
-assumption's range before crediting the item.
+assumption's range before crediting the item. For a retention item the ceiling is the top of the
+category band, not zero churn — an item claiming past it is claiming the roadmap changes the
+category.
 
 ## Rule 2 — items unlock each other; levers multiply, they don't add
 
@@ -38,6 +51,18 @@ Given `seats = trials × conversion × seats-per-account ÷ churn`:
   is worth more than the sum of shipping either.
 - Two separate onboarding improvements both aimed at conversion → **not** additive. Model the
   better one and treat the second as insurance.
+
+**Churn is a term of that identity like any of the others, and the same two readings apply to it.**
+An item that lowers churn compounds with every item moving a numerator term — a deeper product that
+retains better multiplies against the trial flow the platform launch bought, rather than adding to
+it — and because churn is the DIVISOR, a proportional move there is worth more than the same
+proportional move anywhere else in the formula. Two items both aimed at retention compete: an
+unassisted-setup item and a deeper-core-job item both work on the product's position inside one
+band, so model the better one and treat the second as insurance, exactly as with the two onboarding
+items above. **The failure this prevents:** retention items are the ones a roadmap is most tempted
+to sum, because each has its own mechanism and they read as independent — summed, they walk the
+divisor down past the band the category supports, and the ceiling that falls out is a property of
+the arithmetic rather than of the plan.
 
 **Never sum item values.** Compute the sequence.
 
