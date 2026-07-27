@@ -333,15 +333,18 @@ number a founder is most likely to want re-litigated later.
 1. **Write the identity** for the target's shape, in full, before any value goes into it.
 2. **Fill each driver from its named home** — price, conversion, retention, reach — and record
    any founder-instinct divergence rather than averaging it.
-3. **Write every unsourced driver as an `assumption`** with its `value` and `sensitivity`. None of
+3. **Classify each driver `structural` or `policy`** from the table's `kind` column, before any
+   verdict is written. A verdict whose binding driver turns out to be policy is negative for the
+   stated configuration only, and is written in those words.
+4. **Write every unsourced driver as an `assumption`** with its `value` and `sensitivity`. None of
    them enters the identity as though it were sourced.
-4. **Run the flip test** at both ends of every assumption's plausible range. If the verdict flips,
+5. **Run the flip test** at both ends of every assumption's plausible range. If the verdict flips,
    stop: return *undetermined* plus the cheapest test that settles it, and name the threshold.
-5. **Solve for the required value of each driver** at the target date, and name the one that
-   binds — with the size of its gap, and with the drivers that clear stated too.
-6. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
+6. **Solve for the required value of each driver** at the target date, and name the one that
+   binds — with the size of its gap, its kind, and with the drivers that clear stated too.
+7. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
    below.
-7. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
+8. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
    with the date held, as a band — then build the lever table separately.
-8. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
+9. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
    verdict rather than editing it.
