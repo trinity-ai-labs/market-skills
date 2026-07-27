@@ -104,9 +104,7 @@ const PLAYBOOK_EXEMPT = new Map([
   ['find:', 'discovery sweep — returns a roster against one search lens, authors no dimension content'],
   ['verify:', 'refutation panel — argues one already-written claim down, writes nothing'],
   ['critic:', 'completeness critic — reads the research tree and names gaps, writes nothing'],
-  ['profile:', 'RESTATES the competitors playbook in a hand-written prompt — the failure rule 6 names, still open'],
-  ['sizing:reconcile', 'writes sizing.md "per playbook skeleton" without the skeleton in hand — same failure, still open'],
-  ['close-gap:', 'carries the critic\'s generated dispatch string rather than the dimension playbook — same failure, still open'],
+  ['close-gap:', "per-gap remediation on the critic's own generated dispatch string — the critic returns {gap, dispatch} naming no dimension, and several gap classes have none to name (an unprofiled competitor is Workflow A's playbook, which B never holds), so a key guessed off the free text would hand some gaps the WRONG playbook — worse than none"],
 ]);
 
 /**

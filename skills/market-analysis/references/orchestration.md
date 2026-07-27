@@ -114,7 +114,7 @@ const skipped = roster.filter(c => !toProfile.includes(c) && c.kind !== 'status-
 if (skipped.length) log(`NOT profiled (visible omission, listed in competitors.md): ${skipped.join(', ')}`)
 
 const profiles = await parallel(toProfile.map(c => () =>
-  agent(`${CTX}\n\nProfile competitor "${c.name}" (${c.kind}; ${c.url || 'find their site'}). Write the full profile to ${outDir}/research/profiles/${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md: what it does (one paragraph), pricing model + actual price points, pricing-page CTA verbatim (their true GTM motion), dated traction points — every citable point found, not just two (two is the floor below which no rate can be derived, never the target), each with its own date and source, or if none disclosed say so explicitly (no disclosed traction, checked ${date}) rather than omitting the line — funding, their positioning claim in their own words, most likely next move — ONLY as a prediction if backed by >=2 independent signal types (hiring patterns, changelog, pricing change, messaging drift, new integrations); with fewer, label it a rumor — and the WEDGE LINE: what they structurally don't cover and why. Full source table in the file. RETURN only: a <=120-word summary ending with the wedge line.`,
+  agent(`${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nApply that playbook's PER-COMPETITOR rules to exactly one: "${c.name}" (${c.kind}; ${c.url || 'find their site'}). Only those — the roster ordering, the capability matrix, the category verdict and the growth band belong to the competitors.md writer, which reads your file. Write the full profile, with its full source table, to ${outDir}/research/profiles/${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md. RETURN only: a <=120-word summary ending with the wedge line.`,
     { label: `profile:${c.name}`, phase: 'Profile', model: 'sonnet', effort: 'medium' })
     .then(p => ({ name: c.name, kind: c.kind, summary: p }))))
 
@@ -211,7 +211,7 @@ const dims = await parallel([
 ])
 const [bottomUp, topDown, ...dimResults] = dims
 const sizing = await agent(
-  `${CTX}\n\nReconcile these two sizing passes into ${outDir}/research/sizing.md (playbook skeleton; Sources table in-file): bottom-up is the ANCHOR, top-down corroborates; ranges + tags; a >30% divergence is a boundary mismatch to explain, never an average to take.${updateRule('sizing')}\nThen return the JSON summary.\n\nBOTTOM-UP:\n${bottomUp}\n\nTOP-DOWN:\n${topDown}`,
+  `${CTX}\n\nPlaybook:\n${playbooks.sizing}\n\nReconcile these two sizing passes into ${outDir}/research/sizing.md per the playbook's skeleton (Sources table stays IN this file — never touch sources.md).${updateRule('sizing')}\nThen return the JSON summary.\n\nBOTTOM-UP:\n${bottomUp}\n\nTOP-DOWN:\n${topDown}`,
   { label: 'sizing:reconcile', phase: 'Research', model: 'opus', effort: 'high', schema: CLAIMS_SCHEMA })
 
 // ---- Verify: refutation panels on the TOP load-bearing claims only ----
@@ -251,6 +251,10 @@ for (let round = 0; round < 3; round++) {
   if (round === 2) { log('critic still unclean after max rounds — gaps returned for the report'); unclosedGaps.push(...gaps); break }
   if (gaps.length > 8) { log(`closing 8 of ${gaps.length} gaps this round; rest re-audited next round`) }
   log(`critic round ${round + 1}: ${Math.min(gaps.length, 8)} gaps — closing`)
+  // No playbook rides along: a gap names no dimension, and several gap classes have none to name
+  // (an unprofiled competitor belongs to Workflow A's playbook, which B never holds). Guessing a
+  // key off the free text would hand some gaps the WRONG playbook — worse than none. g.dispatch,
+  // written against the file the critic actually read, is the whole brief.
   await parallel(gaps.slice(0, 8).map((g, i) => () =>
     agent(`${CTX}\n\n${g.dispatch}\n\nUPDATE the relevant file under ${outDir}/research/ — append new rows to its Sources table, never delete prior rows.`,
       { label: `close-gap:${i}`, phase: 'Critique', model: 'sonnet', effort: 'medium' })))
