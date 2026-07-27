@@ -556,7 +556,8 @@ paragraph does not. The one-liners are in
 [references/vault.md](references/vault.md#the-queries-this-schema-exists-to-make-trivial); the
 coverage query is in [references/vocabulary.yml](references/vocabulary.yml).
 
-Four query results are resolved BEFORE a section is written, never after:
+Five things are resolved BEFORE a section is written, never after — the four vault queries, and
+one re-verification none of them structurally reaches:
 
 - **Subject collisions** — two `current` claims on one subject. Each is a contradiction, a
   duplicate, or a missing `scopes` edge, and the fix is one of those three edits. Picking a side
@@ -568,6 +569,27 @@ Four query results are resolved BEFORE a section is written, never after:
 - **Stale claims** — `stale_after` already passed. Re-check or downgrade before citing.
 - **`status: unverified`** — asserted with nothing behind it. Each needs a validation step in
   the plan, or it does not get asserted.
+- **Product claims re-verified against source at the current commit.** Every claim about the
+  subject's own product is re-read against the product's own repo, docs and changelog *as they
+  are today* — not as the Phase 0 dossier found them. The dossier is the product truth the whole
+  plan inherits, and it was written before the research fleet spent a week running; the product
+  moved underneath it. **A plan that only re-checks numbers that look too good drifts
+  pessimistic, and every drift reads as rigour.** A capability that shipped, a limit that was
+  raised, a seam that was closed: each one now reads as the plan being careful. The skill's
+  existing skepticism fires in one direction only — strong rules against unmodelled optimism, a
+  both-directions test on input values — so this step is worth nothing unless it is run in the
+  direction those do not cover. A drift is a **supersession, not an edit in place**, under the
+  standing two-edit rule, with `supersedes_reason` naming the commit or release that moved it;
+  edited in place, the plan reads as though it were written against a product state its author
+  never saw. The population is the one Phase 4's code-verify rule already governs — this is that
+  rule moved to the entry of the phase that drafts rather than the phase that attacks, because
+  the objection Phase 4 catches is one Phase 3 already wrote into the plan, and a *pessimistic*
+  claim rarely draws an objection at all. The four queries above cannot reach it: a claim stale
+  because the world moved is what `stale_after` catches, and a claim stale because the product
+  moved has no shelf life on it at all. **The failure this prevents:** an understated product
+  claim survives every check in the skill, reads as conservative to every reader, and reaches an
+  acquirer or an investor as a fabricated weakness — one the founder then has to argue their own
+  plan out of.
 
 **The evidence-backed verdict is computed after those queries and before the first section is
 drafted**, as the `claim` note [references/target.md](references/target.md) specifies — and where
@@ -901,6 +923,12 @@ three milestones, and where everything landed. Invite pushback on the specific b
   second metric picked to confirm the first tests the thesis's fit to the instrument, which reads
   as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
+- Every claim about the subject's own product was re-verified against source at the current
+  commit before the first section was drafted, and each drift landed as a supersession rather
+  than an edit in place. The rest of the skill's skepticism fires on optimism, so a claim that
+  went stale in the *pessimistic* direction — a capability that shipped, a limit that was raised
+  — clears every other bar on this list and reads as conservatism the whole way to the reader
+  who acts on it.
 - Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
   the claim — a claim whose named section does not say what the note says is still open,
   whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
@@ -980,6 +1008,7 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Low-confidence number promoted to headline | Confidence is derived; tags survive import; validation step instead |
 | Hockey-stick from penetration hand-waving | Bottom-up build; scenarios move assumptions |
 | Flat acquisition line read as conservative | Zero growth is an assumption: name its driver, and place the implied rate against the band |
+| Product claim gone stale in the pessimistic direction | Re-verify every product claim against source at the current commit before drafting; a drift is a supersession, not an edit |
 | Policy variable reported as a ceiling | Label every input structural or policy; a chosen input caps the configuration, not the business |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |
