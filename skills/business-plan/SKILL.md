@@ -28,8 +28,17 @@ and is never restated here.
    that traces to nothing is narrative wearing evidence; flag it, don't let it stand.
 2. **A claim that the subject "has no X" is unactionable until checked against source.**
    Milestone fields, issue titles and backlog labels are not evidence of absence.
-3. **Names describe conditions, not costs.** Enum values, type lists and field names say what
-   raised a thing — never how often, how badly, or at what cost to the user.
+3. **Names describe conditions, not costs — and a reading describes one too, never its cause.**
+   Enum values, type lists and field names say what raised a thing — never how often, how badly,
+   or at what cost to the user. An instrument's reading is the same kind of evidence: **before a
+   metric is cited as evidence for a mechanism, state what else produces that number.** A count says
+   a thing exists; it never says why. Where the alternative explanation is not excluded the metric
+   is a description and not evidence — and a metric chosen *after* the conclusion is a conclusion
+   wearing an instrument. That second clause is the one worth writing down: a careful reader
+   supplies the alternative explanation anyway, while an instrument selected to fit a thesis already
+   reached leaves every step downstream of it locally sound. The tell is a second metric introduced
+   to confirm the first; chosen after the thesis, it tests the thesis's fit to the instrument rather
+   than the mechanism.
 4. **Evaluate the bundle, not the columns.** A product whose thesis is integration always
    scores as commodity on a per-capability grid, so the matrix gets supplemented, never trusted
    alone.
@@ -112,6 +121,51 @@ nearest-reachable solve and the negotiation script are in
     consequence as physics, and a number reported as physics is one nobody argues with. The
     ceiling's half of this is in [references/plan-template.md](references/plan-template.md), the
     verdict's in [references/target.md](references/target.md).
+
+19. **Nothing is dispatched to the red team until the plan and the vault have been reconciled.**
+    Lint runs at Phase 2's per-dimension checkpoint and again in Phase 5 before rendering;
+    between drafting and the panel there is nothing, and a panel briefed on a plan the ledger has
+    already moved past returns objections about a version nobody is shipping, at full panel cost.
+    Three steps, and the third is the gate — the first two bound it rather than replace it.
+    `vault-lint.sh --used-in` **fails**: a citation resolving to a file or a section that is not
+    there is not a judgment call. `vault-lint.sh --supersession-sweep` **emits the worklist** —
+    every section a supersession put in doubt. Then **the read**: every `current` claim whose
+    `used_in` names a plan document is reconciled against that document, and every superseded
+    claim's `used_in` targets are re-read. It is a read and not a grep, because plan prose cites
+    `[S#]` and `[F#]` codes while a claim carries no code at all, so nothing mechanical can tell
+    whether a section still says what the note says. The two lint calls are what keep the read
+    bounded and therefore done: a reconciliation stated as "check the plan against the vault" is
+    a task nobody can size, and a task nobody can size is a task nobody starts. The gate sits on
+    the dispatch rather than the phase boundary, because a panelist already briefed cannot be
+    un-briefed.
+
+20. **A claim is not finished when the note is written; it is finished when the prose it names
+    carries it.** Writing the note and writing `used_in` are one act, and the claim stays open
+    until the section `used_in` names actually says what the note says — invariant 19 is where
+    that gets read. This is an invariant rather than a Phase 3 step because the obligation
+    outlives Phase 3: the vault keeps growing through drafting and into the red team, and a
+    claim minted while the panel is running is subject to it exactly as one minted while the
+    plan was being written. Written into the drafting phase, the rule would stop applying at
+    the moment the vault is most likely to move. Without the loop, carrying a new claim into the
+    prose becomes something the conductor has to remember rather than something the phase
+    requires, and what gets remembered is whatever was minted most recently — leaving a corpus
+    that knows something its own documents do not say, where every note is individually correct
+    and the plan is quietly out of date.
+
+21. **The grill closes as a phase, not as a channel.** Founder input arriving after Phase 1 is
+    normal rather than exceptional, and it gets the treatment anything said during the grill
+    gets: the same `fact` note resting on the interview `source`, the next `[F#]` in the
+    existing sequence, an appended row in `research/founder-brief.md`, and invariant 20's
+    propagation obligation like any other claim. The numbering continues and the brief is
+    appended rather than rewritten — `[F#]` codes are cited from the plan by number, so a
+    renumber silently repoints every citation already written. How a late fact is recorded is in
+    [references/grill.md](references/grill.md#a-fact-arriving-after-the-grill-is-recorded-exactly-as-one-said-during-it).
+    The failure this prevents: the evidence a founder volunteers late is the evidence nobody
+    thought to ask for, which makes it the least redundant material in the corpus and exactly
+    what a model with no channel for it drops. It arrives conversationally during Phases 3 and 4
+    and lands nowhere — no `[F#]`, no note, no propagation obligation, because the phase that
+    owned founder input is over — so it reaches the plan as something the conductor happened to
+    remember, or not at all.
 
 ## Output contract — deterministic home
 
@@ -367,6 +421,11 @@ in the plan resolves through, exactly as `[S#]` resolves through `sources.md`. `
 human-readable citation; the `fact` note ID is what a query reaches. It's written BEFORE any
 dispatch, and Phase 2's brief carries it verbatim so F-numbers stay stable everywhere.
 
+**Closing the grill closes the phase, not the channel** (invariant 21). What the founder says in
+Phases 3 and 4 is recorded exactly as what they said here was, and the brief is **appended** to
+rather than rewritten — every `[F#]` already cited keeps its number, which is the whole reason
+the file is written once and only ever grows.
+
 **Then compute the provisional verdict, before the research fleet spends anything** — the dossier
 and the grill already carry every driver the identity needs, at assumption strength. Put it to the
 founder as the "want to talk about this now, or should I go find out properly?" turn, which is
@@ -497,7 +556,8 @@ paragraph does not. The one-liners are in
 [references/vault.md](references/vault.md#the-queries-this-schema-exists-to-make-trivial); the
 coverage query is in [references/vocabulary.yml](references/vocabulary.yml).
 
-Four query results are resolved BEFORE a section is written, never after:
+Five things are resolved BEFORE a section is written, never after — the four vault queries, and
+one re-verification none of them structurally reaches:
 
 - **Subject collisions** — two `current` claims on one subject. Each is a contradiction, a
   duplicate, or a missing `scopes` edge, and the fix is one of those three edits. Picking a side
@@ -509,6 +569,27 @@ Four query results are resolved BEFORE a section is written, never after:
 - **Stale claims** — `stale_after` already passed. Re-check or downgrade before citing.
 - **`status: unverified`** — asserted with nothing behind it. Each needs a validation step in
   the plan, or it does not get asserted.
+- **Product claims re-verified against source at the current commit.** Every claim about the
+  subject's own product is re-read against the product's own repo, docs and changelog *as they
+  are today* — not as the Phase 0 dossier found them. The dossier is the product truth the whole
+  plan inherits, and it was written before the research fleet spent a week running; the product
+  moved underneath it. **A plan that only re-checks numbers that look too good drifts
+  pessimistic, and every drift reads as rigour.** A capability that shipped, a limit that was
+  raised, a seam that was closed: each one now reads as the plan being careful. The skill's
+  existing skepticism fires in one direction only — strong rules against unmodelled optimism, a
+  both-directions test on input values — so this step is worth nothing unless it is run in the
+  direction those do not cover. A drift is a **supersession, not an edit in place**, under the
+  standing two-edit rule, with `supersedes_reason` naming the commit or release that moved it;
+  edited in place, the plan reads as though it were written against a product state its author
+  never saw. The population is the one Phase 4's code-verify rule already governs — this is that
+  rule moved to the entry of the phase that drafts rather than the phase that attacks, because
+  the objection Phase 4 catches is one Phase 3 already wrote into the plan, and a *pessimistic*
+  claim rarely draws an objection at all. The four queries above cannot reach it: a claim stale
+  because the world moved is what `stale_after` catches, and a claim stale because the product
+  moved has no shelf life on it at all. **The failure this prevents:** an understated product
+  claim survives every check in the skill, reads as conservative to every reader, and reaches an
+  acquirer or an investor as a fabricated weakness — one the founder then has to argue their own
+  plan out of.
 
 **The evidence-backed verdict is computed after those queries and before the first section is
 drafted**, as the `claim` note [references/target.md](references/target.md) specifies — and where
@@ -539,7 +620,10 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
 
 - **Write `used_in` at the moment of citation** — `"business-plan.md#why-now"` on every claim
   the draft leans on. Without it a stale claim tells you it needs re-checking but not which
-  paragraph is standing on it, so the re-check gets deferred because nobody can size it.
+  paragraph is standing on it, so the re-check gets deferred because nobody can size it. The
+  same field is what closes the claim: per invariant 20 it stays open until the named section
+  carries it, and a claim minted after that section was drafted is subject to that exactly as
+  one minted while it was being written.
 - **The thesis traces.** The plan's core bet restates the analysis's whitespace recommendation,
   sharpened by the founder's unfair advantages — traceably, not vibes-first.
 - **Cite by code, and there is no third kind.** `[S#]` resolves through `sources.md`, `[F#]`
@@ -605,6 +689,11 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   and reconcile every number against it — the ask, the SOM range, the price. A one-pager
   number that disagrees with the model it fronts is the commonest credibility kill.
 
+**The phase closes on invariant 19's reconciliation, not on the last section being written.**
+The documents are the phase's output; whether the ledger underneath them still agrees is the
+phase's exit condition, and it is checked here because Phase 4 spends its most expensive
+attention on whatever this hands it.
+
 ## Phase 4 — Red team
 
 Before the plan is done, it gets attacked. Dispatch a panel — one agent per lens, parallel
@@ -637,16 +726,24 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
   price, from what they use today?
 
-**The target list is generated, not read.** Two queries run before the panel is briefed:
-`vault-lint.sh --unverified`, and every claim that reached the plan carrying
-`confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the
-attack surface each panelist's brief carries in its lens. "Read the plan and object" produces
-objections about whatever a panelist happened to notice; this produces them about what the
-corpus already knows is weak. Every brief also carries the founder's named fear `[F#]`: attack
-this hardest, then name the two risks the founder did NOT name. The operator and target-customer
-briefs additionally carry the structural half of `research/growth-curves.md`'s strategy record —
-what comparables had that this founder does not — because that is an objection the corpus can
-already evidence rather than one a panelist has to invent.
+**The target list is generated, not read.** Invariant 19's reconciliation runs before any of this
+and gates the dispatch — its two lint calls, `vault-lint.sh --used-in` and `vault-lint.sh
+--supersession-sweep`, belong beside the query below rather than in a block of their own, and no
+brief is written until the read behind them is done. Two further queries then run before the panel
+is briefed: `vault-lint.sh --unverified`, and every claim that reached the plan carrying
+`confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the attack
+surface each panelist's brief carries in its lens. "Read the plan and object" produces objections
+about whatever a panelist happened to notice; this produces them about what the corpus already knows
+is weak. Every brief also carries the founder's named fear `[F#]`: attack this hardest, then name
+the two risks the founder did NOT name. The operator and target-customer briefs additionally carry
+the structural half of `research/growth-curves.md`'s strategy record — what comparables had that
+this founder does not — because that is an objection the corpus can already evidence rather than
+one a panelist has to invent.
+
+**A metric that enters a brief as evidence for a mechanism enters with what else produces it**,
+per invariant 3. This is where that rule bites hardest: a panelist handed a number reads it as
+the evidenced part of the brief and spends the turn elsewhere, so an unexcluded alternative
+explanation reaches the panel as settled ground and comes back unattacked.
 
 **The verdict is on the attack surface, not only the plan built on it.** Every brief carries the
 settled target, the verdict, the driver the verdict named as binding, and that driver's `kind`;
@@ -760,7 +857,10 @@ Fold: fix what's fixable; every row disposed "moved to Risks" appears in the pla
 section by its number — a plan that pre-states its best objections beats one that hides them.
 **A surviving objection also lands in the vault**, as a `claim` that `supersedes` what it
 corrects or an `assumption` with a `validated_by` step. An objection disposed only in the table
-is one nothing downstream can find. If an objection guts the thesis, say so to the founder
+is one nothing downstream can find. That note is subject to invariant 20 like any other: it is
+finished when the section its `used_in` names carries it, not when the row is disposed — and a
+note minted this late is the likeliest of all to be left sitting in a ledger nobody reads back
+into the prose. If an objection guts the thesis, say so to the founder
 plainly and revise the bet — that IS the job.
 
 ## Phase 5 — Deliverables
@@ -817,9 +917,21 @@ three milestones, and where everything landed. Invite pushback on the specific b
 ## Quality bars — non-negotiable
 
 - Every market fact traces to `sources.md` or the founder brief; confidence tags survive import.
+- Wherever the plan or the red team reasons from a count to a cause, the metric states what else
+  produces that number, and a metric introduced after the conclusion it supports is named as one.
+  Unexcluded, the alternative explanation ships as the evidenced part of the argument — and a
+  second metric picked to confirm the first tests the thesis's fit to the instrument, which reads
+  as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault, at the per-dimension gate and again before rendering.
-- Every claim cited in a rendered document carries `used_in`; every `required: true` subject
-  has a claim under it or a stated gap.
+- Every claim about the subject's own product was re-verified against source at the current
+  commit before the first section was drafted, and each drift landed as a supersession rather
+  than an edit in place. The rest of the skill's skepticism fires on optimism, so a claim that
+  went stale in the *pessimistic* direction — a capability that shipped, a limit that was raised
+  — clears every other bar on this list and reads as conservatism the whole way to the reader
+  who acts on it.
+- Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
+  the claim — a claim whose named section does not say what the note says is still open,
+  whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
 - The steady-state ceiling is computed and stated, not implied by a 12-month curve, with every
   input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
   the ceiling of that configuration, with one changed policy value beside it.
@@ -869,6 +981,11 @@ three milestones, and where everything landed. Invite pushback on the specific b
   rectangle where three corners clear and one fails reads at its centre as a clean yes, and the
   failing corner is usually the one the founder was aiming at.
 - The plan matches the founder's stated ambition, not a template's default ambition.
+- Nothing was dispatched to the red team until the plan and the vault were reconciled: the
+  `--used-in` pass clean, the `--supersession-sweep` worklist read to its end, and every
+  superseded claim's citation sites re-read. The panel is the most expensive read the plan gets,
+  and a panelist already briefed cannot be un-briefed — the objections come back about a version
+  nobody is shipping and are paid for in full.
 - Red team ran, and its surviving objections are IN the plan and in the vault.
 - Every red-team brief carried the model's identity, its per-input `structural`/`policy` labels,
   the curve's shape with its named driver, the inputs unmodelled in the pessimistic direction, and
@@ -891,6 +1008,7 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Low-confidence number promoted to headline | Confidence is derived; tags survive import; validation step instead |
 | Hockey-stick from penetration hand-waving | Bottom-up build; scenarios move assumptions |
 | Flat acquisition line read as conservative | Zero growth is an assumption: name its driver, and place the implied rate against the band |
+| Product claim gone stale in the pessimistic direction | Re-verify against source at the current commit; a drift is a supersession |
 | Policy variable reported as a ceiling | Label every input structural or policy; a chosen input caps the configuration, not the business |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |

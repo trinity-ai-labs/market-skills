@@ -48,6 +48,13 @@ _Grilled: <date> · Cited from the plan as [F#]_
 | F1 | <the answer, as a fact> | ambition | <e.g. "founder override: kept price despite floor evidence"> |
 ```
 
+**The file is appended to, never rewritten**, and it keeps growing after Phase 1 closes —
+founder input arriving during drafting or the red team lands here as the next `[F#]`, with the
+date and the phase it arrived in in its `Note` column. The plan cites `[F#]` by number, so a
+renumber silently repoints every citation already written; and the header's single `_Grilled:_`
+date speaks for the interview, which is why a late row carries its own. The recording procedure
+is [grill.md](grill.md#a-fact-arriving-after-the-grill-is-recorded-exactly-as-one-said-during-it).
+
 ## `one-pager.md`
 
 ```markdown
