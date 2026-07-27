@@ -146,6 +146,22 @@ non-draft PR.
 
 **Merge commits, not squash. Never rebase. Never self-merge without review.**
 
+**A slice opens a DRAFT PR, and only the reviewer flips it ready.** The draft PR *is* the
+implementer's hand-back — the diff, not the summary. An agent's report is its claim about what it
+did; the diff is what it did, and the two diverge in the direction that reads fine. Draft here
+means "pushed and self-gated, not yet read"; ready means someone read it. There is no runner to
+flip it, so nothing else claims the state.
+
+The flip is the point rather than the label: GitHub refuses to merge a draft, so a PR cannot reach
+the integration branch without someone deliberately marking it read. `merge-pr.sh` calls
+`gh pr merge` directly and errors on a draft, which is the interlock working — the reviewer runs
+`gh pr ready <n>` and then `merge-pr.sh <n>`. Without it the only thing between an unread diff and
+the branch is the reviewer's own discipline, and discipline is what fails on the tenth slice of a
+long release.
+
+A PR approval would be the native mechanism and does not work here: GitHub blocks approving your
+own pull request, and the implementer and the reviewer commit under the same identity.
+
 Branch prefixes: `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`.
 
 **Shipping is a version bump, not a merge.** `.claude-plugin/plugin.json` sets `version`,
