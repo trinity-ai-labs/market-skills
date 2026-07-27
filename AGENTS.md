@@ -70,7 +70,11 @@ sh scripts/fixtures/run-fixtures.sh   # only if you touched bin/vault-lint.sh
 Sub-second, no install. Run `check.mjs` green before opening a PR. It enforces skill
 structure, frontmatter (`name` must match the directory — the plugin loader maps by
 directory, so a mismatch registers the skill under the wrong trigger), and that every
-relative markdown link resolves inside `skills/`.
+relative markdown link resolves inside `skills/`. It also checks the wiring the prose
+above asks for: that every dispatched brief interpolates its playbook, that a dimension
+playbook is registered everywhere it gets dispatched from, and that a cited `## Heading`
+resolves to one a template writes. Each of those fails when its own pattern matches
+nothing, because a check that stops matching prints the same green as one that passed.
 
 The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` rather than
 to the repo: it asserts that every check the lint claims to make still fires, against
