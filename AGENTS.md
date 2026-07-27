@@ -136,13 +136,12 @@ and shares its rendering reference. The two install as a pair; a reference that 
 
 ## Workflow
 
-Worktree → PR → merge. Never commit to `main` directly; the helper is
-`setup-worktree.sh <branch> main` run from anywhere inside the repo, and it reads
-`.agents/worktree.json` for the gate command and house conventions. That file declares
-`node scripts/check.mjs` as both `gate` and `scopedCheck` — this repo has one
-authoritative check and no separate heavy tier, so there is no gate queue to enqueue
-against and no runner to wait for. Run the gate yourself and open an ordinary,
-non-draft PR.
+Worktree → PR → merge. Never commit to `main` directly; the helper is `setup-worktree.sh
+<branch> main` run from anywhere inside the repo, and it reads `.agents/worktree.json` for
+the gate command and house conventions. That file declares `node scripts/check.mjs` as both
+`gate` and `scopedCheck` — this repo has one authoritative check and no separate heavy tier,
+so there is no gate queue to enqueue against and no runner to wait for. Run the gate
+yourself, and hand back a draft PR per the rule below.
 
 **Merge commits, not squash. Never rebase. Never self-merge without review.**
 
