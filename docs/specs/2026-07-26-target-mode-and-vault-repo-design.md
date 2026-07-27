@@ -183,10 +183,23 @@ share.
 
 ## Where the changes land
 
+`SKILL.md` states its invariants at the head of the file specifically because compaction only
+re-attaches the head — so scattering the reachability method, the nearest-reachable solve, the
+confidence ceiling and the negotiation script across Phases 0, 1, 3, 4 and 5, as a first pass at
+this table did, is the exact failure that structure exists to prevent. Those four pieces
+therefore move to a new reference, the same way the vault schema and the authoring checklist
+already live in `references/vault.md` rather than inline in the phases. `SKILL.md` gets one new
+head-level invariant — 16, the next number after the existing 15 — stating that a target verdict
+is computed from evidenced drivers and is never asserted, plus short phase-level pointers to
+`references/target.md`, not the rules themselves. Because `references/target.md` is new, it also
+needs adding wherever `scripts/check.mjs` resolves it: the gate link-checks every relative
+reference in this repo, so an unresolved link to a file that does not yet exist fails the same
+check that catches any other broken cross-reference.
+
 | File | Change |
 | --- | --- |
-| `skills/business-plan/SKILL.md` | Target capture in Phase 1; both verdicts; the negotiation turn; `git init` in Phase 0's scaffold; the remote question after Phase 5 |
-| `skills/business-plan/SKILL.md` | The vault's own `README.md` and `.gitignore`, generated in Phase 0 and regenerated at each phase boundary |
+| `skills/business-plan/SKILL.md` | Invariant 16 (a target verdict is computed from evidenced drivers, never asserted); phase-level pointers to `references/target.md` for target capture (Phase 1), the provisional and evidence-backed verdicts and the negotiation turn (Phase 1 and Phase 3), and the red team attacking the verdict (Phase 4); `git init` in Phase 0's scaffold; the vault's own `README.md` and `.gitignore`, generated in Phase 0 and regenerated at each phase boundary; the remote question after Phase 5 |
+| `skills/business-plan/references/target.md` | New. The reachability method (driver decomposition, the binding-driver readout, undetermined-vs-negative), the nearest-reachable solve, the verdict's confidence ceiling, and the negotiation script (counter-offer, levers, founder chooses) |
 | `skills/business-plan/references/grill.md` | The target as the opening question, with its conversion rule for unquantified answers |
 | `skills/business-plan/references/strategy-sim.md` | The solve-backwards pass |
 | `skills/business-plan/references/plan-template.md` | The verdict section, and dated checkpoints |
