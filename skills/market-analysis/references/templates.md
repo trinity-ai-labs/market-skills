@@ -123,9 +123,19 @@ _Analyzed: <date>_
 
 ## Profiles
 ### <Competitor> (direct | indirect | adjacent)
-<what it does · pricing · disclosed traction (cited) · funding · their positioning claim ·
-most likely next move · **wedge line: what they don't cover and why**>
+<what it does · pricing · disclosed traction points — dated, at least two per competitor where
+available, each with its source (or "no disclosed traction, checked <date>" if none — absence
+recorded, never omitted) · funding · their positioning claim · most likely next move ·
+**wedge line: what they don't cover and why**>
 <...one block per competitor...>
+
+## Observed growth band
+<the %/mo range derived from each competitor's dated traction pair, slowest to fastest across
+the profiled set. Each endpoint labelled with its competitor, its two dated points, and its
+stage (launch-year / growth / mature) — never averaged into a single number, which would
+describe no company in the set. Then the per-competitor rate that produced each endpoint, one
+line per competitor, including any recorded as having no disclosed traction (excluded from the
+band, not silently dropped).>
 
 ## Threat ranking
 <who hurts this product most: Impact × Probability × Confidence per threat, with the scenario.
