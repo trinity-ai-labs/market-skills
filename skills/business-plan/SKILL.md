@@ -166,6 +166,31 @@ If the founder already has a corpus from earlier work — research files, a plan
 `[F#]` codes — adopt it instead of scaffolding an empty vault:
 [references/vault-migration.md](references/vault-migration.md).
 
+**The vault is a git repo from its first commit.** Run `git init` at the slug directory — the
+vault root, never a subdirectory of it — and commit at every phase boundary. There is no remote
+and therefore no exposure, and a claim ledger is what this pays off on immediately:
+`vault-lint.sh` says what the corpus asserts now, `git diff` says what it stopped asserting, and
+nothing else in the skill answers the second question. An existing repo is left alone: running
+`git init` over one is a no-op, but a re-scaffold that rewrites its files is not.
+
+Two files are **generated**, at scaffold and again at every phase boundary, and committed there:
+
+- **`.gitignore`** — editor and OS state only: `.DS_Store`, and an editor's per-window workspace
+  file (Obsidian rewrites `.obsidian/workspace.json` on every open, so unignored it makes each
+  commit noise and buries the ledger changes the history exists to show). Never ignore a dotfile
+  wholesale: `.vault/config.json` is what makes the directory a vault, and a clone without it is
+  not one. **Rendered `deliverables/*.pdf` are committed, not ignored** — they are the artifact a
+  shared vault exists to share, and a repo whose deliverables are ignored hands a recipient the
+  working notes and none of the output.
+- **`README.md`** at the vault root — what the product is; what this corpus is and which skill
+  produced it; the note-type map (the six types and what each asserts); where to start reading
+  (`one-pager.md`, then `business-plan.md`); the current target and its verdict status; and the
+  `vault-lint.sh` invocation for checking the corpus. Its last line states that it is generated
+  and regenerated rather than hand-edited. Without it a shared vault is a directory of
+  `CLAIM-AS23SD44.md`-style filenames — deliberately bare IDs, legible to this skill and opaque
+  to a human opening the repo cold. Regenerating it every phase is what keeps it from drifting:
+  a stale README on a shared repo is worse than none, because it reads as current.
+
 Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
 dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet —
 writing it to `research/product-dossier.md` (vault-relative — the slug directory is the vault). The grill needs the dossier's value
@@ -478,6 +503,20 @@ exemption; it fails verification if it spills to page 2), per
 `~/.claude/skills/market-analysis/references/rendering.md` (the shared rendering system —
 design, paged-media CSS, toolchain ladder, and the mandatory render → Read the PDF back →
 check every page → fix loop). A deliverable you didn't read back is not done.
+
+**Once the deliverables exist — and not before — ask about a remote.** The vault has been a local
+repo since Phase 0; this is the separate question of whether it goes anywhere. Asked at scaffold,
+it asks the founder to consent to the visibility of contents neither of you has seen yet, which
+is why it waits for something worth sharing. Collect both halves:
+
+- **Destination** — which account or organization.
+- **Visibility** — private preselected. Public is a real choice some founders make deliberately
+  and is offered as one; what it is not is a default, over a corpus carrying their pricing, their
+  runway and their named fear.
+
+**No remote is created without an explicit answer to both, and nothing is ever pushed
+automatically.** A remote inferred from one answer, or a push that follows a phase-boundary
+commit on its own, publishes a private business corpus on a step the founder never took.
 
 ## Walk sign-off
 
