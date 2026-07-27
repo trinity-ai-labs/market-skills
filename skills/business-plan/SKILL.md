@@ -372,14 +372,23 @@ ambition: <venture | bootstrap | lifestyle | lender>  — bootstrap/lifestyle: s
   sizing agent, bottom-up only (the venture-scale sniff test still gets stated); else full rigor.
 target: <the outcome the plan is engineered backwards from, and its date | "no specific
   number">  — size at the resolution this needs: a target denominated in customers or MRR makes
-  the bottom-up segment count the load-bearing output, not the top-down category figure.
-provisionalVerdict: <reachable | unreachable | undetermined, the driver it named as binding, and
-  that driver's kind — structural | policy | "none — no target stated">  — pre-research, so it is
-  an assumption and never citable; the driver it names is the one to research hardest, and the
-  kind says what "hardest" means. A structural driver wants better evidence for the value it
-  already has; a policy one wants evidence for what it could be set to — channel throughput, and
-  which comparable strategies at this stage were adoptable at all — which is a different hunt
-  pointed at different sources.
+  the bottom-up segment count the load-bearing output, not the top-down category figure. A range
+  stated on either axis is passed as the range, both ends, never as a midpoint: the verdict is
+  computed at the rectangle's corners, and a fleet handed a point researches one date at one value.
+provisionalVerdict: <reachable | unreachable | undetermined, and the SET of drivers the identity
+  named as binding, each with its own kind — structural | policy. Where either axis was stated as a
+  range that is one entry per corner solved, each naming that corner's binding driver and kind;
+  where the target is an exit it is a set by construction, because the multiple's four inputs carry
+  their own kinds — growth slope at the sale date and the named acquirer are policy, scarcity and
+  the bidder count are structural. | "none — no target stated">  — pre-research, so it is an
+  assumption and never citable; the drivers it names are the ones to research hardest, and each
+  kind says what "hardest" means for that one. A structural driver wants better evidence for the
+  value it already has; a policy one wants evidence for what it could be set to — channel
+  throughput, and which comparable strategies at this stage were adoptable at all — which is a
+  different hunt pointed at different sources. **Emitting one kind for a verdict computed over four
+  drivers picks one hunt and silently drops three**: the fleet comes back thorough on the driver
+  that was named and empty on the one that binds, and the gap is invisible because the dimension it
+  belonged to still returned a file.
 categoryBoundary: <the boundary from the Phase 0 dossier, or "undecided — you call it">
 mustProfile: <competitors the founder named — always profiled, whatever their kind>
 founder brief (verbatim):
@@ -426,6 +435,20 @@ skips the question the error existed to ask.
   still passes. An origin left unnamed makes two series incomparable while they sit on one axis
   looking comparable, and an exclusion left off the list reads as a comparable nobody found rather
   than one whose origin could not be dated.
+- **Where the settled target is an exit**, `market-analysis.md` additionally carries its `## Exit
+  comparables & implied multiple` section: the disclosed acquisitions in the category, each indexed
+  to the acquired company's growth slope at the moment of sale, the multiple each one implies, and
+  the band's two ends traced to the four inputs
+  ([references/target.md](references/target.md#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)
+  homes them). Check that the set is indexed *to slope* rather than merely listed — multiples with
+  no slope beside them cannot be read at this roadmap's slope, so a list of them is a category
+  average wearing a reference class's name, which is the shape a run returns when it looked the
+  question up instead of building the set. Without the section an exit run comes back with the
+  indexed curves, passes every other check on this list, and Phase 3 then solves the exit identity
+  at a multiple nobody sourced — the term the verdict is most sensitive to, and the one the flip
+  test exists to fire on. Naming the artifact is what does this work: the first line's "all
+  contract files exist" is satisfied by a folder listing, and a folder listing cannot tell an exit
+  run from a revenue one.
 - `Coverage` names what was skipped and why; `Risks to this analysis` is non-empty (a market
   analysis with nothing soft in it wasn't done honestly).
 - `Assumptions` is present and non-empty for a dispatched run — each entry states the default,
@@ -541,6 +564,24 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
   why-now weak?) · bootstrap/lifestyle: *default-alive skeptic* (does this reach cash-positive
   before the runway ends?) · lender: *credit officer* (does cash flow service the debt through
   the downside case?).
+
+  **Where the settled target is an exit, this lens asks the acquirer's question instead of the
+  funder's** — not *would an investor put money into this*, but *which named acquirer has a hole
+  this patches, and is the product visibly the patch*. The brief carries the dossier's seam
+  argument and the acquirer set the exit identity was solved against, counted, and the lens attacks
+  the name and the count rather than the ARR. **An unnamed acquirer is not an answer, and neither
+  is a named one whose hole the plan never states.** "Someone in this category would want this"
+  grants the driver the verdict was most sensitive to —
+  [references/target.md](references/target.md) homes strategic necessity to a *named* acquirer and
+  files it as `policy`, so a lens that accepts the unnamed form hands back a clean bill on the term
+  the whole exit rests on. Two follow-ons the lens owes: a single interested buyer is a price
+  **floor** and not a price, so a count of one is reported as one rather than as evidence of
+  demand; and *what stops this acquirer building it itself inside two quarters* is the scarcity
+  input asked from the buyer's side, where the honest answer prices an acquihire instead of an
+  acquisition. **The failure this prevents:** an exit plan collects a full investor-shaped
+  objection table — market size, moat, why-now — and reads as thoroughly attacked while nobody
+  asked who buys it. Fundable and acquirable have different answers often enough that a pass on one
+  says nothing about the other.
 - **Operator** — kill the execution: does the milestone plan survive contact with the team
   size, runway, and the founder's hours?
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
@@ -564,6 +605,42 @@ one told a driver binds without being told it is `policy` grants the configurati
 was computed under — the assumption most worth attacking, and the one no lens is otherwise
 tasked with. Re-run the identity against any objection that survives:
 [references/target.md](references/target.md).
+
+**Read the model's identity before the panel reads its numbers — a pre-pass, not a fourth lens.**
+All three lenses reason from the plan document, so all three inherit its frame: a revenue model
+that assumes a flat curve, or that treats a founder's choice as a fixed property of the business,
+hands every panelist that frame as the ground they attack *from*. A fourth voice briefed alongside
+the others would inherit it too and would arrive at the same moment as three lenses' worth of
+detail objections, too late to change what the panel is pointed at — which is why this runs BEFORE
+any brief is written and its output goes INTO the briefs, exactly as the settled target and the
+binding driver's kind do above. Three steps, in this order:
+
+1. **Write out the revenue model's identity — the chain of terms, ahead of any value in it.**
+   `MRR = paying customers × price`, the acquisition-and-retention chain standing under the
+   customer count, and for an exit target the multiple band on top of it. Terms first, values
+   second: a chain nobody wrote down is one nobody can disagree with a term of, which is the same
+   property that makes the target verdict attackable.
+2. **Label every input `structural` or `policy`** — those two words, per invariant 18, using
+   [references/target.md](references/target.md)'s vocabulary and never a coined variant. A third
+   word ("semi-structural", "market-driven") is a way of not answering that reads as a finer
+   distinction, and it survives review for exactly that reason.
+3. **Name which of the policy inputs the founder could revisit this quarter, and state the model's
+   shape — flat, decaying or compounding — as a claim with a driver behind it** rather than as the
+   backdrop the curve was drawn on. Zero growth is an assertion that next month's reach, conversion
+   and mix are identical to this month's, and it needs a named driver exactly as an inflection
+   does.
+
+The pass returns a short block every brief carries verbatim: the identity, the label per input, and
+the shape with its driver. A panelist told the flat stretch is an assertion resting on a named
+channel cap can attack the cap; one who is not told reads the flat line as the conservative part of
+the plan and spends the turn somewhere else.
+
+**The failure this prevents:** a structurally wrong model is the one a panel is unable to attack,
+because every lens is pointed at the plan's contents rather than its shape. The panel returns a
+full objection table, all of it about details, and the plan reads as thoroughly red-teamed — but a
+model nobody could attack is not a model nobody could fault. The tell is a red team whose severest
+row argues about a value inside the identity while the identity itself carries a term nobody
+labelled.
 
 **Code-verify every objection about the subject's own product BEFORE disposing of it. This is
 the single highest-value rule in the skill.** Panelists reason from the plan document, and the
