@@ -52,13 +52,16 @@ Hunt:
   traction points (dated — see below), funding/investors, positioning claim in their own words,
   **most likely next move**, and **what they structurally don't cover and why** — the wedge
   line. Every profile ends with it.
-- **Traction points are dated, not a single snapshot**: at least two per competitor where
-  available (ARR, users, downloads — only if stated somewhere citable), each tagged with its own
-  date and source, so a monthly growth rate is derivable from the pair. **Record absence as
-  absence**, e.g. "no disclosed traction, checked <date>" — never a silent omission. An omitted
-  competitor and a competitor that disclosed nothing look identical in the growth band below, so
-  skipping the line instead of stating the absence lets the band quietly narrow to whoever
-  happened to publish.
+- **Traction points are dated, not a single snapshot, and the ask is every point, not a count**:
+  capture every citable dated point found (ARR, users, downloads — only if stated somewhere
+  citable), each tagged with its own date and source. Two is the bare minimum below which no
+  rate can be derived at all — it is not the target. A floor phrased as a quantity gets read as
+  the quantity: a fleet agent that finds six dated points and reports two has followed the rule
+  as written, and the discarded points can't be recovered later without re-running the research.
+  **Record absence as absence**, e.g. "no disclosed traction, checked <date>" — never a silent
+  omission. An omitted competitor and a competitor that disclosed nothing look identical in the
+  growth band below, so skipping the line instead of stating the absence lets the band quietly
+  narrow to whoever happened to publish.
 - **Next-move prediction is signal-counting, not vibes**: job postings lead announcements by
   6–18 months (2+ same-role posts in ~60 days or a leadership hire = signal; one post = noise);
   call a move a prediction only on ≥2 independent signal types (hiring, changelog, pricing
@@ -71,13 +74,21 @@ Hunt:
   does it pull the product into a different category? Say so explicitly — the conductor adjusts
   the frame on this verdict before the other dimensions run.
 - **Observed growth band**: a named output alongside the category verdict, not folded into it.
-  Derive a %/mo rate from each competitor's dated traction pair (above) and report the
-  slowest-to-fastest range across the profiled set. Label both endpoints — competitor, its two
-  dated points, and its stage (launch-year, growth, mature) — rather than averaging: a mature
-  company's rate and a launch-year company's rate are both real and mean different things, and
-  collapsing them into one averaged range produces a single number that describes no company in
-  the set. A competitor recorded as having disclosed no traction sits out of the band rather than
-  being folded in as a zero.
+  For each competitor, derive a %/mo rate from its earliest and latest dated point (whatever the
+  full count collected above) and report the slowest-to-fastest range across the profiled set.
+  **Every rate carries the span it was measured over** — the first and last date used, not just
+  the number — because rates measured over different intervals aren't comparable: a band whose
+  endpoints span different intervals ranks companies by how long ago someone published, not by
+  how fast they grow. Label both endpoints — competitor, its dated points and span, and its stage
+  (launch-year, growth, mature) — rather than averaging: a mature company's rate and a
+  launch-year company's rate are both real and mean different things, and collapsing them into
+  one averaged range produces a single number that describes no company in the set. A competitor
+  recorded as having disclosed no traction sits out of the band rather than being folded in as a
+  zero. **The band is a scalar reference range, not a growth curve**: two dated points (or an
+  earliest-to-latest span) discard the shape and decay of a company's growth, so the band is a
+  sanity check on a projection's level, never a substitute for modelling its trajectory — reading
+  it as a curve invites extrapolating one averaged rate flat across a horizon, the same
+  unmodelled-line error the business-plan skill's projection guard exists to catch.
 
 Sources: competitor pricing pages + changelogs + docs (primary), funding databases and press,
 founder interviews/podcasts, G2/Capterra reviews (for weaknesses users actually complain about
