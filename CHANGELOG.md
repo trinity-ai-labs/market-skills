@@ -2,6 +2,57 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.3.0
+
+- **The projection guard is symmetric — a flat line names its driver exactly as a hockey stick
+  does.** The revenue build rejected a curve that was too optimistic and accepted, without a
+  word, one that assumed nothing happens: every inflection point had to name an operational
+  driver, while a stretch of zero growth had to name nothing at all. But zero growth is not the
+  absence of an assumption — it is the assertion that next month's reach, conversion and mix are
+  identical to this month's, which needs a driver (a hard channel cap, a fixed-capacity delivery
+  model, a deliberate no-growth policy) or it is unmodelled rather than cautious. The two
+  directions are not equally dangerous, and the flat one is worse: an over-projection gets
+  challenged and an under-projection gets believed, so a flat line reads as conservative,
+  therefore credible, therefore unexamined, and reaches the founder's decisions with nothing
+  behind it.
+- **Every steady-state input is labelled `structural` or `policy`, and a policy-bound ceiling is
+  the ceiling of that configuration.** *Structural* is set by the market or the product — churn
+  at the evidenced rate, the category conversion benchmark, the price band willingness-to-pay
+  supports. *Policy* is set by a founder decision — channel count, hours a week, the price point
+  chosen inside that band, headcount, how much of the growth engine gets built. Without the
+  label the identity solved to a number and the number was reported as a property of the
+  business, so a decision became a law of nature and its consequence was reported as physics —
+  and a number reported as physics is one nobody argues with. A ceiling whose binding input is
+  policy is now stated in those terms, with the ceiling under at least one changed policy value
+  shown beside it: the same arithmetic, relabelled, moving the founder from "the business tops
+  out below my goal" to "this configuration does". It rides on a new invariant, 18, because the
+  discipline has to hold in a phase the head of the file is all that survives into.
+- **A negative verdict may not rest on a driver the founder chooses.** The target decomposed
+  into drivers and named the one that binds without ever asking what kind of thing that driver
+  was — and reach, the driver that binds most often, is channels crossed with hours, which is a
+  decision and not a ceiling. A negative verdict is the single output most likely to make a
+  founder stop, and a policy-bound one stopped them over something they could revisit this week,
+  reported in the same frontmatter and at the same confidence letter as an observation somebody
+  read off a page and quoted. The driver-home table now carries a `kind` column, the
+  classification runs before the verdict is written anywhere, and where the binding driver is
+  policy the run returns "unreachable in the stated configuration" with that variable named and
+  goes straight to the counter-offer and the lever table with it solved. Relieving it is also
+  what surfaces the next binding driver — often a structural one, and the one actually worth
+  telling the founder about.
+- **Comparable growth rates become a band, and the projection is checked against it.**
+  `market-analysis` already collected disclosed traction per competitor but never dated those
+  points, so no rate was derivable and nothing downstream could tell a plausible curve from an
+  invented one. Profiles now carry at least two dated traction points per competitor where
+  available, absence is recorded as absence rather than omitted — an omitted competitor and one
+  that disclosed nothing were indistinguishable, which let the band narrow to whoever happened
+  to publish — and `competitor-analysis.md` emits an `## Observed growth band` as a named output
+  alongside the category verdict, both endpoints labelled with their competitor and stage rather
+  than averaged into a single number describing no company in the set. `business-plan` then
+  places the projection's own implied monthly growth rate against that band and defends any
+  excursion in either direction with a named difference, or re-cuts. Category growth and company
+  growth are held apart where both appear, since a slow-category finding was otherwise free to
+  justify a flat company projection.
+
 ## 1.2.0
 
 - **The target is the input the plan is engineered backwards from.** `business-plan` had no
