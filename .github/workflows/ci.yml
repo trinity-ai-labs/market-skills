@@ -192,8 +192,12 @@ jobs:
           exempt='^(scripts/|\.github/|\.agents/|AGENTS\.md|CHANGELOG\.md|\.gitignore)'
           changed="$(git diff --name-only "$base" HEAD | grep -vE "$exempt" || true)"
           if [ -z "$changed" ]; then echo "nothing shipped changed — bump not required"; exit 0; fi
-          was="$(git show "$base:.claude-plugin/plugin.json" 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("version",""))' || echo "")"
-          now="$(python3 -c 'import json; print(json.load(open(".claude-plugin/plugin.json")).get("version",""))')"
+          # Reads empty stdin as "no version yet" rather than crashing: the base
+          # commit legitimately has no manifest on the PR that introduces one, and
+          # a traceback there reads as a broken job instead of a first release.
+          read_version='import json,sys; raw=sys.stdin.read(); print(json.loads(raw).get("version","") if raw.strip() else "")'
+          was="$(git show "$base:.claude-plugin/plugin.json" 2>/dev/null | python3 -c "$read_version")"
+          now="$(python3 -c "$read_version" < .claude-plugin/plugin.json)"
           echo "shipped content changed:"; echo "$changed" | sed 's/^/  /'
           echo "version: ${was:-<none>} -> $now"
           # Compared as numbers, not strings: a REGRESSION (a bad merge dropping
