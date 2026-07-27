@@ -747,7 +747,10 @@ number a founder is most likely to want re-litigated later.
 2. **Name the reference class before any driver takes a value from it**, classify it `structural`,
    home it to `research/growth-curves.md`, and flip it across the alternatives a reasonable person
    would argue for. A verdict that moves between two defensible classes is *undetermined*, with both
-   classes named and the cheapest test that settles which one the subject is in.
+   classes named and the cheapest test that settles which one the subject is in. The class records
+   what it was inferred from as part of naming it, and where it was read off the subject's own price
+   point, packaging or delivery, that dependency is named wherever the class is named, because it is
+   what makes step 8 fire.
 3. **Classify each driver `structural` or `policy`** from the table's `kind` column, before any
    verdict is written. That column decides two things: where the value may come from — the indexed
    set sources a structural driver and only checks a policy one — and what a negative verdict may
