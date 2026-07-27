@@ -131,7 +131,22 @@ available (from moats research), what has to be true to earn it, and the honest 
 <motion selected via the three gates: ACV band → buyer type (single-user value capture?) →
 time-to-value (<30 min unassisted aha?). CAC/ACV sanity ≤ ~30–40%. Hybrid is the normal
 steady state. Solo founder: ONE primary channel matched to founder strength, 90-day commit,
-6–9 months to compounding traction — never promise a 90-day breakout.>
+6–9 months to compounding traction — never promise a 90-day breakout.
+
+Then corroborate the selected motion against research/growth-curves.md's strategy record, AFTER
+the three gates and never instead of them. A channel a comparable demonstrably ran across the
+months this plan is at is better evidence than a category-level claim that the channel works,
+because it is dated to a stage rather than asserted about a market — and the record is keyed to
+the stretch of curve it ran during, so a comparable's month-6 play is not read as its month-40
+one. Only strategies that record filed as POLICY for this founder are eligible: adoptable at
+their grilled hours, channels and capital. A STRUCTURAL one goes to Key risks below, not here.
+
+The record proves what those companies DID, never what CAUSED their curve. It is a claim, not a
+fact, and nobody publishes the channel that did nothing — so the accounts that exist are the ones
+that worked, and reading them as causes buys a survivorship artifact at the price of the plan's
+primary motion. Cite it as corroboration for a choice the gates already made, with its confidence
+tag intact; a motion selected BECAUSE a comparable ran it has confused evidence of action with
+proof of mechanism.>
 
 ## Growth engine
 <the automated execution machine, per growth-engine.md: the three per-product skills to build
@@ -158,7 +173,16 @@ CAC payback + LTV:CAC (always paired), the milestone this capital buys>
 ## Key risks & mitigations
 <2–4 real ones, stated plainly (surviving red-team objections land HERE), each with a
 concrete mitigation or an honest open question. Naming your own risks is a credibility
-signal; defensive spin is not.>
+signal; defensive spin is not.
+
+The STRUCTURAL half of research/growth-curves.md's strategy record is routed here: every
+comparable growth strategy that record filed as gated on headcount, capital, an existing
+audience or an advantage this founder does not have. What the comparables had and this founder
+does not is a risk the plan pre-states rather than one a reader discovers by asking how those
+curves were actually grown — and it is the honest counterweight to the exhibit in Target &
+verdict, which shows the shapes without saying what they cost. Same discipline as the policy half
+above: the record is evidence of what those companies HAD, never proof it is what produced their
+curves, so state the gap and its mitigation without conceding the causal claim.>
 
 ## Validation plan
 <every Low-tagged assumption → cheapest real-world test → kill/continue threshold → date>
