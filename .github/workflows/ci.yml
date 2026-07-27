@@ -192,11 +192,15 @@ jobs:
           exempt='^(scripts/|\.github/|\.agents/|AGENTS\.md|CHANGELOG\.md|\.gitignore)'
           changed="$(git diff --name-only "$base" HEAD | grep -vE "$exempt" || true)"
           if [ -z "$changed" ]; then echo "nothing shipped changed — bump not required"; exit 0; fi
-          # Reads empty stdin as "no version yet" rather than crashing: the base
-          # commit legitimately has no manifest on the PR that introduces one, and
-          # a traceback there reads as a broken job instead of a first release.
+          # The base commit legitimately has no manifest on the PR that introduces
+          # one, and `git show` exits 128 there. Kept OUT of a pipeline and given
+          # its own `|| true`: under `pipefail` a failing `git show` upstream of a
+          # successful `python3` fails the whole substitution, and `set -e` then
+          # kills the job with git's 128 and no output at all. Reading it into a
+          # variable first makes the "no manifest yet" case explicit instead.
           read_version='import json,sys; raw=sys.stdin.read(); print(json.loads(raw).get("version","") if raw.strip() else "")'
-          was="$(git show "$base:.claude-plugin/plugin.json" 2>/dev/null | python3 -c "$read_version")"
+          base_manifest="$(git show "$base:.claude-plugin/plugin.json" 2>/dev/null || true)"
+          was="$(printf '%s' "$base_manifest" | python3 -c "$read_version")"
           now="$(python3 -c "$read_version" < .claude-plugin/plugin.json)"
           echo "shipped content changed:"; echo "$changed" | sed 's/^/  /'
           echo "version: ${was:-<none>} -> $now"
