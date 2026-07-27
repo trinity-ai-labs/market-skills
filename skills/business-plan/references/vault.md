@@ -501,6 +501,20 @@ shipping something and watching. An assumption with no validation step is a perm
 unverified belief that nothing will ever revisit, which is the state the field exists to
 prevent.
 
+**A value the indexed reference class can speak to is not believed with no evidence, so it is
+not an `assumption`.** Where a **structural** driver has no subject instrument but
+`research/growth-curves.md` indexes it at the month in question, its value is a `claim` resting
+on that set — carrying the set's `stale_after` and a `validated_by` naming the kill test that
+would overturn it. `assumption` is the **last** rung, for a value the reference class genuinely
+cannot speak to. The ladder and the order it runs in are
+[target.md](target.md#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)'s;
+a second copy here is a second source of truth nothing keeps in sync.
+
+**The failure that misfiling causes:** invariant 11 caps a claim at its weakest input, so routing
+the only legitimate evidence a pre-launch company has through an `assumption` makes every driver
+weak by construction — and every plan for a company that has not launched then reads as
+unjustified, which is every company at the moment the plan is worth writing.
+
 ### The question note records the gap, not the answer
 
 ```yaml
