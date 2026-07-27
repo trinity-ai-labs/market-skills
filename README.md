@@ -34,7 +34,7 @@ ship as a pair, always, which is why one plugin holds both.
 ## Install
 
 ```
-/plugin marketplace add trinity-ai-labs/orchestration-skills
+/plugin marketplace add trinity-ai-labs/claude-plugins
 /plugin install market@trinity-ai-labs
 ```
 

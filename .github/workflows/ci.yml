@@ -139,8 +139,8 @@ jobs:
         # things this cannot (unrecognized fields, schema drift), but it needs the
         # CLI installed. This covers the failure modes that break a published
         # plugin outright: unparseable JSON, a missing field, a `name` that does
-        # not match the marketplace entry maintained in the orchestration-skills
-        # repo, a version the bump guard below cannot compare, and a bin/ entry
+        # not match the marketplace entry maintained in the claude-plugins repo,
+        # a version the bump guard below cannot compare, and a bin/ entry
         # that lands on a user's PATH without its executable bit.
         run: |
           set -eu
@@ -157,7 +157,7 @@ jobs:
           if plugin.get("name") != "market":
               fail.append(
                   f"plugin.json: name is '{plugin.get('name')}', but the marketplace entry "
-                  "in trinity-ai-labs/orchestration-skills installs 'market'"
+                  "in trinity-ai-labs/claude-plugins installs 'market'"
               )
           if not re.fullmatch(r'\d+\.\d+\.\d+', str(plugin.get("version", ""))):
               fail.append(f"plugin.json: version '{plugin.get('version')}' is not MAJOR.MINOR.PATCH")
