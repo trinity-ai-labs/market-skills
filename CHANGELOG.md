@@ -73,6 +73,39 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   and `reach` rows can take a reference-class value from that set too — a category benchmark is
   one figure standing in for every stage at once, which quietly asserts that a company six months
   from its origin converts like one forty months from it.
+- **The curve exhibit reaches the plan's own deliverable, and the strategy record behind it has
+  two consumers.** Both were authored and neither was connected, which is the defect this release
+  kept producing: a rule that reads correct while nothing produces or consumes it. The indexed
+  exhibit was written into `market-analysis.md`, and a `business-plan` engagement runs the
+  research engine's Phases 1–4 and skips its deliverables — so on the only path that matters the
+  chart existed as markdown in a file nothing rendered, and the standalone-research path was the
+  one place it became an artifact. It now lands in `business-plan.md`'s Target & verdict section,
+  under the verdict it argues about, and Phase 5's render loop checks it page-by-page with
+  everything else. That section rather than Market or Financial summary because those are swapped
+  out on the bootstrap, lifestyle and lender tracks and Target & verdict is not — parked in one of
+  them, the exhibit vanishes from exactly the tracks whose target is a fixed income figure. The
+  strategy record — what each comparable was doing to grow across each stretch of its curve,
+  sorted into `policy` or `structural` for *this* founder — had no reader at all. Its policy half
+  now corroborates the go-to-market motion after the three gates rather than instead of them, and
+  its structural half routes to Key risks, where what comparables had and this founder does not is
+  pre-stated rather than left for a reader to find. Both halves keep the record as a `claim`: it
+  is evidence of what those companies did, never proof of what caused their curves, and since
+  nobody publishes the channel that did nothing, adopting a comparable's channel because it worked
+  for them buys a survivorship artifact at the price of the plan's primary motion.
+- **The red team is told the binding driver's kind, and the flat-line rule finally has a bar.**
+  Every panelist brief carried the target, the verdict and the driver named as binding, but not
+  that driver's `kind` — so a panel handed "unreachable, reach binds" attacked whether the target
+  was reachable, when the question worth attacking was whether the configuration was the one to
+  run. The brief now carries the kind, on the same reasoning the paragraph already gave for
+  carrying the verdict at all: a panel that is not told the verdict is policy-bound grants the
+  configuration it was computed under, and no lens is otherwise tasked with that. The dispatched
+  market-analysis brief's `provisionalVerdict` carries it too, because the kind changes what
+  researching the binding driver hardest even means — a structural driver wants better evidence
+  for the value it has, a policy one wants evidence for what it could be set to. And the symmetric
+  flat-line guard, the first gap this release set out to close, was stated in the revenue build
+  and diagnosed in the failure-modes table while the quality bars — the list that says what may
+  not ship — gated only the checks derived from it. It has its own bar now, above the band and
+  trajectory bars that test the same claim: that the curve's shape is asserted, not assumed.
 - **An amended base definition is reported when an existing vault is reused.** This release is
   the first time a base definition in `vocabulary.yml` has ever been amended
   (`steady-state-ceiling`), and it exposed a gap: upgrading a vault picks up *new* base terms but
