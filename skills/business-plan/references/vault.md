@@ -441,14 +441,19 @@ base term retroactively invalidates claims that were correct when they were file
 that an *amended* base definition never reaches an existing vault the way a *new* base term does:
 the vault keeps the superseded wording indefinitely, every claim under that subject was written
 against it, and nothing reports the divergence. So Phase 0 reports it, at the one moment both
-files are open — a base term whose definition differs from the shipped one is named to the
-founder as an advisory that does not stop the run, because a vault written under an older
-definition is valid and only unreviewed, and erroring on it would break every existing vault on
-upgrade. Reconciling is per claim and needs judgement: re-read each claim filed under the amended
-subject against the new wording, and where it no longer asserts what that subject now asserts,
-supersede it — two edits, with `supersedes_reason` naming the amendment. Re-filing it silently
-under the new definition is the failure this exists to stop: the claim then reads as though it
-were written under wording its author never saw.
+files are open, and it reports a **version delta** rather than a diff of two wordings: the
+shipped `vocabulary.yml` carries a `vocabulary_version` and an `amendments` log, so the founder
+is handed the entries between the vault's stamp and the shipped one — per amended term, the
+framing it carried (`was`), the framing it carries now (`now`), and the test each claim already
+filed under it has to pass (`must_assert`). A report that only says the definitions differ names
+no term and so asks for a corpus-wide re-read nobody can size. It is an advisory and does not
+stop the run, because a vault written under an older definition is valid and only unreviewed, and
+erroring on it would break every existing vault on upgrade. Reconciling is per claim and needs
+judgement, and it ends in a **supersession** — two edits, per the rule above, with
+`supersedes_reason` naming the amendment — never an edit in place, because a re-filed claim reads
+as though it were written under wording its author never saw. The procedure, the worked example,
+and the point at which the vault adopts the amended definition are in
+[vault-migration.md](vault-migration.md#an-upgraded-vault-enters-here-not-at-stage-1--reconcile-the-claims-an-amended-definition-left-behind).
 
 **`stale_after` is declared per claim and never derived from a pull date.** A vendor price
 rots in a quarter; a founder's motivation does not; a regulatory deadline is fixed until it
