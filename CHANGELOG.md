@@ -2,6 +2,170 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.4.0
+
+- **An exit target has its own identity, and its dominant term is a band.** An outcome stated as
+  an acquisition or a company valuation was the one shape `business-plan` could not decompose:
+  forced into the revenue identity it came back confident about ARR, which is the term an exit
+  verdict is least sensitive to, while the term that decides the answer disappeared into an
+  assumed figure nobody wrote down. It is now `exit value = ARR at exit × multiple`. The left
+  term is one of the existing identities solved at the *sale* date rather than the target date,
+  so those shapes are a term of this one and never a substitute for it, and the multiple enters
+  as a band and never as a scalar — written as one number it reads as a property of the category
+  and the verdict inherits a precision nobody evidenced. The band's ends trace to four inputs,
+  each with a named home in the corpus and a `kind` per invariant 18, and not one of them is ARR:
+  the growth slope at the moment of sale and the strategic necessity of the asset to a *named*
+  acquirer are policy, while scarcity — whether the buyer ships it itself in two quarters — and
+  the count of buyers with the same hole are structural. One interested party is a price **floor**
+  and not a price, because a single bidder pays whatever the founder's next-best alternative is
+  worth. Reporting a slope-bound exit as structural tells a founder their company cannot be sold
+  for that, when what is true is that this roadmap cannot sell it for that. The multiple is
+  usually the binding driver and always the least evidenced, so an exit solved at a single
+  assumed multiple is the existing traces-to-nothing case applied to the term that decides the
+  answer: the run returns **undetermined** and names the cheapest test, which is a comparable-exit
+  reference class rather than a founder interview — the founder cannot know a price set by buyers
+  they have not met, so asking returns their hope wearing the authority of an answer. And the
+  window under the band is structural and time-varying, which makes this the first driver whose
+  `stale_after` is load-bearing rather than administrative: a multiple assumed three years out
+  assumes today's comparables' window is still open then, and a shelf life set to the plan's own
+  horizon comes up for re-checking on the one date the answer stops being useful. The exit also
+  gets its own lever table — slope, acquirer legibility, date — because hours, capital and price
+  all act one term down, through the side of the identity the verdict was least sensitive to. The
+  same term reaches the roadmap and the memo: a roadmap item may now earn its place by moving one
+  of the multiple's inputs rather than a row in the assumptions table, which models ARR and has no
+  row for the multiple at all — so the items aimed at the term that decides the answer were being
+  filed as maintenance, and the permutation table that ranks orderings is measured at the sale
+  month, since the order maximising twelve-month cumulative can be the one that arrives at the
+  sale decelerating. In the venture memo the ask is sized against the slope it holds *through* the
+  sale month rather than a revenue level, the moat section asks what stops the *buyer* shipping it
+  next quarter, and the financial summary runs to the sale date instead of stopping at 36 months.
+- **A target stated as a range is solved at its corners, and a midpoint is a number neither end
+  asserts.** Either axis may be stated as a range — a salary replaced in eighteen to twenty-four
+  months, a sale at a value range inside a date range — and both at once is how an exit target
+  normally arrives rather than an edge case. A value range over a date range is a rectangle, not
+  a point: the corners are not equally hard, and which of them clear *is* the verdict. So a ranged
+  target returns the set of corner verdicts, with the binding driver and its kind named per
+  corner, which tells the founder which part of their own ambition is the problem and leaves the
+  rest standing. Collapsed to its centre, a rectangle where three corners clear and one fails
+  reads as a clean yes, and the corner that fails is usually the one the founder was aiming at.
+  Two distinctions carry the subtle half of it. A stated range is **not** an assumption and does
+  not trigger the flip test — that test runs on evidence uncertainty, the plausible range of a
+  driver nobody sourced, while the corner solve runs on stated intent, which is the founder's own
+  and needs no source; conflating them returns *undetermined* for every ranged target by
+  construction, because a rectangle drawn across a real decision boundary is exactly one whose
+  corners disagree, and that disagreement is the finding rather than a gap in the evidence. And
+  the late end of a date range is not the easy end: it is cheaper on ARR, because the
+  reference-class decay has more months to compound, and more exposed on the multiple, because
+  the window closes. A founder who widens the date to make the target easier has bought ARR
+  headroom with window risk nobody told them about. The plan carries the corners as a table with
+  the founder's stated range and the evidence's range on separate labelled rows — both arrive as
+  an interval with two ends, and merged the founder reads the whole width as their ambition being
+  narrowed when half of it is the evidence admitting what it does not know.
+- **A growth rate carries the ARR bucket it was measured in, and rates are compared only within a
+  bucket.** Re-basing a comparable's series to months since a named origin controls for calendar
+  time and market conditions; it does not control for **scale**, and nothing else recorded the ARR
+  level a rate was posted at. So two companies sitting at month 18 — one posting around 20%/mo
+  from a few hundred thousand in ARR, one around 4%/mo at tens of millions — were compared as
+  commensurable and pooled into a month-18 range neither company's scale supports. It fires in
+  both directions, which is why tagging one end of it is not enough: percentage growth off a small
+  base is arithmetically easy and reads as a category norm, so a subject at low ARR is told its
+  plan is unambitious against companies that were tiny when they posted those rates, while the
+  same undifferentiated band makes the high-ARR rate look reachable at a scale nobody in the set
+  achieved it at. Buckets are now declared as a property of the reference class, every rate is
+  tagged with the one it was measured in, a comparable that crosses a bucket mid-series is tagged
+  per stretch rather than per company, the decay is fitted per bucket where the set spans more
+  than one, and the projection is checked against the bucket it will actually be in at that month.
+  The exhibit carries the bucket too rather than leaving it to the caption — a chart that hides it
+  re-creates the cross-bucket comparison in the one artifact a reader trusts without reading the
+  prose.
+- **A headline acquisition figure is not what the seller received, and the whole reference class
+  skews high because of it.** Where the target is an exit, the disclosed acquisitions in the
+  category are a second series on the same indexed axis — each sale placed at the month since the
+  acquired company's own named origin and at its growth slope running into the sale, because slope
+  is what the multiple is set by and a multiple with no slope beside it cannot be read at the
+  month a roadmap puts its own sale. Built naively that set lies: earnout contingent on post-close
+  targets, escrow released later or not at all, acquirer stock carried at the acquirer's own
+  valuation, and retention packages that are compensation for the team rather than price for the
+  company all sit inside an announced number. That is not one bad data point to drop — headlines
+  are what gets published, and the components that reduce them are disclosed later, elsewhere, in
+  less-read documents, so the bias belongs to the class, and naming survivorship does not catch it
+  because these deals did close. The set therefore records the headline and what portion was
+  actually received at close with the source for the split, and the band is drawn on consideration
+  received, cash-only figure beside it. A comparable whose split cannot be found is labelled
+  `headline-only, uncorroborated` everywhere it appears and never pooled with decomposed ones:
+  pooled, it lifts the band by exactly the amount nobody could verify, and the label is the only
+  thing telling a reader which end of the band rests on a figure and which on an announcement.
+  Endpoints stay labelled with their company, ARR at exit, stage and slope rather than averaged
+  into a mean multiple that describes no deal that happened; too few comparables to bound a band
+  is written in those words — "two comparables, no band" — instead of a line run through a pair;
+  and survivorship is stated outright beside the band, because nobody publishes the multiple they
+  were offered and refused, so the set is what this category paid the sellers who said yes.
+- **The red team reads the model's frame before it reads the model's numbers.** All three lenses
+  reason *from* the plan document, so all three inherit its frame: a revenue model that assumes a
+  flat curve, or that treats a founder's choice as a fixed property of the business, hands every
+  panelist that frame as the ground they attack from. A structurally wrong model therefore drew
+  three lenses' worth of detail objections and none about its shape, and the plan read as
+  thoroughly attacked — the tell being a panel whose severest row argues about a value inside the
+  identity while the identity itself carries a term nobody labelled. A pre-pass now runs before
+  any brief is written and its output goes into every brief: the identity written out as a chain
+  of terms ahead of any value in it, every input labelled `structural` or `policy` in those two
+  words and never a coined third (a "semi-structural" is a way of not answering that reads as a
+  finer distinction and survives review for exactly that reason), and the curve's shape — flat,
+  decaying or compounding — stated as a claim with a named driver behind it rather than as the
+  backdrop it was drawn on. A fourth lens would have inherited the same frame and arrived
+  alongside the other three, too late to change what the panel was pointed at; that is why it is a
+  pre-pass and not another voice. Where the target is an exit, the capital lens also swaps the
+  funder's question for the acquirer's — which named buyer has a hole this patches, and is the
+  product visibly the patch — because an exit plan otherwise collects a full investor-shaped
+  objection table while nobody asks who buys it, and fundable and acquirable have different
+  answers often enough that a pass on one says nothing about the other.
+- **The vocabulary carries a version, and drift has a reconciliation path instead of an
+  advisory.** Phase 0 already reported that a base definition had changed when an existing vault
+  was reused, but a report that only says the definitions differ names no term: it hands the
+  founder a corpus-wide re-read with no way to size it, and a task nobody can size is a task
+  nobody starts, so the drift stays in place and the advisory becomes the noise people learn to
+  skip. `vocabulary.yml` now carries a `vocabulary_version` and an `amendments` log, and Phase 0
+  reports the delta plus every entry between the vault's stamp and the shipped one — per amended
+  term the framing it carried (`was`), the framing it carries now (`now`), and the test each claim
+  already filed under it has to pass (`must_assert`). A copy carrying no stamp predates the stamp
+  and is older than every entry rather than equal to the current version, since reading an absent
+  stamp as current would exempt exactly the vaults most likely to need reconciling. The version is
+  owned by that file rather than by the plugin, and adding a term does not move it: bumping on
+  additions would fire the advisory on every release that touched the file and train the founder
+  to dismiss it before the one release where a definition actually moved. `vault-migration.md`
+  carries the procedure as its own entry point — one grep per amended term bounds the entire
+  scope, because only claims carry a subject; a claim that no longer asserts what the subject now
+  asserts is superseded under the standing two-edit rule with `supersedes_reason` naming the
+  amendment, never re-filed in place under wording its author never saw; the paragraph in the plan
+  standing on that claim is rewritten with it, or the reconciliation moves the defect rather than
+  fixing it; and the vault adopts the amended wording and stamps its copy **last**, because
+  adopting first is the silent redefinition the extension rule bans.
+- **The vault root is `~/Documents/go-to-market/<product-slug>/`.** `business` named the
+  business-plan half of a pair that also produces the whole market analysis, so the folder a user
+  goes looking for their competitor research in was named after the other skill. Same layout, same
+  slug rule, same boundary — the slug directory itself is still the vault, with no `vault/`
+  subdirectory — only the parent changed. A corpus created under the old root is not found by the
+  reuse check, which `ls`es the parent for a folder naming the same product: move the slug
+  directory and nothing breaks, because every citation, `rests_on` edge and research file inside
+  it is vault-relative by design.
+- **The gate resolves every `#anchor` in the shipped reference files.** A skill's method lives in
+  reference files navigated by their own `## Contents` blocks, and the gate resolved a link by its
+  path with the fragment stripped — `other.md#gone` passed on the strength of `other.md` existing,
+  and a pure in-file `(#gone)` had no path to resolve at all. So an edit deleted a `## Heading`
+  while the file's own Contents block went on linking to it and everything stayed green, caught by
+  hand rather than by the check. Check 9 validates every anchor, in-file and cross-file, against
+  the headings the target file actually renders, and a file carrying a `## Contents` heading that
+  offers no list-item anchor link is itself a failure — an index rewritten out of link form would
+  otherwise drop out of the check while body links elsewhere in the same file kept it green. The
+  slug rule lives in exactly one place: two checkers with two sluggers drift apart silently and
+  both get trusted.
+- **Three of the rules above earn a quality bar, because prose in a reference file is not a
+  producer.** A rule reaches an agent only when it is interpolated into a brief or performed by
+  the conductor in a phase, so a rule stated once in a reference file reads correct on the page
+  while nothing runs it. The ranged target's corner readout, the model-identity block every
+  red-team brief now carries, and the exit red team's named-acquirer question are each on the list
+  that says what may not ship, rather than resting on the paragraph that describes them.
+
 ## 1.3.0
 
 - **The projection guard is symmetric — a flat line names its driver exactly as a hockey stick
