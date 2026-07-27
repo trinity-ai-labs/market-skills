@@ -661,6 +661,9 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - The steady-state ceiling is computed and stated, not implied by a 12-month curve, with every
   input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
   the ceiling of that configuration, with one changed policy value beside it.
+- Every stretch of the projection's curve names its operational driver — inflections and flat
+  stretches alike. Zero growth is an assumption, not the absence of one, and unnamed it is
+  unmodelled rather than conservative.
 - The projection's implied monthly growth rate is placed against the observed growth band, and
   its implied trajectory against the indexed comparable curves at matching months since origin.
   Any excursion — in level, in either direction, or in shape — names the difference defending it.
