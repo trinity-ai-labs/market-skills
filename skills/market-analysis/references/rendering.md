@@ -37,6 +37,13 @@ founder hands an investor without apologizing.
   read as different in kind — dashed stroke plus its own end label — because an overlay that looks
   like one more comparable hides the single comparison the exhibit exists to make. Companies
   excluded from the overlay are listed in the caption, not omitted.
+- **The ARR bucket is legible in the chart, not only in the caption.** Rates are comparable only
+  within a bucket, so the exhibit has to show which comparisons are within-bucket: where the
+  plotted metric IS ARR, band the buckets as light horizontal tints with each band's range
+  labelled at the axis; where it is not, every line's end label carries its bucket. Undifferentiated,
+  the chart draws two paths side by side at the same month that were measured at scales an order of
+  magnitude apart, and a cross-bucket comparison then looks exactly like a within-bucket one — the
+  chart re-creating the error the rule removed, in the artifact a reader trusts most.
 - **The exit multiple is overlaid on that same chart, never given one of its own.** Where the exit
   comparables ran, mark each sale on its own comparable's path at the month it happened and label
   the mark with the multiple it implies. Slope is what sets the multiple, so the mark has to sit

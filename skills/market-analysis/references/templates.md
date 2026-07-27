@@ -77,6 +77,12 @@ an aligned one.>
 (not what they averaged over their history), the months the fit is supported over, and how well it
 fits. Any company with too few dated points to fit is listed here in those words — "two points, no
 shape" — never folded in as a two-point average.>
+<the ARR buckets the set is read in, declared for this reference class, and every rate tagged with
+the bucket it was measured in — a company crossing a bucket mid-series tagged per stretch, not per
+company. Rates are compared only within a bucket, and this product's own projected rate is checked
+against the bucket it will be in at that month, never against the set as a whole: months since
+origin controls for calendar time, nothing else here controls for scale, and a band pooled across
+buckets is two phenomena on one axis.>
 <companies excluded from the indexed overlay, each with the reason (origin undatable) and its
 calendar series retained — listed, never silently dropped, or the reference class reads tighter
 than the evidence supports.>
@@ -96,15 +102,17 @@ line per comparable, this product's own projection overlaid — per rendering.md
 ## Exit comparables & implied multiple (when the target is an exit)
 <the comparable set, one entry per disclosed acquisition in the category: the acquired company,
 its origin event and that event's date, the month since that origin the sale landed at, its stage
-and its growth slope across the months running into the sale, ARR at exit, and the multiple that
-ARR and the deal imply. Indexed to slope at the moment of sale, the same basis every other series
+and its growth slope across the months running into the sale, ARR at exit, the ARR bucket that
+figure sits in, and the multiple that ARR and the deal imply. Indexed to slope at the moment of
+sale, the same basis every other series
 here uses, because slope is what the multiple is set by — a sale recorded against a level with no
 slope beside it cannot be read at the month a roadmap puts its own sale.>
 <the acquirer per comparable, named, with its stated strategic rationale in its own words, quoted
 with source and pull date. A rationale paraphrased into a motive is the analyst's claim wearing
 the acquirer's authority.>
-<the implied-multiple endpoints, each labelled with its comparable, that comparable's ARR at exit,
-its stage and its slope at sale — never averaged into a single multiple, which describes no deal
+<the implied-multiple endpoints, each labelled with its comparable, that comparable's ARR at exit
+and bucket, its stage and its slope at sale — never averaged into a single multiple, which
+describes no deal
 that happened. Fewer comparables than a band needs is stated in those words — "two comparables, no
 band" — never a band run through two points.>
 <survivorship, stated outright: the announced acquisitions are the ones that closed, nobody

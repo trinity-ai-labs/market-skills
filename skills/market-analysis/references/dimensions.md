@@ -120,6 +120,27 @@ Hunt:
   exhibit as excluded-from-overlay with the reason. Silently excluding it makes the reference
   class look tighter than the evidence supports: what the survivors share is a habit of publishing
   launch dates, which is a disclosure pattern, not a growth pattern.
+- **Every rate carries the ARR bucket it was measured in, and rates are only ever compared within
+  a bucket.** Re-basing to months since origin controls for calendar time and market conditions;
+  it does not control for **scale**, and nothing else in this file records the ARR level a rate
+  was posted at. So declare the buckets in the file as a property of the reference class —
+  order-of-magnitude bands are the usual cut — tag every rate with the bucket it was measured in,
+  fit per bucket where the set spans more than one (a single curve fitted across buckets is this
+  same error one level up), and check the subject's own projected rate against the bucket **it
+  will actually be in at that month**, not against the set as a whole. A
+  band assembled across buckets is not a band; it is two different phenomena plotted on one axis.
+  A comparable that crosses a bucket mid-series is tagged per stretch rather than per company: the
+  company that posted the early rates is not the one that posted the late ones in the only respect
+  this comparison turns on.
+- **The bucket failure fires in both directions, which is why tagging one end of it is not
+  enough.** Two comparables both sit at month 18 — one posting around 20%/mo from a few hundred
+  thousand in ARR, one around 4%/mo at tens of millions. Pooled, they produce a month-18 range
+  neither company's scale supports: a subject at low ARR is told its plan is unambitious against
+  companies that were tiny when they posted those rates, because percentage growth off a small
+  base is arithmetically easy and reads as a category norm; and the same undifferentiated band
+  makes the high-ARR rate look reachable at a scale nobody in the set achieved it at. Both come
+  back as a confident number with a reference class behind it, which is exactly what carries them
+  through review.
 - **Fit the decay across the set — never assume a constant rate.** The output is two things: a
   per-company trajectory over months-since-origin, and a fitted decay across the indexed set with
   a stated goodness of fit and the months the fit is supported over. That is what lets the
@@ -201,8 +222,11 @@ Hunt:
   category rather than of the handful of deals that reached an announcement.
 - **The file states the exhibit it will produce**: an indexed multi-series chart — months since
   origin on x, the metric on y, one line per comparable, the subject's own projection overlaid —
-  plus the excluded-from-overlay list beneath it. Where the exit set ran, each sale is marked on
-  its own company's line at the month it happened, carrying its implied multiple: slope is what
+  plus the excluded-from-overlay list beneath it, and the ARR bucket each line sits in made
+  legible in the chart itself rather than only in the caption — a chart that hides the bucket
+  re-creates the cross-bucket comparison the bucket rule exists to remove, and does it in the one
+  artifact a reader trusts without reading the prose. Where the exit set ran, each sale is marked
+  on its own company's line at the month it happened, carrying its implied multiple: slope is what
   sets the multiple, so the multiple rides the curve rather than sitting in an exhibit of its own,
   where a reader has to carry a month across two charts and stops doing it after the second
   comparable. Built per `rendering.md`; an unrendered curve file gets read as a table of numbers
