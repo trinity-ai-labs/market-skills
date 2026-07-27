@@ -91,6 +91,36 @@ wrong without it, cut it.
 real engagement are the ones with a concrete failure attached — "page count reads
 correct while whole sections are dropped" beats "verify rendering carefully".
 
+**A dispatched brief interpolates its playbook; it never restates it.** A skill is prose that
+instructs agents, and nothing fails to compile — a rule added to a reference file reads correct
+whether or not anything runs it. Interpolation is what runs it: `orchestration.md`'s
+`competitors.md` writer passes `${playbookCompetitors}` into its prompt, so every rule added to
+that playbook reaches its agent by construction. The profiling call beside it hand-writes a
+prompt restating the same playbook in its own words, and that is the one a new dated-traction
+rule never reached. A restatement is a second source of truth that nothing keeps in sync, and it
+fails in the direction that hides, because the playbook still reads correct. A brief ADDS what
+the playbook cannot know — which competitor, which output path — and paraphrases nothing the
+playbook already says. `check.mjs` holds the line: an `agent(...)` call that interpolates no
+playbook must be listed as an exception, with its reason, in the check itself.
+
+**Prose in a reference file is not a producer.** It produces something only when it is
+interpolated into a brief an agent receives, or when the conductor performs the step itself in a
+phase. Where construction cannot save you, ask three questions of every rule you add: what
+produces it, what consumes it, and what fails if it is absent. The third is the one people skip,
+and it is why a rule earns a quality bar or a verification-checklist entry rather than a
+statement alone. Two shapes read correct on the page and still lose the rule: an enumeration
+that names one of two siblings drops the other, because the agent takes the enumeration as the
+checklist and the interpolated playbook as background; and a floor stated as a quantity is read
+as the quantity, so "at least two where available" gets an agent that found six to report two.
+
+**Every artifact a phase consumes is named in that phase's verification checklist.** A static
+check sees wiring, never payload — a channel can be connected correctly and carry the wrong
+thing, and only a consumer that inspects its own input catches that, on the first real run
+instead of the seventh. `business-plan`'s Phase 2 "Verify the return" list is the working form:
+it names `research/growth-curves.md` outright, and that is what bounces a research run that came
+back without it. A generic "all contract files exist" clause does not do this job — the artifact
+has to be named.
+
 **Prose style.** Section headings are action titles stating the finding, not labels.
 Banned words, each a red flag to the people who read hundreds of these: *revolutionary,
 disruptive, game-changing, cutting-edge, delve, tapestry, paramount*, and *seamless* or
