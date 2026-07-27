@@ -195,8 +195,14 @@ bare, from whatever directory the user happens to be working in:
 ```sh
 vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
 vault-lint.sh --unverified --vault "$VAULT_PATH"
+vault-lint.sh --used-in --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
+
+`--used-in` is the one that leaves the vault: a claim records the document and section it was
+cited into, and this opens each one to check the file is there and the `#anchor` names a real
+heading, exiting 1 when it does not. It stops at whether the citation **resolves** — whether the
+section still *carries* the claim is a read, and `--help` says why a tool cannot do it.
 
 It is POSIX `/bin/sh` with zero dependencies — no Node, no Python, no jq. A tool that reads an
 entire private business corpus should not carry a transitive dependency tree, and a runtime
