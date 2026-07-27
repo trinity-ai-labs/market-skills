@@ -38,6 +38,7 @@ later questions exist at all.
 - [3. Monetization & pricing instinct](#3-monetization--pricing-instinct)
 - [4. Resources & constraints](#4-resources--constraints-the-plan-must-survive-these)
 - [5. Unfair advantages](#5-unfair-advantages-the-thesis-multiplier)
+- [5a. Products you've used](#5a-products-youve-used-the-failure-you-hit-not-the-verdict-you-formed)
 - [6. GTM appetite](#6-gtm-appetite-motion-must-fit-the-founder-not-just-the-market)
 - [7. Timeline & fear](#7-timeline--fear)
 - [A fact arriving after the grill is recorded exactly as one said during it](#a-fact-arriving-after-the-grill-is-recorded-exactly-as-one-said-during-it)
@@ -318,6 +319,56 @@ conversation.
   years, tech head start, community access, cost structure. Probe each concretely — "an
   audience" means a number and a channel. No real answer is itself a finding: the plan then
   leans on speed + focus, and says so.
+
+## 5a. Products you've used (the failure you hit, not the verdict you formed)
+
+- **"Which products in this category have you personally used, and what specifically
+  broke? Name the failure, not the verdict."** The competitor research reads docs,
+  changelogs and pricing pages — every one of them written by the company being
+  profiled, and none of them recording the thing that made someone leave. The founder is
+  usually the only person in the engagement who has been a *customer* in this category,
+  which makes them a source no dispatch can reach. **Default: read the list off the
+  evidence first** — a competitor named in the README, a tool the repo migrated off, a
+  subscription sitting in the cost notes — and present it to correct. An open "what have
+  you tried?" returns what the founder still uses and drops what they abandoned, and the
+  abandoned one is the one that broke. Each product named joins `mustProfile`, per §0a.
+
+**Both halves arrive in the same sentence, and only one is admissible.** "Their sync is
+unreliable" is a verdict — the founder's assessment of someone else's product, resting on
+nothing a reader can re-check. It enters the corpus at `L`, as commentary, and it is never
+promoted on the strength of who said it. "I lost three days of edits when their sync
+resolved a conflict without telling me" is an observation the founder made themselves:
+dated, specific, and primary in the way a competitor's own changelog is not. It is worth
+more than any feature matrix, because a matrix records what a product claims to do and this
+records what it did. Most answers carry both, in that order — the verdict first, because it
+is the conclusion the founder has been holding, and the failure second, once you ask what
+the verdict rests on.
+
+**File them apart.** Two `[F#]` facts, not one — the failure at `H`, the verdict at `L`, one
+[assertion per note](vault.md#one-assertion-per-note-because-status-and-confidence-are-per-note).
+Folded together they average into something that reads like evidence and is not: the verdict
+borrows the failure's confidence, and a section drafted months later cites "the incumbents
+are unreliable" to a single remembered conflict resolution. The failure survives that
+citation; the verdict is what makes it indefensible.
+
+**The failure is a question for the research, not a finding on its own.** It rides into the
+competitor profile as the thing that profile has to answer: is this **structural** — a
+consequence of how the product is built, which its own roadmap cannot remove — or a defect
+someone fixes next quarter? A structural failure the subject answers by construction is a
+wedge, and it is the one competitive finding no amount of documentation reading produces,
+because documentation describes the product working. A defect is a feature request with a
+date on it, and no positioning should be built on one.
+
+**"I haven't used any of them" is an answer, and a load-bearing one.** It says the value
+hypotheses rest on a category the founder has read about rather than lived in — which raises
+what the research has to establish and lowers what the grill's other answers can be taken to
+settle. Record it as a fact; never let it pass as a question that got skipped.
+
+**The failure this prevents:** unasked, the founder's category experience reaches the plan as
+a sentence asserting that the incumbents are clunky, with nothing underneath it — while the
+specific, dated, first-hand failure that sentence was standing on is never written down at
+all. The competitor dimension can profile every product in the category and still not learn
+which one lost a user, or why.
 
 ## 6. GTM appetite (motion must fit the founder, not just the market)
 
