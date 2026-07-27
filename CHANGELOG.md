@@ -122,6 +122,16 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   failure that makes people stop upgrading. The claims already filed under an amended subject are
   re-read against the new wording and superseded under the standing two-edit rule, rather than
   silently re-filed under a definition their author never saw.
+- **Every dispatched brief now interpolates its playbook, and the exemption table no longer
+  documents the defect it exists to catch.** The per-competitor profiling call hand-wrote a prompt
+  restating the competitors playbook in its own words, which is how the dated-traction rule above
+  reached the playbook and never the agent — and it was then patched by restating the rule a second
+  time, leaving two sources of truth that read correct. The sizing reconciler was told to follow a
+  playbook skeleton it was never handed. Both take the block itself now, and their hand-written
+  halves shrink to what a playbook cannot know: which competitor, which output path, the return
+  contract. `close-gap` keeps its exemption on an argued constraint rather than an open bug — the
+  critic's gaps name no dimension and several classes have none to name, so a key guessed off the
+  free text would hand a gap the wrong playbook, worse than none.
 
 ## 1.2.0
 
