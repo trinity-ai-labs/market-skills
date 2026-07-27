@@ -644,8 +644,8 @@ with nothing recording that it died.
 ## Layout: one directory per type, one file per note
 
 ```
-<user-vault>/                     # e.g. ~/Documents/business/<product-slug>/vault/
-  .vault/
+<user-vault>/                     # e.g. ~/Documents/business/<product-slug>/
+  .vault/                         # THE ENGAGEMENT FOLDER IS THE VAULT — no `vault/` subdir
     config.json                   # schemaVersion — the migration gate
   sources/
     SOURCE-K92MZ1QA.md
@@ -660,8 +660,22 @@ with nothing recording that it died.
   decisions/
     DECISION-VV02HH55.md
   _vocab.yml                      # the controlled subject vocabulary
-  research/                       # prose, untouched by the vault
+  research/                       # ALL prose, untouched by the vault — dimensions, profiles,
+                                  #   the founder brief and the product dossier
+  sources.md                      # the [S#] index
+  one-pager.md  business-plan.md  # plan documents — the lint ignores non-note files at the root
 ```
+
+**The boundary is the engagement folder, and that is load-bearing rather than cosmetic.** A
+source with no public URL carries a *vault-relative* path, so anything a `source` note rests on
+must be inside the vault or the path resolves to nothing — with no error, because a missing file
+is not a malformed field. Research prose is exactly such a source: a competitor ledger or a
+dimension file frequently *is* the evidence. Put the vault one level down and
+`research/competitors.md` reads as vault-relative, resolves nowhere, and lints clean.
+
+It is also what makes the corpus **portable**. Copy the folder and every citation, every
+`rests_on` edge and every research file travels with it. A ledger whose evidence lives outside
+it is an index, not a ledger.
 
 **The filename is exactly the ID plus `.md`. No slug, no title, no date.**
 

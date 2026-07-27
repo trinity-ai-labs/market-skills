@@ -80,30 +80,43 @@ and is never restated here.
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
 product name, kebab-case; re-runs update in place, never a new folder):
 
+**The engagement folder IS the vault.** There is no `vault/` subdirectory — the slug directory
+carries `.vault/config.json`, and everything else lives inside it:
+
 ```
-~/Documents/business/<product-slug>/
-  one-pager.md                # the door-opener — always produced first, every track
-  business-plan.md            # the main artifact — SHAPE DEPENDS ON TRACK (see below)
-  financial-model.md          # assumptions table + scenarios, referenced by the plan
-  red-team.md                 # the panel's objections + dispositions (Phase 4)
-  vault/                      # the claim ledger — scaffolded in Phase 0
-    .vault/config.json        # schemaVersion — a directory without it is not a vault
-    _vocab.yml                # controlled subjects, seeded from references/vocabulary.yml
-    sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note, <ID>.md
-    research/
-      product-dossier.md      # written INTO the vault (Phase 0), not as a standalone file
-      founder-brief.md        # the grill's numbered [F#] facts (Phase 1) — the plan cites these
+~/Documents/business/<product-slug>/      # ← this directory is the vault
+  .vault/config.json        # schemaVersion — a directory without it is not a vault
+  _vocab.yml                # controlled subjects, seeded from references/vocabulary.yml
+  sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note, <ID>.md
+  research/                 # ALL prose, untouched by the vault — market-analysis dimensions,
+    product-dossier.md      #   profiles/, plus these two written here in Phase 0 / Phase 1
+    founder-brief.md        #   the grill's numbered [F#] facts — the plan cites these
+  sources.md                # the [S#] index (market-analysis)
+  one-pager.md              # the door-opener — always produced first, every track
+  business-plan.md          # the main artifact — SHAPE DEPENDS ON TRACK (see below)
+  financial-model.md        # assumptions table + scenarios, referenced by the plan
+  red-team.md               # the panel's objections + dispositions (Phase 4)
   deliverables/
-    business-plan.html        # rendered deliverables (Phase 5)
+    business-plan.html      # rendered deliverables (Phase 5)
     business-plan.pdf
     one-pager.html
     one-pager.pdf
-  ...market-analysis files (owned by that skill)
+  ...market-analysis files (market-analysis.md, competitor-analysis.md — owned by that skill)
 ```
 
-The two files under `vault/research/` are prose the vault does not touch; they sit inside it so
-the `source` notes resting on them carry a vault-relative path, which is what makes duplicate
-detection work for a source with no public URL. Layout rules:
+**Why the boundary sits here and not one level down.** A source with no public URL carries a
+*vault-relative* path, so anything a `source` note can rest on must be inside the vault or the
+path resolves to nothing — silently, since a missing file is not a malformed field. Research
+prose is exactly such a source: a competitor ledger or a dimension file frequently *is* the
+evidence. With the vault one level down, `research/competitors.md` reads as vault-relative,
+resolves to a path that does not exist, and lints clean.
+
+It also makes the corpus **portable**: copy the slug directory and every citation, every
+`rests_on` edge and every research file comes with it. A ledger whose evidence lives outside it
+is an index, not a ledger. The lint ignores non-note files at the vault root, so the plan
+documents and `sources.md` sit inside without interfering.
+
+Layout rules:
 [references/vault.md](references/vault.md#layout-one-directory-per-type-one-file-per-note).
 
 Templates AND the track branch (venture memo vs. bootstrap operating plan vs. lender classic —
@@ -127,11 +140,13 @@ competitor-analysis Monitoring plan re-check (pricing pages, changelogs) as a pa
 and note it in Coverage; past them, or if the product's stage/boundary moved, plan a full
 refresh.
 
-**Scaffold the vault before anything writes.** Create the tree above, write
-`.vault/config.json` with its `schemaVersion`, and copy
-[references/vocabulary.yml](references/vocabulary.yml) to `vault/_vocab.yml` — a copy, not a
-pointer, so a vault stays checkable against the vocabulary it was written under after the skill
-ships new terms. Extend it by that file's governance rule; never delete or redefine a base term.
+**Scaffold the vault before anything writes.** The vault path IS the slug directory — never a
+`vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with its
+`schemaVersion`, and copy [references/vocabulary.yml](references/vocabulary.yml) to
+`<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
+vocabulary it was written under after the skill ships new terms. Extend it by that file's
+governance rule; never delete or redefine a base term.
+
 Pass the absolute vault path to every agent and tool: resolution is `--vault` or `VAULT_PATH`
 and nothing else, because an upward search from a repo either walks to the filesystem root or
 finds a *different* engagement's vault and reads the wrong corpus with no error at all. An
@@ -144,7 +159,7 @@ If the founder already has a corpus from earlier work — research files, a plan
 
 Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
 dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet —
-writing it to `vault/research/product-dossier.md`. The grill needs the dossier's value
+writing it to `research/product-dossier.md` (vault-relative — the slug directory is the vault). The grill needs the dossier's value
 hypotheses to exist; nothing else of market-analysis runs yet.
 
 **Sweep for founder-authored writing before the grill — it is the cheapest context you will
@@ -225,12 +240,12 @@ founder's own words in the body; a paraphrase is a judgement nobody can re-check
 the six-step checklist:
 [references/vault.md](references/vault.md#writing-a-note-the-six-step-checklist).
 
-A fork raised to a decision brief closes as a `decision` note in `vault/decisions/` — the same
+A fork raised to a decision brief closes as a `decision` note in `decisions/` — the same
 artifact, with the extra fields
 [references/decisions.md](references/decisions.md#the-record-extends-the-vaults-decision-note-it-does-not-replace-it)
 defines. There is no second record and no parallel directory.
 
-Close the grill by writing `vault/research/founder-brief.md` — the numbered fact table
+Close the grill by writing `research/founder-brief.md` — the numbered fact table
 (template in [references/plan-template.md](references/plan-template.md)) every `[F#]` citation
 in the plan resolves through, exactly as `[S#]` resolves through `sources.md`. `[F#]` stays the
 human-readable citation; the `fact` note ID is what a query reaches. It's written BEFORE any
