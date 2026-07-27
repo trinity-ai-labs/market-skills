@@ -30,7 +30,15 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   assumes today's comparables' window is still open then, and a shelf life set to the plan's own
   horizon comes up for re-checking on the one date the answer stops being useful. The exit also
   gets its own lever table — slope, acquirer legibility, date — because hours, capital and price
-  all act one term down, through the side of the identity the verdict was least sensitive to.
+  all act one term down, through the side of the identity the verdict was least sensitive to. The
+  same term reaches the roadmap and the memo: a roadmap item may now earn its place by moving one
+  of the multiple's inputs rather than a row in the assumptions table, which models ARR and has no
+  row for the multiple at all — so the items aimed at the term that decides the answer were being
+  filed as maintenance, and the permutation table that ranks orderings is measured at the sale
+  month, since the order maximising twelve-month cumulative can be the one that arrives at the
+  sale decelerating. In the venture memo the ask is sized against the slope it holds *through* the
+  sale month rather than a revenue level, the moat section asks what stops the *buyer* shipping it
+  next quarter, and the financial summary runs to the sale date instead of stopping at 36 months.
 - **A target stated as a range is solved at its corners, and a midpoint is a number neither end
   asserts.** Either axis may be stated as a range — a salary replaced in eighteen to twenty-four
   months, a sale at a value range inside a date range — and both at once is how an exit target
