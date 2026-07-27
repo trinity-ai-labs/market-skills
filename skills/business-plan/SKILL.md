@@ -414,6 +414,10 @@ downstream:
 - **Resources** — team, runway (months, not dollars, if they prefer), hours/week, capital
   available or sought.
 - **Unfair advantages** — distribution, audience, domain expertise, tech head start.
+- **Category usage** — which products in this category the founder has personally used, and what
+  specifically broke. A named failure they hit themselves is a primary observation and outranks
+  any feature matrix; their verdict on a competitor is commentary. Both arrive in one sentence,
+  so file them apart.
 - **Constraints & appetite** — geography, compliance lines, will they do sales calls, content,
   paid ads?
 - **Automation appetite** — how much of the growth engine gets automated, and the founder's
