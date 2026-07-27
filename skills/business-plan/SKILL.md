@@ -83,9 +83,13 @@ nearest-reachable solve and the negotiation script are in
 [references/target.md](references/target.md). Point at it; never restate it.
 
 16. **A target verdict is computed from evidenced drivers, never asserted, and never at high
-    confidence.** Asserted instead of computed, a verdict is an opinion in the shape of a
-    finding: unarguable, untestable, and carrying the vault's authority into a forecast about a
-    future nobody has run.
+    confidence — and a verdict whose binding driver is `policy` rather than `structural` is
+    negative for the stated configuration only, never for the target.** Asserted instead of
+    computed, a verdict is an opinion in the shape of a finding: unarguable, untestable, and
+    carrying the vault's authority into a forecast about a future nobody has run. Reported
+    without its driver's kind, a policy-bound "unreachable" stops a founder over a decision they
+    could revisit this week, in the same words and at the same confidence as a constraint no
+    decision of theirs can move.
 
 17. **The vault is a git repo (Phase 0): commit at every meaningful write, and where a remote
     exists — the Phase 5 consent gate — push every commit.** Phase boundaries are too coarse a
@@ -94,6 +98,14 @@ nearest-reachable solve and the negotiation script are in
     destination and visibility, and past that an unpushed commit is worse than no remote — it
     reads as a backup, so the founder believes the corpus is in two places while it is on one
     laptop.
+
+18. **Every input to a steady-state ceiling and every target driver is labelled `structural` or
+    `policy` — those two words — and any ceiling or verdict whose binding input is policy is
+    stated as the result of that configuration, with one changed policy value shown beside it.**
+    Unlabelled, the skill lets a founder's decision become a law of nature and reports the
+    consequence as physics, and a number reported as physics is one nobody argues with. The
+    ceiling's half of this is in [references/plan-template.md](references/plan-template.md), the
+    verdict's in [references/target.md](references/target.md).
 
 ## Output contract — deterministic home
 
