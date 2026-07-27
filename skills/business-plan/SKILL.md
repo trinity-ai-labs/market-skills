@@ -877,10 +877,12 @@ plainly and revise the bet — that IS the job.
 
 ## Phase 5 — Deliverables
 
-**Lint is the release gate, and it runs before the first render.** `vault-lint.sh` must
-be clean over the whole vault: a plan citing a retracted or superseded source does not ship. The
-failure this stops is the worst one available — a polished PDF asserting flatly what the corpus
-already withdrew, handed to the one reader with no way to check it.
+**Lint is the release gate, and it runs before the first render.** Invariant 15 names the calls
+this gate makes and what each one is for; it is the whole set, never the default run alone. The
+vault comes back clean or nothing renders: a plan citing a retracted or superseded source does
+not ship, and neither does one whose citation names a document that was renamed or a section
+that was cut. The failure this stops is the worst one available — a polished PDF asserting
+flatly what the corpus already withdrew, handed to the one reader with no way to check it.
 
 Render `business-plan.md` (+ the financial model) into ONE polished, self-contained
 `deliverables/business-plan.html` and a print-quality `deliverables/business-plan.pdf`, and
