@@ -27,8 +27,11 @@
 //   8. Every backtick-quoted `## Heading` resolves to a real heading — one skill
 //      cites another's output sections by literal string, and when the two drift
 //      the citing prose still reads correct while the section is never produced
+//   9. Every `#anchor` in a markdown link resolves to a heading in the file it
+//      points at — these references are navigated by their Contents blocks, and
+//      a link whose heading was renamed or deleted lands the reader nowhere
 //
-// Checks 6-8 each fail when their own source pattern matches NOTHING, because a
+// Checks 6-9 each fail when their own source pattern matches NOTHING, because a
 // check that quietly stops matching prints the same green as a check that passed.
 
 import { readdir, readFile, stat } from 'node:fs/promises';
@@ -73,19 +76,75 @@ function readFrontmatter(text) {
 }
 
 /**
+ * Drop fenced code blocks. A link or a heading inside a fence is an EXAMPLE of a
+ * pattern — a template showing the shape of an output file — not a live link
+ * that must resolve or a heading a reader can jump to.
+ */
+const stripFences = (text) => text.replace(/```[\s\S]*?```/g, '');
+
+/** Every markdown link target outside a code fence, URLs and mail links dropped. */
+function* localLinks(text) {
+  for (const m of stripFences(text).matchAll(/\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
+    const target = m[1];
+    if (/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(target)) continue;
+    yield target;
+  }
+}
+
+/**
  * Markdown links whose target is a relative path. Skips URLs, anchors, and mail
  * links — and skips fenced code blocks, since an example link inside a code
  * fence documents a pattern rather than pointing at a file that must exist.
  */
 function relativeLinks(text) {
-  const withoutFences = text.replace(/```[\s\S]*?```/g, '');
   const out = [];
-  for (const m of withoutFences.matchAll(/\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
-    const target = m[1];
-    if (/^([a-z][a-z0-9+.-]*:|#|\/\/)/i.test(target)) continue;
+  for (const target of localLinks(text)) {
+    if (target.startsWith('#')) continue;
     out.push(target.split('#')[0]);
   }
   return out.filter(Boolean);
+}
+
+/**
+ * GitHub's heading-anchor slug, which is what every `#fragment` in these files
+ * is written against: lowercase, drop everything that is not a word character,
+ * whitespace or a hyphen, THEN map each whitespace character to its OWN hyphen.
+ *
+ * Two details are load-bearing, and each is a false positive on a known-good
+ * file if you get it wrong. Collapsing whitespace runs breaks every heading
+ * containing an em dash: dropping the dash leaves the two spaces that flanked
+ * it, so `## Stage 5 — Stop` slugs to `stage-5--stop` — the doubled hyphen the
+ * Contents blocks in this repo actually carry. And `_` is a word character
+ * GitHub keeps, not an emphasis marker to strip: vault-migration.md's
+ * `#retrofit-killed_because-…` entry points at a heading holding a
+ * `killed_because` code span, and a slugger that eats the underscore reports
+ * that working link as broken.
+ *
+ * This mirrors, character for character, the slug rule in ci.yml's
+ * "Every '## Contents' link points at a real heading" step. Two checkers with
+ * two sluggers is worse than one checker, because they drift and both get
+ * trusted.
+ *
+ * No file here has two headings that slug alike, so the `-1`/`-2` suffixes
+ * GitHub appends to a repeated heading have nothing to model.
+ */
+function slugify(heading) {
+  return heading
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}_\s-]/gu, '')
+    .replace(/\s/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** The anchors a file offers: one slug per heading it actually renders. */
+function headingSlugs(text) {
+  const out = new Set();
+  for (const line of stripFences(text).split('\n')) {
+    const m = line.match(/^#{1,6}\s+(.*?)\s*$/);
+    if (m) out.add(slugify(m[1]));
+  }
+  return out;
 }
 
 const ORCHESTRATION = join(SKILLS_DIR, 'market-analysis', 'references', 'orchestration.md');
@@ -244,6 +303,51 @@ async function checkCitedHeadingsExist() {
   }
 }
 
+/**
+ * Check 9 — every `#anchor` a link carries resolves to a heading in the file it
+ * points at.
+ *
+ * Check 4 validates the PATH half of a link and deliberately strips the
+ * fragment, so `other.md#gone` passes on the strength of `other.md` existing and
+ * a pure in-file `(#gone)` has no path to resolve at all. That is how an edit
+ * deleted a `## Heading` while the file's own Contents block went on linking to
+ * it, green the whole way. These references are navigated by those Contents
+ * blocks, so a dead anchor is a reader landing nowhere in the file that IS the
+ * skill's method.
+ *
+ * A link whose path does not resolve is check 4's failure, not this one's — it
+ * is skipped here rather than reported twice.
+ */
+async function checkAnchorsResolve() {
+  const slugsFor = new Map();
+  const slugsOf = async (file) => {
+    if (!slugsFor.has(file)) slugsFor.set(file, headingSlugs(await readFile(file, 'utf8')));
+    return slugsFor.get(file);
+  };
+
+  let anchors = 0;
+  for await (const file of walk(SKILLS_DIR)) {
+    if (!file.endsWith('.md')) continue;
+    for (const target of localLinks(await readFile(file, 'utf8'))) {
+      const hash = target.indexOf('#');
+      if (hash === -1) continue;
+      const path = target.slice(0, hash);
+      const anchor = target.slice(hash + 1);
+      if (!anchor) continue;
+
+      const dest = path === '' ? file : resolve(dirname(file), path);
+      if (!dest.endsWith('.md') || !existsSync(dest)) continue;
+
+      anchors += 1;
+      if (!(await slugsOf(dest)).has(anchor)) {
+        const where = dest === file ? 'this file' : relative(ROOT, dest);
+        fail(file, 'link', `dead anchor -> ${target} — no heading in ${where} slugs to "${anchor}"`);
+      }
+    }
+  }
+  if (anchors === 0) fail(SKILLS_DIR, 'link', 'no #anchor links found — check 9 ran on nothing');
+}
+
 async function main() {
   if (!existsSync(SKILLS_DIR)) {
     fail(SKILLS_DIR, 'structure', 'no skills/ directory');
@@ -297,6 +401,7 @@ async function main() {
   await checkBriefsInterpolatePlaybooks();
   await checkDimensionsAreRegistered();
   await checkCitedHeadingsExist();
+  await checkAnchorsResolve();
 
   report();
 }

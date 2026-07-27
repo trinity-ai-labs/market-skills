@@ -168,6 +168,21 @@ jobs:
 
   version-bump:
     name: shipped content changed ⇒ version bumped
+    # Only the merge that actually SHIPS is gated on the version. A release is
+    # built on an integration branch from several slice branches, and each slice
+    # changes shipped content — so without this condition every slice PR demands
+    # its own bump, and one release either carries five of them or shows four red
+    # PRs. The observed consequence was worse than the noise: slices stopped being
+    # opened as PRs at all and were merged into the integration branch as bare
+    # merge commits, which on a public repo costs the per-slice diff, the review
+    # record, and `--delete-branch` — merged branches then accumulate until
+    # someone prunes them by hand.
+    #
+    # The `checks` job above deliberately still runs on EVERY pull request: the
+    # gate, shellcheck, and the public-repo hygiene scans are exactly what a slice
+    # PR is for. Only the bump is deferred to the boundary where an install can
+    # actually see it.
+    if: github.event_name == 'push' || github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     steps:
       # The one job that needs history: it diffs against the PR base and reads the

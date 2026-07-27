@@ -120,6 +120,27 @@ Hunt:
   exhibit as excluded-from-overlay with the reason. Silently excluding it makes the reference
   class look tighter than the evidence supports: what the survivors share is a habit of publishing
   launch dates, which is a disclosure pattern, not a growth pattern.
+- **Every rate carries the ARR bucket it was measured in, and rates are only ever compared within
+  a bucket.** Re-basing to months since origin controls for calendar time and market conditions;
+  it does not control for **scale**, and nothing else in this file records the ARR level a rate
+  was posted at. So declare the buckets in the file as a property of the reference class —
+  order-of-magnitude bands are the usual cut — tag every rate with the bucket it was measured in,
+  fit per bucket where the set spans more than one (a single curve fitted across buckets is this
+  same error one level up), and check the subject's own projected rate against the bucket **it
+  will actually be in at that month**, not against the set as a whole. A band assembled across
+  buckets is not a band; it is two different phenomena plotted on one axis.
+  A comparable that crosses a bucket mid-series is tagged per stretch rather than per company: the
+  company that posted the early rates is not the one that posted the late ones in the only respect
+  this comparison turns on.
+- **The bucket failure fires in both directions, which is why tagging one end of it is not
+  enough.** Two comparables both sit at month 18 — one posting around 20%/mo from a few hundred
+  thousand in ARR, one around 4%/mo at tens of millions. Pooled, they produce a month-18 range
+  neither company's scale supports: a subject at low ARR is told its plan is unambitious against
+  companies that were tiny when they posted those rates, because percentage growth off a small
+  base is arithmetically easy and reads as a category norm; and the same undifferentiated band
+  makes the high-ARR rate look reachable at a scale nobody in the set achieved it at. Both come
+  back as a confident number with a reference class behind it, which is exactly what carries them
+  through review.
 - **Fit the decay across the set — never assume a constant rate.** The output is two things: a
   per-company trajectory over months-since-origin, and a fitted decay across the indexed set with
   a stated goodness of fit and the months the fit is supported over. That is what lets the
@@ -170,10 +191,76 @@ Hunt:
   say so. Same discipline sizing applies to bottom-up vs top-down: a large gap is a mismatch to
   explain, and averaging the two produces a number that is neither the category's growth nor any
   company's.
+- **Where the target is an exit, the disclosed acquisitions in the category are a second series on
+  the same axis.** Index them the way this dimension indexes anything else — to the acquired
+  company's growth slope at the moment of sale, at its month since its own stated origin — so a
+  sale lands at a month and a slope rather than at a date. Per comparable, hunt **ARR at exit, the
+  multiple that implies, the acquirer, the acquirer's stated strategic rationale in its own quoted
+  words, and the company's stage and slope at sale**. The multiple is the term an exit verdict is
+  most sensitive to and the one nobody sources: the founder cannot supply it — it is set by buyers
+  they have not met, at a moment that has not happened — so a run without this set solves the exit
+  at an assumed multiple and returns *undetermined* on the driver that decided the answer.
+  `business-plan`'s `references/target.md` names this set as the cheapest test that settles it,
+  which is why the indexing basis has to be the same one: an exit indexed to anything but slope
+  cannot be read at the month the roadmap puts the sale.
+- **The set IS the reference class — label the endpoints, never average them into a multiple.**
+  The same discipline the observed growth band already runs under: each endpoint carries its
+  company, its ARR at exit, its stage, its slope at sale and the deal's date. A mean multiple
+  across the set describes no deal that happened, and it is the figure that ends up in the
+  identity precisely because it is the only one shaped like an answer.
+- **Too few comparables to bound a band is a stated finding, written in those words.** Where the
+  category has one or two disclosed exits, record "two comparables, no band" against the set and
+  leave the band undrawn rather than running a line through the pair. A band drawn through two
+  points is indistinguishable on the page from one bounded across twelve and carries none of the
+  evidence a band implies — the two-point-average error again, one term further down the identity
+  where it moves the verdict far more.
+- **Decompose the consideration — a headline figure is not what the seller received.** Record, per
+  comparable, the headline and **what portion was actually received at close**, with the source for
+  the split. A headline routinely folds in an **earnout** contingent on post-close targets, an
+  **escrow/holdback** released later or not at all, **acquirer stock** rather than cash (carried at
+  the acquirer's own valuation, itself a multiple and itself unrealised), and **retention packages**
+  that are compensation for the team rather than price for the company. The split lives in the
+  filings and the later disclosures; it is never in the announcement. Draw the band on consideration
+  received at close, with the stock leg carried at the acquirer's own mark and the cash-only figure
+  recorded beside it, so a reader can see how much of the number is still someone else's equity.
+- **A reference class built from announcements skews high as a class, and naming survivorship does
+  not catch it.** Headline figures are the ones that get published; the components that reduce them
+  are disclosed later, elsewhere, and in less-read documents. So this is not one bad data point to
+  drop — it is a bias in the whole set, and it slips past the survivorship note below because these
+  deals did close. A multiple that was mostly earnout and one paid in cash at close are different
+  numbers wearing the same label, and an exit verdict computed against the first tells a founder a
+  price no seller in the set actually took home.
+- **Where the split cannot be found, the comparable is recorded as "headline-only, uncorroborated"
+  and labelled that way everywhere it appears** — in the set, at its endpoint, on the exhibit, and
+  in any band it contributes to. Never pool it silently with decomposed comparables: pooled, it
+  lifts the band by exactly the amount nobody could verify, and the label is the only thing telling
+  a reader which end of that band rests on a figure and which rests on an announcement.
+- **A worked example, invented end to end.** Comparable D — origin: general availability; sale at
+  month 34, announced 14 months before this run's pull date; stage: growth, slope around 6%/mo
+  across the three months into the sale; ARR at exit around $9M, bucket $1–10M. The headline was
+  about $72M, implying **8×**. The acquirer's filing splits it: roughly 45% earnout against
+  post-close targets over two years, 10% escrow held 18 months, and about $33M at close — a third of
+  that in acquirer stock at the acquirer's own valuation. Consideration received at close therefore
+  implies **3.7×**, and cash alone nearer 2.4×. Both figures are that deal's multiple; only one of
+  them is a price. Left as the headline, this comparable sets a band top a founder is told to hold
+  out for and the seller in question never got.
+- **Name survivorship outright, in the file, beside the band.** Announced acquisitions are the
+  ones that closed: nobody publishes the multiple they were offered and refused, and a sale that
+  collapsed in diligence leaves no figure to index. The set is therefore what this category paid
+  the sellers who said yes, which is a narrower statement than what this category pays — and left
+  unstated the reader makes the wider one, because a labelled band reads as a property of the
+  category rather than of the handful of deals that reached an announcement.
 - **The file states the exhibit it will produce**: an indexed multi-series chart — months since
   origin on x, the metric on y, one line per comparable, the subject's own projection overlaid —
-  plus the excluded-from-overlay list beneath it. Built per `rendering.md`; an unrendered curve
-  file gets read as a table of numbers and the shape comparison never happens.
+  plus the excluded-from-overlay list beneath it, and the ARR bucket each line sits in made
+  legible in the chart itself rather than only in the caption — a chart that hides the bucket
+  re-creates the cross-bucket comparison the bucket rule exists to remove, and does it in the one
+  artifact a reader trusts without reading the prose. Where the exit set ran, each sale is marked
+  on its own company's line at the month it happened, carrying its implied multiple and whether
+  that multiple was decomposed or is headline-only: slope is what sets the multiple, so it rides
+  the curve rather than sitting in an exhibit of its own, where a reader has to carry a month
+  across two charts and stops doing it after the second comparable. Built per `rendering.md`; an unrendered curve file gets read as a table of numbers
+  and the shape comparison never happens.
 
 Sources: the dated traction points already in `research/profiles/` and `research/competitors.md`
 (primary — never re-derive points that dimension sourced; a second series for the same company
@@ -189,6 +276,15 @@ and launch threads, job boards (a hiring wave dates a channel or a team the foun
 Wayback pricing-page diffs, and for public companies the filings and investor letters. Reading the
 same page twice costs nothing; discovering at synthesis that nobody asked how the curve was grown
 costs the whole dimension a re-run.
+
+For the exit set the sources are the acquirer's own disclosures rather than the coverage of them:
+the acquisition announcement and the acquirer's investor communications around it (the stated
+rationale, quoted rather than paraphrased into a motive), the acquired company's last disclosed
+traction points already in `research/profiles/` (ARR at exit and the slope running into the sale,
+never re-derived), and category M&A trackers to find the deals at all. The consideration split is a
+separate hunt with separate sources: the acquirer's filings and its later periodic disclosures,
+where an earnout, an escrow and a stock component are itemised months after the announcement that
+never mentioned them. Reading only the announcement is what makes the set skew high.
 
 ## Market sizing (`research/sizing.md`)
 
