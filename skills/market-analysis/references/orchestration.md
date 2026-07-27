@@ -251,6 +251,10 @@ for (let round = 0; round < 3; round++) {
   if (round === 2) { log('critic still unclean after max rounds — gaps returned for the report'); unclosedGaps.push(...gaps); break }
   if (gaps.length > 8) { log(`closing 8 of ${gaps.length} gaps this round; rest re-audited next round`) }
   log(`critic round ${round + 1}: ${Math.min(gaps.length, 8)} gaps — closing`)
+  // No playbook rides along: a gap names no dimension, and several gap classes have none to name
+  // (an unprofiled competitor belongs to Workflow A's playbook, which B never holds). Guessing a
+  // key off the free text would hand some gaps the WRONG playbook — worse than none. g.dispatch,
+  // written against the file the critic actually read, is the whole brief.
   await parallel(gaps.slice(0, 8).map((g, i) => () =>
     agent(`${CTX}\n\n${g.dispatch}\n\nUPDATE the relevant file under ${outDir}/research/ — append new rows to its Sources table, never delete prior rows.`,
       { label: `close-gap:${i}`, phase: 'Critique', model: 'sonnet', effort: 'medium' })))
