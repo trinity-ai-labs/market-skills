@@ -752,7 +752,16 @@ three milestones, and where everything landed. Invite pushback on the specific b
   the ceiling of that configuration, with one changed policy value beside it.
 - Every stretch of the projection's curve names its operational driver — inflections and flat
   stretches alike. Zero growth is an assumption, not the absence of one, and unnamed it is
-  unmodelled rather than conservative.
+  unmodelled, not conservative.
+- Every model input names its driver in both directions, and a low one with none is unmodelled,
+  not conservative. Skepticism that fires in one direction only is a filter: each pessimistic
+  input is defensible alone, the chain multiplies them, and their product reaches the founder as
+  a property of the market rather than as a stack of choices nobody wrote down.
+- A structural driver with no subject instrument is sourced from the indexed set — a `claim`
+  resting on `research/growth-curves.md`, carrying that set's `stale_after`, a `validated_by`
+  kill test and the survivorship qualifier — and is never filed as an `assumption`. Filed that
+  way, invariant 11 caps it at its weakest input, and every plan for a company that has not
+  launched reads as unjustified for a reason that is routing rather than evidence.
 - The projection's implied monthly growth rate is placed against the observed growth band, and
   its implied trajectory against the indexed comparable curves at matching months since origin.
   Any excursion — in level, in either direction, or in shape — names the difference defending it.
