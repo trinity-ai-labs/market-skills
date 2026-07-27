@@ -84,6 +84,16 @@ settled one — as a `supersedes` / `status: superseded` pair, never `retracted`
 [target.md](target.md#the-founder-chooses-and-the-superseded-target-keeps-its-reason) (the
 two-edit mechanics are [vault.md](vault.md#every-note-carries-these-six-fields)'s).
 
+EVERY DRIVER VALUE SAYS WHERE IT CAME FROM, AND A REFERENCE-CLASS VALUE IS LABELLED AS ONE —
+measured on the subject's own instrument, read off a sourced category benchmark, or taken from the
+indexed reference class in research/growth-curves.md at the month the target counts. A value the
+indexed set SOURCED carries the survivorship qualifier with it, in the same words each time; a
+policy driver never carries that label, because the set is only ever allowed to CHECK it, per
+[target.md](target.md#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it).
+Rendered identically, a value extrapolated from comparables and a value measured on this product
+are indistinguishable, and the founder acts on both equally — while only one of them is about
+their company.
+
 WHERE EITHER AXIS WAS STATED AS A RANGE, THIS SECTION CARRIES THE CORNER VERDICTS — plural, as a
 table — not one verdict: which corners clear and which do not, with the binding driver and that
 driver's kind named per corner, per
