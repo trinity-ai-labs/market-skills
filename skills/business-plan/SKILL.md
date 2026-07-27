@@ -975,12 +975,19 @@ three milestones, and where everything landed. Invite pushback on the specific b
   `--supersession-sweep` worklist read to its end. The default run is a strict subset of the
   checks that exist, so a plan clears it while citing a document nobody can open — and the last
   thing standing between that citation and a rendered PDF is this gate.
+- The plan states the strongest claim its evidence supports, and a claim weaker than its evidence
+  is an error of the same class as one stronger. Understatement is not caution: an overclaim gets
+  challenged, an understatement gets believed. Every other bar on this list fires on optimism, so
+  a claim falling short of its own evidence clears all of them and reads as rigour — to the
+  founder, to the panel, and to the reader who acts on it — and the only person who can catch it
+  is the one who re-opens the source. The both-directions test below governs the *values* in the
+  model; this governs what the prose asserts, whatever the evidence behind it was.
 - Every claim about the subject's own product was re-verified against source at the current
   commit before the first section was drafted, and each drift landed as a supersession rather
-  than an edit in place. The rest of the skill's skepticism fires on optimism, so a claim that
-  went stale in the *pessimistic* direction — a capability that shipped, a limit that was raised
-  — clears every other bar on this list and reads as conservatism the whole way to the reader
-  who acts on it.
+  than an edit in place. This is the bar above at the one point it can be enforced by
+  construction: the product moves while the research fleet spends a week running, so *which*
+  claims fell behind their own evidence is a knowable population here — the subject's own — and
+  a matter of noticing everywhere else.
 - Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
   the claim — a claim whose named section does not say what the note says is still open,
   whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
