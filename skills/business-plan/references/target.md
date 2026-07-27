@@ -30,7 +30,10 @@ inside Phase 3 is not in context when Phase 3 runs.
 
 Every target is an arithmetic identity waiting to be written down. Write the identity first, in
 full, before a single value goes into it — because the identity is what makes the verdict
-checkable by someone who disagrees with it.
+checkable by someone who disagrees with it. **The shapes below are the ones this file
+decomposes, not the ones that exist.** Read the list as open: a target whose shape is missing
+gets forced into the nearest one on it, and the substitution is silent because the identity that
+results is well-formed.
 
 - **A revenue target.** `MRR at the target date = paying customers at that date × price`.
 - **The customer count underneath it.** `new customers per month = reach per month × conversion`,
@@ -46,6 +49,18 @@ checkable by someone who disagrees with it.
   by the reinvestment the plan already commits to — owner pay is a named bucket in
   [strategy-sim.md](strategy-sim.md), never the residual. Solving for revenue equal to the salary
   is the standard version of this mistake, and it understates the target by the whole cost base.
+
+**An exit target is a shape this file does not yet decompose, and it is the one the list above
+will swallow.** An outcome stated as a company valuation or an acquisition does not reduce to the
+revenue identity, because its dominant term is a multiple and a multiple is not a constant: it is
+a range set by the growth slope at the moment of sale, by how strategically necessary and how
+hard to rebuild the asset is to a *named* acquirer, and by a window that can close. Forced into
+the revenue identity, every one of those disappears into an assumed ARR figure at a multiple
+nobody evidenced or even wrote down, and the verdict comes back confident about a quantity that
+was never the constraint. Until the identity is written, record the exit target as stated and
+return **undetermined**, naming the missing decomposition as what is missing — which is
+[a driver that traces to nothing](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
+applied one level up, to the identity rather than to a value inside it.
 
 **The failure the identity prevents:** without it, "can we get to this number" is answered by
 judgement about the number as a whole, and judgement about a whole number is unarguable. Nobody
