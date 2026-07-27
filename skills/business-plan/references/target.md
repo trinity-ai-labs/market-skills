@@ -22,6 +22,7 @@ inside Phase 3 is not in context when Phase 3 runs.
 - [The outcome decomposes into drivers before any number goes into it](#the-outcome-decomposes-into-drivers-before-any-number-goes-into-it)
   - [Each driver takes its value from a named place in the corpus](#each-driver-takes-its-value-from-a-named-place-in-the-corpus)
   - [The multiple's inputs have homes too, and not one of them is ARR](#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)
+  - [A structural driver may be sourced from the reference class; a policy driver may only be checked by it](#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it)
 - [The verdict names which driver binds, and by how much](#the-verdict-names-which-driver-binds-and-by-how-much)
 - [A binding driver that is policy makes the verdict conditional, not negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative)
 - [A driver that traces to nothing makes the verdict undetermined, not negative](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative)
@@ -96,15 +97,18 @@ home, and the home is not the same for all four:
 | retention | structural | the same, and it is per-period, so the period is part of the value |
 | reach | policy | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput; where the indexed set covers the same months, a comparable's reach at that month since origin is the reference-class check on that figure — it does not replace it, because reach is this founder's channels and hours |
 
-**`kind` records who sets the value, and it is what a negative verdict is later allowed to
-conclude.** A **structural** driver is set by the category and the product: conversion and
-retention are what they are at the stage the target counts, and no decision the founder takes this
-week moves them. A **policy** driver is a value the founder chose and could choose differently —
-reach is channels × hours, which is a decision, and price is a point the founder picks inside a
-band the willingness-to-pay evidence sets, so the point is policy and the band is structural.
-[A binding driver that is policy makes the verdict conditional, not
-negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative) is the test
-that runs on this column.
+**`kind` records who sets the value, and it decides two things: where that value is allowed to come
+from, and what a negative verdict is later allowed to conclude.** A **structural** driver is set by
+the category and the product: conversion and retention are what they are at the stage the target
+counts, and no decision the founder takes this week moves them. A **policy** driver is a value the
+founder chose and could choose differently — reach is channels × hours, which is a decision, and
+price is a point the founder picks inside a band the willingness-to-pay evidence sets, so the point
+is policy and the band is structural. Two tests run on this column at two moments: [a structural
+driver may be sourced from the reference class; a policy driver may only be checked by
+it](#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it)
+at fill time, and [a binding driver that is policy makes the verdict conditional, not
+negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative) at verdict
+time.
 
 **Where the founder's instinct and the evidenced range disagree, record the divergence — never
 average them.** The midpoint of a founder's hope and a benchmark is a number neither of them
@@ -138,14 +142,20 @@ least sensitive to, and the second term is what decides the answer.
 
 | driver | kind | where its value comes from |
 |---|---|---|
-| growth slope at the moment of sale — **not the level reached** | policy | `research/growth-curves.md`'s indexed set, read at the month the sale lands. A company growing fast at a smaller ARR prices above a larger one that has flattened, which is why the level term cannot stand in for this one. The exit multiple and the indexed curve are the same instrument read at different moments, which is why they share an exhibit rather than each getting one |
+| growth slope at the moment of sale — **not the level reached** | policy | the slope this roadmap commits to at the month the sale lands — stated configuration in the same sense reach is, never the plan's own projection fed back in — with `research/growth-curves.md`'s indexed set read at that same month as the check on it. A company growing fast at a smaller ARR prices above a larger one that has flattened, which is why the level term cannot stand in for this one. The exit multiple and the indexed curve are the same instrument read at different moments, which is why they share an exhibit rather than each getting one |
 | strategic necessity to a **named** acquirer | policy | the dossier's seam argument — what is true only because these parts sit in one system. The question is not "is this valuable" but *which acquirer has a hole this patches, and is the product visibly the patch*. An unnamed acquirer is not a driver value; it is a blank the identity accepts without complaint. Which acquirer the roadmap is aimed at is a decision, and that is what makes this policy |
 | scarcity, and how buildable the asset is | structural | the moats dimension, with `power = benefit + barrier` asked of the buyer rather than of a competitor. If the acquirer ships it itself in two quarters the price collapses to an acquihire, and nothing the founder decides this week moves that |
 | a bidding dynamic | structural | the same named-acquirer set, counted rather than argued: how many buyers have the same hole. One interested party is a price **floor**, not a price — a single bidder pays what it has to, and what it has to pay is whatever the founder's next-best alternative is worth |
 
-**`kind` means the same thing here as above — who sets the value, and what a negative verdict is
-allowed to conclude.** Slope and the acquirer aimed at are policy, so an exit value the multiple
-will not carry at the roadmap's current slope is unreachable *in the stated configuration*, and
+**`kind` means the same thing here as above — where the value may come from, and what a negative
+verdict is allowed to conclude.** At fill time that reads: the indexed set and the comparable-exit
+set *check* slope and the named acquirer, because both are commitments this roadmap makes; the moats
+dimension and the counted acquirer set *source* scarcity and the bidder count outright, because both
+are properties of the category and its buyers.
+
+At verdict time it reads as it does above. Slope and the acquirer aimed at are policy, so an exit
+value the multiple will not carry at the roadmap's current slope is unreachable *in the stated
+configuration*, and
 [A binding driver that is policy makes the verdict conditional, not
 negative](#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative) is the rule
 that fires. Scarcity and the bidder count are structural: they are set by the category and by the
@@ -157,6 +167,97 @@ for that, when what is true is that this roadmap cannot sell it for that.
 memory.** A band whose ends trace to nothing is a scalar with error bars painted on, and it fails
 in the direction that hides: it *passes* the flip test, because ends chosen close together give
 the same verdict at both, and the run then reports a verdict that rests on the width of a guess.
+
+### A structural driver may be sourced from the reference class; a policy driver may only be checked by it
+
+The two tables above hand the same instrument two different authorities, and the reason is the
+`kind` column rather than anything about the instrument. `research/growth-curves.md` *sets*
+conversion, at the month since origin the target counts; the same file only *checks* reach against
+what the founder said their own channels do. Stated as a principle:
+
+**A structural driver is a property of the category, so the indexed set can source it. A policy
+driver is the founder's own configuration, so a comparable's value is evidence about a different
+company's choices and can only ever be a check.**
+
+Conversion and retention are what the category does at a stage, and a comparable measured at that
+stage is measuring the same quantity — the set speaks to them directly. Reach is this founder's
+channels at this founder's hours; a comparable that put ten times as many people in front of its
+product a month is reporting a different budget and a different audience, and pasting that figure in
+replaces the configuration under test with somebody else's. The same reading runs down the exit
+table: slope at the sale month and the acquirer the roadmap aims at are commitments this plan makes,
+so the indexed set and the comparable-exit set check them, while scarcity and the bidder count are
+properties of the category and its buyers, so the moats dimension and the counted acquirer set
+source them.
+
+**Sourcing a policy driver from a comparable is neither conservative nor aggressive — it answers a
+different question, and the answer comes back well-formed.** The verdict exists to say whether *this
+configuration* reaches the target. Fill reach from the reference class and it says instead whether a
+company with that reference class's channels would, and the founder's stated hours never enter the
+arithmetic at all. Nothing in the readout marks the swap: the figure carries a citation, the identity
+balances, and the binding driver is named with the same confidence it would have had. The founder
+then argues about a constraint that was never theirs.
+
+**The reference class is not a term in any identity, and it is the input every structural driver's
+value rests on.** Which companies are comparable is what sets conversion, retention and the multiple
+at once, one level beneath the arithmetic — so it takes the discipline the drivers take: **named in
+the readout, classified `structural`, homed to `research/growth-curves.md`, and put through the flip
+test.** Left unwritten it is not a neutral background choice; it is the largest unexamined input in
+the method.
+
+**Flip the reference class across the alternatives a reasonable person would argue for.** Re-solve
+the identity with each candidate set's values at the months the target counts. Same verdict under
+both and it stands, with the readout naming which class it stood on. Verdict moves and there is no
+verdict: the run returns **undetermined**, names both candidate classes, and names the cheapest test
+that would settle which one the subject belongs to. This is [a driver that traces to
+nothing](#a-driver-that-traces-to-nothing-makes-the-verdict-undetermined-not-negative) applied one
+level up — to the thing that decides where every structural driver's value comes from.
+
+**The failure an unwritten reference class causes:** a class chosen by feel cannot be attacked,
+because it never appears as an input, and the growth rate it sets then inherits the authority of the
+indexed set it was only ever assumed into. The founder is handed what reads as a property of their
+market, and what they were handed is a categorisation. It is the highest-leverage error available in
+this method precisely because every structural driver beneath it moves together: the whole verdict
+shifts without a single figure in it looking wrong.
+
+A worked example, invented end to end:
+
+> A developer-tool product is indexed against a general developer-tooling class, and its structural
+> drivers take their month-18 values from that set. A reviewer argues the subject belongs to a
+> narrower class the same file indexes separately — tools adopted bottom-up by individual engineers
+> inside larger accounts — which posts materially steeper conversion at the same month.
+>
+> Both classes are defensible from the dossier, so the class is flipped. The target clears under the
+> narrower one and misses under the general one.
+>
+> **Readout:** *undetermined, and what is undetermined is the reference class rather than any driver.
+> Conversion, retention and the multiple all move together between the two classes, which is why no
+> single figure looks wrong under either. The cheapest test is the adoption path in the disclosed
+> deployments: whether the product enters an account through an individual engineer or through a
+> procurement decision. Kill/continue: if the disclosed deployments are predominantly
+> procurement-led, the general class is the right one and the target does not clear.*
+
+**Every company in the indexed set is a survivor, so a driver sourced from it carries the
+survivorship qualifier wherever the value appears.** The set is assembled from companies that got far
+enough to be written about; the ones that posted the same early numbers and then stopped are absent
+by construction. That is a property of the set rather than of any member, and it makes a driver
+sourced this way systematically optimistic. The qualifier travels with the value into the readout and
+into any exhibit that renders it, in the same words each time — not as a footnote on the research
+file, which is not where the number is read.
+
+**Where a broad-population figure and a named-company value both exist for the same metric, record
+the disagreement — never pick by feel and never average.** This is the founder-instinct rule at a
+different pair of sources: a midpoint is a number neither source asserts, entering the identity
+carrying the authority of both. The gap is not a rounding difference. Broad-population medians and
+named-company values for the same metric routinely differ by most of an order of magnitude, because
+the named companies are the ones that worked, and a run that quietly took the higher of the two has
+sized the plan against a population the subject is not in yet.
+
+**The failure an unqualified survivor value causes:** reported bare it says *this is what companies
+at this stage do*, when what it says is *this is what the companies that made it did*. That is the
+both-directions defect wearing the opposite sign — an unaudited bias in a value that reads as
+sourced. Replacing a pessimistic default nobody challenged with an optimistic one nobody challenged
+moves the error; it does not remove it, and it is harder to catch in the second position because the
+number now has a citation behind it.
 
 ## The verdict names which driver binds, and by how much
 
@@ -251,10 +352,44 @@ and never reaches the constraint they cannot decide their way out of.
 
 ## A driver that traces to nothing makes the verdict undetermined, not negative
 
-Any driver value that cannot be traced to a source is an `assumption` note carrying its `value`
-and its `sensitivity` — the fields and the note shape are in
+**A driver with no subject instrument tries the reference class before it degrades to an
+assumption.** No `source` note, no benchmark and no grilled founder fact is not yet a dead end.
+Where the driver is **structural** and `research/growth-curves.md` indexes it at the month the
+target counts, the value is a `claim` resting on that indexed set — carrying the set's `stale_after`
+and a `validated_by` naming the kill test that would overturn it. Only a driver the reference class
+genuinely cannot speak to degrades: every policy driver, whose value the set is only ever allowed to
+check, and any structural one the set does not index at the month in question.
+
+**The failure skipping that rung causes:** invariant 11 caps a claim at its weakest input. Route the
+only legitimate evidence a pre-launch company has through an `assumption` and every driver is weak by
+construction — so every plan for a company that has not launched reads as unjustified, which is every
+company at the moment the plan is worth writing. `market-analysis` builds the indexed reference class
+precisely so a driver can take its value at a stated month; declining to let it is the skill refusing
+its own instrument, and the founder is told the evidence is thin when what is thin is the routing.
+
+**What survives that rung is a real assumption.** A driver value with no source and no
+reference-class home is an `assumption` note carrying its `value` and its `sensitivity` — the fields
+and the note shape are in
 [vault.md](vault.md#the-assumption-note-is-what-you-would-believe-with-no-evidence). It is never
 written into the identity as though it were sourced.
+
+A worked example, invented end to end:
+
+> A pre-launch product has no conversion data of its own, and the benchmark the research found
+> measures conversion to signup while the target counts first paid. `research/growth-curves.md`
+> indexes four comparables that disclose paid conversion, two of them at the month since origin the
+> target counts.
+>
+> Conversion is **structural** and the set speaks to it at the right month, so it does not degrade.
+> It enters as a `claim` resting on those two comparables, at the tighter of the two ranges they
+> describe, with the set's `stale_after` and a `validated_by` reading: *a landing test at the stated
+> price, run to a few hundred visitors; if paid conversion lands below the set's low end the driver
+> is overstated and the verdict is re-solved.*
+>
+> Reach in the same run has no source either — and reach is **policy**, so no comparable is allowed
+> to set it. It degrades to an `assumption` at the founder's stated channels and hours, and the flip
+> test runs across its band. The two drivers were equally unsourced and are routed differently, and
+> the thing that decided it was the `kind` column, not how thin the evidence felt.
 
 **Then run the flip test, and run it before the verdict is written anywhere.** Re-solve the
 identity at both ends of the assumption's plausible range:
@@ -537,25 +672,36 @@ number a founder is most likely to want re-litigated later.
    including the exit shape, whose left term is one of the other identities solved at the sale
    date and whose right term is a multiple band. **Write the target's stated ranges beside it**,
    on either axis, exactly as stated.
-2. **Fill each driver from its named home** — price, conversion, retention, reach — and record
-   any founder-instinct divergence rather than averaging it.
+2. **Name the reference class before any driver takes a value from it**, classify it `structural`,
+   home it to `research/growth-curves.md`, and flip it across the alternatives a reasonable person
+   would argue for. A verdict that moves between two defensible classes is *undetermined*, with both
+   classes named and the cheapest test that settles which one the subject is in.
 3. **Classify each driver `structural` or `policy`** from the table's `kind` column, before any
-   verdict is written. A verdict whose binding driver turns out to be policy is negative for the
-   stated configuration only, and is written in those words. For an exit target this runs over
-   the multiple's four inputs too — slope and the named acquirer are policy, scarcity and the
-   bidder count are structural.
-4. **Write every unsourced driver as an `assumption`** with its `value` and `sensitivity`. None of
-   them enters the identity as though it were sourced.
-5. **Run the flip test** at both ends of every assumption's plausible range — evidence
+   verdict is written. That column decides two things: where the value may come from — the indexed
+   set sources a structural driver and only checks a policy one — and what a negative verdict may
+   conclude, since a verdict whose binding driver turns out to be policy is negative for the stated
+   configuration only and is written in those words. For an exit target it runs over the multiple's
+   four inputs too: slope and the named acquirer are policy, scarcity and the bidder count are
+   structural.
+4. **Fill each driver from its named home** — price, conversion, retention, reach — recording any
+   founder-instinct divergence rather than averaging it, and any disagreement between a
+   broad-population figure and a named-company value the same way. Every value taken from the indexed
+   set carries the survivorship qualifier wherever it is reported.
+5. **Try the reference class before degrading** — a structural driver with no subject instrument
+   that the indexed set reaches at the target's month is a `claim` resting on that set, with its
+   `stale_after` and a `validated_by` kill test. Only what the set cannot speak to becomes an
+   `assumption` with its `value` and `sensitivity`, and none of them enters the identity as though it
+   were sourced.
+6. **Run the flip test** at both ends of every assumption's plausible range — evidence
    uncertainty only, never the target's own stated range. If the verdict flips, stop: return
    *undetermined* plus the cheapest test that settles it, and name the threshold.
-6. **Solve for the required value of each driver** at the target date, and name the one that
+7. **Solve for the required value of each driver** at the target date, and name the one that
    binds — with the size of its gap, its kind, and with the drivers that clear stated too. Where
    either axis was stated as a range, solve at the rectangle's corners and report which clear,
    with the binding driver named per corner; never solve at a midpoint.
-7. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
+8. **Cap the confidence twice**: derive it per invariant 11, then hold `confidence_own` at `M` or
    below.
-8. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
+9. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
    with the date held, as a band — then build the lever table separately.
-9. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
-   verdict rather than editing it.
+10. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
+    verdict rather than editing it.
