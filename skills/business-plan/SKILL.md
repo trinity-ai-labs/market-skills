@@ -491,6 +491,19 @@ it is negative, the negotiation turn happens HERE, before drafting, per that sam
 drafted against a target still being argued about is re-cut section by section when the target
 settles, and the milestones written under the old number are the ones that quietly survive.
 
+**A reference class inferred from the subject's own price point or packaging is re-flipped in this
+phase, and the trigger fires in both directions.** The class is named back in Phase 2 from the
+dossier, while the pricing and capital forks that settle the subject's packaging are simulated and
+settled here — so it is fixed before the decision it was read off is final. The trigger therefore
+has two halves: re-flip it against whatever pricing, packaging and delivery decision is settled at
+the moment the verdict is computed, **and** re-flip it again when a fork settled later in this
+phase — the strategic-fork simulation below runs after this point, not before it — lands on a
+different packaging than the class was inferred from. Either way a changed class re-solves the identity rather than annotating the verdict,
+because every structural driver beneath the class moves together; the rule and its failure are in
+[references/target.md](references/target.md#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it).
+A comparison nothing forces is a comparison that gets skipped, which is why this one is attached to
+the single phase where both halves are open.
+
 Write `one-pager.md` FIRST (it forces the clarity everything else inherits), then
 `business-plan.md` in the track's shape, then `financial-model.md` — all per
 [references/plan-template.md](references/plan-template.md). Drafting is YOUR work — it needs the
@@ -794,6 +807,12 @@ three milestones, and where everything landed. Invite pushback on the specific b
   kill test and the survivorship qualifier — and is never filed as an `assumption`. Filed that
   way, invariant 11 caps it at its weakest input, and every plan for a company that has not
   launched reads as unjustified for a reason that is routing rather than evidence.
+- A verdict standing on a reference class inferred from the subject's own price point or packaging
+  names that dependency where the class is named, and a pricing, packaging or delivery decision
+  settled after the class was named re-solves the verdict rather than annotating it. The class is
+  downstream of a policy input and inherits its mutability, so one left fixed across that decision
+  hands the founder a reclassification — every structural driver beneath it moving at once —
+  reported as a property of the market.
 - The projection's implied monthly growth rate is placed against the observed growth band, and
   its implied trajectory against the indexed comparable curves at matching months since origin.
   Any excursion — in level, in either direction, or in shape — names the difference defending it.
