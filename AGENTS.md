@@ -186,9 +186,17 @@ CHANGELOG.md                  what each pinned version actually changed
 
 `vault-lint.sh` ships to users and runs read-only against a vault path: no arguments beyond
 `--vault` (or `VAULT_PATH`) for the checks, `--json` for an agent consumer, `--unverified`
-for the notes asserted with nothing behind them, and `graph <ID>` for one note's
-neighbourhood. Rule 3 above has the reasoning for why `bin/` and `scripts/` sit under
-different constraints.
+for the notes asserted with nothing behind them, `--used-in` for whether each note's
+citation target still resolves, and `graph <ID>` for one note's neighbourhood. Rule 3 above
+has the reasoning for why `bin/` and `scripts/` sit under different constraints.
+
+`--used-in` is a mode rather than part of `check` because it reads documents outside the six
+note directories, and it is a verdict rather than a report: it exits 1 when a target file is
+missing or a `#anchor` names no heading. **Its boundary is deliberate and belongs in any change
+to it** — it asserts that the citation resolves, never that the named section carries the claim.
+Plan prose cites `[S#]` and `[F#]` codes and a claim note carries no citation code at all, so a
+scan matching note IDs against prose fires on every correctly cited claim; a check that cries
+wolf gets switched off, and switching it off takes the working half with it.
 
 **Every invocation in `skills/` is bare — `vault-lint.sh …`, never a path**, and CI rejects
 the path form. The pre-plugin layout used a relative path, which resolves against the

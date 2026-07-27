@@ -123,10 +123,21 @@ function relativeLinks(text) {
  * `killed_because` code span, and a slugger that eats the underscore reports
  * that working link as broken.
  *
- * This is the one place the rule lives, and every anchor check resolves through
- * it. A second copy of it anywhere — another language, another file — drifts
- * from this one silently, and both copies get trusted; a check that needs a slug
- * calls this rather than writing its own.
+ * This is the one place the rule lives for `skills/`, and every anchor check
+ * here resolves through it. A second copy of it drifts from this one silently
+ * and both copies get trusted, so a check that needs a slug in this file calls
+ * this rather than writing its own.
+ *
+ * There is exactly one sanctioned second copy, and it exists because the
+ * language boundary forces it: `slug()` in `bin/vault-lint.sh` resolves the
+ * `#anchor` of a `used_in` entry against a document in the USER's vault, on a
+ * machine that has no Node. It cannot call this, and it has no Unicode class
+ * table either, so it approximates `\p{L}\p{N}` by dropping an enumerated set
+ * of punctuation code points and keeping every other byte. The two agree on
+ * everything a heading in this repo or a plan document realistically carries;
+ * they part on an uppercase non-ASCII letter, which awk cannot case-fold. A
+ * change to GitHub's rule is a change to BOTH — this comment is the only thing
+ * that says so.
  *
  * No file here has two headings that slug alike, so the `-1`/`-2` suffixes
  * GitHub appends to a repeated heading have nothing to model.

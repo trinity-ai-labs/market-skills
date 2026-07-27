@@ -466,6 +466,18 @@ everyone to ignore the flag, and then it stops working for the claims that actua
 artifact is now standing on it — so the re-check gets deferred, because nobody can size it.
 Write it when the claim is first cited; omit the key until then.
 
+**`vault-lint.sh --used-in` is what keeps those entries honest.** It opens every target and
+exits 1 when the document is missing (`used-in-missing-file`) or the `#anchor` names no heading
+in it (`used-in-dead-anchor`) — the two ways a citation rots without anything else noticing, a
+renamed document and a renamed section. The anchor is matched against the heading's GitHub slug,
+so the entry is written as the reader's own link: `"business-plan.md#why-now"` for `## Why now`,
+resolved against the vault root and not against the note's own directory. An entry with no `#`
+is checked for the file alone, which is the shape to use when a claim reaches a document whose
+sections it does not name. **The mode stops at whether the target resolves and never asks whether
+the section carries the claim** — the prose cites `[S#]` and `[F#]` codes rather than note IDs,
+so matching IDs against prose would report every correctly cited claim as broken. Whether the
+section still agrees with the note is a read over the worklist this mode produces, not a grep.
+
 ### The assumption note is what you would believe with no evidence
 
 ```yaml
@@ -802,9 +814,11 @@ grep -rnE '^[a-z_]+: \[' "$VAULT_PATH"
 ```
 
 Whole-corpus aggregation — required-field checks, confidence-propagation violations, dangling
-`rests_on` targets, near-miss vocabulary terms — belongs to the `vault-lint.sh` script in this
-repository's `scripts/` directory, not to the agent. Code is reliable at counting; an agent is
-reliable at authoring one good note. Splitting them that way is what keeps both honest.
+`rests_on` targets, near-miss vocabulary terms, and the `used_in` targets `--used-in` opens —
+belongs to `vault-lint.sh`, not to the agent. It ships from this repository's `bin/` directory,
+which Claude Code puts on the Bash tool's `PATH`, so it is invoked bare from wherever you are.
+Code is reliable at counting; an agent is reliable at authoring one good note. Splitting them
+that way is what keeps both honest.
 
 ## A worked chain from source to decision
 

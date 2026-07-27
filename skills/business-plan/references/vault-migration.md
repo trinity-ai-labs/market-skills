@@ -684,9 +684,15 @@ end.** After stage 1 it is every source orphaned plus every required subject gap
 to the subjects the plan genuinely has no position on. Running the lint only once, at the end,
 means every mistake you made in stage 1 is discovered three hundred notes later.
 
-Two closing checks the census does not cover:
+Three closing checks the census does not cover:
 
 ```sh
+# Every used_in entry stage 3 wrote, opened. A migration takes its citation sites from a
+# grep over documents that already exist, so a heading renamed since - or a document the
+# manifest named under its old filename - lands in the vault as a citation to nothing.
+# A verdict, not a target list: it exits 1 on a missing file or a dead #anchor.
+vault-lint.sh --used-in --vault "$VAULT_PATH"
+
 # The validation queue the migration just created: every assumption written in stage 4,
 # plus everything carried at Low confidence. A target list, not a verdict - it exits 0.
 vault-lint.sh --unverified --vault "$VAULT_PATH"

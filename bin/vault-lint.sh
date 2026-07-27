@@ -20,6 +20,16 @@
 # corpus-wide near-miss, because each note is individually valid, and it would
 # round-trip verbatim prose through shell argv quoting.
 #
+# WHAT --used-in CHECKS, AND WHAT IT DELIBERATELY DOES NOT
+# --used-in asserts that a used_in entry RESOLVES: the document exists, and the
+# #anchor names a heading in it. It never asserts that the named section carries
+# the claim. Plan prose cites [S#] and [F#] codes, and a claim note carries no
+# citation code at all - so a scan matching note IDs against prose reports a
+# false positive on every correctly cited claim, dozens deep on a healthy vault.
+# A check that cries wolf gets switched off, and switching it off takes the half
+# that worked along with it. Whether the section agrees with the note is a read
+# over a bounded worklist, not a grep, and it is not this script's job.
+#
 # PARSING STRATEGY
 # The frontmatter reader is a subset parser over flat scalars, block lists, and
 # the four fields allowed a literal block scalar. It COERCES NOTHING - every
@@ -54,6 +64,18 @@ vault-lint.sh - read-only checks over a claim vault.
       Report the notes asserted with nothing behind them: everything with
       status: unverified, and everything carried at Low confidence. A target
       list, not a verdict - it exits 0 whether or not it finds any.
+
+  vault-lint.sh --used-in [--vault PATH] [--json]
+      Open every note's used_in target and check that it resolves: the document
+      exists under the vault root, and the #anchor names a heading in it. A
+      verdict - it exits 1 on any failure. Kept out of `check` because it reads
+      documents outside the six note directories, which is a different surface.
+
+      It checks that the target RESOLVES, never that the section CARRIES the
+      claim. Plan prose cites [S#] and [F#] codes and a claim note carries no
+      citation code at all, so matching note IDs against prose would report a
+      false positive on every correctly cited claim - and a check that cries
+      wolf gets switched off, taking the half that worked with it.
 
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
@@ -124,6 +146,11 @@ while [ $# -gt 0 ]; do
 	--unverified)
 		[ "$MODE" = "graph" ] && die "--unverified and graph are separate modes"
 		MODE="unverified"
+		shift
+		;;
+	--used-in)
+		[ "$MODE" = "graph" ] && die "--used-in and graph are separate modes"
+		MODE="used-in"
 		shift
 		;;
 	--depth)
@@ -769,6 +796,274 @@ if [ "$MODE" = "unverified" ]; then
 fi
 
 # ----------------------------------------------------------------------------
+# what the two verdict modes share
+#
+# `check` and `--used-in` both emit failure rows and both carry a verdict out in
+# their exit status, so the date, the path index and the renderer are built once
+# here rather than twice. graph and --unverified have already exited: neither
+# produces a failure row, and the path index costs a find over the whole vault.
+# ----------------------------------------------------------------------------
+
+TODAY=$(date +%Y-%m-%d)
+
+# Every path that exists inside the vault, relative to its root. Read once into
+# an array rather than shelling out per note: a source with no public URL carries
+# a vault-relative path, a used_in entry names a document at the vault root, and
+# the only way to know either resolves is to look. Answering from this index
+# rather than from the filesystem also keeps every lookup inside the vault - a
+# used_in entry of ../elsewhere.md is reported missing rather than opened.
+PATHIDX="$TMP/paths"
+(cd "$VAULT" && find . -mindepth 1 2>/dev/null | sed 's|^\./||') >"$PATHIDX" 2>/dev/null || : >"$PATHIDX"
+
+# One awk, branching on asjson internally - the same shape --unverified uses, so
+# a further report mode has one pattern to copy rather than two. It also carries
+# the exit status out itself, which is what removes the separate counting pass:
+# awk already knows how many rows it buffered. `prog` is the name the mode
+# answers to, so a --used-in failure is not mistaken for a `check` failure by
+# whoever reads the terminal.
+#
+# Human output goes to stderr and JSON to stdout on purpose: a caller piping
+# --json into a parser gets only the document, and a human running it bare still
+# sees everything.
+render_failures() {
+	LC_ALL=C sort -o "$FAILURES" "$FAILURES"
+
+	awk -v vault="$VAULT" -v today="$TODAY" -v asjson="$JSON" -v prog="$1" -F '\t' '
+		BEGIN {
+			DQ = sprintf("%c", 34)
+			BS = sprintf("%c", 92)
+		}
+		# Escaped one character at a time: a gsub replacement containing a backslash
+		# is rescanned by awk, and what it does with an unrecognised escape there is
+		# unspecified - which would produce invalid JSON on exactly the notes whose
+		# text most needs reading.
+		# The same escaper as the --unverified renderer above. Both are short
+		# and stable; if either ever grows a case the other needs, that is the
+		# point to hoist it rather than copy it a third time.
+		function jesc(s,   i, c, o) {
+			o = ""
+			for (i = 1; i <= length(s); i++) {
+				c = substr(s, i, 1)
+				if (c == DQ) o = o BS DQ
+				else if (c == BS) o = o BS BS
+				else if (c == "\t") o = o " "
+				else o = o c
+			}
+			return o
+		}
+		{ row[++n] = $0 }
+		END {
+			if (asjson == "1") {
+				printf "{\n"
+				printf "  " DQ "ok" DQ ": %s,\n", (n == 0 ? "true" : "false")
+				printf "  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
+				printf "  " DQ "checked_on" DQ ": " DQ "%s" DQ ",\n", jesc(today)
+				printf "  " DQ "failure_count" DQ ": %d,\n", n
+				printf "  " DQ "failures" DQ ": ["
+				for (i = 1; i <= n; i++) {
+					split(row[i], p, "\t")
+					printf "%s\n    {", (i == 1 ? "" : ",")
+					printf DQ "file" DQ ": " DQ "%s" DQ ", ", jesc(p[1])
+					printf DQ "check" DQ ": " DQ "%s" DQ ", ", jesc(p[2])
+					printf DQ "id" DQ ": " DQ "%s" DQ ", ", jesc(p[3])
+					printf DQ "detail" DQ ": " DQ "%s" DQ "}", jesc(p[4])
+				}
+				printf "%s]\n}\n", (n == 0 ? "" : "\n  ")
+			} else if (n == 0) {
+				printf "%s: clean - %s\n", prog, vault
+			} else {
+				printf "%s: %d failure%s under %s\n", prog, n, (n == 1 ? "" : "s"), vault > "/dev/stderr"
+				for (i = 1; i <= n; i++) {
+					split(row[i], p, "\t")
+					if (p[1] != last) { printf "\n%s\n", p[1] > "/dev/stderr"; last = p[1] }
+					printf "  [%s] %s\n", p[2], p[4] > "/dev/stderr"
+				}
+				printf "\n" > "/dev/stderr"
+			}
+			exit (n == 0 ? 0 : 1)
+		}
+	' "$FAILURES"
+}
+
+# ----------------------------------------------------------------------------
+# --used-in - every used_in target resolves
+#
+# Two checks, named apart because they want different fixes. `used-in-missing-file`
+# means the document is absent: either the claim was cited into a file that was
+# later renamed, or used_in was back-filled onto a note nothing cites.
+# `used-in-dead-anchor` means the document is there and the section is not: a
+# heading was renamed or cut while the note went on naming it.
+#
+# THE BOUNDARY IS THE POINT. This asserts the target RESOLVES and never that the
+# section CARRIES the claim - see the header comment for why an ID-matching scan
+# would report a false positive on every correctly cited claim.
+#
+# Pass 2 already emits used_in as L records like every other block list, so the
+# record stream has everything except the target documents' headings, which is
+# the one new read.
+# ----------------------------------------------------------------------------
+
+# LC_ALL=C is load-bearing rather than tidy. A heading and an anchor both carry
+# UTF-8, and awk implementations split on whether that is characters or bytes:
+# macOS awk in a UTF-8 locale aborts the record with `illegal byte sequence` the
+# moment it meets a sequence it cannot decode, so a vault with one accented
+# heading would report a clean bill of health over every note after it. Pinning
+# the locale makes every implementation read bytes, which is the one behaviour
+# the slug rule below is written against.
+if [ "$MODE" = "used-in" ]; then
+	LC_ALL=C awk -v root="$VAULT" -v out="$FAILURES" -v pathidx="$PATHIDX" -F '\t' '
+		BEGIN {
+			DQ = sprintf("%c", 34)
+			SQ = sprintf("%c", 39)
+			BS = sprintf("%c", 92)
+
+			# The printable ASCII the slug rule drops, written out rather than
+			# expressed as a negated class: a negated class in a byte-oriented
+			# awk also strikes every byte of every non-ASCII letter.
+			DROP = "!" DQ "#$%&" SQ "()*+,./:;<=>?@[" BS "]^`{|}~"
+
+			# The non-ASCII punctuation a heading realistically carries, which
+			# the slug rule drops exactly as it drops the ASCII kind: en dash,
+			# em dash, horizontal bar, the curly single and double quotes, the
+			# ellipsis, bullet, middle dot, the daggers, degree, section,
+			# pilcrow and the guillemets. awk has no character-class table to
+			# ask, so the set is enumerated - and enumerated by CODE POINT
+			# rather than written literally, because a literal curly quote in a
+			# shell script is indistinguishable from a mistyped ASCII one to
+			# every linter and every reader.
+			np = split("8211 8212 8213 8216 8217 8218 8220 8221 8222 8226 8230 8224 8225 183 176 167 182 171 187", cp, " ")
+			for (pi = 1; pi <= np; pi++) UNIPUNCT = UNIPUNCT (pi == 1 ? "" : "|") utf8(cp[pi] + 0)
+
+			while ((getline pl < pathidx) > 0) EXISTS[pl] = 1
+			close(pathidx)
+		}
+
+		# One code point as the UTF-8 bytes that carry it. sprintf("%c", n)
+		# emits byte n under the C locale this program is pinned to; under a
+		# UTF-8 locale the same call emits a CHARACTER and every sequence built
+		# here would be wrong, which is the second reason the locale is pinned.
+		function utf8(n) {
+			if (n < 128) return sprintf("%c", n)
+			if (n < 2048) return sprintf("%c%c", 192 + int(n / 64), 128 + n % 64)
+			return sprintf("%c%c%c", 224 + int(n / 4096), 128 + int(n / 64) % 64, 128 + n % 64)
+		}
+
+		$1 == "N" { files[++nf] = $2; next }
+		$1 == "S" { V[$2, $3] = $4; next }
+		$1 == "L" { if ($3 == "used_in") UI[$2, ++UN[$2]] = $4; next }
+
+		function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+		# The GitHub slug rule, because that is what every #fragment in a plan
+		# document is written against: lowercase, drop punctuation, and turn each
+		# whitespace character into its own hyphen. Two details are load-bearing,
+		# and each one turns a working link into a reported failure if it is wrong.
+		#
+		# The repo gate implements the same rule in JavaScript, for the anchors
+		# inside skills/ - scripts/check.mjs, slugify(). This is the sanctioned
+		# second copy and the language boundary is what forces it: that file is
+		# contributor-only, and Node is not on the machine this one runs on. A
+		# change to either has to be checked against the other; the comment
+		# there says the same thing from the other side.
+		#
+		# Whitespace runs are NOT collapsed. A heading built around an em dash
+		# keeps the two spaces that flanked it once the dash is dropped, so
+		# `## Target - verdict` written with a dash slugs to `target--verdict`
+		# with a doubled hyphen, which is what the rendered anchor carries.
+		#
+		# Every byte the two drop lists do not name survives. awk sees UTF-8 as
+		# bytes, so a class keeping only [a-z0-9_ -] eats every accented letter
+		# and reports a heading that anchors fine as dead. UNIPUNCT is removed
+		# first and as whole SEQUENCES: a bracket expression over the same
+		# characters would be read as a set of bytes by a byte-oriented awk, and
+		# would then strike the continuation byte of an unrelated letter.
+		#
+		# Case folding is ASCII-only, because that is all a byte-oriented awk can
+		# do: a heading whose non-ASCII letter is written uppercase still misses.
+		# The trade is deliberate - that heading is rare, and the alternative
+		# reports every accented heading as dead.
+		function slug(h,   i, c, o) {
+			gsub(UNIPUNCT, "", h)
+			o = ""
+			for (i = 1; i <= length(h); i++) {
+				c = substr(h, i, 1)
+				if (c == " " || c == "\t") { o = o "-"; continue }
+				if (index(DROP, c) > 0) continue
+				o = o tolower(c)
+			}
+			sub(/^-+/, "", o)
+			sub(/-+$/, "", o)
+			return o
+		}
+
+		# Every heading one document offers an anchor for, ATX form only. A `#`
+		# inside a fenced code block is an example rather than a section a reader
+		# can jump to, so fences are tracked by marker character and run length -
+		# which is what stops a longer nested fence from closing its parent early.
+		#
+		# Setext headings (a title underlined with ===) are deliberately not read.
+		# They are document titles and a #fragment cites a section, so reading
+		# them would mean carrying a line of lookbehind for a case nothing cites.
+		function scan(doc,   path, line, t, c, n, fc, fn, h) {
+			path = root "/" doc
+			fc = ""; fn = 0
+			while ((getline line < path) > 0) {
+				sub(/\r$/, "", line)
+				t = line
+				sub(/^[ \t]+/, "", t)
+				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+					c = substr(t, 1, 1)
+					n = 0
+					while (substr(t, n + 1, 1) == c) n++
+					if (fc == "") { fc = c; fn = n }
+					else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+					continue
+				}
+				if (fc != "") continue
+				if (!match(t, /^#+[ \t]+/)) continue
+				h = substr(t, RLENGTH + 1)
+				sub(/[ \t]*#+[ \t]*$/, "", h)
+				sub(/[ \t]+$/, "", h)
+				HAS[doc SUBSEP slug(h)] = 1
+			}
+			close(path)
+		}
+
+		END {
+			for (i = 1; i <= nf; i++) {
+				f = files[i]
+				id = V[f, "id"]
+				for (j = 1; j <= UN[f]; j++) {
+					entry = UI[f, j]
+					p = index(entry, "#")
+					doc = (p > 0) ? substr(entry, 1, p - 1) : entry
+					anchor = (p > 0) ? substr(entry, p + 1) : ""
+					sub(/^[ \t]+/, "", doc); sub(/[ \t]+$/, "", doc)
+					sub(/^\.\//, "", doc)
+					sub(/\/+$/, "", doc)
+
+					if (doc == "") {
+						report(f, "used-in-missing-file", id, "`used_in` names `" entry "`, which is an anchor with no document in front of it. A bare fragment resolves against nothing, so the note reads as cited while naming no artifact at all - and when its stale_after fires there is no document to go and re-check")
+						continue
+					}
+					if (!(doc in EXISTS)) {
+						report(f, "used-in-missing-file", id, "`used_in` names `" entry "` and nothing exists at " doc " under the vault root. Either the document was renamed after the claim was cited into it, or used_in was back-filled onto a note nothing cites - either way the blast radius points at a document no reader can open, so the re-check its stale_after fires has nowhere to go")
+						continue
+					}
+					if (anchor == "") continue
+					if (!(doc in SCANNED)) { SCANNED[doc] = 1; scan(doc) }
+					if (!((doc SUBSEP anchor) in HAS))
+						report(f, "used-in-dead-anchor", id, "`used_in` names `" entry "` and no heading in " doc " slugs to `" anchor "`. A heading was renamed or cut while the note went on naming it, so the claim reads as cited into a section nobody can find - and a stale_after that fires sends its reader to a document with no such paragraph in it")
+				}
+			}
+		}
+	' "$RECORDS"
+
+	render_failures "vault-lint used-in"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
 # pass 3 - the checks
 #
 # Reads the record stream plus the parse errors, and emits one failure per line:
@@ -778,14 +1073,6 @@ fi
 # product here - the person reading it is deciding whether to care, and a
 # message that only restates the rule gives them nothing to decide with.
 # ----------------------------------------------------------------------------
-
-TODAY=$(date +%Y-%m-%d)
-
-# Every path that exists inside the vault, relative to its root. Read once into
-# an array rather than shelling out per note: a source with no public URL carries
-# a vault-relative path, and the only way to know it resolves is to look.
-PATHIDX="$TMP/paths"
-( cd "$VAULT" && find . -mindepth 1 2>/dev/null | sed 's|^\./||' ) >"$PATHIDX" 2>/dev/null || : >"$PATHIDX"
 
 awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields="$EDGE_FIELDS" -v pathidx="$PATHIDX" -F '\t' '
 	BEGIN {
@@ -1162,68 +1449,4 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 # render
 # ----------------------------------------------------------------------------
 
-LC_ALL=C sort -o "$FAILURES" "$FAILURES"
-
-# One awk, branching on asjson internally - the same shape --unverified uses, so
-# a third report mode has one pattern to copy rather than two. It also carries
-# the exit status out itself, which is what removes the separate counting pass:
-# awk already knows how many rows it buffered.
-#
-# Human output goes to stderr and JSON to stdout on purpose: a caller piping
-# --json into a parser gets only the document, and a human running it bare still
-# sees everything.
-awk -v vault="$VAULT" -v today="$TODAY" -v asjson="$JSON" -F '\t' '
-	BEGIN {
-		DQ = sprintf("%c", 34)
-		BS = sprintf("%c", 92)
-	}
-	# Escaped one character at a time: a gsub replacement containing a backslash
-	# is rescanned by awk, and what it does with an unrecognised escape there is
-	# unspecified - which would produce invalid JSON on exactly the notes whose
-	# text most needs reading.
-	# The same escaper as the --unverified renderer above. Both are short
-	# and stable; if either ever grows a case the other needs, that is the
-	# point to hoist it rather than copy it a third time.
-	function jesc(s,   i, c, o) {
-		o = ""
-		for (i = 1; i <= length(s); i++) {
-			c = substr(s, i, 1)
-			if (c == DQ) o = o BS DQ
-			else if (c == BS) o = o BS BS
-			else if (c == "\t") o = o " "
-			else o = o c
-		}
-		return o
-	}
-	{ row[++n] = $0 }
-	END {
-		if (asjson == "1") {
-			printf "{\n"
-			printf "  " DQ "ok" DQ ": %s,\n", (n == 0 ? "true" : "false")
-			printf "  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
-			printf "  " DQ "checked_on" DQ ": " DQ "%s" DQ ",\n", jesc(today)
-			printf "  " DQ "failure_count" DQ ": %d,\n", n
-			printf "  " DQ "failures" DQ ": ["
-			for (i = 1; i <= n; i++) {
-				split(row[i], p, "\t")
-				printf "%s\n    {", (i == 1 ? "" : ",")
-				printf DQ "file" DQ ": " DQ "%s" DQ ", ", jesc(p[1])
-				printf DQ "check" DQ ": " DQ "%s" DQ ", ", jesc(p[2])
-				printf DQ "id" DQ ": " DQ "%s" DQ ", ", jesc(p[3])
-				printf DQ "detail" DQ ": " DQ "%s" DQ "}", jesc(p[4])
-			}
-			printf "%s]\n}\n", (n == 0 ? "" : "\n  ")
-		} else if (n == 0) {
-			printf "vault-lint: clean - %s\n", vault
-		} else {
-			printf "vault-lint: %d failure%s under %s\n", n, (n == 1 ? "" : "s"), vault > "/dev/stderr"
-			for (i = 1; i <= n; i++) {
-				split(row[i], p, "\t")
-				if (p[1] != last) { printf "\n%s\n", p[1] > "/dev/stderr"; last = p[1] }
-				printf "  [%s] %s\n", p[2], p[4] > "/dev/stderr"
-			}
-			printf "\n" > "/dev/stderr"
-		}
-		exit (n == 0 ? 0 : 1)
-	}
-' "$FAILURES"
+render_failures "vault-lint"
