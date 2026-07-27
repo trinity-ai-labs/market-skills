@@ -123,19 +123,22 @@ _Analyzed: <date>_
 
 ## Profiles
 ### <Competitor> (direct | indirect | adjacent)
-<what it does · pricing · disclosed traction points — dated, at least two per competitor where
-available, each with its source (or "no disclosed traction, checked <date>" if none — absence
-recorded, never omitted) · funding · their positioning claim · most likely next move ·
-**wedge line: what they don't cover and why**>
+<what it does · pricing · disclosed traction points — dated, every citable point found (two is
+the bare minimum below which no rate can be derived, never the target quantity), each with its
+source (or "no disclosed traction, checked <date>" if none — absence recorded, never omitted) ·
+funding · their positioning claim · most likely next move · **wedge line: what they don't cover
+and why**>
 <...one block per competitor...>
 
 ## Observed growth band
-<the %/mo range derived from each competitor's dated traction pair, slowest to fastest across
-the profiled set. Each endpoint labelled with its competitor, its two dated points, and its
-stage (launch-year / growth / mature) — never averaged into a single number, which would
-describe no company in the set. Then the per-competitor rate that produced each endpoint, one
-line per competitor, including any recorded as having no disclosed traction (excluded from the
-band, not silently dropped).>
+<the %/mo range derived from each competitor's earliest-to-latest dated point, slowest to
+fastest across the profiled set. Each endpoint labelled with its competitor, the span it was
+measured over (first and last date used — spans aren't comparable across different intervals),
+and its stage (launch-year / growth / mature) — never averaged into a single number, which would
+describe no company in the set. Then the per-competitor rate that produced each endpoint, each
+carrying its own span, one line per competitor, including any recorded as having no disclosed
+traction (excluded from the band, not silently dropped). A scalar reference range, not a growth
+curve — a level check for a projection, never a substitute for modelling its trajectory.>
 
 ## Threat ranking
 <who hurts this product most: Impact × Probability × Confidence per threat, with the scenario.
