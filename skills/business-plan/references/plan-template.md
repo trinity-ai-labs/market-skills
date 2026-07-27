@@ -235,7 +235,28 @@ Then check whether any assumption is COHORT-DEPENDENT rather than flat. Churn is
 — if it varies by cohort (multi-seat accounts churning less than solo, annual less than
 monthly), the ceiling changes SHAPE, not just height, and a flat churn row silently averages
 that away. Name any assumption you suspect is cohort-dependent and mark it for post-launch
-measurement.>
+measurement.
+
+Then label every input in the identity structural or policy — those two words, no third:
+
+  structural — set by the market or the product, not by the founder: churn at the rate the
+  evidence supports, the category's conversion benchmark, the price band willingness-to-pay
+  supports.
+  policy — set by a founder decision: how many channels run, hours a week into the business,
+  the price point chosen inside that band, headcount, how much of the growth engine gets built.
+
+A ceiling whose BINDING input is policy is the ceiling of THIS CONFIGURATION, not of the
+business, and is stated that way — with the ceiling under at least one changed policy value
+shown beside it, so a choice reads as a choice. Worked example: the identity solves to 180
+seats, the binding input is trial flow, and trial flow is one channel worked six hours a week.
+The line reads "180 seats at one channel and six hours a week; 360 at two channels and the
+same hours" — the same arithmetic, relabelled, and it moves the founder from "the business
+tops out below my goal" to "this configuration does".
+
+The failure this prevents: the model lets a decision become a law of nature and then reports
+the consequence as physics, and a number reported as physics is one nobody argues with. The
+cohort check above asks whether an input is uniform; this one asks whether it is chosen. Both
+run, and neither answers the other's question.>
 
 ## Cost of the alternative (MANDATORY wherever price is defended)
 <Affordability is not a pricing argument. "X% of what they already spend" says nothing about
