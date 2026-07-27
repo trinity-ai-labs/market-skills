@@ -73,7 +73,10 @@ and is never restated here.
 15. **Lint is a gate, not a report.** The shipped `vault-lint.sh` runs at Phase 2's
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
-    not render.
+    not render. **That same gate reads the dimension's own file, never the summary its author
+    wrote about it** — the researcher who wrote the prose also minted the notes the plan resolves
+    citations through, so accepting a dimension on its summary is what puts an unreviewed number
+    in the ledger.
 
 **The target** — the driver identity, the binding-driver readout, the confidence ceiling, the
 nearest-reachable solve and the negotiation script are in
