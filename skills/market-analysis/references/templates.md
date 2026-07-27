@@ -107,6 +107,17 @@ figure sits in, and the multiple that ARR and the deal imply. Indexed to slope a
 sale, the same basis every other series
 here uses, because slope is what the multiple is set by — a sale recorded against a level with no
 slope beside it cannot be read at the month a roadmap puts its own sale.>
+<the consideration split, per comparable: the headline figure and the multiple it implies, then
+what portion was actually received at close and the multiple THAT implies — earnout against
+post-close targets, escrow/holdback, acquirer stock carried at the acquirer's own valuation, and
+retention packages that are compensation for the team rather than price for the company — with the
+source for the split, which is the acquirer's filings and later disclosures, never the
+announcement. The band is drawn on consideration received at close, with the cash-only figure
+recorded beside it. A comparable whose split cannot be found is recorded as "headline-only,
+uncorroborated" and carries that label everywhere it appears, never pooled with decomposed ones:
+announcements publish the headline and disclose the components that reduce it later and elsewhere,
+so a set read off announcements skews high as a class rather than in one bad entry, and naming
+survivorship does not catch that because these deals closed.>
 <the acquirer per comparable, named, with its stated strategic rationale in its own words, quoted
 with source and pull date. A rationale paraphrased into a motive is the analyst's claim wearing
 the acquirer's authority.>
@@ -119,7 +130,8 @@ band" — never a band run through two points.>
 publishes the multiple they were offered and refused, and a sale that collapsed in diligence
 leaves no figure to index. The set is what this category paid the sellers who said yes.>
 <rendered onto the indexed exhibit above — each sale marked on its own comparable's line at the
-month it happened, labelled with its multiple — per rendering.md, never as a chart of its own.>
+month it happened, labelled with the multiple received at close and marked as decomposed or
+headline-only — per rendering.md, never as a chart of its own.>
 
 ## Customers & segments
 <segments with sizes; JTBD chain and where current tools break it; beachhead recommendation>

@@ -46,7 +46,11 @@ founder hands an investor without apologizing.
   chart re-creating the error the rule removed, in the artifact a reader trusts most.
 - **The exit multiple is overlaid on that same chart, never given one of its own.** Where the exit
   comparables ran, mark each sale on its own comparable's path at the month it happened and label
-  the mark with the multiple it implies. Slope is what sets the multiple, so the mark has to sit
+  the mark with the multiple implied by the consideration received at close — filled for a
+  comparable whose split was found, hollow and suffixed `headline` for one recorded as
+  headline-only, so the two can never read as the same kind of figure. The distinction is carried
+  by shape and label rather than color, for the same reason every other mark here is: the chart
+  gets printed. Slope is what sets the multiple, so the mark has to sit
   on the slope. Split across two exhibits, the reader has to carry a month from one chart to the
   other to answer "what multiple has this slope actually fetched", and stops doing it after the
   second comparable — the comparison the pair exists to support then never happens, silently,
