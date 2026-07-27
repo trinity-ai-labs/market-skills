@@ -40,6 +40,7 @@ later questions exist at all.
 - [5. Unfair advantages](#5-unfair-advantages-the-thesis-multiplier)
 - [6. GTM appetite](#6-gtm-appetite-motion-must-fit-the-founder-not-just-the-market)
 - [7. Timeline & fear](#7-timeline--fear)
+- [A fact arriving after the grill is recorded exactly as one said during it](#a-fact-arriving-after-the-grill-is-recorded-exactly-as-one-said-during-it)
 
 ## Posture — read it off the first substantive answer, never ask for it
 
@@ -342,3 +343,31 @@ conversation.
   answer.
 - **"What's the risk that most worries you?"** Goes straight into the red-team brief — the
   panel attacks their fear hardest, plus the two they didn't name.
+
+## A fact arriving after the grill is recorded exactly as one said during it
+
+The bank above is the phase; it is not the channel. The sharpest material in an engagement
+routinely arrives in passing during drafting or the red team, when the founder is reading a
+section and remembers what it left out. Invariant 21 is what makes it land somewhere. This is
+the recording, and every line of it is the grill's own procedure applied unchanged:
+
+- **The same `source` note** — the interview source written at the grill's close, never a new
+  one for "the follow-up conversation". A second source note splits one interview into two
+  provenances, and a query for what the founder said comes back with half of it.
+- **The next `[F#]` in the sequence.** Never a renumber, never a sub-number like `[F12a]`. The
+  plan cites `[F#]` by number, so a renumber silently repoints every citation already written,
+  and a sub-number is a code nothing else in the corpus produces or resolves.
+- **An appended row in `research/founder-brief.md`**, carrying the date the fact arrived and the
+  phase it arrived in. Appending is what keeps every earlier row's number where the plan expects
+  it; the date is what tells a later reader that a fact postdates the section citing it.
+- **The same propagation obligation** as any other claim — finished when the prose it names
+  carries it, which at this point is nearly always a section already drafted.
+
+**Push on a late fact the same way.** A number volunteered mid-draft gets the challenge it would
+have got in section 3, not a pass for arriving conveniently: the founder is now reading a plan
+built on the earlier answer, which is exactly the pressure that produces a corrected one.
+
+**The failure this prevents:** treated as an aside, a late fact reaches the plan as something
+the conductor happened to remember. It is also the material least likely to be redundant — the
+founder volunteered it rather than answering a question, so nothing in the bank above was ever
+going to surface it.

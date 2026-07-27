@@ -152,6 +152,21 @@ nearest-reachable solve and the negotiation script are in
     that knows something its own documents do not say, where every note is individually correct
     and the plan is quietly out of date.
 
+21. **The grill closes as a phase, not as a channel.** Founder input arriving after Phase 1 is
+    normal rather than exceptional, and it gets the treatment anything said during the grill
+    gets: the same `fact` note resting on the interview `source`, the next `[F#]` in the
+    existing sequence, an appended row in `research/founder-brief.md`, and invariant 20's
+    propagation obligation like any other claim. The numbering continues and the brief is
+    appended rather than rewritten — `[F#]` codes are cited from the plan by number, so a
+    renumber silently repoints every citation already written. How a late fact is recorded is in
+    [references/grill.md](references/grill.md#a-fact-arriving-after-the-grill-is-recorded-exactly-as-one-said-during-it).
+    The failure this prevents: the evidence a founder volunteers late is the evidence nobody
+    thought to ask for, which makes it the least redundant material in the corpus and exactly
+    what a model with no channel for it drops. It arrives conversationally during Phases 3 and 4
+    and lands nowhere — no `[F#]`, no note, no propagation obligation, because the phase that
+    owned founder input is over — so it reaches the plan as something the conductor happened to
+    remember, or not at all.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -405,6 +420,11 @@ Close the grill by writing `research/founder-brief.md` — the numbered fact tab
 in the plan resolves through, exactly as `[S#]` resolves through `sources.md`. `[F#]` stays the
 human-readable citation; the `fact` note ID is what a query reaches. It's written BEFORE any
 dispatch, and Phase 2's brief carries it verbatim so F-numbers stay stable everywhere.
+
+**Closing the grill closes the phase, not the channel** (invariant 21). What the founder says in
+Phases 3 and 4 is recorded exactly as what they said here was, and the brief is **appended** to
+rather than rewritten — every `[F#]` already cited keeps its number, which is the whole reason
+the file is written once and only ever grows.
 
 **Then compute the provisional verdict, before the research fleet spends anything** — the dossier
 and the grill already carry every driver the identity needs, at assumption strength. Put it to the
