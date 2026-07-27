@@ -50,11 +50,14 @@ The repo gate stays on Node rather than moving to Python for a narrower reason:
 on macOS, a Store alias stub on Windows. A runtime that fails honestly is preferable to
 one that lies.
 
-**4. Docs ship in the same PR as the behavior they describe.** v1.1.0 changed the
-on-disk vault layout and left `README.md` describing the old one — including a
+**4. Docs ship in the same PR as the behavior they describe — `README.md`,
+`AGENTS.md`, and any `skills/*/references/` file that restates it.** v1.1.0 changed
+the on-disk vault layout and left `README.md` describing the old one — including a
 `vault-lint.sh` invocation pointing at a directory that had stopped existing — and
 v1.1.1 exists only to fix that. A behavior change and its documentation belong in one
-PR; a docs-only follow-up release means the first thing a new user read was wrong.
+PR: when you change a skill's behavior, grep the repo for what documents it and fix
+every hit before you open the PR. A docs-only follow-up release means the first thing
+a new user read was wrong.
 
 ## The gate
 
