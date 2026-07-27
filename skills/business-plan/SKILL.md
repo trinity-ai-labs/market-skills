@@ -185,6 +185,19 @@ finds a *different* engagement's vault and reads the wrong corpus with no error 
 existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill does not
 understand stops the run rather than being half-read.
 
+**A reused vault's `_vocab.yml` is compared against the shipped
+[references/vocabulary.yml](references/vocabulary.yml), and a base term whose definition has
+changed is reported to the founder.** The copy is what keeps a vault checkable, and it is also
+what freezes it: the lint reads the vault's copy and never the shipped file, so a vault
+scaffolded before an amendment keeps the superseded wording indefinitely and nothing says so.
+This phase is the one point where both files are open, which is what makes the comparison free.
+It is **not** an error and does not stop the run — a vault written under an older definition is
+valid, it is only unreviewed, and erroring would break every existing vault on upgrade, which is
+the failure that makes people stop upgrading. What the report asks for is a re-read: the claims
+already filed under an amended subject are read against the new wording, and where one no longer
+asserts what the amended definition says the subject asserts, it is superseded under the standing
+two-edit rule rather than silently re-filed under a definition it was not written to.
+
 If the founder already has a corpus from earlier work — research files, a plan citing `[S#]`/
 `[F#]` codes — adopt it instead of scaffolding an empty vault:
 [references/vault-migration.md](references/vault-migration.md).
