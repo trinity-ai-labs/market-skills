@@ -26,6 +26,7 @@ which of their rules bite differently when you are writing three hundred notes i
 - [Retrofit `killed_because` while the person who remembers is still here](#retrofit-killed_because-while-the-person-who-remembers-is-still-here)
 - [Six schema rules that bite differently in bulk](#six-schema-rules-that-bite-differently-in-bulk)
 - [Budget a day per hundred notes, and finish a stage or revert it](#budget-a-day-per-hundred-notes-and-finish-a-stage-or-revert-it)
+- [An upgraded vault enters here, not at Stage 1 — reconcile the claims an amended definition left behind](#an-upgraded-vault-enters-here-not-at-stage-1--reconcile-the-claims-an-amended-definition-left-behind)
 - [Finish with vault-lint, and know which failures legitimately survive](#finish-with-vault-lint-and-know-which-failures-legitimately-survive)
 
 ## The extraction manifest is already written — it is the plan's citations
@@ -497,6 +498,123 @@ remaining failures are a known, enumerable set. A stage 3 abandoned at claim 60 
 because the claim set no longer matches the manifest and nothing except the manifest checklist
 records where the boundary is. Keep that checklist current as you go; it is what makes stopping
 for the day safe.
+
+## An upgraded vault enters here, not at Stage 1 — reconcile the claims an amended definition left behind
+
+Everything above turns prose into a ledger. This section is the other entry point and it starts
+from the opposite place: the vault exists, the notes are written, and what moved is the
+definition underneath them. There is no manifest, no bottom-up order, and no new notes beyond the
+replacements this produces — so read it as its own short procedure rather than as a sixth stage.
+You are here because Phase 0 reused an existing vault and reported vocabulary drift.
+
+**The trigger is Phase 0's advisory, and the amendment log is the scope.** The shipped
+[vocabulary.yml](vocabulary.yml) carries a `vocabulary_version` and an `amendments` log; the
+vault's `_vocab.yml` carries the stamp it was seeded with, or none at all if it predates the
+stamp. Phase 0 reports the entries between the two, each naming the term, the framing it carried
+(`was`), the framing it carries now (`now`), and the test to apply (`must_assert`). That report
+is an advisory rather than a lint failure, which means nothing forces this work — so do it while
+the advisory is in front of you, because a vault carrying claims under two readings of one
+subject looks identical to a healthy one from every query.
+
+**One grep per amended term is the entire scope.** Only claims carry a `subject`, so nothing
+else in the corpus is affected:
+
+```sh
+grep -rl 'subject: "steady-state-ceiling"' "$VAULT_PATH/claims"
+```
+
+Bounding it this way is the difference between an afternoon and a corpus-wide re-read nobody
+starts. A re-read that never starts leaves the drift in place *and* costs the advisory its
+credibility for the next amendment.
+
+**Re-read each hit against `must_assert`, and the answer is binary.** Either the claim still
+asserts what the subject now asserts — in which case leave it completely untouched, because a
+cosmetic edit puts a note in the history as having changed when what changed was the vocabulary
+around it — or it does not, and it is superseded: two edits, per
+[vault.md](vault.md#every-note-carries-these-six-fields), with `supersedes_reason` naming the
+amendment. Editing the claim in place is the failure this whole procedure exists to prevent. The
+sentence then reads as though its author wrote it under wording they never saw, and the record
+that the ground moved — the only thing that explains why a plan said one thing in March and
+another in July — is gone.
+
+Worked on the one amendment that has actually shipped, `steady-state-ceiling`, amended at
+`vocabulary_version` 2 from *the equilibrium the business converges on* to a ceiling belonging to
+the modelled **configuration**, with every input labelled `structural` or `policy`. A claim filed
+under the old framing:
+
+```yaml
+id: CLAIM-PM71QD05
+type: claim
+title: "The business levels off at about 900 paying customers"
+status: current
+confidence: M
+confidence_own: M
+created: "2026-02-11"
+subject: "steady-state-ceiling"
+stale_after: "2026-12-31"
+rests_on:
+  - FACT-KD03WQ55
+  - FACT-ZB77NN12
+used_in:
+  - "business-plan.md#the-ceiling"
+```
+
+Under `was` that sentence is exactly what the subject asked for. Under `now` it asserts something
+the subject no longer carries: 900 is the answer for one churn rate and one acquisition rate, and
+the founder chose both. The claim names no configuration and labels no input, so it fails
+`must_assert` and gets a replacement:
+
+```yaml
+id: CLAIM-VT38HK92
+type: claim
+title: "At 5% monthly churn and 45 new customers a month the modelled configuration levels off at about 900 paying customers"
+status: current
+confidence: M
+confidence_own: M
+created: "2026-07-27"
+subject: "steady-state-ceiling"
+stale_after: "2026-12-31"
+rests_on:
+  - FACT-KD03WQ55
+  - FACT-ZB77NN12
+used_in:
+  - "business-plan.md#the-ceiling"
+supersedes:
+  - CLAIM-PM71QD05
+supersedes_reason: "vocabulary_version 2 amended steady-state-ceiling from a property of the business to a property of the modelled configuration. The earlier claim named no configuration and labelled no input."
+```
+
+...and `status: superseded` on `CLAIM-PM71QD05`, whose title stays in the words it was written
+in. The body of the replacement carries the labels the amended definition asks for — churn is
+`policy` here, and the ceiling under one changed value of it belongs beside the number. Between
+the two notes the corpus now records what was asserted, what it became, and why, which is what
+the two-edit rule buys and what re-filing in place would have spent.
+
+**`used_in` is the second half of the reconciliation, and skipping it moves the defect rather
+than fixing it.** The superseded claim names the paragraph standing on it, and that paragraph
+still says the business tops out at 900 — a founder's own decision reported as a law of nature,
+which is invariant 18's failure exactly. Rewrite the sentence to the replacement's
+assertion. A ledger reconciled under a document that was not is a ledger nobody's reader ever
+sees.
+
+**Adopt the amended definition last, and stamp the copy.** Once every claim under the term is
+reconciled, replace that one term's `definition` in the vault's `_vocab.yml` with the shipped
+wording and set `vocabulary_version` to the shipped value. Three ways this goes wrong, each with
+a distinct cost:
+
+- **Adopting first** is the silent redefinition [vocabulary.yml](vocabulary.yml)'s extension rule
+  bans — the vault then reads every existing claim against wording none of them was written to,
+  and nothing marks which ones predate it. Reconciling first is what makes the adoption honest.
+- **Overwriting the whole file** with the shipped `vocabulary.yml` drops the engagement's own
+  terms, and every claim under them becomes an `unknown-subject` error at the next lint. Edit the
+  one term.
+- **Skipping the stamp** leaves the advisory firing on every subsequent run with the work already
+  done, which is how a real signal turns into one people dismiss by reflex.
+
+**Then run the lint, and expect the reconciliation to show up in it.** `supersedes-status` is the
+check that catches a half-done reconciliation — a replacement written while its target is still
+`current` — and it is the reason this is a lint-verifiable procedure rather than a careful one.
+The census below is the acceptance test, unchanged.
 
 ## Finish with vault-lint, and know which failures legitimately survive
 
