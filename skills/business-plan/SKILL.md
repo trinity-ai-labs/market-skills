@@ -82,18 +82,24 @@ and is never restated here.
 15. **Lint is a gate, not a report.** The shipped `vault-lint.sh` runs at Phase 2's
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
-    not render. **Phase 5's run is three calls, not one** — `vault-lint.sh`, then
-    `vault-lint.sh --used-in`, then `vault-lint.sh --supersession-sweep`. `--used-in` is a
-    separate mode, so the default run never opens a citation target: a plan clears the bare gate
-    while carrying a citation to a document that was renamed or a section that was cut, and the
-    next thing that happens is a rendered PDF asserting it to the one reader with no way to
-    check. The sweep is the report half and fails nothing; it is here because Phase 4's
-    dispositions mint supersessions *after* invariant 19's sweep has already run, which makes
-    the render the only point they are read at all — the worklist is read to its end before the
-    first render, or the deliverable ships the version the panel corrected while `red-team.md`
-    records that row as fixed. **Phase 2's checkpoint stays the bare run**: no note carries
-    `used_in` until drafting cites it, so `--used-in` there checks an empty set, and running it
-    anyway teaches the mode as cadence-wide when it belongs to one gate.
+    not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
+    bare check, then `--used-in`, then `--supersession-sweep`, and exits non-zero unless every
+    part passes. It is one call because it was three, and three calls made from memory is a set
+    nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
+    success line said `clean` over a corpus with dozens of dead anchors. That line now names what
+    it checked and what it did not, and the gate carries one exit status for all three.
+    `--used-in` stays a separate mode *inside* the gate rather than folding into `check`, because
+    it reads documents outside the six note directories: the default run never opens a citation
+    target, so a plan clears the bare gate while carrying a citation to a document that was
+    renamed or a section that was cut, and the next thing that happens is a rendered PDF
+    asserting it to the one reader with no way to check. The sweep is the report half and fails
+    nothing; it is in the gate because Phase 4's dispositions mint supersessions *after*
+    invariant 19's sweep has already run, which makes the render the only point they are read at
+    all — the worklist the gate prints is read to its end before the first render, or the
+    deliverable ships the version the panel corrected while `red-team.md` records that row as
+    fixed. **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
+    cites it, so the gate's second part would check an empty set there, and running the whole
+    gate anyway teaches it as cadence-wide when it belongs to one phase.
     **That same gate reads the dimension's own file, never the summary its author
     wrote about it** — the researcher who wrote the prose also minted the notes the plan resolves
     citations through, so accepting a dimension on its summary is what puts an unreviewed number
@@ -281,8 +287,9 @@ and note it in Coverage; past them, or if the product's stage/boundary moved, pl
 refresh.
 
 **Scaffold the vault before anything writes.** The vault path IS the slug directory — never a
-`vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with its
-`schemaVersion`, and copy [references/vocabulary.yml](references/vocabulary.yml) to
+`vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with
+`"schemaVersion": 2` — the current version, so every check the schema carries applies to this
+vault from its first note — and copy [references/vocabulary.yml](references/vocabulary.yml) to
 `<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
 vocabulary it was written under after the skill ships new terms. The copy carries the shipped
 file's `vocabulary_version`, which is what makes a vault scaffolded today report no drift on its
@@ -294,7 +301,11 @@ Pass the absolute vault path to every agent and tool: resolution is `--vault` or
 and nothing else, because an upward search from a repo either walks to the filesystem root or
 finds a *different* engagement's vault and reads the wrong corpus with no error at all. An
 existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill does not
-understand stops the run rather than being half-read.
+understand stops the run rather than being half-read. **An existing vault at an older
+`schemaVersion` is left at it** — the lint reads every version it supports and holds each vault
+to the rules it was written under, so a reuse is not the moment to bump one. The upgrade is its
+own procedure, in
+[references/vault-migration.md](references/vault-migration.md#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2).
 
 **A reused vault's `_vocab.yml` is compared against the shipped
 [references/vocabulary.yml](references/vocabulary.yml), and an amended base definition is
@@ -956,8 +967,11 @@ one before anything renders: invariant 22's sweep runs over it before this phase
 
 ## Phase 5 — Deliverables
 
-**Lint is the release gate, and it runs before the first render.** Invariant 15 names the calls
-this gate makes and what each one is for; it is the whole set, never the default run alone. The
+**Lint is the release gate, and it runs before the first render.** One call —
+`vault-lint.sh --release-gate --vault "$VAULT_PATH"` — which invariant 15 breaks into its three
+parts and says what each is for. It exits non-zero unless every part passes, so the gate is a
+verdict rather than a set of calls somebody has to remember making, and the sweep worklist it
+prints is read to its end before anything renders. The
 vault comes back clean or nothing renders: a plan citing a retracted or superseded source does
 not ship, and neither does one whose citation names a document that was renamed or a section
 that was cut. The failure this stops is the worst one available — a polished PDF asserting
@@ -1016,10 +1030,11 @@ three milestones, and where everything landed. Invite pushback on the specific b
   second metric picked to confirm the first tests the thesis's fit to the instrument, which reads
   as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault at the per-dimension gate, and the render gate ran
-  invariant 15's full set: the default check clean, `--used-in` clean, and the
-  `--supersession-sweep` worklist read to its end. The default run is a strict subset of the
-  checks that exist, so a plan clears it while citing a document nobody can open — and the last
-  thing standing between that citation and a rendered PDF is this gate.
+  `vault-lint.sh --release-gate` to a zero exit — every part, one verdict — with the
+  `--supersession-sweep` worklist it printed read to its end. The bare run is a strict subset of
+  the checks that exist and its success line now says so, so a plan clears it while citing a
+  document nobody can open — and the last thing standing between that citation and a rendered
+  PDF is this gate.
 - The plan states the strongest claim its evidence supports, and a claim weaker than its evidence
   is an error of the same class as one stronger. Understatement is not caution: an overclaim gets
   challenged, an understatement gets believed. Every other bar on this list fires on optimism, so

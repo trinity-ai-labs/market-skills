@@ -28,6 +28,7 @@ which of their rules bite differently when you are writing three hundred notes i
 - [Budget a day per hundred notes, and finish a stage or revert it](#budget-a-day-per-hundred-notes-and-finish-a-stage-or-revert-it)
 - [An upgraded vault enters here, not at Stage 1 — reconcile the claims an amended definition left behind](#an-upgraded-vault-enters-here-not-at-stage-1--reconcile-the-claims-an-amended-definition-left-behind)
 - [Finish with vault-lint, and know which failures legitimately survive](#finish-with-vault-lint-and-know-which-failures-legitimately-survive)
+- [Stamp schemaVersion 2 last, after the vault can already pass at 2](#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2)
 
 ## The extraction manifest is already written — it is the plan's citations
 
@@ -84,7 +85,7 @@ the state this whole document exists to prevent.
 
 ## Five stages, in this order, because each one makes the next cheaper
 
-Scaffold the vault first — the tree, `.vault/config.json` with its `schemaVersion`, and
+Scaffold the vault first — the tree, `.vault/config.json` with `"schemaVersion": 2`, and
 `_vocab.yml` copied from [vocabulary.yml](vocabulary.yml)
 ([layout](vault.md#layout-one-directory-per-type-one-file-per-note)). The lint refuses a
 directory without a config, and it says so plainly:
@@ -641,8 +642,13 @@ vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
 Clean looks like this, and exits 0:
 
 ```
-vault-lint: clean - /Users/example/Documents/go-to-market/example-product
+vault-lint: note-level checks passed - /Users/example/Documents/go-to-market/example-product.
+Not opened: citation targets, supersession blast radius - --release-gate asks all of them.
 ```
+
+The line is deliberately narrower than "clean". This run reads note fields and opens no
+document, so a corpus whose citations all point at renamed files prints it too — and a success
+line that reads as a whole-corpus verdict is the one somebody renders on.
 
 Failures are grouped by file, each naming the check and the failure it prevents, and exit 1:
 
@@ -721,7 +727,54 @@ vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
+**Before the first render — not here — the first and third of those are one call.**
+`vault-lint.sh --release-gate` runs the bare check, `--used-in` and the sweep together and exits
+non-zero unless every part passes, which is what the render gate is held to. It is deliberately
+not the migration's acceptance test: `coverage-gap` and `orphan-source` legitimately survive a
+finished migration, so the gate exits 1 over a corpus that is done, and the census above is the
+thing that tells you it is. Reaching for the gate here would make a finished migration look
+unfinished, and a red that is expected is a red nobody reads.
+
 The census proves the corpus is well-formed. The `graph` spot-check on two or three of the
 plan's load-bearing sentences is what proves it is *true* — that the chain from an assertion a
 stranger will act on down to a verbatim passage actually connects, which is the only thing the
 migration was ever for.
+
+## Stamp schemaVersion 2 last, after the vault can already pass at 2
+
+`vault-lint.sh` reads both `schemaVersion` 1 and 2. A vault at 1 is held to exactly the rules it
+was written under, so **nothing about upgrading the skill obliges you to upgrade a vault** — an
+existing corpus keeps working untouched, which is the property the version set exists to buy.
+Move to 2 when you want the checks version 2 added; the list of what those are is in
+[vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand).
+
+The number is a claim about the corpus, not a label on it: it tells the tool which rules to
+apply. So the order mirrors the vocabulary reconciliation above — **do the work, then stamp** —
+and the mechanism that makes that workable is the vault's own git history, which invariant 17
+already requires.
+
+1. **Edit `schemaVersion` to 2 in the working tree and do not commit it.** The version-2 checks
+   only fire at 2, so this is how you find out what the upgrade owes. An uncommitted number is a
+   question, not an assertion.
+2. **Run the gate and read the failures as the worklist.**
+
+   ```sh
+   vault-lint.sh --release-gate --vault "$VAULT_PATH"
+   ```
+
+   Everything it reports beyond the two that legitimately survive any finished migration
+   (`coverage-gap`, `orphan-source`) is upgrade work.
+3. **Fix the corpus, never the number.** If the worklist is bigger than the session, revert the
+   `2` and leave the vault at 1 — it is correct at 1 and it keeps rendering. A vault left
+   committed at 2 mid-upgrade puts the render gate permanently red for reasons that have nothing
+   to do with the render, and the next person cannot tell an upgrade in progress from a corpus
+   that broke.
+4. **Commit the stamp together with the fixes, as the last edit.** One commit in which the vault
+   both claims 2 and passes at 2 means no commit in the history ever records a version the corpus
+   could not back up — which is the same failure mode as adopting an amended definition before
+   reconciling the claims under it, one level up.
+
+**Migrations stay forward-only.** There is no 2→1 path, for the reason
+[vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand) gives: writing one means
+holding every field the newer schema added in a shape the older one can carry, which is a second
+schema maintained forever.

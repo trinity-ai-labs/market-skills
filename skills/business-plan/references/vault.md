@@ -494,6 +494,14 @@ section still agrees with the note is a read, not a grep, and `--supersession-sw
 that bounds it: it names the sections a supersession put in doubt, so the read is over that list
 rather than over every citation in the corpus.
 
+**Before a render, all three are one call: `vault-lint.sh --release-gate`.** It runs the bare
+check, then `--used-in`, then the sweep, and exits non-zero unless every part passes. The
+separate modes are still there and are what you reach for mid-engagement — a citation question
+and a supersession question are different questions — but the gate before anything ships is one
+invocation with one verdict, because three invocations made from memory is a set nobody can be
+held to. The bare run's own success line says as much: it reports that the note-level checks
+passed and that the citation targets and the supersession blast radius were **not** opened.
+
 ### The assumption note is what you would believe with no evidence
 
 ```yaml
@@ -773,14 +781,23 @@ error at all. Refusing without an explicit path costs one flag and removes the e
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "created": "2026-03-14"
 }
 ```
 
 `schemaVersion` is a required integer, incremented only on a change that would make an older
 tool misread an existing vault. `created` is optional. The file is JSON, not YAML, so the
-coerce-nothing rule does not apply to it — JSON has unambiguous types.
+coerce-nothing rule does not apply to it — JSON has unambiguous types. **The current version is
+2**; a new vault is scaffolded at it.
+
+**The tool reads a SET of versions, not one.** `vault-lint.sh` reads both `1` and `2`. A vault at
+1 gets exactly the behaviour it has always had, and a vault at 2 additionally gets the checks
+version 2 added. That set is what makes the version a real extension point rather than a number
+nobody may move: a new check that an existing corpus could not possibly satisfy goes in behind a
+version, so upgrading the tool never turns a finished corpus red. A check written to fire
+unconditionally has the opposite property — every vault authored before it fails on the day the
+skill updates, which is how a gate stops being run.
 
 **A tool that finds a `schemaVersion` it does not understand refuses and exits non-zero**,
 printing the version it found and the version it supports. It does not guess, and it does not
