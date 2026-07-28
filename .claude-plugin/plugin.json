@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "market",
   "displayName": "Go To Market",
-  "description": "Take a product to market: evidence-first market analysis (sizing, competitors, segments, pricing, timing) and the business plan built on it (monetization, GTM, projections, milestones, risks). Ships vault-lint.sh, the claim-ledger lint the plan gates on.",
-  "version": "1.12.0",
+  "description": "Take a product to market: evidence-first market analysis (sizing, competitors, segments, pricing, timing) and the business plan built on it (monetization, GTM, projections, milestones, risks). Ships vault-lint, the claim-ledger lint the plan gates on, as matched POSIX-shell and PowerShell implementations.",
+  "version": "1.13.0",
   "author": {
     "name": "Trinity AI Labs",
     "url": "https://github.com/trinity-ai-labs"
