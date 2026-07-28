@@ -1,5 +1,5 @@
-# Fixture vocabulary - the vault's own _vocab.yml, trimmed to the four subjects
-# this fixture takes a position on. A real vault seeds this from the skill's
+# Fixture vocabulary - the vault's own _vocab.yml, trimmed to the subjects this
+# fixture takes a position on. A real vault seeds this from the skill's
 # vocabulary.yml reference and extends it per engagement, which is why the lint
 # reads this file and never the shipped one.
 
@@ -42,4 +42,25 @@ terms:
     aliases:
       - growth-rate
       - market-trajectory
+    required: false
+
+  steady-state-ceiling:
+    definition: The equilibrium the modelled configuration converges on, stated against the
+      founder's stated goal with every input labelled structural or policy. Required, and
+      carried here by a claim holding none of the five verdict fields - the ceiling half of
+      the asymmetry, where field presence is what triggers the set.
+    aliases:
+      - ceiling
+      - steady-state
+      - equilibrium
+    required: true
+
+  target-verdict:
+    definition: Whether the founder's stated target is reached by the stated date, with the
+      driver that binds named and that driver's kind recorded. Not required, because a plan
+      owes a verdict only where a target was stated - and a term this release introduces, so
+      the four fields a verdict owes outright are owed whatever the note carries.
+    aliases:
+      - target-feasibility
+      - goal-verdict
     required: false

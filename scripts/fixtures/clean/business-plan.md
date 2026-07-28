@@ -39,6 +39,39 @@ line instead would yield `business-model--pricing-business-model`, which is
 neither, so this pair is what asserts the strip happens before the slug rule
 runs.
 
+## Target & verdict {#target-verdict}
+
+`CLAIM-VD04DD44` is cited here, as `business-plan.md#target-verdict`. The verdict
+is conditional and the section says so in the words the note stores: the target
+does not clear at six hours a week across two channels, and the counter-offer
+below carries what each of those would have to become. `--binding-driver` matches
+that string verbatim, so a section rewritten to say only *does not clear* fails
+rather than rendering at the same confidence letter as the sentence that qualified
+it.
+
+The `Kind` column renders off `driver_kind` and is matched the same way. The
+corner where nothing binds carries an em dash in both cells and owes no kind,
+which is why the check skips it rather than reporting a corner with no note
+behind it.
+
+| Corner | Verdict | Binding driver | Kind |
+|---|---|---|---|
+| low value · early date | does not clear at six hours a week across two channels | reach | policy |
+| low value · late date | clears | — | — |
+
+Three distinct source notes stand under that driver, from three counterparties,
+and the note states both counts — so nothing here is thin and nothing has to be
+surfaced.
+
+## Steady state {#steady-state}
+
+`CLAIM-VD05EE55` is cited here, as `business-plan.md#steady-state`. That note
+carries none of the five verdict fields, which is the ceiling half of the
+asymmetry: the subject predates the fields and every existing vault holds a claim
+shaped like it. There is deliberately no `{#steady-state}` equivalent of
+`verdict-unfiled`, so this rendered section with a field-less note behind it is
+the legitimate case rather than a failure.
+
 ## Not a heading
 
 ```sh
