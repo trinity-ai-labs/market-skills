@@ -746,6 +746,25 @@ terms:
       - growth-ceiling
     required: true
 
+  target-verdict:
+    definition: Whether the founder's stated target is reached by the stated date, computed from
+      the driver identity, with the driver that binds named and that driver's kind recorded. A
+      claim here asserts a pass, a fail or an undetermined against one stated target and nothing
+      else. It is not a number in its own right, which is what separates it from
+      revenue-forecast, and not an equilibrium the modelled configuration tends toward, which is
+      steady-state-ceiling — the ceiling carries no date, and a target can miss its own date while
+      sitting under a ceiling that clears it. Where the binding driver is policy the claim is
+      negative for the stated configuration only, and it names the policy variable. Not required,
+      because a plan owes a verdict only where a target was stated, and a founder who named none
+      has none to miss.
+    aliases:
+      - target-feasibility
+      - goal-feasibility
+      - target-reachability
+      - goal-verdict
+      - stated-target
+    required: false
+
   runway:
     definition: Burn rate, months of cash remaining, and the date the business is either
       default-alive or needs capital. One position, because the three numbers are the same
