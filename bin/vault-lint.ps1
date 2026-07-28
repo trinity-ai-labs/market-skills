@@ -163,11 +163,24 @@ function Remove-TrailingCr {
 # FullName into a path relative to it. Returns '' when the directory cannot be
 # resolved, which the caller reads as "nothing to walk" - the shell's `find`
 # prints nothing and moves on in the same case.
+#
+# READ OFF A DirectoryInfo, not off Resolve-Path, because the only consumer of
+# this string is Substring against a FullName that Get-ChildItem produced - and
+# both walks below now root that Get-ChildItem AT this string. Get-Item and
+# Get-ChildItem hand back the same object type from the same .NET enumeration,
+# so the prefix and the paths it is stripped from spell the directory the same
+# way by construction. Resolve-Path is a separate normalization that need not
+# agree: on Windows a directory reached through an 8.3 short name - which is
+# what %TEMP% is for any user whose name is over eight characters, so it is the
+# ordinary spelling of a temp path rather than a curiosity - has two spellings
+# of DIFFERENT LENGTHS, and a Substring against the wrong one cuts into the file
+# name rather than off it.
 function Get-PathPrefix {
 	param([string]$Directory)
-	$resolved = Resolve-Path -LiteralPath $Directory -ErrorAction SilentlyContinue
-	if ($null -eq $resolved) { return '' }
-	$full = $resolved.ProviderPath
+	$item = Get-Item -LiteralPath $Directory -Force -ErrorAction SilentlyContinue
+	if ($null -eq $item) { return '' }
+	$full = $item.FullName
+	if ($full.Length -eq 0) { return '' }
 	if ($full.EndsWith([string][System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::Ordinal)) { return $full }
 	return $full + [System.IO.Path]::DirectorySeparatorChar
 }
@@ -3848,7 +3861,18 @@ foreach ($d in $NOTE_DIRS) {
 	# hidden: without it a `.draft.md` left in a note directory is invisible here
 	# and read there, which is a note the two implementations disagree about the
 	# existence of.
-	foreach ($entry in (Get-ChildItem -LiteralPath $dirPath -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+	#
+	# THE WALK STARTS AT $prefix, NOT AT $dirPath, so the string being stripped
+	# below is the string the enumeration was rooted at. Two resolutions of one
+	# directory do not have to spell it the same way: on Windows a path reached
+	# through an 8.3 short name (`C:\Users\RUNNER~1\...`, which is what %TEMP%
+	# hands a process for a long user name) resolves to a longer spelling, and
+	# Substring against a prefix of the other length cuts into the file name
+	# instead of off it. Every note then points at a path that does not exist -
+	# and because a note that cannot be read is reported as a parse failure
+	# rather than as a missing index, a mode that only counts notes of one type
+	# sees a vault with none of them and reports agreement.
+	foreach ($entry in (Get-ChildItem -LiteralPath $prefix -Recurse -File -Force -ErrorAction SilentlyContinue)) {
 		# -cnotlike, not -notlike: `find -name '*.md'` matches case-sensitively
 		# even on a case-insensitive filesystem, and PowerShell's -like does not.
 		# A README.MD picked up here would be parsed as a note and reported as
@@ -4267,7 +4291,13 @@ $TODAY = (Get-Date).ToString('yyyy-MM-dd', [System.Globalization.CultureInfo]::I
 $PATHIDX = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
 $VAULT_PREFIX = Get-PathPrefix $VAULT
 if ($VAULT_PREFIX.Length -gt 0) {
-	foreach ($entry in (Get-ChildItem -LiteralPath $VAULT -Recurse -Force -ErrorAction SilentlyContinue)) {
+	# Rooted at $VAULT_PREFIX rather than at $VAULT for the reason the note walk
+	# above is: the prefix stripped from each result has to be the prefix the
+	# results were built from. Here the mismatch is silent rather than loud - the
+	# StartsWith guard below drops every entry - so the index comes back empty
+	# and every vault-relative path in the corpus is reported as resolving to
+	# nothing.
+	foreach ($entry in (Get-ChildItem -LiteralPath $VAULT_PREFIX -Recurse -Force -ErrorAction SilentlyContinue)) {
 		$full = $entry.FullName
 		if (-not $full.StartsWith($VAULT_PREFIX, [System.StringComparison]::Ordinal)) { continue }
 		[void]$PATHIDX.Add((Get-RelativeSlashPath $full $VAULT_PREFIX))
