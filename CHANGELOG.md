@@ -2,6 +2,133 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.12.0
+
+- **Invariant 18 has two halves and only one of them was ever enforced; the verdict half is now a
+  note shape, and `vault-lint.sh --binding-driver` reads it against the plan section that renders
+  it.** The ceiling half got its surface in 1.3.0, when `steady-state-ceiling`'s vocabulary
+  definition was amended to require the configuration and the structural/policy labels —
+  `vocabulary.yml`'s amendments log records exactly that, `amended_at: 2`, `shipped_in: "1.3.0"`.
+  The verdict half stayed prose for nine releases, so *your target is unreachable* and *your target
+  is unreachable at six hours a week across two channels* rendered identically, in the same
+  frontmatter, at the same confidence letter — and only the second one is true. A verdict is the
+  single output of this skill most likely to make a founder stop, and a policy-bound one stopped
+  them over a decision they could revisit that week. **The reason it stayed prose is worth stating
+  plainly: there was nothing structured to check.** A verdict was an ordinary `claim`; nothing
+  marked a claim as a verdict, named the driver that binds, recorded that driver's kind, or counted
+  the evidence under it, so invariant 16's second clause had no surface to be enforced against and
+  any check would have had to read a sentence for meaning. So this release is a note shape first
+  and checks second: a new `target-verdict` vocabulary term, sibling of `steady-state-ceiling` and
+  named for the plan anchor it renders into, plus five fields — `binding_driver`, `driver_kind`,
+  `conditional_on`, `evidence_n` and `evidence_counterparties` — owed as a set the way a decision
+  note's brief fields already are. **No eighth note type**, and the five hang off the `subject`
+  rather than off the type, because one verdict is filed as an `assumption` before the research
+  that settles it and a `claim` after: a rule keyed to `type: claim` would exempt every verdict
+  written before the research came back, which is every verdict at the point where a wrong one is
+  cheapest to fix.
+- **The wording check matches a string the note owns, verbatim, and that is the `--roadmap-table`
+  argument from 1.11.0 applied one document section over.** `conditional_on` holds the policy
+  variable in the words the plan uses, and the check asks whether that string appears in the
+  section the verdict renders into. There is no phrase list and no sentence-shape inference,
+  because where one side renders off the other an exact match is a *check* — a mismatch means
+  somebody wrote the sentence by hand — while anything looser is a similarity test that fires on
+  correctly-written prose whose wording drifted, and a check that cries wolf gets switched off,
+  taking the half that worked with it. The same instrument is already house style: `chosen` against
+  an entry in `options`, and a milestone `title` against its roadmap row. The corner table's `Kind`
+  column is held the same way, so `plan-template.md` now states that column as a contract the
+  writer owes rather than a formatting choice, and `target.md` names the token
+  `policy-within-band` beside the prose form "policy within a structural band" wherever the cell or
+  the field is discussed — a writer copying the prose into a cell would otherwise earn a mismatch
+  on a correct plan.
+- **`counterparty` on the source note, rather than an `n` field on the verdict, because the source
+  count was never the missing half.** Distinct sources under a binding driver is transitive closure
+  over `rests_on` — the lint's job, and it already held every edge it needed. Concentration is the
+  half nothing in the corpus could compute: two deals with the same counterparty, written up on two
+  separate research passes, are two source notes with two `url_canonical` values, and
+  deduplication structurally cannot reach them because they genuinely *are* two documents —
+  distinct pages, distinct pulls, neither a duplicate of the other. The only thing they share is the
+  party on the other side of the table, and nothing recorded it. Unwritten, a count of two reads as
+  two independent sources at the same confidence letter, when it is one relationship's terms
+  standing in for a market's. The field is optional and omitted where there is no party — a
+  published report has none — and a consumer that needs the value falls back to `publisher`, then
+  to the `url_canonical` host. **Which way that chain errs is documented rather than left to be
+  discovered**: a third party reporting two unrelated deals collapses them onto one party and cries
+  wolf, which is exactly why the field is authored rather than inferred; dropping the chain instead
+  would be worse in the direction that hides, since an unwritten field would read as *no
+  counterparty* rather than *not recorded* and a corpus written before the field would report
+  perfect diversity. It reaches researchers through the source-note contract in
+  `market-analysis/SKILL.md`, which `orchestration.md` interpolates verbatim into every dimension
+  brief as `vaultNotes` — so a new field reached every agent that writes a source note with no
+  orchestration change at all, which is the interpolate-never-restate rule paying for itself.
+- **The trigger is the `subject` and not `schemaVersion`, and it is deliberately asymmetric across
+  the two subjects.** `target-verdict` is a term this release introduces, so no existing corpus
+  carries it: there the four unconditional fields are owed **outright**, and a note carrying none
+  of them fails. `steady-state-ceiling` is `required: true` and predates its 1.3.0 amendment, so
+  every vault already holds one — there the trigger is **field presence**, and an unlabelled legacy
+  ceiling claim still passes. That asymmetry is the exemption `schemaVersion` exists to provide,
+  obtained without spending a version: `SUPPORTED_SCHEMA` stays `1 2` and no vault needs migrating.
+  **The asymmetry is the design rather than an inconsistency to tidy away later.** What field
+  presence buys is an exemption for notes written before the fields existed, and only the ceiling
+  half has such notes to exempt; extending it to the verdict half would pay an exemption's whole
+  cost over an empty population, and the cost is exact — omitting `binding_driver` would become the
+  cheapest way past every rule that reads the note. A dodge available by omission is not an
+  exemption, which is why `--red-team` checks its roster in both directions too. `vault.md`'s table
+  of what each schema version costs deliberately carries no row for this mode, with the reason
+  beside it: a row would assert the opposite, and the lint would then disagree with the schema
+  about which vaults the mode applies to, in the direction where the schema reads stricter than the
+  tool.
+- **Surfacing a thin tail is a conjunction, and it shipped through most of this release as a
+  disjunction that could never fire.** The rule was written as *the closure is thin and the note
+  **or** the rendered section does not say so* — vacuous, because `check` already owes both counts
+  on every note the mode reads, so the disjunction could never be both-false and the check
+  collapsed to a question about the ledger alone. Which left the reported failure shipping: the
+  defect is not that the ledger is wrong, it is that the corpus knew the tail was two deals from one
+  party and the number a founder acts on never said so where anybody read it. It is now both
+  halves — the note's counts must be what the closure holds, **and** the section must carry the one
+  line those two generate, `Evidence: 2 sources, 1 counterparty`, matched verbatim like
+  `conditional_on`, with each noun pluralising on its own numeral. **An earlier draft scanned the
+  section for the two counts as whole-word tokens, and that was rejected**: an unrelated pair of
+  digits in the same paragraph silences it, and a check that passes for the wrong reason is worse
+  here than one that fails for the wrong reason, because nothing ever surfaces it. One string
+  generated and one string looked for means a mismatch can only mean the line was hand-written or
+  never written. `plan-template.md` carries the form — a new `Evidence` column on the corner table
+  and the same line as a clause in the ceiling sentence — and the line is owed **only** where the
+  tail is actually thin, under three distinct sources or every source from one counterparty at any
+  count, so a well-evidenced corner carries an em dash and this never becomes a line on every plan
+  that everyone learns to skip.
+- **Six rules stand on the five fields, and two of them exist purely to close a dodge.**
+  `verdict-fields-incomplete` and `driver-kind-unknown` are in the bare `check`, because they read
+  nothing but the note; `verdict-unconditional`, `verdict-kind-mismatch`, `verdict-thin-evidence`
+  and `verdict-unfiled` are in `--binding-driver`, because they have to open `business-plan.md`.
+  `driver_kind`'s enumeration is closed at three words for a reason worth the sentence: everything
+  downstream branches on policy-or-not, so an unrecognised value takes the structural path by
+  default and buys exactly the exemption invariant 18 exists to refuse, with a typo
+  indistinguishable from a deliberate classification. **`verdict-kind-mismatch` runs both
+  directions** because hand-editing a `Kind` cell to `structural` is otherwise the cheapest way
+  past `verdict-unconditional` — a structural verdict owes no condition — and a driver cell edited
+  until it matches no note would otherwise clear both. **`verdict-unfiled` fails a rendered
+  `{#target-verdict}` section with no note behind it**, which is `--roadmap-table` inverted: that
+  mode fails a milestone note the plan never renders, this one fails a rendered section the ledger
+  never held. It is needed because `target-verdict` is `required: false`, so `coverage-gap` does not
+  ask for a note either, and writing the verdict sentence straight into the plan would otherwise
+  bypass the ledger entirely — no `rests_on` and so no confidence derivation, no `stale_after` and
+  so nothing that ever comes up again, no supersession when the target is renegotiated, and no
+  section for `--supersession-sweep` to name when something underneath it moves.
+- **Two boundaries are recorded because a later reader will want to reopen them, and both were
+  chosen against a stricter form that fires on correct work.** `verdict-kind-mismatch`'s reverse
+  direction asks whether a corner row **names a driver**, not whether that row states a kind: the
+  stricter form fires on `plan-template.md`'s own worked example, where an undetermined corner
+  names its driver and writes an em dash in the `Kind` cell, and a check that reddens the shipped
+  template is one somebody switches off, which costs both halves. And **the section a verdict
+  renders into is the anchor its subject names first, with `used_in` only as a fallback** rather
+  than as a union of every `used_in` target — under the union, a note that also cites `## Why now`
+  cleared the condition check whenever the phrase turned up there, so the verdict corner could read
+  *does not clear* and pass. The union looked more permissive in the right way and was more
+  permissive in the wrong one. `--binding-driver` joins `--release-gate`, making the composite six
+  parts, and the fixture suite went from 192 assertions to 241 across six new corpora, each failing
+  exactly one of the mode's rules while passing the rest — which is the only shape that catches a
+  composite silently reporting one part's verdict as the whole.
+
 ## 1.11.0
 
 - **The plan's roadmap table is now read against the milestone set it renders —
