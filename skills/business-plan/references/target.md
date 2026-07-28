@@ -91,12 +91,19 @@ attack is one nobody can trust either.
 A driver value is only a driver value if you can say where it came from. Every one of them has a
 home, and the home is not the same for all four:
 
-| driver | kind | where its value comes from |
+The `kind` column below is the prose name of each kind. **The token those names write to
+`driver_kind`, and to the plan's `Kind` cell, is one of `structural`, `policy` and
+`policy-within-band`** — so *policy within a structural band* and `policy-within-band` are the same
+kind stated two ways, and only the hyphenated one is a value. `vault-lint.sh --binding-driver`
+matches the cell against the field verbatim, so a `Kind` cell carrying the prose phrase fails
+against a note carrying the token, on a plan that is otherwise correct.
+
+| driver | kind (prose name · token) | where its value comes from |
 |---|---|---|
-| price | policy within a structural band | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
-| conversion | structural | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts; where `research/growth-curves.md` indexes a comparable that discloses it, the reference-class value at the month since origin the target counts is preferred to the benchmark, and a divergence between the two is recorded rather than averaged |
-| retention | policy within a structural band | the **band** from the same places conversion takes its value, and it is per-period, so the period is part of the value. The **position inside the band** is homed to the product — the depth of what it does, whether the valuable thing is reachable unassisted, and the friction between the two — as a `claim` carrying a sourced base with its magnitude labelled `measured`, `reference-class` or `assumed`, and an `assumed` one taking the both-directions test like any other input |
-| reach | policy | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput; where the indexed set covers the same months, a comparable's reach at that month since origin is the reference-class check on that figure — it does not replace it, because reach is this founder's channels and hours |
+| price | policy within a structural band · `policy-within-band` | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
+| conversion | structural · `structural` | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts; where `research/growth-curves.md` indexes a comparable that discloses it, the reference-class value at the month since origin the target counts is preferred to the benchmark, and a divergence between the two is recorded rather than averaged |
+| retention | policy within a structural band · `policy-within-band` | the **band** from the same places conversion takes its value, and it is per-period, so the period is part of the value. The **position inside the band** is homed to the product — the depth of what it does, whether the valuable thing is reachable unassisted, and the friction between the two — as a `claim` carrying a sourced base with its magnitude labelled `measured`, `reference-class` or `assumed`, and an `assumed` one taking the both-directions test like any other input |
+| reach | policy · `policy` | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput; where the indexed set covers the same months, a comparable's reach at that month since origin is the reference-class check on that figure — it does not replace it, because reach is this founder's channels and hours |
 
 **`kind` records who sets the value, and it decides two things: where that value is allowed to come
 from, and what a negative verdict is later allowed to conclude.** A **structural** driver is set by
@@ -413,7 +420,9 @@ to a judgement can only be met with a counter-judgement.
 **Classify the binding driver before the verdict is written anywhere.** Read its `kind` off the
 driver-home table: **structural**, set by the category, **policy**, set by the founder and
 re-settable, or **policy within a structural band**, where the band is structural and the position
-inside it is not. Reach is the case that decides most runs, because reach is the driver that binds
+inside it is not — written to `driver_kind` and to the plan's `Kind` cell as `structural`, `policy`
+and `policy-within-band`, which is the third name in the form a value takes rather than a fourth
+kind. Reach is the case that decides most runs, because reach is the driver that binds
 most often and reach is policy — channels crossed with hours is a decision, and a decision is not a
 ceiling.
 
@@ -423,6 +432,23 @@ run then goes directly to the counter-offer and the lever table with that variab
 hours, the channel count or the price point the stated target would need. The readout names the
 kind alongside the driver, so the founder reads *reach binds, and reach is policy* rather than
 *reach binds* and supplies the second half themselves — usually as "so it cannot be done".
+
+**The classification is a record as well as a readout, and three fields on the verdict note are
+where it lands.** `binding_driver` holds the driver step 9 named, in the words the plan uses;
+`driver_kind` holds one of `structural`, `policy` or `policy-within-band`, unquoted, and the
+enumeration is closed at those three; `conditional_on` holds the policy variable verbatim as the
+rendered plan states it, owed whenever `driver_kind` is either policy value. **The failure this half
+prevents is not the readout's.** Left in the readout alone, the classification is a phrase inside a
+sentence, so nothing can tell a rendered section that carries the condition from one that dropped
+it — and the drop is invisible precisely because what remains still reads as a finished sentence.
+Recorded, it is a string `vault-lint.sh --binding-driver` matches against the plan section the
+note's `used_in` names, in the words the section itself uses. The full set — those three plus
+`evidence_n` and `evidence_counterparties` — and the rule that binds them as a set are
+[vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
+Note which way `conditional_on` runs: it is owed only where `driver_kind` is a policy value, and a
+`structural` verdict owes none. That negative case carries as much weight as the positive one — a
+rule demanding a condition from every verdict would be met by inventing one, and an invented
+configuration on a structural miss is the same defect this section exists to stop, run backwards.
 
 **A split driver makes the verdict conditional on where in its band the product sits, and the words
 change with it.** Where retention binds, the finding is *this product as built does not retain well
@@ -857,5 +883,20 @@ number a founder is most likely to want re-litigated later.
     below.
 11. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
     with the date held, as a band — then build the lever table separately.
-12. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
-    verdict rather than editing it.
+12. **Record it** — an `assumption` before research, a `claim` after — under `subject:
+    target-verdict`, then supersede the earlier verdict rather than editing it. **Four fields every
+    verdict owes:** **`binding_driver`**, step 9's answer in the words the plan uses;
+    **`driver_kind`**, step 3's classification, one of `structural`, `policy` or
+    `policy-within-band` and unquoted; and **`evidence_n`** and **`evidence_counterparties`**, the
+    distinct source notes and the distinct counterparties reached under the binding driver, as
+    quoted whole numbers. **A fifth only where step 3 said policy:** **`conditional_on`**, the
+    policy variable verbatim as the rendered plan states it, owed when `driver_kind` is `policy` or
+    `policy-within-band` and owed by nothing else — **a structural verdict names no condition,
+    because a rule demanding one from every verdict would be met by inventing one.** Steps 3 and 9
+    already produced the first two and step 4 walked the sources the counts are taken over, so this
+    step records what the run computed rather than deciding anything new — which is exactly why it
+    gets skipped. Unrecorded, they are a sentence in a readout: `vault-lint.sh --binding-driver` has
+    no string to hold the rendered section against and no count to check the surfaced one against,
+    so the section that quietly dropped the condition renders at the same confidence letter as the
+    one that kept it. Any one of the four present makes the other three owed, per
+    [vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type).

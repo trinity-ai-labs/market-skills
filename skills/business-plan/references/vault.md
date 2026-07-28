@@ -26,6 +26,7 @@ they may not omit.
   - [The fact note is one observed value with its provenance](#the-fact-note-is-one-observed-value-with-its-provenance)
   - [The claim note is the only type that carries a subject](#the-claim-note-is-the-only-type-that-carries-a-subject)
   - [The assumption note is what you would believe with no evidence](#the-assumption-note-is-what-you-would-believe-with-no-evidence)
+  - [A target verdict is a claim carrying five more fields, not an eighth note type](#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)
   - [The question note records the gap, not the answer](#the-question-note-records-the-gap-not-the-answer)
   - [The decision note keeps the rejected options and the reopen trigger](#the-decision-note-keeps-the-rejected-options-and-the-reopen-trigger)
   - [The milestone note carries a position, a cost, and the assumption it moves](#the-milestone-note-carries-a-position-a-cost-and-the-assumption-it-moves)
@@ -430,6 +431,7 @@ quote: |                    # required — the load-bearing passage, verbatim
   nutrition panel from 1 January 2027.
 publisher: "Example Standards Agency"   # optional
 published: "2025-11-02"                 # optional — the source's own date, not yours
+counterparty: "Example Retail Group"    # optional — the party a deal or datum came from
 ---
 
 The revision sets a hard compliance date and gives no transitional exemption for
@@ -456,6 +458,30 @@ turns that into a mechanical duplicate a checker can flag.
 and `url_canonical` to the vault-relative path of the research file that records it, for
 example `"research/founder-brief.md"`. The fields stay required and uniform, and duplicate
 detection still works across the two researchers who both wrote up the same conversation.
+
+**`counterparty` is optional and records the party a deal or datum came from** — the platform whose
+take rate this is, the distributor whose terms these are, the one customer both quotes came from. A
+published document like the example above has none, and omits the key. A consumer that needs the
+value applies a fallback chain and stops at the first hit: `counterparty`, then `publisher`, then
+the host of `url_canonical`.
+
+**The failure it prevents is one `url_canonical` structurally cannot reach.** Two deals with the
+same counterparty, written up from two separate research passes, are two source notes with two
+`url_canonical` values. A count of sources says 2, while the concentration — one relationship's
+terms standing in for a market's — is invisible. Deduplication cannot catch it, because the two
+write-ups genuinely *are* two documents: distinct pages, distinct pulls, neither a duplicate of the
+other. The only thing they share is the party on the other side of the table, and nothing but this
+field records it.
+
+**The fallback chain is a proxy, and it is worth knowing which way it errs.** `publisher` is the
+first fallback because a deal write-up is usually published *by* the counterparty — a platform's own
+announcement, a distributor's own terms page — so the chain is right in the common case. Where a
+third party reported the deal it is wrong in the direction that cries wolf: two unrelated deals
+covered by one trade publication collapse onto one party, and a concentration gets reported that is
+not there. That is exactly why the field is authored rather than inferred. Dropping the chain
+instead is worse in the direction that hides: an unwritten field would read as *no counterparty*
+rather than *not recorded*, so every note would count as its own distinct party and a corpus written
+before the field existed would report perfect diversity.
 
 ### The fact note is one observed value with its provenance
 
@@ -573,15 +599,15 @@ that bounds it: it names the sections a supersession put in doubt, so the read i
 rather than over every citation in the corpus.
 
 **Before a render, all of them are one call: `vault-lint.sh --release-gate`.** It runs the bare
-check, `--used-in`, the sweep, `--red-team` and `--roadmap-table`, and exits non-zero unless every
-part passes. The
-separate modes are still there and are what you reach for mid-engagement — a citation question,
-a supersession question, a panel question and a roadmap question are different questions — but the
-gate before
-anything ships is one invocation with one verdict, because a set of invocations made from memory
-is a set nobody can be held to. The bare run's own success line says as much: it reports that the
-note-level checks passed and that the citation targets, the supersession blast radius, the
-panel objection rows and the roadmap table were **not** opened.
+check, `--used-in`, the sweep, `--red-team`, `--roadmap-table` and `--binding-driver`, and exits
+non-zero unless every part passes. The separate modes are still there and are what you reach for
+mid-engagement — a citation question, a supersession question, a panel question, a roadmap question
+and a question about the verdict drivers and the evidence under them are different questions — but
+the gate before anything ships is one invocation with one verdict, because a set of invocations made
+from memory is a set nobody can be held to. The bare run's own success line says as much: it reports
+that the note-level checks passed and that the citation targets, the supersession blast radius, the
+panel objection rows, the roadmap table and the verdict drivers and the evidence under them were
+**not** opened.
 
 ### The assumption note is what you would believe with no evidence
 
@@ -631,6 +657,129 @@ a second copy here is a second source of truth nothing keeps in sync.
 the only legitimate evidence a pre-launch company has through an `assumption` makes every driver
 weak by construction — and every plan for a company that has not launched then reads as
 unjustified, which is every company at the moment the plan is worth writing.
+
+### A target verdict is a claim carrying five more fields, not an eighth note type
+
+A verdict on the founder's stated target, and a ceiling stated against that target, are one of the
+two types above carrying a `subject` of `target-verdict` or `steady-state-ceiling`: an `assumption`
+before the research that settles it, a `claim` after
+([target.md](target.md#computing-a-verdict-the-checklist) step 12). Five further fields hang off
+that **subject** rather than off the type, because one verdict is filed under both types inside a
+single engagement — a rule keyed to `type: claim` would exempt every verdict written before the
+research came back, which is every verdict at the point where a wrong one is cheapest to fix.
+
+```yaml
+subject: "target-verdict"     # or "steady-state-ceiling" — the subject is what these five belong to
+binding_driver: "reach"       # the driver the identity solved for, in the words the plan uses
+driver_kind: policy           # structural | policy | policy-within-band — those three words
+conditional_on: "six hours a week across two channels"   # required when driver_kind is policy or policy-within-band
+evidence_n: "2"               # distinct source notes reached under the binding driver
+evidence_counterparties: "1"  # distinct counterparties among those sources
+```
+
+**`binding_driver` names the driver the identity solved for, and it is what gives the two counts a
+scope.** *Distinct sources under the verdict* is most of the corpus; *distinct sources under the
+binding driver* is a number worth printing. Left in prose the driver is a phrase inside a sentence,
+so the counts beside it are over nothing in particular — and the binding driver **moves**, because
+relieving reach usually makes price bind next
+([target.md](target.md#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative)).
+The field is therefore also the record of which driver the stored counts were taken under, which is
+the half a re-run silently invalidates.
+
+**`driver_kind` takes exactly three words — `structural`, `policy`, `policy-within-band` — and the
+enumeration is closed.** Closing it is the point. Everything downstream branches on *policy or
+not*: a policy-bound verdict owes a stated condition and a structural one does not. So an
+unrecognised value takes the structural path by default and buys exactly the exemption invariant 18
+exists to refuse, with a typo indistinguishable from a deliberate classification, and the plan
+reports a founder's own decision as a category floor. The value is unquoted, the same as
+`sensitivity` and `date_confidence` above: a closed word list gives a parser nothing to be wrong
+about, which is the only question the coerce-nothing rule asks.
+
+**`conditional_on` is required when `driver_kind` is `policy` or `policy-within-band`, and holds the
+policy variable in the words the rendered plan uses.** Verbatim, because a later check matches this
+string against the plan section the note's `used_in` names — the same rule `chosen` is held to
+against `options`, and a milestone `title` against its roadmap row, for the same reason: where one
+side renders off the other an exact match is a check, and anything looser is a similarity test that
+cries wolf until somebody switches it off. **The failure:** *your target is unreachable* and *your
+target is unreachable at six hours a week across two channels* are indistinguishable in a rendered
+plan, at the same confidence letter, and only the second one is true. A `structural` verdict owes no
+condition, because there is no choice to name — and that negative case carries as much weight as the
+positive one, since a rule demanding a condition from every verdict would be met by inventing one.
+
+**`evidence_n` and `evidence_counterparties` are what the verdict states about the evidence under
+its binding driver** — distinct source notes reached through `rests_on`, and distinct
+`counterparty` values among them under the fallback chain above. Both are quoted whole numbers, the
+same rule `sequence` is held to, because a count that becomes a YAML integer stops being comparable
+as the string every other query over this corpus compares. **Where the tail is thin, storing them is
+half of what is owed and the rendered section carries the other half** — one line generated off these
+two fields, `Evidence: 2 sources, 1 counterparty`, matched verbatim the way `conditional_on` is;
+[plan-template.md](plan-template.md) carries the form. Counts that are right in the ledger and absent
+from the plan leave the defect exactly where it was. **The failure:** the corpus knows the
+tail is thin and the rendered figure does not say so. A verdict resting on two deals renders
+identically to one resting on twenty, because `confidence` is a letter about the weakest link and
+says nothing about how many links there are. The counterparty count is the half that cannot be
+recovered from anything else the corpus records: three deals from one counterparty is one
+relationship's terms reported as a market's, and a source count of three reads as the opposite.
+
+**Any one of the five present makes the others owed.** `binding_driver`, `driver_kind`, `evidence_n`
+and `evidence_counterparties` are owed unconditionally; `conditional_on` is owed on top of them
+exactly when `driver_kind` is `policy` or `policy-within-band`. This is the rule the decision note's
+brief fields are held to, one type over, and it is here for the same reason: a note carrying some of
+them reads complete to every consumer, while the missing field is precisely the one that would have
+qualified the number. A verdict naming its driver and labelling it `policy` with no counts is a
+fully qualified finding to every reader and to every tool, and what it is not saying is that the two
+deals underneath it came from one counterparty.
+
+**The trigger is the `subject` and `schemaVersion` is not — and the two subjects are triggered
+differently.** `target-verdict` is a term this release introduces, so no note in any existing corpus
+carries it at any version: under that subject `binding_driver`, `driver_kind`, `evidence_n` and
+`evidence_counterparties` are owed **whatever else the note carries** — a note carrying none of them
+fails, and so does one carrying a partial set — with `conditional_on` owed on top of those four
+exactly when `driver_kind` is `policy` or `policy-within-band`, per the rule above. `steady-state-ceiling` predates its 1.3.0 amendment and is `required: true`,
+so every vault already holds one: there the trigger is **field presence** — a ceiling claim carrying
+none of the five owes none of them, and carrying any one owes the set.
+
+**The asymmetry is the point, not an inconsistency to be tidied away later.** What field presence
+buys is an exemption for notes written before the fields existed, and only the ceiling half has such
+notes to exempt. Extending the same leniency to the verdict half would pay an exemption's whole cost
+over an empty population, and that cost is exact: omitting `binding_driver` would become the
+cheapest way past every rule below that reads the note. **A dodge available by omission is not an
+exemption.** `--red-team` checks its roster in both directions for this reason — with only the
+forward check, the cheapest way past a lens that returned nothing is to delete it from the roster.
+
+**This is still the exemption the version field exists to provide, obtained without spending a
+version on it**, and the split makes that argument stronger rather than weaker: a check firing
+unconditionally over a subject no older vault can carry fails nothing, while one firing
+unconditionally over every subject fails every vault authored before it on the day the skill
+updates, which is how a gate stops being run.
+
+**A verdict that reaches the plan without ever reaching the ledger is the last hole, and
+`verdict-unfiled` closes it.** Everything above presumes a note exists. Nothing yet stops the verdict
+sentence being written straight into `business-plan.md` under the `{#target-verdict}` anchor with no
+note behind it at all — and `target-verdict` is `required: false`, so the coverage query does not ask
+for one either. What that costs is every property the ledger exists to give a number: no `rests_on`,
+so no confidence derivation and no cap; no `stale_after`, so nothing ever comes up for re-checking;
+no supersession when the target is renegotiated, so the superseded finding is simply overwritten; and
+`--supersession-sweep` cannot name the section when something under it moves, because nothing records
+that the section was ever standing on anything. It is the one output of this skill most likely to
+make a founder stop, held to less than a sourced market-size figure. The check is `--roadmap-table`
+inverted — that mode fails milestone notes with no `business-plan.md` to render them, and this fails
+a rendered section with no note behind it. **What triggers it is a non-empty section at the anchor
+and never a reading of the prose inside it**, for the same reason `conditional_on` is matched
+verbatim: a check that infers a verdict from sentence shape cries wolf, and a check that cries wolf
+gets switched off.
+
+**Six rules stand on these fields, and every one of them fails rather than printing a worklist.**
+Unlike `--supersession-sweep`, a thin tail nobody surfaced is not the corpus working.
+
+| rule | mode | what fires |
+|---|---|---|
+| the five fields are a set | `check` | `verdict-fields-incomplete` on a note carrying some of them |
+| `driver_kind` is one of three words | `check` | `driver-kind-unknown` on a fourth |
+| a policy-bound verdict states its condition | `--binding-driver` | `verdict-unconditional` where `conditional_on` does not appear in the plan section `used_in` names |
+| the plan's `Kind` column renders off the note | `--binding-driver` | `verdict-kind-mismatch`, both directions — a cell hand-edited to `structural` is otherwise the cheapest way past the row above |
+| the evidence under the binding driver is surfaced | `--binding-driver` | `verdict-thin-evidence` where the closure reaches under three distinct sources, or one counterparty, and either the note's counts are not what the closure holds or the rendered section does not carry the line they generate |
+| the plan's verdict is filed as a note | `--binding-driver` | `verdict-unfiled` — a `business-plan.md` carrying a non-empty section at the `{#target-verdict}` anchor with no `claim` or `assumption` under `subject: target-verdict` behind it |
 
 ### The question note records the gap, not the answer
 
@@ -983,6 +1132,14 @@ not exist when a version-1 corpus was written:
 restating it, because a version that adds a rule in one release and a second in the next ends up
 with two lists, one of which is quietly short. A short list of what a version costs is worse than
 no list: it reads as complete.
+
+**`--binding-driver` is deliberately not a row in it**, and the omission is the design rather than a
+gap in the list. Its four rules are triggered by a note's `subject`, or by the plan section a verdict
+renders into, never by a version — so a corpus written before those fields existed owes nothing at
+either `1` or `2` and needs no exemption bought with a version — the fields and the argument are
+[above](#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type). A row here
+would assert the opposite, and the lint would then disagree with the schema about which vaults the
+mode applies to, in the direction where the schema reads stricter than the tool.
 
 The last two are checks on a *record of a read* rather than on the read itself, which is the only
 shape a mechanical check over a judgment step can take. The two directions `--red-team` checks

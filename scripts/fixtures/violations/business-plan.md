@@ -25,6 +25,13 @@ so this heading anchors as `target--verdict`. Collapsing the run would produce
 `target-verdict`, which is not what the rendered document carries — and a note
 citing the real anchor would then be reported dead.
 
+It is also where `--binding-driver` resolves `CLAIM-VDTV0016`, and it is a heading
+rather than an anchor attribute on purpose: section identity folds to its
+alphanumeric bytes, so `Target — verdict` and `{#target-verdict}` are the same
+section to that mode while staying different addresses to `--used-in`. Because a
+`target-verdict` note stands behind it, `verdict-unfiled` is silent here — that
+check has a vault of its own, where nothing does.
+
 ## Précis of the ask
 
 A heading whose letters are not all ASCII. awk reads UTF-8 as bytes, so a slug

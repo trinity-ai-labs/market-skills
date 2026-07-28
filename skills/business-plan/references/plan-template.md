@@ -117,12 +117,50 @@ Rendering "the verdict" as a single value destroys the finding exactly where it 
 rectangle where three corners clear and one does not reads at its centre as a clean yes, and the
 corner that fails is usually the one the founder was aiming at. Invented shape:
 
-| Corner | Verdict | Binding driver | Kind |
-|---|---|---|---|
-| low value · late date | clears | — (price and conversion both clear) | — |
-| low value · early date | clears at the band's lower end | reach | policy |
-| high value · late date | undetermined — flips across the multiple's band | multiple | — |
-| high value · early date | does not clear | growth slope at the sale date | policy |
+| Corner | Verdict | Binding driver | Kind | Evidence |
+|---|---|---|---|---|
+| low value · late date | clears | — (price and conversion both clear) | — | — |
+| low value · early date | clears at the band's lower end | reach | policy | Evidence: 2 sources, 1 counterparty |
+| high value · late date | undetermined — flips across the multiple's band | multiple | — | Evidence: 1 source, 1 counterparty |
+| high value · early date | does not clear | growth slope at the sale date | policy | — |
+
+THE `Kind` COLUMN RENDERS OFF THE VERDICT NOTE'S `driver_kind` AND IS MATCHED VERBATIM — one of
+structural, policy or policy-within-band, in those words, for every corner where a driver binds; a
+corner where nothing binds carries an em dash and owes no kind. That makes the column a contract
+the writer owes rather than a formatting choice, and `vault-lint.sh --binding-driver` compares each
+cell against the note behind that corner in both directions. Same rule `chosen` is held to against
+`options` and a milestone title against its roadmap row, and for the same reason: where one side
+renders off the other an exact match is a check, and anything looser is a similarity test that
+cries wolf until somebody switches it off. The failure the both-directions half prevents is
+specific — a cell hand-edited to structural is otherwise the cheapest way past
+[the rule that a policy-bound verdict states its
+configuration](target.md#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative),
+since a structural verdict owes none; and a kind the note carries that no row shows is the same
+dodge run the other way.
+
+WHERE THE EVIDENCE UNDER A BINDING DRIVER IS THIN, THE SECTION SAYS SO IN ONE FIXED FORM RENDERED
+OFF THE NOTE'S TWO COUNTS — `Evidence: 2 sources, 1 counterparty`, with both numerals taken verbatim
+from `evidence_n` and `evidence_counterparties` and each noun pluralising on its own numeral (`1
+source`, `2 sources`; `1 counterparty`, `2 counterparties`). **The line is owed only where the tail
+is actually thin** — under three distinct sources, or every source from one counterparty at any
+count — so a well-evidenced corner carries an em dash and owes nothing, and this never becomes a line
+on every plan that everyone learns to skip. `vault-lint.sh --binding-driver` builds that string off
+the note and looks for it in this section, so the contract is that the string appears here and not
+that it appears in a particular cell: in the corner-table shape it is a cell, because each corner has
+its own counts, and in the scalar shape it is a clause in the verdict sentence. The cell repeats the
+word `Evidence` rather than letting the column header carry it, because the tool generates ONE string
+from the two fields — a shorter table-only form would be a second rendering with nothing keeping the
+two in step, which is the drift the verbatim rule exists to remove.
+
+**The failure this prevents is the one the counts exist for, and it is not a wrong number.** The
+ledger can be perfectly honest — `evidence_n: "2"`, `evidence_counterparties: "1"` — while the
+section renders *reach binds; the target lands about a third of the way* with no hint the finding
+rests on two deals with the same party. Typographically that is identical to a verdict resting on
+twenty deals across twelve parties, and `confidence` cannot separate them: it is a letter about the
+weakest link and says nothing about how many links there are. So the corpus knows the tail is thin
+and the number a founder acts on does not say so — which is the whole defect, unchanged, if the
+counts stop at the note. Three deals from one counterparty is the terms of one relationship reported
+as the terms of a market, and a source count of three reads as the opposite.
 
 KEEP THE FOUNDER'S STATED RANGE AND THE EVIDENCE'S RANGE VISIBLY APART — two labelled rows, never
 one interval. Both arrive as the same shape, an interval with two ends, and merged the founder
@@ -413,6 +451,23 @@ seats, the binding input is trial flow, and trial flow is one channel worked six
 The line reads "180 seats at one channel and six hours a week; 360 at two channels and the
 same hours" — the same arithmetic, relabelled, and it moves the founder from "the business
 tops out below my goal" to "this configuration does".
+
+THE CEILING'S CLAIM NOTE CARRIES THE SAME FIVE FIELDS THE VERDICT'S DOES, under `subject:
+steady-state-ceiling`: `binding_driver` for the input that sets the ceiling, `driver_kind` for its
+label — structural, policy or policy-within-band, unquoted and closed at those three —
+and `evidence_n` / `evidence_counterparties` for the evidence under that input as quoted whole
+numbers. Any one of those four present makes the other three owed. The fifth, `conditional_on`,
+carries the configuration verbatim as the line above states it ("one channel and six hours a week")
+and is owed only where `driver_kind` is policy or policy-within-band — a ceiling whose binding input
+is structural names no configuration, because a rule demanding one from every ceiling would be met
+by inventing one. `vault-lint.sh --binding-driver` matches `conditional_on` against this section —
+and, where the evidence under that input is thin, the same `Evidence: 2 sources, 1 counterparty` line
+the verdict section owes, built off this note's own two counts and stated as a clause in the ceiling
+sentence.
+Recorded nowhere, the relabelled arithmetic lives only in the sentence: an edit that trims the line back to "180 seats" a draft
+later leaves a number reported as physics, reading exactly as it did before, with nothing that can
+say the qualifier was ever there. The field rules and both triggers are
+[vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
 
 The failure this prevents: the model lets a decision become a law of nature and then reports
 the consequence as physics, and a number reported as physics is one nobody argues with. The
