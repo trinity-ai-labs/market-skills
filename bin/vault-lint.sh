@@ -130,10 +130,10 @@ vault-lint.sh - read-only checks over a claim vault.
       that failed to read it.
 
   vault-lint.sh --release-gate [--vault PATH]
-      Run every mode a release owes, in order - `check`, then --used-in, then
-      --supersession-sweep - printing each part's output under its own
-      heading. The exit status is the worst status any part returned, so the
-      gate is clean only when every part is.
+      Run every mode a release owes, in order - `check`, --used-in,
+      --supersession-sweep and --red-team - printing each part's output under
+      its own heading. The exit status is the worst status any part returned,
+      so the gate is clean only when every part is.
 
       It exists because the alternative was three calls made from memory, and
       which of them actually ran was a matter of recall. The bare run's
@@ -143,6 +143,23 @@ vault-lint.sh - read-only checks over a claim vault.
       --json is refused here: several JSON documents printed one after
       another are not a JSON document. Run each mode with --json separately
       when a consumer needs to parse the result.
+
+  vault-lint.sh --red-team [--vault PATH] [--json]
+      Check red-team.md's panel record against itself: every lens named in its
+      `## Lenses dispatched` roster wrote at least one objection row, and every
+      row's lens is on the roster. A verdict - it exits 1 on either.
+
+      Nothing else in the corpus records which lenses were dispatched, so
+      without the roster a lens that returned findings, saw them folded into
+      two documents and never wrote a row is indistinguishable from a lens
+      that had no objections - silence and thoroughness read the same, and the
+      plan then cites objection codes into a file carrying none of them. The
+      reverse direction is checked because otherwise the gate clears by
+      deleting a lens from the roster, which is the cheapest way past it.
+
+      A vault with no red-team.md dispatched no panel and passes. A red-team.md
+      with no roster fails at schemaVersion 2, where the roster is part of the
+      schema, and passes at 1, which predates it.
 
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
@@ -208,6 +225,7 @@ check                gate  note-level checks
 --used-in            gate  citation targets
 --supersession-sweep gate  supersession blast radius
 --release-gate       -     -
+--red-team           gate  panel objection rows
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -1723,6 +1741,177 @@ if [ "$MODE" = "used-in" ]; then
 	' "$RECORDS"
 
 	render_failures "vault-lint used-in"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --red-team - a dispatched lens owes rows
+#
+# The panel is the most expensive read a plan gets, and until now nothing in the
+# corpus recorded which lenses were sent. A lens that returned findings, saw
+# them folded into two documents and never wrote a row in red-team.md is
+# indistinguishable from a lens that had no objections: silence and thoroughness
+# read the same, and the plan then cites objection codes into a file carrying
+# none of them. This creates the record it enforces - the `## Lenses dispatched`
+# roster - and checks it against the objection table beside it.
+#
+# BOTH DIRECTIONS, and the second one is what makes the first hold. A roster
+# entry with no rows is the failure this exists for. A row whose lens is not on
+# the roster is the failure the check would otherwise create: with only the
+# forward direction, the cheapest way past a lens that returned nothing is to
+# delete it from the roster, and the record stops being a record.
+#
+# It is a mode rather than a check for the same reason --used-in is: it reads a
+# document at the vault root rather than a note in one of the six directories,
+# which is a different surface. It shares --used-in's failure renderer, so it
+# reports one row per failure with the same JSON shape.
+#
+# LC_ALL=C for the reason --used-in found the hard way: an objection is free
+# prose in a table cell, so it carries em dashes and curly quotes, and macOS awk
+# in a UTF-8 locale aborts the record on the first sequence it cannot decode -
+# which would end the scan early and pass a document it never finished reading.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "red-team" ]; then
+	RED_TEAM="$VAULT/red-team.md"
+	# A vault with no red-team.md dispatched no panel, which is every vault
+	# before Phase 4 runs. Reported by name rather than passing silently: a mode
+	# that printed `clean` over a document it never found reads as a panel that
+	# was checked. The empty failure file still goes through the renderer, so
+	# --json gets a well-formed document either way.
+	RED_TEAM_OK="every dispatched lens wrote rows - $VAULT"
+	if [ -f "$RED_TEAM" ]; then
+		LC_ALL=C awk -v out="$FAILURES" -v schema="$FOUND_SCHEMA" '
+			function report(check, id, detail) { print "red-team.md\t" check "\t" id "\t" detail >> out }
+
+			# The key the two halves are matched on: trimmed, whitespace runs
+			# collapsed, lowercased. Matching the raw cell would report `Market
+			# skeptic` and `market  skeptic` as two lenses, one of them missing
+			# every row - and a check that fires on capitalisation is one
+			# somebody switches off, which takes the half that worked with it.
+			function key(s) {
+				sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
+				gsub(/[ \t]+/, " ", s)
+				return tolower(s)
+			}
+
+			# The same trim without the folding, for the message. A failure
+			# naming the lens in the case the roster wrote it in is one the
+			# reader can find by eye in the document.
+			function disp(s) {
+				sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			{
+				line = $0
+				sub(/\r$/, "", line)
+				t = line
+				sub(/^[ \t]+/, "", t)
+
+				# Fenced blocks hold examples, not rows. A document that
+				# carries its own row template - which this one is written to -
+				# would otherwise register the template as a dispatched lens
+				# and fail for documenting its own format. Tracked by marker
+				# character and run length so a longer nested fence cannot
+				# close its parent early.
+				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+					c = substr(t, 1, 1)
+					n = 0
+					while (substr(t, n + 1, 1) == c) n++
+					if (fc == "") { fc = c; fn = n }
+					else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+					next
+				}
+				if (fc != "") next
+
+				if (match(t, /^#+[ \t]+/)) {
+					h = substr(t, RLENGTH + 1)
+					sub(/[ \t]*#+[ \t]*$/, "", h)
+					inroster = (key(h) == "lenses dispatched")
+					next
+				}
+
+				if (substr(t, 1, 1) != "|") next
+				row = t
+				sub(/^\|/, "", row)
+				sub(/\|[ \t]*$/, "", row)
+				nc = split(row, cell, "|")
+				if (nc < 2) next
+				c1 = disp(cell[1])
+
+				# The header row and the |---| rule are skipped by the same
+				# test that reads a round, rather than by counting lines: a
+				# table written without a header, or with an alignment row
+				# carrying colons, is still a roster and its rows still name
+				# lenses that owe rows.
+				if (inroster) {
+					if (c1 !~ /^R?[0-9]+$/) next
+					rd = c1
+					sub(/^R/, "", rd)
+					lens = key(cell[2])
+					if (lens == "") next
+					rk = rd SUBSEP lens
+					if (rk in ROSTER) next
+					ROSTER[rk] = 1
+					RORDER[++nr] = rk
+					RSHOW[rk] = disp(cell[2])
+					next
+				}
+
+				# An objection row is identified by its ID rather than by the
+				# heading it sits under, so a document that splits its rounds
+				# across sections is read the same as one with a single table.
+				# The round in the ID is the round the row counts for - it is
+				# the namespace the ID already carries, so there is no second
+				# place for the two to disagree.
+				if (c1 !~ /^R[0-9]+-O[0-9]+$/) next
+				rd = c1
+				sub(/^R/, "", rd)
+				sub(/-O[0-9]+$/, "", rd)
+				lens = key(cell[2])
+				ok = rd SUBSEP lens
+				if (ok in ROWS) next
+				ROWS[ok] = 1
+				OORDER[++no] = ok
+				OSHOW[ok] = disp(cell[2])
+				OID[ok] = c1
+			}
+
+			END {
+				# No roster at all. At schemaVersion 2 that is the failure,
+				# because the roster is where version 2 put the record. At 1 it
+				# is a document that predates the field, and failing it would
+				# fail every corpus with a panel in it on the day the skill
+				# updated - which is how a gate stops being run.
+				if (nr == 0) {
+					if (schema + 0 >= 2)
+						report("red-team-no-roster", "", "red-team.md carries no `## Lenses dispatched` roster. Nothing else in the corpus records which lenses were sent, so a lens that returned findings and wrote no row is indistinguishable from one that had no objections - and the objection codes the plan cites resolve into a table that never carried them")
+					exit
+				}
+
+				for (i = 1; i <= nr; i++) {
+					rk = RORDER[i]
+					if (rk in ROWS) continue
+					split(rk, p, SUBSEP)
+					report("red-team-lens-no-rows", "R" p[1] " " RSHOW[rk],
+						"the roster names `" RSHOW[rk] "` as dispatched in round " p[1] " and no row in red-team.md carries an objection from it. Either the lens returned findings that were folded into the documents and never written down, in which case the plan cites a code the table does not hold, or it genuinely had none - and the whole point of the roster is that those two look identical from outside")
+				}
+
+				for (i = 1; i <= no; i++) {
+					ok = OORDER[i]
+					if (ok in ROSTER) continue
+					split(ok, p, SUBSEP)
+					report("red-team-lens-unrostered", OID[ok],
+						"row `" OID[ok] "` is an objection from `" OSHOW[ok] "` in round " p[1] ", and the roster does not name that lens as dispatched in that round. A roster that omits a lens whose rows are sitting in the table is not the record it claims to be, and the check above it can then be cleared by deleting a line rather than by dispatching a lens")
+				}
+			}
+		' "$RED_TEAM"
+	else
+		RED_TEAM_OK="no red-team.md under $VAULT - no panel was dispatched, so no lens owes rows"
+	fi
+
+	render_failures "vault-lint red-team" "$RED_TEAM_OK"
 	exit $?
 fi
 

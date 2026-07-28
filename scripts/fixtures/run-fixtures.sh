@@ -33,6 +33,8 @@
 #   8. A schemaVersion 2 vault is read, and a version from the future is not.
 #   9. The sweep carries a verdict at schemaVersion 2 - it fails an absent or
 #      stale `reconciled:` - and the same notes at 1 do not fail.
+#  10. --red-team fails a rostered lens with no rows and a row with no roster
+#      entry, and fails a missing roster at schemaVersion 2 only.
 
 set -u
 
@@ -56,7 +58,7 @@ unparsed-line"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team graph"
 
 PASS=0
 FAIL=0
@@ -152,9 +154,16 @@ VJSON=$("$LINT" --vault "$HERE/violations" --json 2>/dev/null)
 # separate modes and a check name that moved between them should turn something
 # red. The per-file `Violates:` contract in 2b is the opposite case: it is a
 # promise made by one note about one check, and which mode reports it is not the
-# note's business, so that assertion reads both documents.
+# note's business, so that assertion reads every mode that reports one.
 UJSON=$("$LINT" --used-in --vault "$HERE/violations" --json 2>/dev/null)
 UI_VIOL_STATUS=$?
+
+# The third document the per-file machinery reads. --red-team reports against
+# red-team.md rather than against a note, and that document carries its own
+# `Violates:` line exactly as a violating note does - the promise is made by the
+# file about a check, and which mode reports it is not the file's business.
+RTJSON=$("$LINT" --red-team --vault "$HERE/violations" --json 2>/dev/null)
+RT_VIOL_STATUS=$?
 
 FIRED=$(printf '%s\n' "$VJSON" |
 	awk -F'"check": "' 'NF > 1 { split($2, a, "\""); print a[1] }' |
@@ -191,7 +200,7 @@ done <"$PAIRS_FILE.got"
 # resolution order that has stopped resolving. Every violating note declares its
 # own checks on a `Violates:` line, and each is asserted against that file.
 printf '\nper-file expectations\n'
-PAIRS=$(printf '%s\n%s\n' "$VJSON" "$UJSON" |
+PAIRS=$(printf '%s\n%s\n%s\n' "$VJSON" "$UJSON" "$RTJSON" |
 	awk -F'"file": "' 'NF > 1 {
 		split($2, a, "\"")
 		split($0, b, "\"check\": \"")
@@ -515,6 +524,62 @@ case "$AT1_OUT" in
 *) no "at 1 the sweep reported an empty verdict instead of saying it did not ask (got: $AT1_OUT)" ;;
 esac
 
+# --- 2h. the lens roster, both directions and both versions ------------------
+# Which note each --red-team failure lands on is asserted by the per-file
+# machinery above, which now reads this mode's JSON too: violations/red-team.md
+# declares both checks on its own `Violates:` line and has to fire both. Written
+# out here is what that machinery cannot see - the exit codes, the clean side,
+# and the version gate on the roster itself.
+printf '\nlens roster\n'
+
+RT_CLEAN=$("$LINT" --red-team --vault "$HERE/clean" 2>&1)
+RT_CLEAN_STATUS=$?
+[ "$RT_CLEAN_STATUS" = "0" ] && ok "--red-team exits 0 when every dispatched lens wrote rows" ||
+	no "--red-team should exit 0 on the clean vault (got $RT_CLEAN_STATUS)"
+
+# The clean side is where the two easy over-firings would show. `R1-O3` writes
+# its lens in lower case and the roster wrote it capitalised, and the fenced
+# template names a lens nothing dispatched - either read literally turns the
+# clean vault red, and a mode that fires on capitalisation is one somebody
+# switches off.
+case "$RT_CLEAN" in
+*failure*) no "--red-team fired on the clean vault - a case difference or a fenced template row was read as real" ;;
+*) ok "a lens case difference and a fenced template row are both ignored" ;;
+esac
+
+[ "$RT_VIOL_STATUS" = "1" ] && ok "--red-team exits 1 on the violating vault" ||
+	no "--red-team exits 1 on the violating vault (got $RT_VIOL_STATUS)"
+case "$RTJSON" in
+*'"failure_count": 2'*) ok "--red-team reports exactly the two planted roster failures" ;;
+*) no "--red-team failure_count is not 2 - a matching lens was reported, or a gap was not" ;;
+esac
+
+# A vault that never dispatched a panel is not a failure, at either version.
+# Failing it would fail every corpus before Phase 4 runs, which is the shape of
+# check that gets switched off rather than satisfied.
+RT_NONE=$("$LINT" --red-team --vault "$HERE/dead-citation" 2>&1)
+RT_NONE_STATUS=$?
+[ "$RT_NONE_STATUS" = "0" ] && ok "a vault with no red-team.md passes --red-team" ||
+	no "a vault with no red-team.md should pass (got $RT_NONE_STATUS)"
+case "$RT_NONE" in
+*"no red-team.md"*) ok "the absent document is named rather than reported clean" ;;
+*) no "--red-team did not say the document was absent (got: $RT_NONE)" ;;
+esac
+
+# The missing roster is the version-gated half, and both sides need asserting:
+# firing at 2 is the check, and staying silent at 1 is what keeps a corpus with
+# a panel in it from going red the day the skill updates. violations/ is at 1
+# and its roster is present, so the silent side is asserted where the roster is
+# absent - the same document, one version down.
+RT_GAP=$(run_status "$HERE/panel-gap" --red-team)
+[ "$RT_GAP" = "1" ] && ok "a red-team.md with no roster fails at schemaVersion 2" ||
+	no "a missing roster should fail at schemaVersion 2 (got $RT_GAP)"
+
+cp "$HERE/panel-gap/red-team.md" "$AT_1/red-team.md"
+RT_AT1=$(run_status "$AT_1" --red-team)
+[ "$RT_AT1" = "0" ] && ok "the same document with no roster passes at schemaVersion 1" ||
+	no "a missing roster must not fail at schemaVersion 1 (got $RT_AT1)"
+
 # --- 3. JSON is well-formed enough to slice ---------------------------------
 printf '\njson\n'
 for v in clean violations; do
@@ -581,7 +646,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -629,12 +694,24 @@ case "$RG_JSON" in
 *) no "--release-gate did not refuse --json clearly (got: $RG_JSON)" ;;
 esac
 
-# A vault for the newly-failing part, for the reason dead-citation exists: a
-# gate whose verdict came from its first part would report it clean, and it is
-# not visible over clean/ or violations/, where every part agrees.
+# One vault per newly-failing part, for the reason dead-citation exists: a gate
+# whose verdict came from its first part would report both of these clean, and
+# neither is visible over clean/ or violations/, where every part agrees.
 RG_UNREC=$(run_status "$HERE/unreconciled" --release-gate)
 [ "$RG_UNREC" = "1" ] && ok "--release-gate fails when only the sweep fails" ||
 	no "--release-gate should fail when only the sweep fails (got $RG_UNREC)"
+
+RG_PANEL=$(run_status "$HERE/panel-gap" --release-gate)
+[ "$RG_PANEL" = "1" ] && ok "--release-gate fails when only --red-team fails" ||
+	no "--release-gate should fail when only --red-team fails (got $RG_PANEL)"
+
+# And that each names the part that failed rather than only carrying its status,
+# since the gate prints a list of the parts that did not pass.
+RG_PANEL_ERR=$("$LINT" --release-gate --vault "$HERE/panel-gap" 2>&1 >/dev/null || true)
+case "$RG_PANEL_ERR" in
+*"did not pass"*--red-team*) ok "the gate names --red-team as the part that failed" ;;
+*) no "the gate did not name the failing part (got: $RG_PANEL_ERR)" ;;
+esac
 
 # --- 6. the supported schemaVersion set ------------------------------------
 # Asserting only that 99 is refused would pass a tool that had narrowed the set
