@@ -644,3 +644,157 @@ function Invoke-ModeCheck {
 # ============================================================================
 # END OF THE STUB SEAM
 # ============================================================================
+
+# ----------------------------------------------------------------------------
+# arguments
+#
+# Ports bin/vault-lint.sh:354-424.
+# ----------------------------------------------------------------------------
+
+$MODE = 'check'
+$VAULT = ''
+$JSON = 0
+$DEPTH = '2'
+$TARGET = ''
+
+$ARGV = New-Object 'System.Collections.Generic.List[string]'
+foreach ($a in $args) { [void]$ARGV.Add([string]$a) }
+$ai = 0
+
+if ($ARGV.Count -gt 0) {
+	if ($ARGV[0] -ceq 'check') {
+		$ai = 1
+	} elseif ($ARGV[0] -ceq 'graph') {
+		$MODE = 'graph'
+		$ai = 1
+		# `vault-lint.sh` and not `vault-lint.ps1`, deliberately: every string
+		# this tool prints that names itself is transcribed from the shell, and
+		# the ONE exception is the die() prefix, which the parity gate folds by
+		# name. Anything else renamed here diverges mid-message, where nothing
+		# folds it. See Show-Usage for the same rule and why it is unfinished.
+		if ($ai -ge $ARGV.Count) { Exit-Refusal 'graph needs a note ID, for example: vault-lint.sh graph CLAIM-AS23SD44' }
+		$TARGET = $ARGV[$ai]
+		$ai++
+	}
+}
+
+while ($ai -lt $ARGV.Count) {
+	$arg = $ARGV[$ai]
+	if ($arg -ceq '--vault') {
+		if ($ARGV.Count - $ai -lt 2) { Exit-Refusal '--vault needs a path' }
+		$VAULT = $ARGV[$ai + 1]
+		$ai += 2
+	} elseif ($arg.StartsWith('--vault=', [System.StringComparison]::Ordinal)) {
+		$VAULT = $arg.Substring(8)
+		$ai++
+	} elseif ($arg -ceq '--json') {
+		$JSON = 1
+		$ai++
+	} elseif ($arg -ceq '--depth') {
+		if ($ARGV.Count - $ai -lt 2) { Exit-Refusal '--depth needs a number' }
+		$DEPTH = $ARGV[$ai + 1]
+		$ai += 2
+	} elseif ($arg.StartsWith('--depth=', [System.StringComparison]::Ordinal)) {
+		$DEPTH = $arg.Substring(8)
+		$ai++
+	} elseif ($arg -ceq '--help' -or $arg -ceq '-h') {
+		Show-Usage
+		exit 0
+	} else {
+		# Every mode flag resolves through the mode table rather than through an
+		# arm of its own, which is what makes adding a mode a one-line append.
+		$selected = Get-ModeForFlag $arg
+		if ($selected.Length -eq 0) { Exit-Refusal ('unexpected argument: ' + $arg) }
+		if ($MODE -ceq 'graph') { Exit-Refusal ($arg + ' and graph are separate modes') }
+		$MODE = $selected
+		$ai++
+	}
+}
+
+# \A and \z rather than ^ and $: in .NET `$` also matches immediately before a
+# trailing newline, so a `--depth` argument of "2<LF>" would pass a `^[0-9]+$`
+# test and then be used as a number. The shell's `*[!0-9]*` case pattern has no
+# such hole, and a divergence here is a refusal on one implementation and a run
+# on the other.
+if (-not [regex]::IsMatch($DEPTH, '\A[0-9]+\z')) {
+	Exit-Refusal ('--depth must be a whole number, got: ' + $DEPTH)
+}
+
+if ($MODE -ceq 'graph' -and $JSON -eq 1) {
+	Exit-Refusal 'graph prints text only - its consumer is an agent building a plan, not an eye looking at a picture'
+}
+
+# ----------------------------------------------------------------------------
+# locate and validate the vault
+#
+# Ports bin/vault-lint.sh:426-465. Resolution is --vault, then $VAULT_PATH, then
+# refuse. Never an upward search: from a code repo that walks to the filesystem
+# root and errors far from its cause, or finds a .vault belonging to a different
+# engagement and reads the wrong corpus with no error at all.
+# ----------------------------------------------------------------------------
+
+if ($VAULT.Length -eq 0 -and $null -ne $env:VAULT_PATH) { $VAULT = $env:VAULT_PATH }
+if ($VAULT.Length -eq 0) { Exit-Refusal 'no vault. Pass --vault <path> or set VAULT_PATH.' }
+if (-not (Test-Path -LiteralPath $VAULT -PathType Container)) { Exit-Refusal ('not a directory: ' + $VAULT) }
+
+# One trailing `/` and nothing else, exactly as `${VAULT%/}` does - not `\`, and
+# not TrimEnd. The `vault` field of every --json document echoes this string
+# verbatim, so anything stripped here that the shell does not strip is a byte
+# the parity gate reports as a difference on all eighteen fixtures at once.
+if ($VAULT.EndsWith('/', [System.StringComparison]::Ordinal)) { $VAULT = $VAULT.Substring(0, $VAULT.Length - 1) }
+
+$CONFIG = $VAULT + '/.vault/config.json'
+if (-not (Test-Path -LiteralPath $CONFIG -PathType Leaf)) {
+	Exit-Refusal ('not a vault - no .vault/config.json under ' + $VAULT + '. Refusing rather than walking an arbitrary directory of Markdown as if it were a corpus.')
+}
+
+# The versions this tool can read, oldest first. A SET rather than a single
+# number, because both directions of the mismatch are not the same problem. A
+# vault at 1 predates the checks version 2 added and cannot owe them, so
+# refusing it would fail every corpus that existed before they did - the tool
+# reads it and holds it to exactly the rules it was written under. A version
+# from the FUTURE stays refused, which is the whole reason the field exists: an
+# older tool half-reading a newer vault reports a clean bill of health over
+# every field it never saw.
+$SUPPORTED_SCHEMA = '1 2'
+$FOUND_SCHEMA = ''
+foreach ($line in (Read-TextLines $CONFIG)) {
+	$m = [regex]::Match($line, '"schemaVersion"[ \t]*:[ \t]*[0-9]+')
+	if (-not $m.Success) { continue }
+	$digits = [regex]::Match($m.Value, '[0-9]+\z')
+	if ($digits.Success) { $FOUND_SCHEMA = $digits.Value; break }
+}
+
+if ($FOUND_SCHEMA.Length -eq 0) {
+	Exit-Refusal ($CONFIG + ' carries no schemaVersion. A tool that guesses half-reads the vault and reports a clean bill of health over every field it never saw.')
+}
+if (-not ((' ' + $SUPPORTED_SCHEMA + ' ').Contains(' ' + $FOUND_SCHEMA + ' '))) {
+	Exit-Refusal ('vault schemaVersion is ' + $FOUND_SCHEMA + ' and this tool reads only these versions: ' + $SUPPORTED_SCHEMA + '. Refusing rather than processing the parts it recognises - a green result from a half-read vault is exactly what somebody acts on.')
+}
+
+# ----------------------------------------------------------------------------
+# DISPATCH POINT 1 - before anything reads the corpus
+#
+# --release-gate re-invokes this script once per part, so it must not pay for a
+# note index it never uses. Same position as bin/vault-lint.sh:493.
+#
+# THE --json REFUSAL LIVES HERE, NOT IN THE STUB BODY, and it is ported ahead of
+# the mode it belongs to. Two reasons. It is asserted today
+# (scripts/fixtures/run-fixtures.sh:772 runs it against whichever implementation
+# VAULT_LINT names), so an unported --release-gate that answered 3 to
+# `--release-gate --json` would fail that assertion while the mode is still
+# allowlisted. And keeping it outside the body means porting the mode cannot
+# drop it: a refusal is the argument surface answering, not the mode running.
+#
+# It sits AFTER vault resolution because that is where the shell has it: with no
+# vault at all, `--release-gate --json` answers "no vault" on both
+# implementations rather than answering the refusal that never got that far.
+# ----------------------------------------------------------------------------
+
+if ($MODE -ceq 'release-gate') {
+	if ($JSON -eq 1) {
+		Exit-Refusal '--release-gate prints several modes in sequence, and several JSON documents printed one after another are not a JSON document. Run each mode with --json separately.'
+	}
+	Invoke-ModeReleaseGate
+}
+
