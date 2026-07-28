@@ -322,11 +322,16 @@ it. Three things it deliberately does not do belong in any change to it. **The s
 renders into is the anchor its subject names, and only where the plan has no such section the ones
 its `used_in` names** — read as a union instead, a note that also cites `## Why now` clears the
 condition check whenever the phrase turns up there, so the verdict corner may read *does not clear*
-and pass. **`verdict-thin-evidence` compares the closure against the note's own `evidence_n` and
-`evidence_counterparties` and reads nothing else**; `vault.md` also permits a rendered section to
-state the counts, and that half is deliberately not implemented, because `check` already owes both
-fields on every note the mode reads — so the only note it could excuse is one whose stored counts
-are *wrong*, and scanning the prose for two numbers lets an unrelated pair silence the rule.
+and pass. **`verdict-thin-evidence` is a conjunction and both halves are load-bearing**: the note's
+`evidence_n` and `evidence_counterparties` must be what the closure holds, *and* the section must
+carry the one line those two generate — `Evidence: 2 sources, 1 counterparty`, matched verbatim like
+`conditional_on`. Written as a disjunction it can never be both-false, because `check` already owes
+both fields on every note the mode reads, so it collapses to a rule about the ledger alone and leaves
+the reported failure shipping: honest counts, and a section that renders the finding with nothing
+saying it rests on two deals with one party. The line is generated rather than grepped for, because a
+scan for the two numbers as tokens lets an unrelated pair of digits silence it — and it is owed only
+where the tail is thin, so a well-evidenced verdict carries nothing and this never becomes a line on
+every plan.
 **`verdict-unfiled` fires on the presence of a non-empty section at the `{#target-verdict}` anchor
 and never on a reading of the prose inside it, and there is no `{#steady-state}` equivalent**,
 because a ceiling section in an existing plan legitimately has no field-carrying note behind it.

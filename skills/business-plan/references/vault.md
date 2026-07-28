@@ -710,7 +710,11 @@ positive one, since a rule demanding a condition from every verdict would be met
 its binding driver** — distinct source notes reached through `rests_on`, and distinct
 `counterparty` values among them under the fallback chain above. Both are quoted whole numbers, the
 same rule `sequence` is held to, because a count that becomes a YAML integer stops being comparable
-as the string every other query over this corpus compares. **The failure:** the corpus knows the
+as the string every other query over this corpus compares. **Where the tail is thin, storing them is
+half of what is owed and the rendered section carries the other half** — one line generated off these
+two fields, `Evidence: 2 sources, 1 counterparty`, matched verbatim the way `conditional_on` is;
+[plan-template.md](plan-template.md) carries the form. Counts that are right in the ledger and absent
+from the plan leave the defect exactly where it was. **The failure:** the corpus knows the
 tail is thin and the rendered figure does not say so. A verdict resting on two deals renders
 identically to one resting on twenty, because `confidence` is a letter about the weakest link and
 says nothing about how many links there are. The counterparty count is the half that cannot be
@@ -774,7 +778,7 @@ Unlike `--supersession-sweep`, a thin tail nobody surfaced is not the corpus wor
 | `driver_kind` is one of three words | `check` | `driver-kind-unknown` on a fourth |
 | a policy-bound verdict states its condition | `--binding-driver` | `verdict-unconditional` where `conditional_on` does not appear in the plan section `used_in` names |
 | the plan's `Kind` column renders off the note | `--binding-driver` | `verdict-kind-mismatch`, both directions — a cell hand-edited to `structural` is otherwise the cheapest way past the row above |
-| the evidence under the binding driver is surfaced | `--binding-driver` | `verdict-thin-evidence` where the closure reaches under three distinct sources, or one counterparty, and the note or the rendered section does not say so |
+| the evidence under the binding driver is surfaced | `--binding-driver` | `verdict-thin-evidence` where the closure reaches under three distinct sources, or one counterparty, and either the note's counts are not what the closure holds or the rendered section does not carry the line they generate |
 | the plan's verdict is filed as a note | `--binding-driver` | `verdict-unfiled` — a `business-plan.md` carrying a non-empty section at the `{#target-verdict}` anchor with no `claim` or `assumption` under `subject: target-verdict` behind it |
 
 ### The question note records the gap, not the answer
@@ -1130,9 +1134,9 @@ with two lists, one of which is quietly short. A short list of what a version co
 no list: it reads as complete.
 
 **`--binding-driver` is deliberately not a row in it**, and the omission is the design rather than a
-gap in the list. Its five rules are triggered by a note carrying one of the verdict fields, never by
-a version, so a corpus written before those fields existed owes nothing at either `1` or `2` and
-needs no exemption bought with a version — the fields and the argument are
+gap in the list. Its four rules are triggered by a note's `subject`, or by the plan section a verdict
+renders into, never by a version — so a corpus written before those fields existed owes nothing at
+either `1` or `2` and needs no exemption bought with a version — the fields and the argument are
 [above](#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type). A row here
 would assert the opposite, and the lint would then disagree with the schema about which vaults the
 mode applies to, in the direction where the schema reads stricter than the tool.

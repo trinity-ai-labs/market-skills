@@ -285,16 +285,26 @@ This mode holds all of that against the section of the plan that renders it, and
 things: a policy-bound verdict whose section states the finding and drops the configuration, a
 corner table whose `Kind` cell disagrees with its note (both ways, because otherwise editing a cell
 is the cheapest way out), a tail that reaches fewer than three sources or all of them from one
-counterparty where the note's own counts do not say so, and a rendered verdict section with no note
-behind it at all. **A single counterparty is reportable however many sources there are:** three deals from one
+counterparty where the tail is not surfaced, and a rendered verdict section with no note behind it at
+all. **A single counterparty is reportable however many sources there are:** three deals from one
 counterparty is one relationship's terms reported as a market's, and a source count of three reads
 as the opposite.
 
+**Surfacing a thin tail takes both halves.** The note has to carry counts that match what the ledger
+actually reaches, *and* the section has to carry the one line those two numbers generate —
+`Evidence: 2 sources, 1 counterparty`. Counts that are right in the vault and absent from the plan
+leave the problem exactly where it was: the section still reads the same as one whose verdict rests
+on twenty deals across twelve parties, and the confidence letter cannot tell you which, because it
+is about the weakest link and says nothing about how many links there are. The line is owed only
+where the tail is genuinely thin, so a well-evidenced verdict carries nothing and this never becomes
+boilerplate you learn to skip.
+
 Both strings the plan renders off the note — the configuration phrase and the `Kind` cell — are
-matched **verbatim**, so a mismatch means somebody wrote the sentence by hand. Nothing here reads
-your prose for sentiment or shape at all: the evidence rule compares the note's stored counts
-against what the ledger actually reaches, and the section-with-no-note check fires on the section
-being there and non-empty, never on what it says. A vault with no verdict passes, and so does an existing
+matched **verbatim**, so a mismatch means somebody wrote the sentence by hand — and so is the
+evidence line, which is built from the note's two counts rather than searched for as a pair of
+numbers, because a stray pair of digits in the same paragraph would otherwise silence the rule.
+Nothing here reads your prose for sentiment or shape: the section-with-no-note check fires on the
+section being there and non-empty, never on what it says. A vault with no verdict passes, and so does an existing
 corpus's ceiling claim that carries none of the new fields — the fields are owed outright only under
 the subject this release introduced, which no corpus written before it can hold.
 
