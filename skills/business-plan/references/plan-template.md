@@ -431,11 +431,13 @@ tops out below my goal" to "this configuration does".
 THE CEILING'S CLAIM NOTE CARRIES THE SAME FIVE FIELDS THE VERDICT'S DOES, under `subject:
 steady-state-ceiling`: `binding_driver` for the input that sets the ceiling, `driver_kind` for its
 label — structural, policy or policy-within-band, unquoted and closed at those three —
-`conditional_on` for the configuration verbatim as the line above states it ("one channel and six
-hours a week"), and `evidence_n` / `evidence_counterparties` for the evidence under that input as
-quoted whole numbers. Any one of them present makes the rest owed, and `vault-lint.sh
---binding-driver` matches `conditional_on` against this section. Recorded nowhere, the relabelled
-arithmetic lives only in the sentence: an edit that trims the line back to "180 seats" a draft
+and `evidence_n` / `evidence_counterparties` for the evidence under that input as quoted whole
+numbers. Any one of those four present makes the other three owed. The fifth, `conditional_on`,
+carries the configuration verbatim as the line above states it ("one channel and six hours a week")
+and is owed only where `driver_kind` is policy or policy-within-band — a ceiling whose binding input
+is structural names no configuration, because a rule demanding one from every ceiling would be met
+by inventing one. `vault-lint.sh --binding-driver` matches `conditional_on` against this section.
+Recorded nowhere, the relabelled arithmetic lives only in the sentence: an edit that trims the line back to "180 seats" a draft
 later leaves a number reported as physics, reading exactly as it did before, with nothing that can
 say the qualifier was ever there. The field rules and both triggers are
 [vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.

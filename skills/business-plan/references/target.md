@@ -434,9 +434,12 @@ sentence, so nothing can tell a rendered section that carries the condition from
 it — and the drop is invisible precisely because what remains still reads as a finished sentence.
 Recorded, it is a string `vault-lint.sh --binding-driver` matches against the plan section the
 note's `used_in` names, in the words the section itself uses. The full set — those three plus
-`evidence_n` and `evidence_counterparties` — and the rule that any one of them present makes the
-rest owed are
+`evidence_n` and `evidence_counterparties` — and the rule that binds them as a set are
 [vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
+Note which way `conditional_on` runs: it is owed only where `driver_kind` is a policy value, and a
+`structural` verdict owes none. That negative case carries as much weight as the positive one — a
+rule demanding a condition from every verdict would be met by inventing one, and an invented
+configuration on a structural miss is the same defect this section exists to stop, run backwards.
 
 **A split driver makes the verdict conditional on where in its band the product sits, and the words
 change with it.** Where retention binds, the finding is *this product as built does not retain well
@@ -872,17 +875,19 @@ number a founder is most likely to want re-litigated later.
 11. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
     with the date held, as a band — then build the lever table separately.
 12. **Record it** — an `assumption` before research, a `claim` after — under `subject:
-    target-verdict`, carrying the five fields the verdict owes, then supersede the earlier verdict
-    rather than editing it. The five: **`binding_driver`**, step 9's answer in the words the plan
-    uses; **`driver_kind`**, step 3's classification, one of `structural`, `policy` or
-    `policy-within-band` and unquoted; **`conditional_on`**, the policy variable verbatim as the
-    rendered plan states it, owed whenever `driver_kind` is either policy value; and
-    **`evidence_n`** and **`evidence_counterparties`**, the distinct source notes and the distinct
-    counterparties reached under the binding driver, as quoted whole numbers. Steps 3 and 9 already
-    produced the first three and step 4 walked the sources the last two count, so this step records
-    what the run computed rather than deciding anything new — which is exactly why it gets skipped.
-    Unrecorded, they are a sentence in a readout: `vault-lint.sh --binding-driver` has no string to
-    hold the rendered section against and no count to check the surfaced one against, so the
-    section that quietly dropped the condition renders at the same confidence letter as the one
-    that kept it. Any one of the five present makes the rest owed, per
+    target-verdict`, then supersede the earlier verdict rather than editing it. **Four fields every
+    verdict owes:** **`binding_driver`**, step 9's answer in the words the plan uses;
+    **`driver_kind`**, step 3's classification, one of `structural`, `policy` or
+    `policy-within-band` and unquoted; and **`evidence_n`** and **`evidence_counterparties`**, the
+    distinct source notes and the distinct counterparties reached under the binding driver, as
+    quoted whole numbers. **A fifth only where step 3 said policy:** **`conditional_on`**, the
+    policy variable verbatim as the rendered plan states it, owed when `driver_kind` is `policy` or
+    `policy-within-band` and owed by nothing else — **a structural verdict names no condition,
+    because a rule demanding one from every verdict would be met by inventing one.** Steps 3 and 9
+    already produced the first two and step 4 walked the sources the counts are taken over, so this
+    step records what the run computed rather than deciding anything new — which is exactly why it
+    gets skipped. Unrecorded, they are a sentence in a readout: `vault-lint.sh --binding-driver` has
+    no string to hold the rendered section against and no count to check the surfaced one against,
+    so the section that quietly dropped the condition renders at the same confidence letter as the
+    one that kept it. Any one of the four present makes the other three owed, per
     [vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type).

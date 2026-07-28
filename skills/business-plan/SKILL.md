@@ -164,9 +164,13 @@ nearest-reachable solve and the negotiation script are in
     verdict's in [references/target.md](references/target.md).
     **The verdict half now has an enforcement surface and the ceiling half's is partial** — say
     which, because the two are checked to different depths and treating them as equal is how the
-    weaker one stops being written. Under `subject: target-verdict` the five labelling fields are
-    owed unconditionally, so a note missing any of them fails, and `verdict-unfiled` fails a
-    rendered `{#target-verdict}` section with no note behind it at all. Under
+    weaker one stops being written. Under `subject: target-verdict` four of the five labelling
+    fields are owed unconditionally — `binding_driver`, `driver_kind`, `evidence_n`,
+    `evidence_counterparties` — and `conditional_on` is owed on top of them only where
+    `driver_kind` is `policy` or `policy-within-band`, because a rule demanding a condition from
+    every verdict would be met by inventing one. A note missing any field it owes fails, and
+    `verdict-unfiled` fails a rendered `{#target-verdict}` section with no note behind it at all.
+    Under
     `steady-state-ceiling` the same fields are owed only once the note carries one of them: that
     subject predates them, every existing vault holds a ceiling claim, and a rule firing over all
     of them would fail every vault authored before this release. So an unlabelled ceiling claim
