@@ -4,6 +4,32 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
 
 ## 1.12.0
 
+- **A rule that is correct, present and read is still not enforced, which is why invariant 16's
+  second clause needed a field rather than a better sentence.** In a real engagement run the plan's
+  corner table recorded the binding driver's kind as `policy`, correctly. Invariant 16 already said,
+  in those words, that a verdict whose binding driver is policy rather than structural is negative
+  for the stated configuration only and never for the target — and it already spelled out the
+  failure it prevents: a policy-bound "unreachable" stops a founder over a decision they could
+  revisit this week, in the same words and at the same confidence as a constraint no decision of
+  theirs can move. The label was right. The rule was right. The rule was read. The verdict was
+  written as structural anyway, and it cost a day before somebody caught it and the corner was
+  reopened as undetermined. **Nothing downstream of a person reading a rule can tell whether they
+  applied it**, and that is the whole case, worth stating plainly because it is uncomfortable: a
+  prose invariant is checkable only by the person it is addressed to, at the moment they are least
+  able to check it — mid-run, holding the conclusion they have already reached. That is not an
+  argument for sharper prose. It is an argument for a field that fails.
+  **So this release is the `resource` precedent applied to the verdict, and it is worth naming as
+  that.** `vault.md` states the precedent outright — "`resource` is the field that makes
+  resource-independence checkable." Before 1.10.0, resource-independence was a paragraph asking an
+  author to notice that two items competed for the same constrained thing; after it, `resource` and
+  `sequence` are fields on the note and `false-independence` fails two milestones that declare the
+  same `resource` at the same `sequence`. Same move one invariant over: `driver_kind` and
+  `conditional_on` turn invariant 16's second clause from a paragraph an author has to apply into
+  fields a check reads, and `evidence_n` / `evidence_counterparties` do it for a sample size that
+  was never written down anywhere at all. It is also the same shape as the seven defects filed as
+  the v1.10.0 umbrella (issue #81) — both sets came out of running a full engagement end to end
+  rather than out of reading the code, which is why both are rules that were already written down
+  and simply never fired.
 - **Invariant 18 has two halves and only one of them was ever enforced; the verdict half is now a
   note shape, and `vault-lint.sh --binding-driver` reads it against the plan section that renders
   it.** The ceiling half got its surface in 1.3.0, when `steady-state-ceiling`'s vocabulary
