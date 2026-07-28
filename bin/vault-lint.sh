@@ -3,6 +3,7 @@
 # vault-lint.sh - read-only whole-corpus checks over a claim vault.
 #
 #   vault-lint.sh [check] [--vault PATH] [--json]
+#   vault-lint.sh --release-gate [--vault PATH]
 #   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
 #
 # This is shipped tooling: it runs on a user machine as part of the skill, so it
@@ -56,12 +57,20 @@ PROG="vault-lint.sh"
 # usage and refusals
 # ----------------------------------------------------------------------------
 
+# ONE BLOCK PER MODE, IN MODE_TABLE ORDER, AND A NEW MODE APPENDS ITS BLOCK
+# IMMEDIATELY BEFORE THE `graph` ONE. Interleaving is what turns a release that
+# adds three modes into three edits to the same lines here, and git merges two
+# of those textually clean - leaving one mode with a working flag and no help
+# text, which reads to its author exactly like a mode that was never added.
 usage() {
 	cat <<'EOF'
 vault-lint.sh - read-only checks over a claim vault.
 
   vault-lint.sh [check] [--vault PATH] [--json]
-      Run every check over the vault. Exits 1 if anything failed.
+      Run every note-level check over the vault. Exits 1 if anything failed.
+      A strict subset of what a release owes: it never opens a citation
+      target and never asks what a supersession put in doubt, which is what
+      --release-gate is for.
 
   vault-lint.sh --unverified [--vault PATH] [--json]
       Report the notes asserted with nothing behind them: everything with
@@ -101,6 +110,21 @@ vault-lint.sh - read-only checks over a claim vault.
       case, and a sweep that omitted it silently would look exactly like one
       that failed to read it.
 
+  vault-lint.sh --release-gate [--vault PATH]
+      Run every mode a release owes, in order - `check`, then --used-in, then
+      --supersession-sweep - printing each part's output under its own
+      heading. The exit status is the worst status any part returned, so the
+      gate is clean only when every part is.
+
+      It exists because the alternative was three calls made from memory, and
+      which of them actually ran was a matter of recall. The bare run's
+      success line covers the notes alone, so a corpus with dozens of dead
+      anchors clears the only call anybody remembered to make and renders.
+
+      --json is refused here: several JSON documents printed one after
+      another are not a JSON document. Run each mode with --json separately
+      when a consumer needs to parse the result.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -125,6 +149,62 @@ EOF
 die() {
 	printf '%s: %s\n' "$PROG" "$1" >&2
 	exit 2
+}
+
+# ----------------------------------------------------------------------------
+# the mode table - the seam a new mode registers into
+#
+# One row per mode. Columns are separated by whitespace and the last one runs
+# to the end of the line:
+#
+#   SELECTOR  the argument that selects the mode - a flag, or `check` for the
+#             one mode that is a bare subcommand
+#   GATE      `gate` if --release-gate runs it as one of its parts, `-` if not
+#   PART      the heading --release-gate prints above that part's output
+#
+# ADDING A MODE IS ADDING A ROW. The argument parser reads the SELECTOR column
+# and --release-gate reads all three, so a new mode needs no arm of its own in
+# the `case` block below and no edit to the gate's composition - it needs a row
+# here, a block in usage(), and its own dispatch further down. A release that
+# adds three modes is what made this a table: three modes each editing the same
+# `case` block is three conflicts, and git resolves two of them textually clean
+# while one mode silently loses the arm that parses its flag.
+#
+# There is no MODE column because it would restate its neighbour on every row:
+# the MODE token is the SELECTOR with its leading `--` stripped. That is a rule
+# a new mode has to follow rather than an accident - a flag and a token that
+# disagreed would be a discrepancy this table could not show.
+#
+# `graph` is deliberately not a row. It takes an operand rather than being
+# selected by a flag, so it is parsed in the positional block below - and a
+# mode that needs a note ID has nothing --release-gate could run unattended.
+#
+# --unverified is a row but not a gate part. Its whole population is the
+# healthy case - an assumption is supposed to be unverified until its
+# validation step runs - so a gate that ran it would either ignore the output
+# or fail every vault that has an assumption in it.
+MODE_TABLE='
+check                gate  note-level checks
+--unverified         -     -
+--used-in            gate  citation targets
+--supersession-sweep gate  supersession blast radius
+--release-gate       -     -
+'
+
+# The MODE a command-line flag selects, or empty when the flag names no mode.
+# `check` is in the table so --release-gate can invoke it, and is skipped here
+# because it stays a positional subcommand: accepting it as a flag would make
+# `vault-lint.sh --vault PATH check` mean something it has never meant.
+mode_for_flag() {
+	while read -r sel _; do
+		case "$sel" in --?*) ;; *) continue ;; esac
+		if [ "$sel" = "$1" ]; then
+			printf '%s\n' "${sel#--}"
+			break
+		fi
+	done <<EOF
+$MODE_TABLE
+EOF
 }
 
 # ----------------------------------------------------------------------------
@@ -167,21 +247,6 @@ while [ $# -gt 0 ]; do
 		JSON=1
 		shift
 		;;
-	--unverified)
-		[ "$MODE" = "graph" ] && die "--unverified and graph are separate modes"
-		MODE="unverified"
-		shift
-		;;
-	--used-in)
-		[ "$MODE" = "graph" ] && die "--used-in and graph are separate modes"
-		MODE="used-in"
-		shift
-		;;
-	--supersession-sweep)
-		[ "$MODE" = "graph" ] && die "--supersession-sweep and graph are separate modes"
-		MODE="supersession-sweep"
-		shift
-		;;
 	--depth)
 		[ $# -ge 2 ] || die "--depth needs a number"
 		DEPTH="$2"
@@ -195,8 +260,14 @@ while [ $# -gt 0 ]; do
 		usage
 		exit 0
 		;;
+	# Every mode flag resolves through the mode table rather than through an
+	# arm of its own, which is what makes adding a mode a one-line append.
 	*)
-		die "unexpected argument: $1"
+		SELECTED=$(mode_for_flag "$1")
+		[ -n "$SELECTED" ] || die "unexpected argument: $1"
+		[ "$MODE" = "graph" ] && die "$1 and graph are separate modes"
+		MODE="$SELECTED"
+		shift
 		;;
 	esac
 done
@@ -238,6 +309,59 @@ FOUND_SCHEMA=$(awk '
 	die "$CONFIG carries no schemaVersion. A tool that guesses half-reads the vault and reports a clean bill of health over every field it never saw."
 [ "$FOUND_SCHEMA" = "$SUPPORTED_SCHEMA" ] ||
 	die "vault schemaVersion is $FOUND_SCHEMA and this tool supports $SUPPORTED_SCHEMA. Refusing rather than processing the parts it recognises - a green result from a half-read vault is exactly what somebody acts on."
+
+# ----------------------------------------------------------------------------
+# --release-gate - every mode a release owes, in one call
+#
+# The gate before a render was three calls made from memory, so which of them
+# actually ran was a matter of recall. This runs the set and carries one
+# verdict out, which is the only form a gate can be held to.
+#
+# EACH PART IS A FRESH INVOCATION OF THIS SCRIPT rather than a function call.
+# Every mode below is a top-to-bottom pipeline that ends in `exit`, and `check`
+# and --used-in share one failure file - running two of them in one process
+# would mean threading a reset between them and letting one mode's failures
+# land in the other's verdict. A process boundary is the cheapest thing that
+# cannot get that wrong, and the cost is re-reading the corpus once per part on
+# a command that runs once per release.
+#
+# $0 is the path the kernel handed the interpreter, so it is the resolved
+# script even when the shell found it on PATH - which is how it is always
+# invoked, since Claude Code puts an enabled plugin's bin/ on PATH.
+#
+# THE EXIT STATUS IS THE WORST STATUS ANY PART RETURNED, not the last one and
+# not a flattened 1. A refusal (2) and a failed check (1) are different
+# answers - one says the tool would not read the vault, the other says it read
+# it and found something - and reporting both as 1 sends a reader hunting for a
+# failure in a check that never ran.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "release-gate" ]; then
+	[ "$JSON" -eq 0 ] ||
+		die "--release-gate prints several modes in sequence, and several JSON documents printed one after another are not a JSON document. Run each mode with --json separately."
+
+	GATE_STATUS=0
+	GATE_FAILED=""
+	printf 'vault-lint release-gate: %s\n' "$VAULT"
+
+	while read -r sel gate part; do
+		[ "$gate" = "gate" ] || continue
+		printf '\n--- %s: %s ---\n' "$sel" "$part"
+		"$0" "$sel" --vault "$VAULT"
+		PART_STATUS=$?
+		[ "$PART_STATUS" -gt "$GATE_STATUS" ] && GATE_STATUS="$PART_STATUS"
+		[ "$PART_STATUS" -eq 0 ] || GATE_FAILED="$GATE_FAILED $sel"
+	done <<EOF
+$MODE_TABLE
+EOF
+
+	if [ "$GATE_STATUS" -eq 0 ]; then
+		printf '\nvault-lint release-gate: every part passed - %s\n' "$VAULT"
+	else
+		printf '\nvault-lint release-gate: did not pass -%s\n' "$GATE_FAILED" >&2
+	fi
+	exit "$GATE_STATUS"
+fi
 
 VOCAB="$VAULT/_vocab.yml"
 HAS_VOCAB=0
@@ -1092,10 +1216,18 @@ PATHIDX="$TMP/paths"
 # Human output goes to stderr and JSON to stdout on purpose: a caller piping
 # --json into a parser gets only the document, and a human running it bare still
 # sees everything.
+#
+# The second argument is the line printed when nothing failed, and it is an
+# argument rather than a constant because "clean" means something different in
+# each mode. `check` looks at note fields and never opens a document, so a
+# corpus with dozens of dead anchors used to print the same `clean` as a whole
+# corpus in order - and a success line read as a whole-corpus verdict is the
+# thing somebody renders on. --used-in's clean genuinely is what it says: every
+# target it was asked to open resolved. It keeps the default.
 render_failures() {
 	LC_ALL=C sort -o "$FAILURES" "$FAILURES"
 
-	awk -v vault="$VAULT" -v today="$TODAY" -v asjson="$JSON" -v prog="$1" -F '\t' '
+	awk -v vault="$VAULT" -v today="$TODAY" -v asjson="$JSON" -v prog="$1" -v okline="${2:-clean - $VAULT}" -F '\t' '
 		BEGIN {
 			DQ = sprintf("%c", 34)
 			BS = sprintf("%c", 92)
@@ -1138,7 +1270,7 @@ render_failures() {
 				}
 				printf "%s]\n}\n", (n == 0 ? "" : "\n  ")
 			} else if (n == 0) {
-				printf "%s: clean - %s\n", prog, vault
+				printf "%s: %s\n", prog, okline
 			} else {
 				printf "%s: %d failure%s under %s\n", prog, n, (n == 1 ? "" : "s"), vault > "/dev/stderr"
 				for (i = 1; i <= n; i++) {
@@ -1724,4 +1856,18 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 # render
 # ----------------------------------------------------------------------------
 
-render_failures "vault-lint"
+# What the bare run did NOT ask, read off the mode table rather than written
+# out a second time. A mode added to the gate would otherwise leave this line
+# silently understating what it skipped, which is the same hand-maintained
+# enumeration the table exists to remove. `check` is excluded because it is the
+# mode printing the line.
+SKIPPED=""
+while read -r sel gate part; do
+	[ "$gate" = "gate" ] || continue
+	[ "$sel" = "check" ] && continue
+	SKIPPED="${SKIPPED:+$SKIPPED, }$part"
+done <<EOF
+$MODE_TABLE
+EOF
+
+render_failures "vault-lint" "note-level checks passed - $VAULT. Not opened: $SKIPPED - --release-gate asks all of them."

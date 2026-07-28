@@ -28,6 +28,8 @@
 #      both, deduped by section.
 #   5. Both JSON outputs are well-formed enough to slice by field.
 #   6. The two refusal paths refuse, and exit 2.
+#   7. --release-gate runs all three parts and carries the worst verdict any of
+#      them returned, including when only one part fails.
 
 set -u
 
@@ -44,6 +46,14 @@ filename-mismatch folded-scalar frontmatter inline-flow-list malformed-edge
 near-miss-subject null-value orphan-source required-field stale-claim
 supersedes-reason supersedes-status type-agreement unknown-subject
 unparsed-line"
+
+# Every mode the lint answers to, and the second census in this file for the
+# same reason as EXPECTED: a mode whose help block was never written and one
+# whose help block was lost in a merge look identical from the outside. The
+# argument parser reads MODE_TABLE, so a new mode's flag works the moment its
+# row lands - `usage()` is the hand-maintained half, and nothing else in the
+# suite ever runs --help. Append a mode here in the same edit that adds its row.
+MODES="check --unverified --used-in --supersession-sweep --release-gate graph"
 
 PASS=0
 FAIL=0
@@ -77,9 +87,19 @@ printf 'clean vault\n'
 CLEAN_OUT=$("$LINT" --vault "$HERE/clean" 2>&1)
 CLEAN_STATUS=$(run_status "$HERE/clean")
 [ "$CLEAN_STATUS" = "0" ] && ok "exits 0" || no "exits 0 (got $CLEAN_STATUS)"
+# Asserted on the new wording rather than on the substring `clean`, because
+# `clean` is exactly what the line stopped saying. The bare run checks note
+# fields and opens no document, so a corpus with dozens of dead anchors printed
+# a whole-corpus verdict - and a success line is what somebody renders on. Both
+# halves are asserted: what it did check, and that it points at the mode that
+# asks the rest.
 case "$CLEAN_OUT" in
-*clean*) ok "reports clean" ;;
-*) no "reports clean (got: $CLEAN_OUT)" ;;
+*"note-level checks passed"*) ok "the success line names what it checked" ;;
+*) no "the success line does not name what it checked (got: $CLEAN_OUT)" ;;
+esac
+case "$CLEAN_OUT" in
+*--release-gate*) ok "the success line names the mode that asks all three" ;;
+*) no "the success line does not point at --release-gate (got: $CLEAN_OUT)" ;;
 esac
 
 # The clean vault is also where correct parsing is asserted. A parser that
@@ -422,6 +442,103 @@ case "$NOVAULT" in
 *"not a directory"*) ok "a missing vault path is refused by name" ;;
 *) no "a missing vault path was not refused clearly" ;;
 esac
+
+# --- 5. the release gate runs every part and carries one verdict -------------
+# The gate exists because three calls made from memory is a set nobody can be
+# held to, so what is asserted here is composition rather than any one part:
+# every part's output appears, in order, on a passing vault and a failing one
+# alike, and ONE failing part is enough to fail the whole call. That last half
+# is what a gate reporting only its first part's verdict would get wrong, and
+# it is invisible over clean/ and violations/ - both vaults agree across the
+# parts, so a broken composition passes both.
+printf '\nrelease gate\n'
+
+RG_CLEAN=$("$LINT" --release-gate --vault "$HERE/clean" 2>&1)
+RG_CLEAN_STATUS=$?
+[ "$RG_CLEAN_STATUS" = "0" ] && ok "--release-gate exits 0 on the clean vault" ||
+	no "--release-gate exits 0 on the clean vault (got $RG_CLEAN_STATUS)"
+
+RG_VIOL=$("$LINT" --release-gate --vault "$HERE/violations" 2>&1)
+RG_VIOL_STATUS=$?
+[ "$RG_VIOL_STATUS" = "1" ] && ok "--release-gate exits 1 on the violating vault" ||
+	no "--release-gate exits 1 on the violating vault (got $RG_VIOL_STATUS)"
+
+# Both vaults, because a gate that stopped at the first failing part would
+# still print all three headings over the clean one.
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius'; do
+	case "$RG_CLEAN" in
+	*"$part"*) ok "the clean gate carries the $part part" ;;
+	*) no "the clean gate is missing the $part part" ;;
+	esac
+	case "$RG_VIOL" in
+	*"$part"*) ok "the violating gate carries the $part part" ;;
+	*) no "the violating gate is missing the $part part" ;;
+	esac
+done
+
+# dead-citation is the vault built for the one-failing-part case: every note in
+# it is well-formed, so `check` is silent, and the one used_in entry names a
+# document that is not there. A gate whose verdict was its first part's would
+# report it clean and a render would go ahead over a citation reaching nothing.
+#
+# One capture sliced three ways, per the rule stated above VJSON: the gate's own
+# output already carries the passing part's success line, the failing part's
+# check name and the composite exit status, so re-invoking the two parts
+# separately would cost three more full corpus parses for nothing.
+DC_GATE=$("$LINT" --release-gate --vault "$HERE/dead-citation" 2>&1)
+DC_GATE_STATUS=$?
+case "$DC_GATE" in
+*"note-level checks passed"*) ok "dead-citation passes the note-level checks" ;;
+*) no "dead-citation should pass the note-level checks (got: $DC_GATE)" ;;
+esac
+case "$DC_GATE" in
+*used-in-missing-file*) ok "dead-citation fails --used-in, on the missing document" ;;
+*) no "dead-citation did not fire used-in-missing-file (got: $DC_GATE)" ;;
+esac
+[ "$DC_GATE_STATUS" = "1" ] && ok "--release-gate fails when only --used-in fails" ||
+	no "--release-gate should fail when only --used-in fails (got $DC_GATE_STATUS)"
+
+# A refusal and a failed check are different answers. The gate reports the
+# worse of the two rather than flattening both to 1, which would send a reader
+# hunting for a failure in a check that never ran.
+RG_FUTURE=$(run_status "$HERE/future-schema" --release-gate)
+[ "$RG_FUTURE" = "2" ] && ok "--release-gate exits 2 when a part refuses to run" ||
+	no "--release-gate exits 2 when a part refuses to run (got $RG_FUTURE)"
+
+# Refused rather than emitting three JSON documents in a row, which is not a
+# JSON document and which every consumer would nonetheless try to parse.
+RG_JSON=$("$LINT" --release-gate --json --vault "$HERE/clean" 2>&1 >/dev/null || true)
+case "$RG_JSON" in
+*"not a JSON document"*) ok "--release-gate refuses --json by name" ;;
+*) no "--release-gate did not refuse --json clearly (got: $RG_JSON)" ;;
+esac
+
+# --- 6. every mode has help text ---------------------------------------------
+# The one thing MODE_TABLE cannot absorb. A mode registers its flag by adding a
+# row, but its paragraph in `usage()` is written by hand at a shared anchor -
+# and a release that adds three modes is three inserts at the same point, two
+# of which git merges textually clean. The mode that loses its block still
+# works, so nothing turns red and the miss surfaces the first time a user runs
+# --help and cannot find the flag they were told about.
+printf '\nhelp text\n'
+
+HELP=$("$LINT" --help 2>&1)
+HELP_STATUS=$?
+[ "$HELP_STATUS" = "0" ] && ok "--help exits 0" || no "--help exits 0 (got $HELP_STATUS)"
+
+# Brackets dropped before matching: `check` is the one mode whose block writes
+# its selector as optional (`vault-lint.sh [check] …`), and the block is what is
+# being asserted rather than the exact synopsis punctuation.
+HELP_FLAT=$(printf '%s\n' "$HELP" | tr -d '[]')
+
+printf '%s\n' "$MODES" | tr ' ' '\n' | grep -v '^$' >"$PAIRS_FILE.modes"
+while read -r mode; do
+	[ -n "${mode:-}" ] || continue
+	case "$HELP_FLAT" in
+	*"vault-lint.sh $mode"*) ok "--help documents $mode" ;;
+	*) no "--help has no block for $mode" ;;
+	esac
+done <"$PAIRS_FILE.modes"
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
