@@ -15,7 +15,7 @@ resource: external-certification-clock
 rests_on:
   - FACT-SV2BB002
 used_in:
-  - "business-plan.md#milestones--roadmap"
+  - "business-plan.md#roadmap"
   - "research/timeline.md"
 ---
 

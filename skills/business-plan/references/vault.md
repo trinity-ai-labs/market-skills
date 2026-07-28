@@ -705,7 +705,7 @@ resource: founder-hours     # required — the constrained resource it consumes
 rests_on:                   # required — block list, what the item stands on
   - CLAIM-AS23SD44
 used_in:                    # required once the item appears in a rendered roadmap
-  - "business-plan.md#milestones--roadmap"
+  - "business-plan.md#roadmap"
   - "research/timeline.md"
 ---
 

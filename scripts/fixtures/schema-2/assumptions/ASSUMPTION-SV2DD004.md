@@ -8,7 +8,7 @@ created: "2026-07-01"
 value: "Most accounts renew in the year after the deadline passes"
 sensitivity: high
 validated_by:
-  - "business-plan.md#milestones--roadmap"
+  - "business-plan.md#roadmap"
 ---
 
 Here so the milestones in this vault have a real assumption to move. `moves`

@@ -16,7 +16,7 @@ resource: founder-hours
 rests_on:
   - CLAIM-SV2CC003
 used_in:
-  - "business-plan.md#milestones--roadmap"
+  - "business-plan.md#roadmap"
   - "research/timeline.md"
 ---
 
