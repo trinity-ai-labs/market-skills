@@ -81,7 +81,7 @@ vault-lint.sh - read-only checks over a claim vault.
       Open every note's used_in target and check that it resolves: the document
       exists under the vault root, and the #anchor names a heading in it. A
       verdict - it exits 1 on any failure. Kept out of `check` because it reads
-      documents outside the six note directories, which is a different surface.
+      documents outside the note directories, which is a different surface.
 
       It checks that the target RESOLVES, never that the section CARRIES the
       claim. Plan prose cites [S#] and [F#] codes and a claim note carries no
@@ -378,14 +378,20 @@ HAS_VOCAB=0
 [ -f "$VOCAB" ] && HAS_VOCAB=1
 
 # Every field whose block-list items name other notes. This is DELIBERATELY
-# wider than vault.md's four edges: `covers` is a question field and
+# wider than vault.md's six edges: `covers` is a question field and
 # `assumptions_low` and `option_evidence` come from decisions.md, and none of
 # the three is called an edge anywhere - but each holds note IDs, so each has to
 # be followed for a dangling target and walked by `graph`. Declared once and
 # passed to both awk programs that traverse it: two copies would let `graph` and
 # `check` disagree about which fields exist, which is the tool shrinking its own
 # blast radius exactly the way it warns notes not to.
-EDGE_FIELDS="rests_on supersedes scopes validated_by covers assumptions_low option_evidence"
+#
+# `depends_on` and `moves` are here unconditionally rather than behind the
+# schema gate below. A vault at 1 carries neither field, so listing them costs
+# nothing there - and gating them would mean the schema-2 check that `moves`
+# names a note that exists is a rule of its own instead of the dangling-edge
+# rule every other edge already gets.
+EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence"
 
 # ----------------------------------------------------------------------------
 # scratch space
@@ -402,19 +408,25 @@ FAILURES="$TMP/failures"
 : >"$RECORDS"
 : >"$FAILURES"
 
-# One directory per type, one file per note. Anything outside these six - the
+# One directory per type, one file per note. Anything outside these seven - the
 # research prose, an editor sidecar - is not a note and is never read. These are
 # the plural directory names; the singular type names are the req[] keys in the
-# checks pass, and vault.md closes the set at six, so both lists are written out
-# by hand and have to move together.
+# checks pass, and vault.md closes the set at seven, so both lists are written
+# out by hand and have to move together.
 #
-# One find per directory rather than one find over six paths: collapsing them
+# `milestones` is read at every schemaVersion even though the type is only
+# legitimate at 2, because a vault at 1 has no such directory by construction -
+# so the only vault this reads it in is one that grew the directory without
+# moving its version, and reading it there is what makes the checks pass say so
+# (`type-agreement`) instead of skipping the notes in silence.
+#
+# One find per directory rather than one find over seven paths: collapsing them
 # means either building an unquoted path list, which breaks the first time a
-# vault lives under a directory with a space in its name, or passing all six
+# vault lives under a directory with a space in its name, or passing all seven
 # unconditionally and swallowing find's stderr, which hides a real permissions
-# error. Six spawns cost a few milliseconds and neither failure is worth it.
+# error. Seven spawns cost a few milliseconds and neither failure is worth it.
 : >"$FILES"
-for d in sources facts claims assumptions questions decisions; do
+for d in sources facts claims assumptions questions decisions milestones; do
 	[ -d "$VAULT/$d" ] && find "$VAULT/$d" -type f -name '*.md'
 done | LC_ALL=C sort >"$FILES"
 
@@ -736,7 +748,7 @@ if [ "$MODE" = "graph" ]; then
 		# with its own program text, so sharing would mean assembling the source
 		# in a shell variable and losing the top-to-bottom readability each awk
 		# program has today. Change one, change the other.
-		function isid(s) { return (s ~ /^(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION)-[A-Za-z0-9]+$/) }
+		function isid(s) { return (s ~ /^(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)-[A-Za-z0-9]+$/) }
 		function pad(n,   i, s) { s = ""; for (i = 0; i < n; i++) s = s " "; return s }
 
 		# A value stores newlines as the two characters \n, so the first line of
@@ -1516,6 +1528,23 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		# COHERENCE instead - see the brief list below.
 		req["decision"]   = "confidence_own options chosen reasoning reopen_if rests_on"
 
+		# The type names, for the type-agreement message. Read off one string
+		# rather than written into the message, so the set a milestone joins is
+		# stated in one place and the message cannot go on naming six types
+		# after a seventh is registered below.
+		types = "source, fact, claim, assumption, question, decision"
+
+		# THE ONE SCHEMA GATE IN THIS PASS, AND EVERY MILESTONE CHECK HANGS OFF
+		# IT. A vault at 1 predates the type and has no milestones/ directory,
+		# so registering the type there would turn `milestone` into a legitimate
+		# value of `type` in a corpus whose schema never had it - and the check
+		# that says so (type-agreement) is the only thing that would notice a
+		# directory grown without the version being moved.
+		if (schema + 0 >= 2) {
+			req["milestone"] = "confidence_own sequence date_confidence moves resource rests_on"
+			types = types ", milestone"
+		}
+
 		why["id"]             = "nothing can address this note, so every edge that was meant to point at it dangles"
 		why["type"]           = "the directory, the ID prefix and the type field stop agreeing, and each consumer answers differently"
 		why["title"]          = "a rendered document has nothing to show - the ID is a link target, not a label"
@@ -1538,6 +1567,10 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		why["chosen"]         = "the record says a fork was considered and not which way it went"
 		why["reasoning"]      = "the decision cannot be re-evaluated when its basis moves"
 		why["reopen_if"]      = "a decision with no trigger is indistinguishable from one nobody may revisit, so it gets filed rather than re-checked"
+		why["sequence"]       = "nothing can order this item against another, so the two checks that read order - a prerequisite scheduled after the item needing it, and two items asserted concurrent on one resource - have no field to run on, and a roadmap with no order reads as a set of things that all happen at once"
+		why["date_confidence"] = "a month the skill derived and a month the founder stated become the same string, and the derived one gets quoted back as a commitment nobody made"
+		why["moves"]          = "the item moves no assumption anyone can name, and roadmap-sequencing.md Rule 1 files that as maintenance rather than as a roadmap item - the model then carries a dated change with no assumption row behind it, so the curve is decoration"
+		why["resource"]       = "what the item consumes is unrecorded, so two items competing for the same founder-week read as independent and the plan credits both"
 
 		# The decision-brief fields below are not in any req[] entry - no type
 		# requires them - but they share this table because the question it
@@ -1590,7 +1623,7 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 	}
 
 	# Duplicated in the graph pass above - see the note there.
-	function isid(s) { return (s ~ /^(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION)-[A-Za-z0-9]+$/) }
+	function isid(s) { return (s ~ /^(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)-[A-Za-z0-9]+$/) }
 
 	# Case and separator drift, collapsed. This is the whole of step 3, and the
 	# reason step 3 exists: it catches the most common near-miss for the cost of
@@ -1706,7 +1739,7 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 
 				# --- the type is stated three times and all three agree ----
 				if (ty != "" && !(ty in req))
-					report(f, "type-agreement", id, "type `" ty "` is not one of source, fact, claim, assumption, question, decision. Structure that does not fit a type belongs on an edge, not in a seventh type")
+					report(f, "type-agreement", id, "type `" ty "` is not one of " types ". Structure that does not fit a type belongs on an edge, not in a new type" (ty == "milestone" ? ". `milestone` is a schemaVersion 2 type and this vault is stamped " schema ", so it does not carry one - move the corpus to 2 the way vault-migration.md describes, doing the work before stamping" : ""))
 				if (ty in req && DIR[f] != ty "s")
 					report(f, "type-agreement", id, "type is `" ty "` but the note sits in " DIR[f] "/ rather than " ty "s/. The filesystem sees only the directory, so a listing of " ty "s/ silently omits this note")
 				if (id != "") {
@@ -1739,6 +1772,50 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 					if (!(tgt in BYID)) continue
 					if (V[BYID[tgt], "status"] != "superseded")
 						report(f, "supersedes-status", id, "supersedes " tgt ", but that note is still `status: " V[BYID[tgt], "status"] "` rather than `superseded`. Supersession is two edits and only one was made, so both notes now read as live and the pair is indistinguishable from an unresolved contradiction")
+				}
+			}
+
+			# --- the two roadmap order rules, at schemaVersion 2 -----------
+			# roadmap-sequencing.md asserts both in prose and nothing has ever
+			# read them. That is what makes them worth a check rather than a
+			# paragraph: a roadmap is a set of claims about when the inputs
+			# to the model change, so an order nobody verified sets the month
+			# every downstream number is dated to.
+			#
+			# `moves` naming a note that does not exist is deliberately NOT
+			# here - `moves` is in EDGE_FIELDS, so it is the dangling-edge rule
+			# every other edge already gets, for one word.
+			if (schema + 0 >= 2 && ty == "milestone") {
+				sq = V[f, "sequence"]
+
+				# The orderability of `sequence` is checked before anything
+				# reads it, because both checks below silently skip a value
+				# they cannot compare - and a check that stops firing prints
+				# the same green as one that passed.
+				if (sq != "" && sq !~ /^[0-9]+$/)
+					report(f, "sequence-not-orderable", id, "`sequence` is `" sq "`, which is not a whole number. Ordering is what `sequence` is for - the date the founder said is kept verbatim in `date_stated` precisely so nothing has to parse it - and a value that will not compare takes both order checks down with it, silently, over exactly the roadmap whose order nobody wrote down")
+
+				k = f SUBSEP "depends_on"
+				for (j = 1; j <= LN[k]; j++) {
+					tgt = LI[k, j]
+					# A dangling target is already a dangling-edge failure and
+					# an unorderable one is already reported on its own note.
+					# Reporting either again here would send the reader to the
+					# wrong field.
+					if (!(tgt in BYID)) continue
+					tsq = V[BYID[tgt], "sequence"]
+					if (sq !~ /^[0-9]+$/ || tsq !~ /^[0-9]+$/) continue
+					if (tsq + 0 >= sq + 0)
+						report(f, "dependency-after-dependent", id, "`depends_on` names " tgt ", whose `sequence` is " tsq ", while the `sequence` here is " sq ". The prerequisite is scheduled at or after the item that needs it, so the roadmap projects a capability landing in a month its own precondition has not reached - and because every item is a dated change to an assumption row, the model credits that month with revenue nothing could have shipped in")
+				}
+
+				# roadmap-sequencing.md Rule 4 - the rule it says most often
+				# changes the answer and is the one people skip. Collected
+				# here and reported after the loop, because the failure is a
+				# property of a GROUP and neither member is the wrong one.
+				if (V[f, "resource"] != "" && sq != "") {
+					rk = V[f, "resource"] SUBSEP sq
+					CONC[rk, ++CN[rk]] = f
 				}
 			}
 
@@ -1849,6 +1926,28 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 			for (j = 1; j <= URLN[u]; j++) others = others (j == 1 ? "" : ", ") URLMEM[u, j]
 			for (j = 1; j <= URLN[u]; j++)
 				report(URLMEM[u, j], "duplicate-url", V[URLMEM[u, j], "id"], "url_canonical " u " is carried by " URLN[u] " source notes: " others ". A claim resting on two of them looks doubly sourced when it rests on one document - which is what one newsletter link carrying tracking parameters and one search result turn into")
+		}
+
+		# Two milestones sharing a `resource` AND a `sequence` are asserted
+		# concurrent on one constrained resource. roadmap-sequencing.md Rule 4
+		# says they only compete if they consume the same one - so this is that
+		# rule read off the ledger instead of trusted, and a FALSE independence
+		# claim is what it catches: the naive value ranking it licenses orders
+		# the whole roadmap, and nothing downstream ever revisits it.
+		#
+		# Reported against every member of the group for the reason duplicate-url
+		# is: neither item is the wrong one, and a reader who opens the other
+		# file has to find the failure there too. Grouped and iterated exactly
+		# the way duplicate-url is, unordered - render_failures sorts the whole
+		# failure file before anything prints it, so the order rows are emitted
+		# in cannot reach the output.
+		for (rk in CN) {
+			if (CN[rk] < 2) continue
+			split(rk, rkp, SUBSEP)
+			others = ""
+			for (j = 1; j <= CN[rk]; j++) others = others (j == 1 ? "" : ", ") V[CONC[rk, j], "id"]
+			for (j = 1; j <= CN[rk]; j++)
+				report(CONC[rk, j], "false-independence", V[CONC[rk, j], "id"], CN[rk] " milestones declare `resource: " rkp[1] "` at `sequence: " rkp[2] "`: " others ". Items competing for one constrained resource cannot be asserted concurrent, so at least one of them is not happening in that slot. Give them distinct sequences, or name the resource each actually consumes - left as is, the plan reads as though both land and every number downstream inherits a week of capacity that was counted twice")
 		}
 
 		for (i = 1; i <= nf; i++) {
