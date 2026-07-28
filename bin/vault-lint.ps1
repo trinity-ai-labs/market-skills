@@ -572,7 +572,213 @@ function Invoke-ModeReleaseGate {
 # both are already handled in the argument parser below.
 # ----------------------------------------------------------------------------
 function Invoke-ModeGraph {
-	Exit-NotPorted 'graph'
+	$sep = [char]28
+
+	# Reads $script:RECORDS the way the shell's graph awk reads $RECORDS: a
+	# fresh N/S/L index built from scratch. Every mode that reads the record
+	# stream owns its own copy of this loop rather than sharing one - the shell
+	# runs each mode as a separate awk process for the same reason (see the
+	# fenced-block-scan note at bin/vault-lint.sh:1283), and hoisting this out
+	# of the mode body is the cross-slice edit the stub seam forbids.
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$v = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$li = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	foreach ($rec in $script:RECORDS) {
+		$p = $rec.Split([char]9)
+		if ($p[0] -ceq 'N') { [void]$files.Add($p[1]); continue }
+		if ($p[0] -ceq 'S') { $v[$p[1] + $sep + $p[2]] = $p[3]; continue }
+		if ($p[0] -ceq 'L') {
+			$k = $p[1] + $sep + $p[2]
+			$items = $null
+			if (-not $li.TryGetValue($k, [ref]$items)) {
+				$items = New-Object 'System.Collections.Generic.List[string]'
+				$li[$k] = $items
+			}
+			[void]$items.Add($p[3])
+			continue
+		}
+	}
+
+	$edgeFields = $script:EDGE_FIELDS.Split([char]32)
+	$maxDepth = [int]$script:DEPTH
+	# Duplicated in the checks pass, same as in the shell - see bin/vault-lint.sh:906.
+	$rxId = [regex]'\A(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)-[A-Za-z0-9]+\z'
+
+	function Get-GraphValue {
+		param([string]$File, [string]$Key)
+		$k = $File + $sep + $Key
+		if ($v.ContainsKey($k)) { return $v[$k] }
+		return ''
+	}
+
+	function Test-GraphId {
+		param([string]$Text)
+		return $rxId.IsMatch($Text)
+	}
+
+	function Get-GraphPad {
+		param([int]$N)
+		return (' ' * $N)
+	}
+
+	# A value stores newlines as the two characters \n, so the first line of a
+	# block scalar is everything before the first one.
+	function Get-GraphFirstLine {
+		param([string]$Text)
+		$p = $Text.IndexOf('\n', [System.StringComparison]::Ordinal)
+		if ($p -ge 0) { return $Text.Substring(0, $p) }
+		return $Text
+	}
+
+	function Get-GraphTargetOf {
+		param([string]$Item)
+		$marker = ' :: '
+		$p = $Item.IndexOf($marker, [System.StringComparison]::Ordinal)
+		if ($p -ge 0) { return $Item.Substring($p + $marker.Length) }
+		return $Item
+	}
+
+	function Get-GraphLabel {
+		param([string]$Id)
+		if (-not $byId.ContainsKey($Id)) { return $Id + '  (no note in this vault carries this ID)' }
+		$f = $byId[$Id]
+		$s = $Id + '  ' + (Get-GraphValue $f 'type') + '  confidence ' + (Get-GraphValue $f 'confidence') + '  status ' + (Get-GraphValue $f 'status')
+		$subject = Get-GraphValue $f 'subject'
+		if ($subject.Length -gt 0) { $s = $s + '  subject ' + $subject }
+		return $s
+	}
+
+	function Get-GraphDetail {
+		param([string]$Id, [string]$Prefix)
+		if (-not $byId.ContainsKey($Id)) { return '' }
+		$f = $byId[$Id]
+		$out = $Prefix + (Get-GraphValue $f 'title') + "`n"
+		$quote = Get-GraphValue $f 'quote'
+		if ($quote.Length -gt 0) { $out = $out + $Prefix + 'quote: ' + (Get-GraphFirstLine $quote) + "`n" }
+		$reasoning = Get-GraphValue $f 'reasoning'
+		if ($reasoning.Length -gt 0) { $out = $out + $Prefix + 'reasoning: ' + (Get-GraphFirstLine $reasoning) + "`n" }
+		$founderReasoning = Get-GraphValue $f 'founder_reasoning'
+		if ($founderReasoning.Length -gt 0) { $out = $out + $Prefix + 'founder_reasoning: ' + (Get-GraphFirstLine $founderReasoning) + "`n" }
+		$reopenIf = Get-GraphValue $f 'reopen_if'
+		if ($reopenIf.Length -gt 0) { $out = $out + $Prefix + 'reopen_if: ' + (Get-GraphFirstLine $reopenIf) + "`n" }
+		return $out
+	}
+
+	# Edges are stored once, on the asserting note, and never mirrored, so the
+	# inbound direction has to be derived - once into $rev rather than
+	# rescanning every note per visited node, which keeps a traversal
+	# proportional to the neighbourhood printed rather than to corpus size.
+	function Invoke-GraphBuildRev {
+		foreach ($f in $files) {
+			$srcId = Get-GraphValue $f 'id'
+			if ($srcId.Length -eq 0) { continue }
+			foreach ($edge in $edgeFields) {
+				$k = $f + $sep + $edge
+				$items = $null
+				if (-not $li.TryGetValue($k, [ref]$items)) { continue }
+				foreach ($item in $items) {
+					$tgt = Get-GraphTargetOf $item
+					if ($tgt.Length -eq 0 -or $tgt -ceq $srcId) { continue }
+					$revList = $null
+					if (-not $rev.TryGetValue($tgt, [ref]$revList)) {
+						$revList = New-Object 'System.Collections.Generic.List[string]'
+						$rev[$tgt] = $revList
+					}
+					[void]$revList.Add($srcId + $sep + $edge)
+				}
+			}
+		}
+	}
+
+	function Invoke-GraphWalkOut {
+		param([string]$Id, [int]$Depth, [int]$Indent)
+		if ($Depth -gt $maxDepth) { return }
+		if (-not $byId.ContainsKey($Id)) { return }
+		$f = $byId[$Id]
+		$padItem = Get-GraphPad ($Indent + 2)
+		$padDetail = Get-GraphPad ($Indent + 4)
+		foreach ($edge in $edgeFields) {
+			$k = $f + $sep + $edge
+			$items = $null
+			if (-not $li.TryGetValue($k, [ref]$items)) { continue }
+			[void]$sb.Append((Get-GraphPad $Indent) + $edge + " ->`n")
+			foreach ($item in $items) {
+				$tgt = Get-GraphTargetOf $item
+				if (-not (Test-GraphId $tgt)) {
+					[void]$sb.Append($padItem + $item + "`n")
+					continue
+				}
+				[void]$sb.Append($padItem + (Get-GraphLabel $tgt) + "`n")
+				[void]$sb.Append((Get-GraphDetail $tgt $padDetail))
+				if (-not $seenOut.Contains($tgt)) {
+					[void]$seenOut.Add($tgt)
+					Invoke-GraphWalkOut $tgt ($Depth + 1) ($Indent + 4)
+				}
+			}
+		}
+	}
+
+	function Invoke-GraphWalkIn {
+		param([string]$Id, [int]$Depth, [int]$Indent)
+		if ($Depth -gt $maxDepth) { return }
+		$entries = $null
+		$hasRev = $rev.TryGetValue($Id, [ref]$entries)
+		if ($Depth -eq 1 -and -not $hasRev) {
+			[void]$sb.Append((Get-GraphPad $Indent) + "(nothing in this vault rests on it)`n")
+			return
+		}
+		if (-not $hasRev) { return }
+		$padLabel = Get-GraphPad $Indent
+		$padDetail = Get-GraphPad ($Indent + 2)
+		foreach ($entry in $entries) {
+			$parts = $entry.Split($sep)
+			$src = $parts[0]
+			$via = $parts[1]
+			[void]$sb.Append($padLabel + (Get-GraphLabel $src) + '   (via ' + $via + ")`n")
+			[void]$sb.Append((Get-GraphDetail $src $padDetail))
+			if (-not $seenIn.Contains($src)) {
+				[void]$seenIn.Add($src)
+				Invoke-GraphWalkIn $src ($Depth + 1) ($Indent + 2)
+			}
+		}
+	}
+
+	$byId = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	foreach ($f in $files) {
+		$id = Get-GraphValue $f 'id'
+		if ($id.Length -gt 0) { $byId[$id] = $f }
+	}
+	$rev = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	Invoke-GraphBuildRev
+
+	if (-not $byId.ContainsKey($script:TARGET)) {
+		# Literal "vault-lint: ", not $PROG - bin/vault-lint.sh:1000 hardcodes this
+		# exact prefix in the awk program rather than routing through die(), so
+		# this is a transcription of that literal rather than a call to
+		# Exit-Refusal.
+		Write-ErrText ('vault-lint: no note with ID ' + $script:TARGET + ' under ' + $script:VAULT + "`n")
+		exit 2
+	}
+
+	$sb = New-Object System.Text.StringBuilder
+	$seenOut = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$seenIn = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+
+	[void]$sb.Append('vault-lint graph: ' + $script:TARGET + '  (depth ' + $maxDepth + ")`n")
+	[void]$sb.Append('  vault: ' + $script:VAULT + "`n")
+	[void]$sb.Append('  file:  ' + $byId[$script:TARGET] + "`n`n")
+	[void]$sb.Append((Get-GraphLabel $script:TARGET) + "`n")
+	[void]$sb.Append((Get-GraphDetail $script:TARGET '  '))
+	[void]$sb.Append("`n")
+	[void]$sb.Append("  rests on`n")
+	[void]$seenOut.Add($script:TARGET)
+	Invoke-GraphWalkOut $script:TARGET 1 4
+	[void]$sb.Append("`n  rested on by`n")
+	[void]$seenIn.Add($script:TARGET)
+	Invoke-GraphWalkIn $script:TARGET 1 4
+
+	Write-OutText $sb.ToString()
+	exit 0
 }
 
 # ----------------------------------------------------------------------------
@@ -583,7 +789,145 @@ function Invoke-ModeGraph {
 # routing through Render-Failures, and change all three together or none.
 # ----------------------------------------------------------------------------
 function Invoke-ModeUnverified {
-	Exit-NotPorted '--unverified'
+	$sep = [char]28
+
+	# Same N/S/L index-building loop as Invoke-ModeGraph, kept as its own copy
+	# rather than a shared helper - see the comment at the top of that function
+	# for why.
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$v = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$li = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	foreach ($rec in $script:RECORDS) {
+		$p = $rec.Split([char]9)
+		if ($p[0] -ceq 'N') { [void]$files.Add($p[1]); continue }
+		if ($p[0] -ceq 'S') { $v[$p[1] + $sep + $p[2]] = $p[3]; continue }
+		if ($p[0] -ceq 'L') {
+			$k = $p[1] + $sep + $p[2]
+			$items = $null
+			if (-not $li.TryGetValue($k, [ref]$items)) {
+				$items = New-Object 'System.Collections.Generic.List[string]'
+				$li[$k] = $items
+			}
+			[void]$items.Add($p[3])
+			continue
+		}
+	}
+
+	function Get-UnverifiedValue {
+		param([string]$File, [string]$Key)
+		$k = $File + $sep + $Key
+		if ($v.ContainsKey($k)) { return $v[$k] }
+		return ''
+	}
+
+	# One of three identical copies - see the note beside the
+	# --supersession-sweep one, bin/vault-lint.sh:1660, for why they stay
+	# copies and what would change that. Change one, change all three.
+	function ConvertTo-UnverifiedJsonEscaped {
+		param([string]$Text)
+		$out = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$c = $Text[$i]
+			if ($c -eq [char]34) { [void]$out.Append('\"') }
+			elseif ($c -eq [char]92) { [void]$out.Append('\\') }
+			elseif ($c -eq [char]9) { [void]$out.Append([char]32) }
+			else { [void]$out.Append($c) }
+		}
+		return $out.ToString()
+	}
+
+	function Get-UnverifiedJsonList {
+		param([string]$File, [string]$Key)
+		$k = $File + $sep + $Key
+		$out = '['
+		if ($li.ContainsKey($k)) {
+			$items = $li[$k]
+			for ($i = 0; $i -lt $items.Count; $i++) {
+				if ($i -ne 0) { $out = $out + ', ' }
+				$out = $out + '"' + (ConvertTo-UnverifiedJsonEscaped $items[$i]) + '"'
+			}
+		}
+		return $out + ']'
+	}
+
+	function Get-UnverifiedPlain {
+		param([string]$File, [string]$Key, [string]$Indent)
+		$k = $File + $sep + $Key
+		$out = ''
+		if (-not $li.ContainsKey($k)) { return $out }
+		foreach ($item in $li[$k]) { $out = $out + $Indent + $Key + ': ' + $item + "`n" }
+		return $out
+	}
+
+	function Get-UnverifiedText {
+		param([string]$File, [string]$Id)
+		$out = '    ' + $Id + '  ' + (Get-UnverifiedValue $File 'type') + '  confidence ' + (Get-UnverifiedValue $File 'confidence') + '  status ' + (Get-UnverifiedValue $File 'status') + "`n"
+		$out = $out + '      ' + (Get-UnverifiedValue $File 'title') + "`n"
+		$sensitivity = Get-UnverifiedValue $File 'sensitivity'
+		if ($sensitivity.Length -gt 0) { $out = $out + '      sensitivity: ' + $sensitivity + "`n" }
+		$out = $out + (Get-UnverifiedPlain $File 'validated_by' '      ')
+		$out = $out + (Get-UnverifiedPlain $File 'used_in' '      ')
+		return $out
+	}
+
+	$unverified = New-Object 'System.Collections.Generic.List[string]'
+	$lowConfidence = New-Object 'System.Collections.Generic.List[string]'
+	$reason = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	foreach ($f in $files) {
+		$id = Get-UnverifiedValue $f 'id'
+		if ($id.Length -eq 0) { continue }
+		if ((Get-UnverifiedValue $f 'status') -ceq 'unverified') {
+			[void]$unverified.Add($f)
+			$reason[$f] = 'status-unverified'
+		} elseif ((Get-UnverifiedValue $f 'confidence') -ceq 'L') {
+			[void]$lowConfidence.Add($f)
+			$reason[$f] = 'low-confidence'
+		}
+	}
+	$total = $unverified.Count + $lowConfidence.Count
+
+	if ($script:JSON -eq 1) {
+		$sb = New-Object System.Text.StringBuilder
+		[void]$sb.Append("{`n")
+		[void]$sb.Append('  "vault": "' + (ConvertTo-UnverifiedJsonEscaped $script:VAULT) + "`",`n")
+		[void]$sb.Append('  "unverified_count": ' + $total + ",`n")
+		[void]$sb.Append('  "notes": [')
+		$n = 0
+		for ($pass = 1; $pass -le 2; $pass++) {
+			$pool = $unverified
+			if ($pass -eq 2) { $pool = $lowConfidence }
+			foreach ($f in $pool) {
+				$n++
+				if ($n -eq 1) { [void]$sb.Append("`n    {") } else { [void]$sb.Append(",`n    {") }
+				[void]$sb.Append('"id": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'id')) + '", ')
+				[void]$sb.Append('"file": "' + (ConvertTo-UnverifiedJsonEscaped $f) + '", ')
+				[void]$sb.Append('"type": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'type')) + '", ')
+				[void]$sb.Append('"status": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'status')) + '", ')
+				[void]$sb.Append('"confidence": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'confidence')) + '", ')
+				[void]$sb.Append('"reason": "' + (ConvertTo-UnverifiedJsonEscaped $reason[$f]) + '", ')
+				[void]$sb.Append('"title": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'title')) + '", ')
+				[void]$sb.Append('"used_in": ' + (Get-UnverifiedJsonList $f 'used_in') + '}')
+			}
+		}
+		if ($n -eq 0) { [void]$sb.Append("]`n}`n") } else { [void]$sb.Append("`n  ]`n}`n") }
+		Write-OutText $sb.ToString()
+		exit 0
+	}
+
+	$plural = 's'
+	if ($total -eq 1) { $plural = '' }
+	$sb = New-Object System.Text.StringBuilder
+	[void]$sb.Append('vault-lint unverified: ' + $total + ' note' + $plural + " asserted with nothing behind them`n")
+	[void]$sb.Append('  vault: ' + $script:VAULT + "`n")
+	[void]$sb.Append("`n  asserted, nothing behind it yet (status: unverified)`n")
+	if ($unverified.Count -eq 0) { [void]$sb.Append("    (none)`n") }
+	foreach ($f in $unverified) { [void]$sb.Append((Get-UnverifiedText $f (Get-UnverifiedValue $f 'id'))) }
+	[void]$sb.Append("`n  carried at Low confidence - the weakest link in the chain below it is thin`n")
+	if ($lowConfidence.Count -eq 0) { [void]$sb.Append("    (none)`n") }
+	foreach ($f in $lowConfidence) { [void]$sb.Append((Get-UnverifiedText $f (Get-UnverifiedValue $f 'id'))) }
+
+	Write-OutText $sb.ToString()
+	exit 0
 }
 
 # ----------------------------------------------------------------------------
