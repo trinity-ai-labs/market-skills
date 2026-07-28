@@ -198,6 +198,23 @@ nearest-reachable solve and the negotiation script are in
     to be missing by. It surfaces at the walk sign-off, when the founder asks why the thing you
     both agreed three phases ago is not in the plan.
 
+23. **Steelman a founder statement before checking it — verify the claim they are making, not
+    the cheapest adjacent number.** This is invariant 3 pointed at a founder's remark instead of
+    at the model: a metric chosen after the conclusion is a conclusion wearing an instrument, and
+    checking whichever number is easiest to check instead of the number the founder actually meant
+    is the same move wearing a different subject. A founder says a competing tool costs more than
+    their seat. The competitor's list price is lower, so the claim is filed as false — but the
+    competitor's product is a control plane that bills separately for the compute underneath it,
+    so the delivered cost is roughly double the seat, and the founder was right about the thing
+    that matters. The cheap number is the one that gets checked, and checking it produces a
+    confident wrong answer. **And a correction that moves no number in the plan is a conversation,
+    not a note:** the vault is a ledger of what the plan stands on, and filing a detail error as a
+    finding spends the founder's attention on a scoreboard rather than on the plan. **The failure
+    this prevents:** a founder's claim about their own market gets refuted on a technicality
+    neither party meant, the refutation reads as rigor because a number backs it, and the plan
+    quietly loses the one piece of the founder's testimony most worth having — the delivered
+    reality a list price hides.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -917,10 +934,17 @@ away *compute*; they do not let it give away *correctness*, which is engineering
 commoditisation argument that doesn't name its layer overclaims in one direction, and a moat
 argument that ignores the layer it does reach overclaims in the other.
 
-Each panelist's objections land in `red-team.md`:
-`| # | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |`.
-Fold: fix what's fixable; every row disposed "moved to Risks" appears in the plan's Key risks
-section by its number — a plan that pre-states its best objections beats one that hides them.
+Each panelist's objections land in `red-team.md`, one row per objection, with an ID namespaced
+by round:
+`| R<round>-O<n> | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |` —
+round 4's third objection is `R4-O3`. Round is the count of times Phase 4 has been dispatched for
+this engagement, starting at 1 and incrementing on each re-dispatch (a plan revision, a follow-on
+session); objection numbering restarts at `O1` inside each round, so the round prefix is what
+keeps round 2's `O1` and round 4's `O1` from colliding on whichever a reader finds first. **Once
+cited, a code is never renumbered** — invariant 21 states the same rule for `[F#]` and for the
+same reason: renumbering silently repoints every citation already written. Fold: fix what's
+fixable; every row disposed "moved to Risks" appears in the plan's Key risks section by its
+round-qualified ID — a plan that pre-states its best objections beats one that hides them.
 **A surviving objection also lands in the vault**, as a `claim` that `supersedes` what it
 corrects or an `assumption` with a `validated_by` step. An objection disposed only in the table
 is one nothing downstream can find. That note is subject to invariant 20 like any other: it is
