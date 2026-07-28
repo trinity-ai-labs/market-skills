@@ -634,7 +634,735 @@ function Invoke-ModeRoadmapTable {
 # porting a check without its silent side turns a clean vault red.
 # ----------------------------------------------------------------------------
 function Invoke-ModeBindingDriver {
-	Exit-NotPorted '--binding-driver'
+	# SUBSEP, spelled out. awk joins a multi-subscript index with \034 and every
+	# composite key below is a transcription of one of those indices, so the
+	# separator is the same byte rather than a character that could turn up in a
+	# path, a field name or a fold key.
+	$SUB = [string][char]28
+
+	# The record stream, indexed the way the awk program indexes it.
+	#
+	#   $V   S records - V[file, key] = value
+	#   $LI  L records - the block-list items under one key, in file order. The
+	#        awk carries LI[k, n] plus a count in LN[k]; a list holds both, and
+	#        LN[k] is its Count, so present() below reads the same predicate.
+	$V = New-Object 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$LI = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$BDFILES = New-Object 'System.Collections.Generic.List[string]'
+
+	# Every document read, once each - SCANNED memoises readdoc.
+	$SCANNED = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	# fold key -> heading ordinal, or 0 for a key two headings claim.
+	$ALIAS = New-Object 'System.Collections.Generic.Dictionary[string,int]' -ArgumentList ([System.StringComparer]::Ordinal)
+	# doc SUBSEP ordinal -> the text of that section.
+	$BODY = New-Object 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	# The corner verdict rows of the one section that has them, as two parallel
+	# lists per section - KN[kk] in the awk is their Count.
+	$KDRV = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$KKND = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$BYID = New-Object 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::Ordinal)
+
+	# The closure state, reset before each walk. closure() only ever ADDS to
+	# these three, so the two counts awk keeps beside them are their Counts:
+	# SEEN makes every id visited once, so nsrc is SRC.Count, and ncp is
+	# incremented under exactly the guard that makes CP a set.
+	$SEEN = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$SRC = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$CP = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+
+	# The two driver_kind values that make a verdict conditional. The full closed
+	# word list, and the rule that rejects a fourth word, belong to the checks
+	# pass - this program branches on policy-or-not and needs no more than that.
+	#
+	# A HashSet with the ordinal comparer rather than a hashtable literal: `@{}`
+	# is case-INSENSITIVE in PowerShell, so a `driver_kind` of `Policy` would be
+	# conditional here and not in awk, where `in` is an exact key test.
+	$COND = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	[void]$COND.Add('policy')
+	[void]$COND.Add('policy-within-band')
+
+	# The subject a verdict carries, and the fold key of the plan anchor it
+	# renders into. plan-template.md writes those two headings as
+	# `## Target & verdict {#target-verdict}` and `## Steady state ...
+	# {#steady-state}`. Ordinal for the reason $COND is.
+	$ANCHOR = New-Object 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$ANCHOR['target-verdict'] = 'targetverdict'
+	$ANCHOR['steady-state-ceiling'] = 'steadystate'
+
+	# The one document section whose table rows are read, so every other section
+	# is parsed and discarded rather than stored. The corner verdict table is a
+	# property of the verdict anchor and the ceiling section carries none, so
+	# recording rows anywhere else would be dead data with a sync obligation
+	# attached.
+	$TABLEDOC = 'business-plan.md'
+	$TABLEKEY = 'targetverdict'
+
+	# The five fields, in the order vault.md lists them. The checks pass carries
+	# the same set split four-plus-one, because it is the half that reports a
+	# missing field and `conditional_on` is owed conditionally; here the whole
+	# set is only ever counted, so it stays one list. Change one, change both.
+	$VF = @('binding_driver', 'driver_kind', 'conditional_on', 'evidence_n', 'evidence_counterparties')
+
+	# The patterns Read-BdDoc runs inside its per-line loop, held as Regex
+	# objects for the reason the shared $RX_* block states: the static
+	# [regex]::Match overloads look the pattern up in a process-wide cache of
+	# fifteen on every call, and this loop runs several of them per line of
+	# every document the mode opens. The patterns that run a handful of times
+	# per process - the used_in entry split, the `..` guard, the www. strip -
+	# stay inline, where hoisting would buy nothing and only move them away from
+	# their one reader. They are declared in this body rather than beside the
+	# shared ones for the reason the stub seam states: a pattern two modes want
+	# is a pattern two slices are both editing.
+	$RX_BD_HEADING = [regex]'\A#+[ \t]+'
+	$RX_BD_TRAILING_HASH = [regex]'[ \t]*#+[ \t]*\z'
+	$RX_BD_ANCHOR_ATTR = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
+	$RX_BD_LEAD_PIPE = [regex]'\A\|'
+	$RX_BD_TRAIL_PIPE = [regex]'\|[ \t]*\z'
+	$RX_BD_ALIGN_CELL = [regex]'\A[ \t]*:?-+:?[ \t]*\z'
+
+	# Byte equality, never PowerShell's `-ceq`. `-ceq` compares under the
+	# invariant CULTURE, which reports "ab" and "a<U+200B>b" equal and a combining
+	# sequence equal to its precomposed form - and every verbatim match in this
+	# mode runs over founder prose, which is exactly where those turn up. awk
+	# compares bytes, so this compares ordinals.
+	function Test-BdEqual {
+		param([string]$A, [string]$B)
+		return [string]::Equals($A, $B, [System.StringComparison]::Ordinal)
+	}
+
+	# V[f, k], with awk's answer for a subscript that was never set.
+	function Get-BdValue {
+		param([string]$File, [string]$Key)
+		$kk = $File + $SUB + $Key
+		if ($V.ContainsKey($kk)) { return $V[$kk] }
+		return ''
+	}
+
+	# BODY[doc, ord], same rule.
+	function Get-BdBody {
+		param([string]$Key)
+		if ($BODY.ContainsKey($Key)) { return $BODY[$Key] }
+		return ''
+	}
+
+	# The same present() the checks pass uses, and copied verbatim rather than
+	# written as `V[f, k] != ""` for one reason: both programs implement the same
+	# trigger, and a field authored as a one-item block list is present to one
+	# test and absent to the other. That divergence fails a note in the checks
+	# pass while silently skipping it here, which is a half-checked verdict with
+	# nothing saying so. Change one, change both.
+	function Test-BdPresent {
+		param([string]$File, [string]$Key)
+		$kk = $File + $SUB + $Key
+		if ($V.ContainsKey($kk) -and $V[$kk].Length -ne 0) { return $true }
+		if ($LI.ContainsKey($kk) -and $LI[$kk].Count -gt 0) { return $true }
+		return $false
+	}
+
+	function Get-BdTrim {
+		param([string]$Text)
+		return $Text.Trim($script:SPACE_TAB)
+	}
+
+	# The third copy of the --supersession-sweep fold, answering the same
+	# question --roadmap-table asks it: which heading is THIS section, rather
+	# than whether an anchor resolves. Every character the slug rule drops is
+	# dropped here too, so any spelling that rule resolves to the verdict heading
+	# folds onto it without this program having to know which characters those
+	# are. Change one, change all three.
+	#
+	# Compared as code points rather than with `-ge`/`-le` on [char]: PowerShell
+	# routes a char comparison through the same culture-aware path `-ceq` uses,
+	# and awk's `c >= "a" && c <= "z"` is a byte range.
+	function Get-BdFold {
+		param([string]$Text)
+		$sb = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$cc = [int]$Text[$i]
+			if ($cc -ge 97 -and $cc -le 122) { [void]$sb.Append([char]$cc); continue }
+			if ($cc -ge 65 -and $cc -le 90) { [void]$sb.Append([char]($cc + 32)); continue }
+			if ($cc -ge 48 -and $cc -le 57) { [void]$sb.Append([char]$cc); continue }
+		}
+		return $sb.ToString()
+	}
+
+	# Register one fold key against one heading ordinal, or RETIRE it when a
+	# second heading claims the same key. The second copy of the
+	# --supersession-sweep claim(), which states the safety property: two
+	# headings differing only in the punctuation the fold drops are
+	# indistinguishable here, so an ambiguous key resolves to nothing rather than
+	# to a guess. Being wrong costs a section read against the wrong note. Change
+	# one, change both.
+	function Add-BdClaimKey {
+		param([string]$Doc, [string]$Key, [int]$Ord)
+		if ($Key.Length -eq 0) { return }
+		$ak = $Doc + $SUB + $Key
+		if ($ALIAS.ContainsKey($ak)) {
+			if ($ALIAS[$ak] -ne $Ord) { $ALIAS[$ak] = 0 }
+			return
+		}
+		$ALIAS[$ak] = $Ord
+	}
+
+	# One corner row, appended to both lists in one call. awk encodes the
+	# lockstep in the subscript - `KDRV[kk, ++KN[kk]]` and then `KKND[kk,
+	# KN[kk]]`, one counter incremented once - and two independently counted
+	# lists would hold it only for as long as two call sites stayed adjacent.
+	# The read loop bounds itself on the driver list and indexes the kind list
+	# at the same offset, where awk answers "" for a subscript past the end and
+	# PowerShell throws, so a row that reached one list and not the other is a
+	# crash rather than a quiet disagreement.
+	function Add-BdKindRow {
+		param([string]$Key, [string]$Driver, [string]$Kind)
+		if (-not $KDRV.ContainsKey($Key)) {
+			$KDRV[$Key] = New-Object 'System.Collections.Generic.List[string]'
+			$KKND[$Key] = New-Object 'System.Collections.Generic.List[string]'
+		}
+		$KDRV[$Key].Add($Driver)
+		$KKND[$Key].Add($Kind)
+	}
+
+	# KN[kk] - how many corner rows are recorded against one section. Read off
+	# the driver list because Add-BdKindRow is the only writer of either.
+	function Get-BdKindRowCount {
+		param([string]$Key)
+		if ($KDRV.ContainsKey($Key)) { return $KDRV[$Key].Count }
+		return 0
+	}
+
+	# One document at the vault root, read once, into three things: every heading
+	# as fold keys pointing at its ordinal, the text of every section, and the
+	# corner verdict rows of the one section that has them. Memoised on SCANNED,
+	# so a document cited by four notes is opened once.
+	#
+	# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is looser than the
+	# rule --roadmap-table readplan() uses (next heading of the same depth or
+	# shallower). Nothing in plan-template.md puts a subsection under the verdict
+	# anchor, so the two agree today; if one is ever added, the phrase a reader
+	# sees inside that subsection is outside the body this reads and the
+	# condition check would cry wolf. That is the trigger to adopt readplan()
+	# depth rule here.
+	#
+	# THE CORNER TABLE IS IDENTIFIED BY ITS HEADER rather than by being the first
+	# table in the section, which is tighter than --roadmap-table needs and for a
+	# reason: the verdict section legitimately carries other tables - the stated
+	# range and the evidenced range as two labelled rows, and the multiple band
+	# an exit target carries - so a positional rule would read one of those and
+	# report every row of a correct table as a kind with no note behind it. A
+	# table is the corner table when its header names both a `Binding driver`
+	# column and a `Kind` column, matched by the same fold as everything else
+	# here; the FIRST such table in the section is read and any later one is
+	# skipped, so a document quoting its own format below the real table cannot
+	# double-count.
+	#
+	# THE ROW PARSER IS THE SECOND COPY of the one in --roadmap-table readplan():
+	# strip the outer pipes, split on `|`, spot the all-dashes alignment rule,
+	# treat everything above it as header and read the header for which column
+	# matters. Both carry the rule that a table with NO alignment rule is not a
+	# table to any renderer, so its rows are not rows. Change one, change both.
+	#
+	# The fence tracking is the FIFTH copy in the shell - --used-in scan(),
+	# --supersession-sweep sections(), --red-team and --roadmap-table readplan()
+	# carry the same six lines, because each reads a document at the vault root.
+	# THIS COPY STAYS LOCAL TO THIS BODY: the other four belong to other mode
+	# bodies, and hoisting one out is the cross-slice edit the stub seam exists
+	# to prevent. A `#` or a `|` inside a fenced block is an example rather than
+	# an assertion the document makes, which is also why fenced lines never reach
+	# BODY: a fenced template carrying a condition would otherwise satisfy the
+	# check for a section that renders nothing. Change one, change all five.
+	function Read-BdDoc {
+		param([string]$Doc)
+		if ($SCANNED.Contains($Doc)) { return }
+		[void]$SCANNED.Add($Doc)
+		# `while ((getline line < path) > 0)` over a path that cannot be opened
+		# returns -1 and runs the body no times. Reading a missing document is
+		# reachable: a used_in entry names whatever the note author wrote.
+		try { $lines = Read-TextLines ($script:VAULT + '/' + $Doc) } catch { return }
+
+		$fc = ''
+		$fn = 0
+		$ord = 0
+		$hdr = ''
+		$intable = 0
+		$dcol = 0
+		$kcol = 0
+		$wanttable = $false
+
+		foreach ($raw in $lines) {
+			# `sub(/^[ \t]+/, "", t)` through the same named pair every other trim
+			# in this file uses, rather than a second spelling of it as a regex.
+			$t = (Remove-TrailingCr $raw).TrimStart($script:SPACE_TAB)
+
+			# No comparison in the fence scan is culture-aware. `-ceq` on a
+			# string and `-eq` on a [char] both take PowerShell's culture path,
+			# which folds a combining sequence onto its precomposed form and
+			# ignores a zero-width space - and a document read by this mode is
+			# founder prose carrying both. `$fc` stays a string because it
+			# carries awk's `fc = ""` sentinel; the fence character it holds is
+			# compared as a code point.
+			if ($t.Length -ge 3 -and ((Test-BdEqual ($t.Substring(0, 3)) '```') -or (Test-BdEqual ($t.Substring(0, 3)) '~~~'))) {
+				$c = [int]$t[0]
+				$n = 0
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ((Test-BdEqual $fc ([string][char]$c)) -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				continue
+			}
+			if ($fc.Length -ne 0) { continue }
+
+			$hm = $RX_BD_HEADING.Match($t)
+			if ($hm.Success) {
+				$h = Get-BdTrim ($RX_BD_TRAILING_HASH.Replace($t.Substring($hm.Length), ''))
+				$ex = ''
+				# Braces written as bracket expressions rather than escaped, for
+				# the reason scan() states: a backslash-brace is an interval
+				# expression to some awks and a literal to others, and which one
+				# runs the shell is a property of the user machine. Transcribed
+				# as written so a diff of the two files reads as one pattern.
+				$am = $RX_BD_ANCHOR_ATTR.Match($h)
+				if ($am.Success) {
+					$ex = $am.Value.Substring(2, $am.Value.Length - 3)
+					$h = Get-BdTrim $h.Substring(0, $am.Index)
+				}
+				$ord++
+				# Both addresses registered, not one: a vault written before the
+				# template carried attributes cites the slug, and an
+				# implementation where the attribute REPLACED it would stop
+				# resolving those entries the day the author pasted a newer
+				# template in.
+				$exFold = Get-BdFold $ex
+				$hFold = Get-BdFold $h
+				if ($ex.Length -ne 0) { Add-BdClaimKey $Doc $exFold $ord }
+				Add-BdClaimKey $Doc $hFold $ord
+				$wanttable = ((Test-BdEqual $Doc $TABLEDOC) -and ((Test-BdEqual $exFold $TABLEKEY) -or (Test-BdEqual $hFold $TABLEKEY)))
+				$hdr = ''
+				$intable = 0
+				continue
+			}
+
+			if ($ord -eq 0) { continue }
+			# A blank line closes a table to every renderer, so it closes one
+			# here - otherwise two tables separated by a paragraph read as one
+			# and the rows of the second land under the header of the first.
+			if ($t.Length -eq 0) { $hdr = ''; $intable = 0; continue }
+
+			$kk = $Doc + $SUB + $ord
+			$BODY[$kk] = (Get-BdBody $kk) + $t + "`n"
+			if ([int]$t[0] -ne 124) { $hdr = ''; $intable = 0; continue }
+			if (-not $wanttable) { continue }
+
+			# Both patterns are anchored, so Replace has exactly one match to
+			# make and agrees with awk's sub(), which replaces only the first.
+			$row = $RX_BD_TRAIL_PIPE.Replace($RX_BD_LEAD_PIPE.Replace($t, ''), '')
+			# split() of the empty string is zero fields in awk and one empty
+			# field here, and the count is what the `nc < 1` guard reads.
+			$cell = $null
+			$nc = 0
+			if ($row.Length -ne 0) {
+				$cell = $row.Split([char]124)
+				$nc = $cell.Length
+			}
+			if ($nc -lt 1) { continue }
+
+			$alldash = $true
+			for ($i = 0; $i -lt $nc; $i++) {
+				if (-not $RX_BD_ALIGN_CELL.IsMatch($cell[$i])) { $alldash = $false; break }
+			}
+
+			if ($alldash) {
+				# The row directly above the rule is the header, and it is read
+				# for nothing but which two columns matter.
+				$dcol = 0
+				$kcol = 0
+				if ($hdr.Length -ne 0 -and (Get-BdKindRowCount $kk) -eq 0) {
+					$hcell = $hdr.Split([char]124)
+					for ($i = 0; $i -lt $hcell.Length; $i++) {
+						$hf = Get-BdFold $hcell[$i]
+						if (Test-BdEqual $hf 'bindingdriver') { $dcol = $i + 1 }
+						elseif (Test-BdEqual $hf 'kind') { $kcol = $i + 1 }
+					}
+				}
+				$intable = 1
+				continue
+			}
+
+			if ($intable -eq 0) { $hdr = $row; continue }
+			if ($dcol -eq 0 -or $kcol -eq 0) { continue }
+			$dv = ''
+			$kv = ''
+			if ($dcol -le $nc) { $dv = Get-BdTrim $cell[$dcol - 1] }
+			if ($kcol -le $nc) { $kv = Get-BdTrim $cell[$kcol - 1] }
+			Add-BdKindRow $kk $dv $kv
+		}
+	}
+
+	# One of three identical copies - the graph pass and the checks pass carry
+	# the other two, neither annotated. Change one, change all three.
+	function Get-BdTargetOf {
+		param([string]$Item)
+		$p = $Item.IndexOf(' :: ', [System.StringComparison]::Ordinal)
+		if ($p -ge 0) { return $Item.Substring($p + 4) }
+		return $Item
+	}
+
+	# The counterparty fallback chain vault.md documents, last rung: the host of
+	# the canonical URL. It errs toward collapsing two unrelated deals covered by
+	# one publication onto one party, which is why the field is authored rather
+	# than inferred - and dropping the chain instead errs the other way, where an
+	# unwritten field reads as *no counterparty* and every note counts as its own
+	# party, so a corpus written before the field reports perfect diversity.
+	function Get-BdHostOf {
+		param([string]$Url)
+		if ($Url.Length -eq 0) { return '' }
+		# awk's index() is 1-based and answers 0 for absent, so its `p > 0` is
+		# "found anywhere, first character included". A `-gt 0` on a 0-based
+		# IndexOf would silently keep a leading-slash URL whole.
+		$p = $Url.IndexOf([char]47)
+		if ($p -ge 0) { $Url = $Url.Substring(0, $p) }
+		return ($Url -creplace '\Awww\.', '')
+	}
+
+	# The transitive closure over rests_on, down to the source notes, collecting
+	# distinct sources and distinct counterparties as it goes. The same downward
+	# walk `graph` performs in walkout(), narrowed to the one edge that carries
+	# provenance: a copy rather than a call because each mode is a separate awk
+	# program in the shell, and this file inherits the separation from the stub
+	# seam. SEEN is what makes a cycle terminate and what stops a diamond
+	# counting one source twice; the caller resets it, along with the two sets,
+	# before each walk.
+	function Add-BdClosure {
+		param([string]$Id)
+		if ($Id.Length -eq 0 -or $SEEN.Contains($Id)) { return }
+		[void]$SEEN.Add($Id)
+		if (-not $BYID.ContainsKey($Id)) { return }
+		$f = $BYID[$Id]
+		if ($f.Length -eq 0) { return }
+		if (Test-BdEqual (Get-BdValue $f 'type') 'source') {
+			[void]$SRC.Add($Id)
+			# `$party`, not `$cp`: PowerShell variable names are
+			# case-INSENSITIVE, so a local `$cp` here IS the `$CP` set this
+			# function is filling, and the walk would overwrite its own
+			# accumulator with a string on the first source note it reached.
+			$party = Get-BdValue $f 'counterparty'
+			if ($party.Length -eq 0) { $party = Get-BdValue $f 'publisher' }
+			if ($party.Length -eq 0) { $party = Get-BdHostOf (Get-BdValue $f 'url_canonical') }
+			if ($party.Length -ne 0) { [void]$CP.Add($party) }
+		}
+		$k = $f + $SUB + 'rests_on'
+		if ($LI.ContainsKey($k)) {
+			foreach ($item in $LI[$k]) { Add-BdClosure (Get-BdTargetOf $item) }
+		}
+	}
+
+	# The ONE rendered form of the two counts, generated off the note so the
+	# section can be matched against it verbatim - the same property that makes
+	# conditional_on and the roadmap table item cell checks rather than
+	# similarity tests. plan-template.md states it as the contract a writer owes:
+	# both numerals come straight from the fields, and each noun pluralises on
+	# its own numeral.
+	#
+	# WHY A GENERATED STRING RATHER THAN A SCAN FOR THE TWO NUMBERS. An earlier
+	# draft looked for each count as a whole-word token, which an unrelated pair
+	# of digits in the same paragraph silences - a check that passes for the
+	# wrong reason, which is worse here than one that fails for the wrong reason,
+	# because nothing ever surfaces it. There is exactly one string to render and
+	# one to look for, so a mismatch means the line was written by hand or was
+	# never written.
+	function Get-BdEvLine {
+		param([string]$N, [string]$C)
+		$np = 's'
+		if (Test-BdEqual $N '1') { $np = '' }
+		$cw = 'ies'
+		if (Test-BdEqual $C '1') { $cw = 'y' }
+		return 'Evidence: ' + $N + ' source' + $np + ', ' + $C + ' counterpart' + $cw
+	}
+
+	# Whether a corner row states a kind at all. plan-template.md writes one of
+	# the three words for every corner where a driver binds, and an em dash both
+	# for a corner where nothing binds and for one whose verdict is undetermined
+	# - so a cell with no alphanumeric byte in it asserts no kind and there is
+	# nothing for a note to disagree with. The test is emptiness after the fold
+	# rather than membership of the three words, so a cell carrying a fourth word
+	# or a typo still fails against the note instead of slipping out of the
+	# check.
+	function Test-BdStatesKind {
+		param([string]$Text)
+		return ((Get-BdFold $Text).Length -ne 0)
+	}
+
+	function Add-BdReport {
+		param([string]$File, [string]$Check, [string]$Id, [string]$Detail)
+		[void]$script:FAILURES.Add($File + "`t" + $Check + "`t" + $Id + "`t" + $Detail)
+	}
+
+	foreach ($rec in $script:RECORDS) {
+		$p = $rec.Split([char]9)
+		$tag = Get-RowField $p 0
+		if (Test-BdEqual $tag 'N') { [void]$BDFILES.Add((Get-RowField $p 1)); continue }
+		if (Test-BdEqual $tag 'S') { $V[(Get-RowField $p 1) + $SUB + (Get-RowField $p 2)] = (Get-RowField $p 3); continue }
+		if (Test-BdEqual $tag 'L') {
+			$k = (Get-RowField $p 1) + $SUB + (Get-RowField $p 2)
+			if (-not $LI.ContainsKey($k)) { $LI[$k] = New-Object 'System.Collections.Generic.List[string]' }
+			$LI[$k].Add((Get-RowField $p 3))
+		}
+	}
+
+	foreach ($f in $BDFILES) {
+		$idv = Get-BdValue $f 'id'
+		if ($idv.Length -ne 0) { $BYID[$idv] = $f }
+	}
+
+	# The verdict section of business-plan.md, resolved once. Its ordinal is what
+	# both the corner table and verdict-unfiled hang off, so it is looked up
+	# before any note is read.
+	$tvord = 0
+	if ($script:HAS_PLAN -eq 1) {
+		Read-BdDoc $TABLEDOC
+		$ak = $TABLEDOC + $SUB + $TABLEKEY
+		if ($ALIAS.ContainsKey($ak) -and $ALIAS[$ak] -gt 0) { $tvord = $ALIAS[$ak] }
+	}
+	$tvkk = $TABLEDOC + $SUB + $tvord
+	$nrow = Get-BdKindRowCount $tvkk
+
+	# THE ASYMMETRIC TRIGGER, in one place. A target-verdict note is read
+	# whatever it carries; a ceiling note is read only once it carries one of the
+	# five, which is the exemption for every ceiling claim written before the
+	# fields existed.
+	$nvt = 0
+	$VN = New-Object 'System.Collections.Generic.List[string]'
+	foreach ($f in $BDFILES) {
+		$ty = Get-BdValue $f 'type'
+		if (-not (Test-BdEqual $ty 'claim') -and -not (Test-BdEqual $ty 'assumption')) { continue }
+		$sj = Get-BdValue $f 'subject'
+		if (-not $ANCHOR.ContainsKey($sj)) { continue }
+		if (Test-BdEqual $sj 'target-verdict') {
+			$nvt++
+		} else {
+			$carried = $false
+			foreach ($vfield in $VF) {
+				if (Test-BdPresent $f $vfield) { $carried = $true; break }
+			}
+			if (-not $carried) { continue }
+		}
+		[void]$VN.Add($f)
+	}
+
+	foreach ($f in $VN) {
+		$sj = Get-BdValue $f 'subject'
+		$id = Get-BdValue $f 'id'
+		$bd = Get-BdValue $f 'binding_driver'
+		$dk = Get-BdValue $f 'driver_kind'
+
+		# The section this verdict renders into: the anchor its subject renders
+		# into, and only where the plan carries no such section, the sections its
+		# used_in names.
+		$CK = New-Object 'System.Collections.Generic.List[string]'
+		if ($script:HAS_PLAN -eq 1) {
+			$ak = $TABLEDOC + $SUB + $ANCHOR[$sj]
+			if ($ALIAS.ContainsKey($ak) -and $ALIAS[$ak] -gt 0) { [void]$CK.Add($TABLEDOC + $SUB + $ALIAS[$ak]) }
+		}
+		$k = $f + $SUB + 'used_in'
+		if ($LI.ContainsKey($k)) {
+			foreach ($entry in $LI[$k]) {
+				# THE ANCHOR COMES FIRST AND used_in IS A FALLBACK, NEVER A
+				# UNION, and the ordering is load-bearing rather than an early
+				# exit worth a line: under a union, a note that also cites `##
+				# Why now` clears the condition check whenever its phrase
+				# appears in THAT section, so a verdict corner reading *does not
+				# clear* passes. The union looked more permissive in the right
+				# way and was more permissive in the wrong one. Widening this
+				# guard reintroduces that defect in the passing direction, where
+				# nothing surfaces it.
+				if ($CK.Count -ne 0) { break }
+				# The third copy of the --used-in split: document, #anchor, and
+				# the leading ./ and trailing / stripped off. Byte-identical to
+				# the copies in --used-in and --supersession-sweep on purpose, so
+				# a diff of the three proves they agree on what an entry names -
+				# the `..` guard below is the one deliberate difference. Change
+				# one, change all three.
+				$hp = $entry.IndexOf([char]35)
+				$doc = $entry
+				$anc = ''
+				if ($hp -ge 0) {
+					$doc = $entry.Substring(0, $hp)
+					$anc = $entry.Substring($hp + 1)
+				}
+				$doc = ((Get-BdTrim $doc) -creplace '\A\./', '') -creplace '/+\z', ''
+
+				if ($doc.Length -eq 0 -or $anc.Length -eq 0) { continue }
+				# A path that climbs out of the vault is not opened. --used-in
+				# reports it missing rather than reading it, and this mode has no
+				# business reading it either.
+				if ([regex]::IsMatch($doc, '(\A|/)\.\.(/|\z)')) { continue }
+				Read-BdDoc $doc
+				$ak = $doc + $SUB + (Get-BdFold $anc)
+				if ($ALIAS.ContainsKey($ak) -and $ALIAS[$ak] -gt 0) { [void]$CK.Add($doc + $SUB + $ALIAS[$ak]) }
+			}
+		}
+
+		# --- the condition a policy-bound verdict owes ----------------------
+		# `conditional_on` absent is verdict-fields-incomplete from `check` and
+		# is not reported twice here under a name about the plan: with no string
+		# there is nothing for a section to be missing.
+		$co = Get-BdValue $f 'conditional_on'
+		if ($COND.Contains($dk) -and $co.Length -ne 0 -and $CK.Count -gt 0) {
+			$found = $false
+			# `$cand`, not `$ck`: a loop variable differing from `$CK` only in
+			# case is the SAME variable in PowerShell, so the first iteration
+			# would replace the candidate list with its own first element.
+			foreach ($cand in $CK) {
+				if ((Get-BdBody $cand).IndexOf($co, [System.StringComparison]::Ordinal) -ge 0) { $found = $true; break }
+			}
+			if (-not $found) {
+				Add-BdReport $f 'verdict-unconditional' $id ('`driver_kind` is `' + $dk + '` and `conditional_on` is `' + $co + '`, and the section this note renders into does not carry that string. A policy-bound verdict is not that the target is unreachable - it is unreachable in the stated configuration, and the plan has to say so in the words the note stores. `Your target is unreachable` and `your target is unreachable at ' + $co + '` render at the same confidence letter and only the second one is true, so the founder is stopped over a decision they could revisit this week. The match is verbatim because the section renders off this field; render the phrase, or correct the field to the words the section uses')
+			}
+		}
+
+		# --- the kind, both directions, in one row scan ---------------------
+		# The forward failure is a Kind cell that disagrees with the note its
+		# Binding driver cell names. The reverse is a verdict in the ledger that
+		# no row names at all, and it is what keeps the forward one honest: with
+		# only the forward direction the cheapest way past both is to edit the
+		# driver cell until it matches no note.
+		#
+		# The reverse asks whether a row NAMES the driver and not whether that
+		# row states a kind, and the difference is a deliberate trade.
+		# plan-template.md writes an em dash in the Kind cell of an undetermined
+		# corner whose driver IS named, so a rule that demanded a kind there
+		# would report the shipped template. What that leaves open is blanking
+		# the Kind cell of a corner that does bind, which the forward half then
+		# skips; the template names that as a contract violation, and a check
+		# that fires on the worked example is one somebody switches off, which
+		# costs both halves.
+		#
+		# A cell naming no note is NOT a failure either way: a corner that clears
+		# legitimately writes an em dash or a parenthetical in that column, and
+		# reporting those would be the crying wolf this whole file refuses.
+		if ((Test-BdEqual $sj 'target-verdict') -and $nrow -gt 0 -and $bd.Length -ne 0 -and $dk.Length -ne 0) {
+			$tvDrv = $KDRV[$tvkk]
+			$tvKnd = $KKND[$tvkk]
+			$hit = $false
+			for ($r = 0; $r -lt $nrow; $r++) {
+				$rowDrv = $tvDrv[$r]
+				$rowKnd = $tvKnd[$r]
+				if (-not (Test-BdEqual $rowDrv $bd)) { continue }
+				$hit = $true
+				if (-not (Test-BdStatesKind $rowKnd)) { continue }
+				if (Test-BdEqual $rowKnd $dk) { continue }
+				Add-BdReport $TABLEDOC 'verdict-kind-mismatch' $id ('the corner verdict row for driver `' + $bd + '` carries `Kind` cell `' + $rowKnd + '` and ' + $id + ' carries `driver_kind: ' + $dk + '`. The column renders off the field, so the two cannot drift unless the cell was edited by hand - and the direction that matters is a cell reading `structural` over a note reading `policy`, which reports a decision the founder made as a category floor at the same confidence letter as an observation somebody read off a page. Match the field verbatim, or correct the field')
+			}
+			if (-not $hit) {
+				Add-BdReport $f 'verdict-kind-mismatch' $id ('`binding_driver` is `' + $bd + '` and no row of the corner verdict table under `{#target-verdict}` names that driver. The table renders its `Binding driver` and `Kind` columns off this note, so a verdict in the ledger that the table never lists is a corner the reader cannot see - and it is the direction that makes the cell check worth having, because a cell edited until it matches nothing would otherwise clear both. Render the row with the driver verbatim, or correct the field to the driver the table names')
+			}
+		}
+
+		# --- the evidence under the binding driver --------------------------
+		# A SINGLE COUNTERPARTY IS REPORTABLE AT ANY n. Three deals from one
+		# counterparty is the terms of one relationship reported as the terms of
+		# a market, and a source count of three reads as the opposite - which is
+		# the half no other field in the corpus can recover.
+		#
+		# SURFACING IT IS A CONJUNCTION: the note carries the counts AND the
+		# section renders them. vault.md once read as a disjunction - the note OR
+		# the section - and that can never be both-false, because `check` owes
+		# both fields on every note this mode reads, so it reduced to a rule
+		# about the ledger alone. The failure being closed is not that the ledger
+		# is wrong. It is that the corpus knew the tail was two deals from one
+		# party and the number a founder acts on never said so where anybody read
+		# it: rendered without the line, that verdict is typographically
+		# identical to one resting on twenty deals across twelve parties, and
+		# `confidence` cannot separate them - it is a letter about the weakest
+		# link and says nothing about how many links there are.
+		#
+		# THE LINE IS OWED ONLY WHERE THE TAIL IS ACTUALLY THIN, so a
+		# well-evidenced verdict owes nothing and this never becomes a line on
+		# every plan that everyone learns to skip. That is what keeps it on the
+		# one case that cannot be stated honestly without it.
+		#
+		# The two halves report under one code and in order, because a wrong pair
+		# cannot render a right line: correct the field first, then the section.
+		# The stored-pair half fires on absent counts as well as wrong ones,
+		# which is deliberately not the `conditional_on` treatment above - there,
+		# with no string stored, the question this mode asks has no answer, while
+		# here the closure answers it either way and the number is the product.
+		# The rendered half is gated on the note reaching a section at all,
+		# exactly as the condition check is: a verdict written before the plan
+		# has a section for it has nothing rendered to be missing the line.
+		$SEEN.Clear()
+		$SRC.Clear()
+		$CP.Clear()
+		Add-BdClosure $id
+		$nsrc = $SRC.Count
+		$ncp = $CP.Count
+
+		if ($nsrc -lt 3 -or $ncp -lt 2) {
+			$en = Get-BdValue $f 'evidence_n'
+			$ec = Get-BdValue $f 'evidence_counterparties'
+			$sp = 's'
+			if ($nsrc -eq 1) { $sp = '' }
+			$cpw = 'ies'
+			if ($ncp -eq 1) { $cpw = 'y' }
+			$tail = [string]$nsrc + ' distinct source note' + $sp + ' and ' + [string]$ncp + ' distinct counterpart' + $cpw
+			if (-not (Test-BdEqual $en ([string]$nsrc)) -or -not (Test-BdEqual $ec ([string]$ncp))) {
+				$states = ''
+				if (Test-BdPresent $f 'evidence_n') {
+					$states = ' - it states `evidence_n: "' + $en + '"` and `evidence_counterparties: "' + $ec + '"`, which is not what the closure holds'
+				}
+				Add-BdReport $f 'verdict-thin-evidence' $id ('the closure under this note reaches ' + $tail + ', and the note does not say so' + $states + '. A verdict resting on two deals renders identically to one resting on twenty, because `confidence` is a letter about the weakest link and says nothing about how many links there are - and three deals from one counterparty is the terms of one relationship reported as the terms of a market. State the counts, or widen the evidence under the driver')
+			} elseif ($CK.Count -gt 0) {
+				$ev = Get-BdEvLine $en $ec
+				$found = $false
+				foreach ($cand in $CK) {
+					if ((Get-BdBody $cand).IndexOf($ev, [System.StringComparison]::Ordinal) -ge 0) { $found = $true; break }
+				}
+				if (-not $found) {
+					Add-BdReport $f 'verdict-thin-evidence' $id ('the closure under this note reaches ' + $tail + ' and the note states both counts, and the section it renders into does not carry `' + $ev + '`. Counts that are right in the ledger are not what this rule is for: the section can render *the target lands about a third of the way* with nothing saying the finding rests on ' + $tail + ', which is typographically identical to a verdict resting on twenty deals across twelve parties - and `confidence` cannot separate the two, because it is a letter about the weakest link and says nothing about how many links there are. The line is generated off `evidence_n` and `evidence_counterparties` and matched verbatim, so render it exactly as printed here; plan-template.md carries the form, and the em dash a well-evidenced corner uses instead')
+				}
+			}
+		}
+	}
+
+	# --- a verdict that reached the plan and never the ledger ---------------
+	# --roadmap-table inverted: that mode fails milestone notes with no
+	# business-plan.md to render them, and this fails a rendered section with
+	# nothing behind it. WHAT TRIGGERS IT IS THE PRESENCE OF A NON-EMPTY SECTION
+	# and never a reading of the prose inside it, for the same reason
+	# conditional_on is matched verbatim: a check that infers a verdict from
+	# sentence shape cries wolf, and one that cries wolf gets switched off.
+	#
+	# THERE IS DELIBERATELY NO {#steady-state} EQUIVALENT. A ceiling section in
+	# an existing plan legitimately has no field-carrying note behind it - the
+	# same asymmetry the trigger above carries, one document over - so a mirror
+	# rule here would fail every plan written before this release.
+	#
+	# `$nvt` is the count of target-verdict notes taken in the classification
+	# loop, because that subject is admitted to VN unconditionally: a second pass
+	# over every note would be the same question asked a third time.
+	if ($tvord -gt 0 -and (Get-BdBody $tvkk).Length -ne 0 -and $nvt -eq 0) {
+		Add-BdReport $TABLEDOC 'verdict-unfiled' '' 'business-plan.md carries a non-empty section at the `{#target-verdict}` anchor and no `claim` or `assumption` under `subject: target-verdict` stands behind it. Everything else this mode checks presumes a note exists, and a verdict written straight into the plan has none of the properties the ledger gives a number: no `rests_on`, so no confidence derivation and no cap; no `stale_after`, so nothing ever comes up for re-checking; no supersession when the target is renegotiated, so the superseded finding is simply overwritten; and `--supersession-sweep` cannot name this section when something under it moves. It is the one output of this skill most likely to make a founder stop, held to less than a sourced market-size figure'
+	}
+
+	# The success line is captured off stdout the way --roadmap-table one is,
+	# because what `clean` means here depends on what there was to compare: a
+	# line saying the verdict agrees with the plan, printed over a vault that
+	# carries no verdict, reads as a verdict that was checked. The shell captures
+	# it in a command substitution, which strips the trailing newline the printf
+	# writes, so it is built here without one.
+	if ($VN.Count -eq 0 -and $tvord -eq 0) {
+		if ($script:HAS_PLAN -eq 1) {
+			$bdOk = 'no verdict note and no section at the {#target-verdict} anchor of business-plan.md - there is no verdict on either side, which is every vault before a target has one - ' + $script:VAULT
+		} else {
+			$bdOk = 'no verdict note and no business-plan.md at the vault root - there is no verdict on either side, which is every vault before a target has one - ' + $script:VAULT
+		}
+	} else {
+		$np = 's'
+		if ($VN.Count -eq 1) { $np = '' }
+		$rp = 's'
+		if ($nrow -eq 1) { $rp = '' }
+		$bdOk = [string]$VN.Count + ' verdict note' + $np + ' against ' + [string]$nrow + ' corner verdict row' + $rp + ' under the {#target-verdict} anchor, matched verbatim - ' + $script:VAULT
+	}
+
+	exit (Render-Failures 'vault-lint binding-driver' $bdOk)
 }
 
 # ----------------------------------------------------------------------------
