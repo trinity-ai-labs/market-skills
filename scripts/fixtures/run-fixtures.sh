@@ -58,7 +58,14 @@
 set -u
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-LINT="$HERE/../../bin/vault-lint.sh"
+# The implementation under test, overridable so the assertions below run against
+# either one. There are two implementations of this lint - bin/vault-lint.sh and
+# the PowerShell port a Windows session with no POSIX shell has to use - and
+# without this override the port ships with nothing asserting that its checks
+# still fire. scripts/parity/parity.mjs proves the two AGREE with each other;
+# only this suite proves what they agree on is still correct, and it is the
+# cheapest second layer available because it already exists.
+LINT="${VAULT_LINT:-$HERE/../../bin/vault-lint.sh}"
 [ -x "$LINT" ] || { printf 'run-fixtures: %s is not executable\n' "$LINT" >&2; exit 2; }
 
 # Every check the violating vault is built to trigger. A check that stops firing
