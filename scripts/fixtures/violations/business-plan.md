@@ -1,5 +1,13 @@
 # Business plan — example product
 
+Violates: roadmap-table-missing
+
+The vault carries eight `milestone` notes and this document has no heading that
+answers to `roadmap`, so the whole roadmap is in the ledger and nowhere a reader
+can see it. That is reported once against this document rather than once per
+milestone: the fix is one thing — write the section — and eight rows for one job
+is a report people stop reading.
+
 The rendered document the violating vault's `used_in` entries resolve against.
 It carries `## Why now` and deliberately no `## Risks`, so `CLAIM-STAL0006`
 stays a pure `stale-claim` fixture while `CLAIM-ANCH0012` has a real document

@@ -223,8 +223,18 @@ operator red-team lens attacks.
 
 Every item in this section is a `milestone` note in the vault, written before the table is —
 the table renders `sequence`, `moves` and `resource` off the notes, so the two cannot drift.
-Writing the table first leaves the roadmap as prose nothing can check, which is what let an
-item name an assumption that was never written. The generated `research/timeline.md` is the
+**That is now enforced rather than asserted**: `vault-lint.sh --roadmap-table` matches this
+table against the milestone set both ways, and the key is the milestone `title` matched
+**verbatim** in the item cell, exactly as `chosen` must match an entry in `options`. A row
+that paraphrases its note has stopped being a rendering of it, and a row with no note behind
+it moves no assumption anybody can name. Writing the table first leaves the roadmap as prose
+nothing can check, which is what let an item name an assumption that was never written.
+
+**Two things the check reads, so write the section in this order:** the item table comes
+FIRST — Rule 3's permutation comparison goes below it, and only the first table here is read
+against the ledger, because that table's first column is an order rather than an item. And
+the item column is the one headed `Item`, so a numbered table (`| # | Item | … |`) works and
+one that renames the column does not. The generated `research/timeline.md` is the
 other rendering of the same set, and it is what a later proposal is judged against: it holds
 what is shipped and what is absent at a given month, so a gap that is a dated item on this
 roadmap does not read as a gap in the product.>

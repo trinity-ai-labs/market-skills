@@ -197,7 +197,8 @@ CHANGELOG.md                  what each pinned version actually changed
 for the notes asserted with nothing behind them, `--used-in` for whether each note's
 citation target still resolves, `--supersession-sweep` for the document sections a
 supersession put in doubt, `--red-team` for whether every dispatched panel lens wrote
-objection rows, `--release-gate` for all four of those run as one call, and
+objection rows, `--roadmap-table` for whether the plan's roadmap table still matches the
+milestone set it renders, `--release-gate` for all five of those run as one call, and
 `graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it** — an
 enumeration that has gone stale reads exactly like one that is complete. Rule 3 above has
@@ -214,7 +215,7 @@ be three edits to the same `case` block, and git resolves two of those textually
 third silently loses the arm that parses its flag.
 
 `--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
-`--supersession-sweep` and `--red-team` as separate invocations of the script and exits with the
+`--supersession-sweep`, `--red-team` and `--roadmap-table` as separate invocations of the script and exits with the
 **worst** status any part returned, so a refusal (2) is never reported as a failed check (1). It
 exists because the render gate was several calls made from memory — which of them ran was a
 matter of recall — and because the bare run's success line used to read as a whole-corpus
@@ -228,9 +229,10 @@ loses its block still works.
 **`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2`) and refuses anything else.** A vault at
 1 is held to exactly the rules it was written under; version 2 is where a check that an existing
 corpus could not owe goes, and the found version is passed into the checks awk and the
-`--supersession-sweep` awk as `schema` so a new check can gate on it. Two rules are behind it
-today: the sweep's `reconciled:` verdict, and `--red-team`'s demand for a roster in a
-`red-team.md` that has none. Refusing a version from the future stays the point of the field: an
+`--supersession-sweep` awk as `schema` so a new check can gate on it. Three rules are behind it
+today: the sweep's `reconciled:` verdict, `--red-team`'s demand for a roster in a
+`red-team.md` that has none, and `--roadmap-table`, which a vault at 1 cannot owe because it has
+no `milestones/` directory to render. Refusing a version from the future stays the point of the field: an
 older tool half-reading a newer vault reports a clean bill of health over every field it never
 saw. Adding a check that fires unconditionally on every existing corpus is the thing this
 mechanism exists to make unnecessary.
@@ -283,6 +285,24 @@ to delete it from the roster. A vault with no `red-team.md` dispatched no panel 
 blocks are skipped, because the document carries its own row template and would otherwise fail
 for documenting its own format, and lens names are matched case-folded with whitespace runs
 collapsed — a check that fires on capitalisation is one somebody switches off.
+
+`--roadmap-table` is the third document at the vault root, and the one place in this tool where
+matching is deliberately **not** folded. `plan-template.md` states the contract it reads: every
+item in the roadmap section is a `milestone` note written before the table, and the table renders
+`sequence`, `moves` and `resource` off the notes — so the item cell **is** the `title`, and the
+key is that title matched **verbatim**, the same rule `vault.md` holds `chosen` to against
+`options` and for the same reason. That is what makes this a check rather than a similarity test:
+a table rendered off the notes matches character for character by construction, so a mismatch
+means the table was edited by hand, and no ID column has to appear in a document a founder hands
+an investor. **Both directions**, each a different failure: a row matching no milestone is an item
+that escaped the ledger, and a milestone the table never lists is a dated change the plan does not
+show. Two reading rules keep it from crying wolf, and both belong in any change to it — **only the
+FIRST table under the roadmap heading is read** (the section legitimately carries the Rule 3
+permutation comparison, whose first column is an *order*), and **the item column is the one the
+header names `Item`**, defaulting to the first (a numbered roadmap puts an ordinal ahead of it,
+the shape the generated `research/timeline.md` uses). Getting either wrong reports every row of a
+correct table as an item with no note behind it — which is what this check was scoped out of
+1.10.0 for, on the mistaken premise that the only available key was a fuzzy one.
 
 **Every invocation in `skills/` is bare — `vault-lint.sh …`, never a path**, and CI rejects
 the path form. The pre-plugin layout used a relative path, which resolves against the
