@@ -773,7 +773,147 @@ function Invoke-ModeUsedIn {
 # (bin/vault-lint.sh:1962), which is why the two are ported together.
 # ----------------------------------------------------------------------------
 function Invoke-ModeRedTeam {
-	Exit-NotPorted '--red-team'
+	$redTeamPath = $script:VAULT + '/red-team.md'
+
+	# A vault with no red-team.md dispatched no panel - reported by name rather
+	# than passing silently, so a mode that printed `clean` over a document it
+	# never found does not read as a panel that was checked.
+	$okLine = 'every dispatched lens wrote rows - ' + $script:VAULT
+
+	if (Test-Path -LiteralPath $redTeamPath -PathType Leaf) {
+		# The key the roster and the objection table are matched on: trimmed,
+		# whitespace runs collapsed, ASCII-folded. Ports key() at
+		# bin/vault-lint.sh:1980 - a check that fires on capitalisation is one
+		# somebody switches off, which takes the half that worked with it.
+		function Get-RedTeamKey {
+			param([string]$Text)
+			$t = $Text.Trim($script:SPACE_TAB)
+			$t = $t -creplace '[ \t]+', ' '
+			$sb = New-Object System.Text.StringBuilder
+			foreach ($ch in $t.ToCharArray()) {
+				if ($ch -ge [char]65 -and $ch -le [char]90) { [void]$sb.Append([char]([int]$ch + 32)) }
+				else { [void]$sb.Append($ch) }
+			}
+			return $sb.ToString()
+		}
+
+		# The same trim with no folding, for a message that names the lens in
+		# the case the document wrote it in. Ports disp() at
+		# bin/vault-lint.sh:1987.
+		function Get-RedTeamDisplay {
+			param([string]$Text)
+			return $Text.Trim($script:SPACE_TAB)
+		}
+
+		$rxHeading = [regex]'\A#+[ \t]+'
+		$rxRosterId = [regex]'\AR?[0-9]+\z'
+		$rxObjectionId = [regex]'\AR[0-9]+-O[0-9]+\z'
+
+		# ROSTER and ROWS as one ordered map each, keyed round-then-lens, rather
+		# than a HashSet plus a List plus a Dictionary apiece: awk fakes an
+		# ordered map with three parallel arrays (ROSTER/RORDER/RSHOW) because
+		# it has no such structure, but .NET's OrderedDictionary gives O(1)
+		# membership AND insertion order in one object. $roster's value is the
+		# lens display text; $rows' value is a two-element array of [display
+		# text, the objection ID the row was first seen under].
+		$roster = New-Object 'System.Collections.Specialized.OrderedDictionary' -ArgumentList ([System.StringComparer]::Ordinal)
+		$rows = New-Object 'System.Collections.Specialized.OrderedDictionary' -ArgumentList ([System.StringComparer]::Ordinal)
+
+		$fc = ''
+		$fn = 0
+		$inRoster = $false
+
+		foreach ($raw in (Read-TextLines $redTeamPath)) {
+			$line = Remove-TrailingCr $raw
+			$t = $line.TrimStart($script:SPACE_TAB)
+
+			# ONE OF FIVE COPIES of the fenced-block scan (bin/vault-lint.sh:
+			# 1283-1285 names all five) - the local --red-team copy, kept apart
+			# from --used-in's above for the reason THE STUB SEAM states. A
+			# document that carries its own row template as an example would
+			# otherwise register the template as a dispatched lens.
+			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
+				$c = $t.Substring(0, 1)
+				$n = 0
+				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
+				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				continue
+			}
+			if ($fc.Length -ne 0) { continue }
+
+			$hm = $rxHeading.Match($t)
+			if ($hm.Success) {
+				$h = $t.Substring($hm.Length)
+				$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
+				$inRoster = ((Get-RedTeamKey $h) -ceq 'lenses dispatched')
+				continue
+			}
+
+			if (-not $t.StartsWith('|', [System.StringComparison]::Ordinal)) { continue }
+			$row = $t.Substring(1)
+			$row = $row -creplace '\|[ \t]*\z', ''
+			$cell = $row.Split('|')
+			if ($cell.Length -lt 2) { continue }
+			$c1 = Get-RedTeamDisplay $cell[0]
+
+			# The header row and the |---| rule are skipped by the same test
+			# that reads a round, rather than by counting lines - a table
+			# written without a header is still a roster.
+			if ($inRoster) {
+				if (-not $rxRosterId.IsMatch($c1)) { continue }
+				$rd = $c1 -creplace '\AR', ''
+				$lens = Get-RedTeamKey $cell[1]
+				if ($lens.Length -eq 0) { continue }
+				$rk = $rd + "`t" + $lens
+				if ($roster.Contains($rk)) { continue }
+				$roster[$rk] = Get-RedTeamDisplay $cell[1]
+				continue
+			}
+
+			# An objection row is identified by its ID rather than by the
+			# heading it sits under, so a document that splits its rounds
+			# across sections is read the same as one with a single table.
+			if (-not $rxObjectionId.IsMatch($c1)) { continue }
+			$rd = $c1 -creplace '\AR', ''
+			$rd = $rd -creplace '-O[0-9]+\z', ''
+			$lens = Get-RedTeamKey $cell[1]
+			$ok = $rd + "`t" + $lens
+			if ($rows.Contains($ok)) { continue }
+			$rows[$ok] = @((Get-RedTeamDisplay $cell[1]), $c1)
+		}
+
+		# No roster at all. At schemaVersion 2 that is the failure, because the
+		# roster is where version 2 put the record. At 1 it is a document that
+		# predates the field, and failing it would fail every corpus with a
+		# panel in it on the day the skill updated.
+		if ($roster.Count -eq 0) {
+			if ([int]$script:FOUND_SCHEMA -ge 2) {
+				[void]$script:FAILURES.Add('red-team.md' + "`t" + 'red-team-no-roster' + "`t" + '' + "`t" + 'red-team.md carries no `## Lenses dispatched` roster. Nothing else in the corpus records which lenses were sent, so a lens that returned findings and wrote no row is indistinguishable from one that had no objections - and the objection codes the plan cites resolve into a table that never carried them')
+			}
+		} else {
+			# BOTH DIRECTIONS, and the second one is what makes the first hold.
+			foreach ($rk in $roster.Keys) {
+				if ($rows.Contains($rk)) { continue }
+				$parts = $rk.Split([char]9)
+				$show = $roster[$rk]
+				[void]$script:FAILURES.Add('red-team.md' + "`t" + 'red-team-lens-no-rows' + "`t" + 'R' + $parts[0] + ' ' + $show + "`t" + 'the roster names `' + $show + '` as dispatched in round ' + $parts[0] + ' and no row in red-team.md carries an objection from it. Either the lens returned findings that were folded into the documents and never written down, in which case the plan cites a code the table does not hold, or it genuinely had none - and the whole point of the roster is that those two look identical from outside')
+			}
+
+			foreach ($ok in $rows.Keys) {
+				if ($roster.Contains($ok)) { continue }
+				$parts = $ok.Split([char]9)
+				$show = $rows[$ok][0]
+				$id = $rows[$ok][1]
+				[void]$script:FAILURES.Add('red-team.md' + "`t" + 'red-team-lens-unrostered' + "`t" + $id + "`t" + 'row `' + $id + '` is an objection from `' + $show + '` in round ' + $parts[0] + ', and the roster does not name that lens as dispatched in that round. A roster that omits a lens whose rows are sitting in the table is not the record it claims to be, and the check above it can then be cleared by deleting a line rather than by dispatching a lens')
+			}
+		}
+	} else {
+		$okLine = 'no red-team.md under ' + $script:VAULT + ' - no panel was dispatched, so no lens owes rows'
+	}
+
+	$status = Render-Failures 'vault-lint red-team' $okLine
+	exit $status
 }
 
 # ----------------------------------------------------------------------------
