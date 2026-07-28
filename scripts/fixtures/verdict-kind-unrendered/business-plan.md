@@ -20,3 +20,8 @@ its driver is named and its `Kind` cell is an em dash. Nothing in this vault
 carries `multiple` as a binding driver, so it demands no note — and a rule that
 required a kind wherever a driver was named would report this row on every plan
 written to the template.
+
+Both corners rest on the one source note this vault carries, so each owes the line
+the rule generates off its own counts. Evidence: 1 source, 1 counterparty — stated
+once, because both corners have the same tail, and it keeps this vault to the one
+failure it was built for.

@@ -46,13 +46,14 @@
 #      `target-verdict` and lenient for `steady-state-ceiling`, the driver_kind
 #      word list is closed, a policy-bound verdict states its configuration
 #      verbatim, the corner table's Kind column matches its note in both
-#      directions, the stored evidence counts are what the closure holds, and a
-#      rendered verdict section has a note behind it. Each of those has a silent
+#      directions, a thin tail is surfaced in BOTH the note's counts and the line
+#      the section renders off them, and a rendered verdict section has a note
+#      behind it. Each of those has a silent
 #      side asserted beside it - a structural verdict owing no condition, an
 #      em-dash corner owing no note, the undetermined corner the template ships,
-#      a ceiling section owing no note, an empty section owing none either, and a
-#      legacy ceiling claim carrying none of the fields - and none of them is
-#      gated on schemaVersion.
+#      a ceiling section owing no note, an empty section owing none either, a
+#      well-evidenced verdict owing no evidence line, and a legacy ceiling claim
+#      carrying none of the fields - and none of them is gated on schemaVersion.
 
 set -u
 
@@ -1243,6 +1244,13 @@ case "$BD_TE" in
 *'"failure_count": 2'*) ok "an absent pair and a wrong pair are both reported, and the correct one is not" ;;
 *) no "--binding-driver did not report exactly two notes over verdict-thin-evidence (got: $BD_TE)" ;;
 esac
+# The wrong-pair note is reported for its PAIR and not for its missing line: a
+# wrong pair cannot render a right line, so correcting the field comes first and a
+# message sending its reader to the section would send them to the wrong fix.
+case "$BD_TE" in
+*CLAIM-BD4GG007*'does not carry'*) no "the wrong-pair note was reported against the section - the field is the thing to correct first" ;;
+*) ok "a wrong pair is reported against the field, not against the section" ;;
+esac
 # The count is computed rather than read, and the concentration is the half no
 # other field can recover: three source notes with three distinct canonical URLs
 # and one counterparty. A rule keyed on the source count alone passes this vault
@@ -1263,11 +1271,52 @@ case "$BD_TE" in
 *) no "the note stating a wrong pair was not reported with its own numbers (got: $BD_TE)" ;;
 esac
 # The silent side, and the reason the count above is the assertion: the rule asks
-# that the concentration be surfaced, not that it be absent. A check that ignored
-# a stated count would report this note too.
+# that the concentration be surfaced, not that it be absent. Its pair matches the
+# closure AND its section carries the line those two generate, so both halves of
+# the conjunction are satisfied - a check that ignored either would report it.
 case "$BD_TE" in
-*CLAIM-BD4FF006*) no "a thin closure the note states correctly was reported - the rule asks that it be surfaced, not absent" ;;
-*) ok "a thin closure the note states correctly is not reported" ;;
+*CLAIM-BD4FF006*) no "a thin closure stated in the note and rendered in the section was reported - both halves are satisfied" ;;
+*) ok "a thin closure stated in the note and rendered in the section is not reported" ;;
+esac
+
+# --- the rendered half of the conjunction, on its own vault ------------------
+# The gap a disjunction between the note and the section could never see: the
+# ledger is honest and the plan renders nothing. Both verdicts here state a pair
+# the closure holds, so the note-side half passes for both and only the rendered
+# half can separate them - which is what makes the failure count the assertion.
+BD_EU=$("$LINT" --binding-driver --vault "$HERE/verdict-evidence-unrendered" --json 2>/dev/null)
+BD_EU_STATUS=$?
+[ "$BD_EU_STATUS" = "1" ] && ok "honest counts with nothing rendered beside them fail" ||
+	no "verdict-evidence-unrendered should exit 1 (got $BD_EU_STATUS)"
+case "$BD_EU" in
+*'"failure_count": 1'*) ok "only the corner whose line is missing is reported" ;;
+*) no "--binding-driver did not report exactly one note over verdict-evidence-unrendered (got: $BD_EU)" ;;
+esac
+# The message quotes the exact string the writer has to render, because the line
+# is generated off the two fields and matched verbatim - a failure naming only the
+# counts leaves its reader guessing at the wording, and a guess is a mismatch.
+case "$BD_EU" in
+*CLAIM-EU1FF006*'Evidence: 1 source, 1 counterparty'*) ok "the failure quotes the line the section is missing" ;;
+*) no "the failure does not quote the generated line (got: $BD_EU)" ;;
+esac
+# Each noun pluralises on its own numeral, and this vault is where that is
+# asserted in both directions at once: the silent corner renders `2 sources, 2
+# counterparties` and the failing one owes `1 source, 1 counterparty`. A generator
+# that pluralised off the wrong numeral, or off neither, matches one and not the
+# other, so the count above moves.
+case "$BD_EU" in
+*CLAIM-EU1EE005*) no "the corner whose line IS rendered was reported - the plural form did not match" ;;
+*) ok "a rendered line matching the note verbatim satisfies the rule" ;;
+esac
+
+# A well-evidenced verdict owes no line at all, which is what stops this becoming
+# a line on every plan that everyone learns to skip. clean/ carries a verdict
+# whose closure reaches three sources from three counterparties, and its section
+# carries no `Evidence:` line anywhere - section 1 already requires that vault to
+# report nothing, so this asserts the reason.
+case "$(cat "$HERE/clean/business-plan.md")" in
+*'Evidence:'*) no "the clean plan carries an Evidence line - the healthy case must owe none" ;;
+*) ok "a well-evidenced verdict owes no evidence line" ;;
 esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"

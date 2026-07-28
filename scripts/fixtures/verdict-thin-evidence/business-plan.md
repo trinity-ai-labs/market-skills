@@ -1,16 +1,21 @@
 # Business plan — example product
 
-`--binding-driver`'s evidence rule. Every verdict here rests on the same three
-source notes, and all three name one counterparty — so the closure is thin by
-concentration rather than by count, which is the case a source count alone reads
-as the opposite of what is there.
+`--binding-driver`'s evidence rule, note side. Every verdict here rests on the
+same three source notes and all three name one counterparty, so each closure is
+thin by concentration rather than by count — which is the case a source count
+alone reads as the opposite of what is there.
 
 ## Target & verdict {#target-verdict}
 
-Three corners do not clear, and each names the driver that binds.
+Three corners do not clear, and each names the driver that binds. No corner table
+here on purpose: the `Kind` column checks need one, and leaving it out keeps this
+vault to the rule it was built for.
 
-The counts are the note's to state and this section renders them or not: what the
-rule asks is that the stored pair be what the closure holds. Nothing here is read
-for meaning — the section is opened for the `conditional_on` string and the corner
-table, and every verdict here is `structural`, so it owes no condition and this
-section carries no table.
+The platform-fee corner surfaces its tail in the form the note generates.
+Evidence: 3 sources, 1 counterparty — three canonical URLs, one party on the other
+side of every one of them.
+
+The other two corners are the planted failures, and neither gets a line, because
+neither states a pair the closure holds: one states nothing and one states a
+counterparty count that is not there. A wrong pair cannot render a right line, so
+the field is the thing to correct first.

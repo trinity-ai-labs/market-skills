@@ -15,3 +15,8 @@ the note behind it carries no condition and this section owes none.
 
 There is deliberately no corner verdict table here. The `Kind` column check needs
 one, so leaving it out is what keeps this vault to a single failure.
+
+Both corners rest on the one source note this vault carries, so each owes the line
+the rule generates off its own counts. Evidence: 1 source, 1 counterparty — stated
+once, because both corners have the same tail, and it keeps this vault to the one
+failure it was built for.
