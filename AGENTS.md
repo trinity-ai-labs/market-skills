@@ -223,7 +223,7 @@ older tool half-reading a newer vault reports a clean bill of health over every 
 saw. Adding a check that fires unconditionally on every existing corpus is the thing this
 mechanism exists to make unnecessary.
 
-`--used-in` is a mode rather than part of `check` because it reads documents outside the six
+`--used-in` is a mode rather than part of `check` because it reads documents outside the
 note directories, and it is a verdict rather than a report: it exits 1 when a target file is
 missing or a `#anchor` names no heading. **Its boundary is deliberate and belongs in any change
 to it** — it asserts that the citation resolves, never that the named section carries the claim.

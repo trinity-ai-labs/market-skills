@@ -6,15 +6,15 @@ what a corpus no longer knows. It lives in the user's own directory, never in th
 
 This file is the schema. It is the one document every other part of the vault work
 references, so it is written to be sufficient on its own: a reader who has only this file
-can write a valid note of any of the six types, place it correctly, and know which fields
+can write a valid note of any of the seven types, place it correctly, and know which fields
 they may not omit.
 
 ## Contents
 
 - [The vault is a claim ledger over the prose](#the-vault-is-a-claim-ledger-over-the-prose)
-- [Six note types, and the taxonomy stops there](#six-note-types-and-the-taxonomy-stops-there)
+- [Seven note types, and the seventh is a record rather than a grade](#seven-note-types-and-the-seventh-is-a-record-rather-than-a-grade)
 - [An ID is an address, not a label](#an-id-is-an-address-not-a-label)
-- [Four edges, each stored once on the asserting note](#four-edges-each-stored-once-on-the-asserting-note)
+- [Six edges, each stored once on the asserting note](#six-edges-each-stored-once-on-the-asserting-note)
 - [Four format invariants that break silently](#four-format-invariants-that-break-silently)
   - [Block lists survive an Obsidian save; inline flow lists do not](#block-lists-survive-an-obsidian-save-inline-flow-lists-do-not)
   - [Coerce nothing: ban the ambiguous value instead of parsing it](#coerce-nothing-ban-the-ambiguous-value-instead-of-parsing-it)
@@ -28,6 +28,7 @@ they may not omit.
   - [The assumption note is what you would believe with no evidence](#the-assumption-note-is-what-you-would-believe-with-no-evidence)
   - [The question note records the gap, not the answer](#the-question-note-records-the-gap-not-the-answer)
   - [The decision note keeps the rejected options and the reopen trigger](#the-decision-note-keeps-the-rejected-options-and-the-reopen-trigger)
+  - [The milestone note carries a position, a cost, and the assumption it moves](#the-milestone-note-carries-a-position-a-cost-and-the-assumption-it-moves)
 - [Confidence is derived wherever a note rests on something](#confidence-is-derived-wherever-a-note-rests-on-something)
 - [Contradiction is a subject collision, not an edge](#contradiction-is-a-subject-collision-not-an-edge)
 - [Status moves in one direction and never silently](#status-moves-in-one-direction-and-never-silently)
@@ -54,7 +55,7 @@ assertable surface readable in one pass.
 nowhere else. When the source is amended, nothing can enumerate what inherited it — so the
 amendment lands in one file and the four documents downstream of it stay confidently wrong.
 
-## Six note types, and the taxonomy stops there
+## Seven note types, and the seventh is a record rather than a grade
 
 | type | asserts | lives in |
 |---|---|---|
@@ -64,12 +65,38 @@ amendment lands in one file and the four documents downstream of it stay confide
 | `assumption` | this is believed with no evidence behind it | `assumptions/` |
 | `question` | this is not known, and here is the gap | `questions/` |
 | `decision` | this option was chosen over these, for this reason | `decisions/` |
+| `milestone` | this work sits at this position, moves that note, and costs this resource | `milestones/` |
 
-**Resist adding a seventh.** Comparable prior-art projects define ten or twelve page types,
-and past about six the taxonomy becomes ceremony: authors stall choosing between two types
-that differ only in emphasis, pick inconsistently, and the query that depends on the type
-being right returns a partial answer. Structure that does not fit a type belongs on an
-**edge**, not in a new type.
+**The ceiling is real, and it is why the set stops here.** Comparable prior-art projects define
+ten or twelve page types, and past about six the taxonomy becomes ceremony: authors stall
+choosing between two types that differ only in emphasis, pick inconsistently, and the query that
+depends on the type being right returns a partial answer. Structure that does not fit a type
+belongs on an **edge**, not in a new type.
+
+**`milestone` was added against that rule, and the argument sits here beside the rule it breaks —
+a rule overruled without one stops being a rule.** Three things had to hold, and they are the
+test an eighth type has to pass rather than a licence for one:
+
+- **The stated harm cannot occur.** What the ceiling prevents is an author stalling between two
+  types that differ only in emphasis. Nothing in the other six carries a position, a dependency
+  or a resource cost, so there is no pair to stall between — a note that says *when this happens*
+  is not a near-miss for a note that says *whether this is true*.
+- **The edge escape hatch does not reach it.** "Structure that does not fit a type belongs on an
+  edge" presumes two notes to hang the edge between. There was no note anywhere in the vault for
+  a roadmap item, so the position, the resource cost and the assumption moved had nothing to hang
+  off.
+- **The set was never six grades.** Five of the six are epistemic — they say what the
+  truth-status of an assertion is. `decision` is not; it is a record of a choice with a reopen
+  trigger. So the set is five grades plus one record, and a second record type for scheduled work
+  follows that precedent instead of breaking it.
+
+**What it buys, stated as the failure it removes:** nothing in the output contract held what is
+true at a given month, so a proposal was judged against the corpus's snapshot of today rather
+than against the state at the month it would land. That is wrong in both directions — it kills a
+proposal over a gap that is a dated roadmap item, and it credits a capability whose prerequisite
+has not shipped. Both read as rigour. `research/timeline.md` is the artifact that answers it, and
+it is a **view over these notes** rather than an eighth hand-maintained document: a document that
+mirrors the plan's roadmap table drifts from it, and nothing in the corpus can tell.
 
 The sharp lines between the types that get confused:
 
@@ -82,6 +109,12 @@ The sharp lines between the types that get confused:
 - **`question` vs `assumption`** — an assumption is a value you are proceeding on; a question
   is a gap you are proceeding without. A question that has an answer you are betting on is
   really two notes.
+- **`milestone` vs everything else** — the other six answer *is this true, and how do we know*.
+  A milestone answers *when does this happen, what does it cost, and what does it change*. A note
+  with no `sequence` and no `resource` is not a milestone, and a milestone that moves nothing is
+  maintenance rather than a roadmap item
+  ([roadmap-sequencing.md](roadmap-sequencing.md#rule-1--every-roadmap-item-names-the-assumption-it-moves-and-the-note-is-what-names-it)
+  Rule 1).
 
 ## An ID is an address, not a label
 
@@ -91,6 +124,7 @@ random characters from `A-Za-z0-9`.
 ```
 SOURCE-K92MZ1QA    FACT-GF45SD01    CLAIM-AS23SD44
 ASSUMPTION-MN66TT21    QUESTION-DD31RR09    DECISION-VV02HH55
+MILESTONE-PJ40XR63
 ```
 
 Generate one with no dependencies:
@@ -124,7 +158,7 @@ only the shape `TYPE-[A-Za-z0-9]+`. A shorter hand-written ID from an early note
 lint failure, because failing an otherwise-valid corpus over a cosmetic length is how a
 useful check gets switched off.
 
-## Four edges, each stored once on the asserting note
+## Six edges, each stored once on the asserting note
 
 | edge | meaning | written on |
 |---|---|---|
@@ -132,8 +166,10 @@ useful check gets switched off.
 | `supersedes` | this note replaces that one, with `supersedes_reason` | the replacement |
 | `scopes` | this narrows that one — not a contradiction, not a supersession | the narrower note |
 | `validated_by` | this assumption is tested by that validation step | the assumption |
+| `depends_on` | this milestone cannot land until that one has | the later milestone |
+| `moves` | this milestone changes the value that note asserts | the milestone |
 
-All four are block lists of IDs.
+All six are block lists of IDs.
 
 **Stored once, on the asserting note, and never mirrored.** There are no backlink fields,
 because a backlink is a second copy of a fact that can drift from the first: edit one side,
@@ -147,6 +183,14 @@ That is exact because IDs are globally unique random strings. It is one more rea
 use sequential IDs: `grep 'F-12'` also matches `F-120` and `F-123`, so the reverse query over
 sequential IDs needs a real parser to be correct, while over random IDs a plain grep is
 already correct.
+
+**There is deliberately no `unlocks` edge, and that is the no-mirroring rule doing its job.**
+"B `depends_on` A" and "A unlocks B" are one fact written twice, so a vault storing both can
+carry either without the other — and the two queries then disagree with nothing able to say
+which side is right, which is precisely the drift a backlink field causes. What an item unlocks
+is read off the reverse of `depends_on`, exactly as what rests on a note is read off the reverse
+of `rests_on`: `vault-lint.sh graph MILESTONE-…` prints it under *rested on by*, and
+`research/timeline.md` is generated from that same traversal.
 
 **`scopes` is the edge people reach for when they want `contradicts`.** Two notes that
 disagree because one is narrower than the other are not in conflict: "willingness to pay is
@@ -629,6 +673,72 @@ plan carries a choice made under conditions that stopped holding.
 turns "this source was amended" into "this decision should be re-taken", which is the only
 version of blast radius anyone acts on.
 
+### The milestone note carries a position, a cost, and the assumption it moves
+
+```yaml
+---
+id: MILESTONE-PJ40XR63      # required
+type: milestone             # required
+title: "Unassisted setup for the core job ships"   # required
+status: current             # required
+confidence: M               # required — derived, same rule as a claim
+confidence_own: M           # required
+created: "2026-03-16"       # required
+sequence: "4"               # required — quoted whole number; the orderable position
+date_stated: "≤6mo"         # optional — verbatim, exactly as the founder said it
+date_confidence: stated     # required — stated | derived | none
+depends_on:                 # optional — block list of MILESTONE- IDs
+  - MILESTONE-RB18KC02
+moves:                      # required — block list; the notes this item changes
+  - ASSUMPTION-MN66TT21
+resource: founder-hours     # required — the constrained resource it consumes
+rests_on:                   # required — block list, what the item stands on
+  - CLAIM-AS23SD44
+used_in:                    # required once the item appears in a rendered roadmap
+  - "business-plan.md#milestones--roadmap"
+  - "research/timeline.md"
+---
+
+Ships the unassisted path for the core job. Until it lands, every account is set
+up by hand, which is what caps how many the founder can take.
+```
+
+**`sequence` is the orderable field; `date_stated` is verbatim and nothing compares it.** A
+founder says "≤6mo" and the ledger records that, not a date nobody stated. So `sequence` is a
+quoted whole number and every order check runs on it, while `date_stated` holds whatever phrase
+was actually said — including one that is not a date at all. Writing a month into `date_stated`
+that the founder never gave is the failure this split prevents: it reads back six months later
+as a commitment, at the same confidence as one they made.
+
+**`date_confidence` is required even when there is no date**, and `none` is the value that says
+so. An absent field is indistinguishable from a forgotten one, so without a positive record a
+skill-derived month and a founder-stated month become the same string on the page — and the
+derived one gets quoted back in a meeting.
+
+**`moves` names note IDs, never the roadmap table's `A-n` row labels.** The plan's assumptions
+table keeps its prose labels for a reader; the note-level edge names the note. That is what makes
+"every roadmap item names the assumption it moves" mechanical rather than a rule nobody verified:
+`moves` is an edge, so an item naming an assumption that does not exist is the ordinary
+`dangling-edge` failure. Where an item aims at a multiple input rather than a model assumption
+([roadmap-sequencing.md](roadmap-sequencing.md#rule-7--for-an-exit-target-an-item-may-move-a-multiple-input-rather-than-a-model-assumption)
+Rule 7), it names the `claim` carrying that input.
+
+**`resource` is the field that makes resource-independence checkable.** Two items compete only if
+they consume the same constrained resource — founder hours, capital, a hire that has not
+happened, someone else's clock. Asserted in prose, that rule is skipped; recorded per item, two
+milestones declaring the same `resource` at the same `sequence` are a *false independence* claim
+the lint fails. The cost of not catching it is the whole roadmap: a false independence claim
+licenses a naive value ranking, orders everything downstream of it, and nothing ever revisits it.
+
+**Four things the lint reads off this type**, each the mechanical form of a rule that was prose:
+`required-field` on a missing `moves` or `resource`, `dangling-edge` on a `moves` or `depends_on`
+target that no note carries, `dependency-after-dependent` where a prerequisite sequences at or
+after the item needing it, and `false-independence` on the shared `resource` and `sequence` pair.
+`sequence-not-orderable` guards the two order checks themselves: both skip a value they cannot
+compare, so a `sequence` of `M4` would take them down silently. All five fire only at
+`schemaVersion: 2` — a vault at 1 has no `milestones/` directory by construction and owes none of
+them.
+
 ## Confidence is derived wherever a note rests on something
 
 Confidence is `H`, `M`, or `L`, ordered `L < M < H`.
@@ -730,9 +840,12 @@ with nothing recording that it died.
     QUESTION-DD31RR09.md
   decisions/
     DECISION-VV02HH55.md
+  milestones/
+    MILESTONE-PJ40XR63.md
   _vocab.yml                      # the controlled subject vocabulary
   research/                       # ALL prose, untouched by the vault — dimensions, profiles,
-                                  #   the founder brief and the product dossier
+    timeline.md                   #   the founder brief and the product dossier. timeline.md is
+                                  #   the exception: GENERATED from milestones/, never hand-edited
   sources.md                      # the [S#] index
   one-pager.md  business-plan.md  # plan documents — the lint ignores non-note files at the root
 ```
@@ -793,7 +906,12 @@ coerce-nothing rule does not apply to it — JSON has unambiguous types. **The c
 
 **The tool reads a SET of versions, not one.** `vault-lint.sh` reads both `1` and `2`. A vault at
 1 gets exactly the behaviour it has always had, and a vault at 2 additionally gets the checks
-version 2 added. That set is what makes the version a real extension point rather than a number
+version 2 added — which are the `milestone` type and the five rules that read it
+(`required-field` on its own fields, `dangling-edge` through `moves` and `depends_on`,
+`dependency-after-dependent`, `false-independence`, and `sequence-not-orderable`). A vault at 1
+has no `milestones/` directory by construction, so it cannot owe any of them; one that has grown
+the directory without moving its version is told so by `type-agreement` rather than having its
+notes read in silence. That set is what makes the version a real extension point rather than a number
 nobody may move: a new check that an existing corpus could not possibly satisfy goes in behind a
 version, so upgrading the tool never turns a finished corpus red. A check written to fire
 unconditionally has the opposite property — every vault authored before it fails on the day the
@@ -896,8 +1014,9 @@ corpus can tell you what it no longer knows.
    with the uppercased type. Do not look anything up; there is no registry.
 3. **Write the file** at `<type-plural>/<ID>.md`, with the six common fields plus that type's
    required fields. Block lists only. Quote every date, and quote anything containing `: `.
-4. **Set the edges**: `rests_on` for a fact, claim, or decision; `validated_by` for an
-   assumption. Omit a key rather than writing an empty list.
+4. **Set the edges**: `rests_on` for a fact, claim, decision or milestone; `validated_by` for an
+   assumption; `moves` and, where there is a prerequisite, `depends_on` for a milestone. Omit a
+   key rather than writing an empty list.
 5. **Derive `confidence`** where the note rests on something: `min(confidence_own, every
    rests_on target)`. Write both fields.
 6. **Run the lint** before considering the note done. It catches the missing required field,

@@ -341,9 +341,9 @@ Five rules bind both, and every one of them fails silently rather than loudly:
 - **One assertion per note.** `status` and `confidence` are per-note fields, so a note asserting
   two things has no correct move when half of it is disproved.
 
-A researcher never writes a `claim`, an `assumption`, or a `decision` — those are the
-conductor's synthesis, and a `fact` needs a `rests_on` edge into a source the conductor owns.
-The other four note types, the edges, and confidence derivation are in
+A researcher never writes a `claim`, an `assumption`, a `decision` or a `milestone` — those are
+the conductor's synthesis, and a `fact` needs a `rests_on` edge into a source the conductor owns.
+The other five note types, the edges, and confidence derivation are in
 [the vault schema](../business-plan/references/vault.md), which is authoritative; nothing above
 overrides it.
 
