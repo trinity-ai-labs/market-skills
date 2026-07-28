@@ -124,6 +124,20 @@ corner that fails is usually the one the founder was aiming at. Invented shape:
 | high value · late date | undetermined — flips across the multiple's band | multiple | — |
 | high value · early date | does not clear | growth slope at the sale date | policy |
 
+THE `Kind` COLUMN RENDERS OFF THE VERDICT NOTE'S `driver_kind` AND IS MATCHED VERBATIM — one of
+structural, policy or policy-within-band, in those words, for every corner where a driver binds; a
+corner where nothing binds carries an em dash and owes no kind. That makes the column a contract
+the writer owes rather than a formatting choice, and `vault-lint.sh --binding-driver` compares each
+cell against the note behind that corner in both directions. Same rule `chosen` is held to against
+`options` and a milestone title against its roadmap row, and for the same reason: where one side
+renders off the other an exact match is a check, and anything looser is a similarity test that
+cries wolf until somebody switches it off. The failure the both-directions half prevents is
+specific — a cell hand-edited to structural is otherwise the cheapest way past
+[the rule that a policy-bound verdict states its
+configuration](target.md#a-binding-driver-that-is-policy-makes-the-verdict-conditional-not-negative),
+since a structural verdict owes none; and a kind the note carries that no row shows is the same
+dodge run the other way.
+
 KEEP THE FOUNDER'S STATED RANGE AND THE EVIDENCE'S RANGE VISIBLY APART — two labelled rows, never
 one interval. Both arrive as the same shape, an interval with two ends, and merged the founder
 reads the whole width as their own ambition being narrowed when half of it is the evidence
@@ -413,6 +427,18 @@ seats, the binding input is trial flow, and trial flow is one channel worked six
 The line reads "180 seats at one channel and six hours a week; 360 at two channels and the
 same hours" — the same arithmetic, relabelled, and it moves the founder from "the business
 tops out below my goal" to "this configuration does".
+
+THE CEILING'S CLAIM NOTE CARRIES THE SAME FIVE FIELDS THE VERDICT'S DOES, under `subject:
+steady-state-ceiling`: `binding_driver` for the input that sets the ceiling, `driver_kind` for its
+label — structural, policy or policy-within-band, unquoted and closed at those three —
+`conditional_on` for the configuration verbatim as the line above states it ("one channel and six
+hours a week"), and `evidence_n` / `evidence_counterparties` for the evidence under that input as
+quoted whole numbers. Any one of them present makes the rest owed, and `vault-lint.sh
+--binding-driver` matches `conditional_on` against this section. Recorded nowhere, the relabelled
+arithmetic lives only in the sentence: an edit that trims the line back to "180 seats" a draft
+later leaves a number reported as physics, reading exactly as it did before, with nothing that can
+say the qualifier was ever there. The field rules and both triggers are
+[vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
 
 The failure this prevents: the model lets a decision become a law of nature and then reports
 the consequence as physics, and a number reported as physics is one nobody argues with. The
