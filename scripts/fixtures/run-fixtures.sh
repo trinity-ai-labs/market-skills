@@ -831,11 +831,18 @@ HELP_STATUS=$?
 # being asserted rather than the exact synopsis punctuation.
 HELP_FLAT=$(printf '%s\n' "$HELP" | tr -d '[]')
 
+# Matched against the basename of $LINT, not a literal `vault-lint.sh`: this
+# census runs against whichever implementation VAULT_LINT names, and a
+# hardcoded literal either fails the port for a cosmetic reason (its own
+# --help correctly names itself vault-lint.ps1) or forces the port to print a
+# command its reader does not have, just to satisfy this assertion.
+LINT_PROG=$(basename "$LINT")
+
 printf '%s\n' "$MODES" | tr ' ' '\n' | grep -v '^$' >"$PAIRS_FILE.modes"
 while read -r mode; do
 	[ -n "${mode:-}" ] || continue
 	case "$HELP_FLAT" in
-	*"vault-lint.sh $mode"*) ok "--help documents $mode" ;;
+	*"$LINT_PROG $mode"*) ok "--help documents $mode" ;;
 	*) no "--help has no block for $mode" ;;
 	esac
 done <"$PAIRS_FILE.modes"
