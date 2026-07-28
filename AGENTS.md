@@ -80,9 +80,10 @@ a new user read was wrong.
 ## The gate
 
 ```
-node scripts/check.mjs          # human output, exit 1 on failure
-node scripts/check.mjs --json   # machine-readable
-sh scripts/fixtures/run-fixtures.sh   # only if you touched bin/vault-lint.sh
+node scripts/check.mjs                # human output, exit 1 on failure
+node scripts/check.mjs --json         # machine-readable
+sh scripts/fixtures/run-fixtures.sh   # only if you touched bin/vault-lint.sh or .ps1
+node scripts/parity/parity.mjs        # only if you touched bin/vault-lint.sh or .ps1
 ```
 
 Sub-second, no install. Run `check.mjs` green before opening a PR. It enforces skill
@@ -102,14 +103,24 @@ away, so `## Foo {#bar}` slugs to `foo-bar`, and every Contents link pointing at
 goes dead while the file still reads correct. The same check counts the fenced ones and
 fails at zero, so the prohibition cannot outlive the contract it exists to protect.
 
-The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` rather than
-to the repo: it asserts that every check the lint claims to make still fires, against
-corpora built to trigger each one. Run it whenever you touch that script. A check that
-stops firing and a check that was deleted look identical from the outside, which is why
-the assertion has to be written down rather than eyeballed.
+The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` and
+`bin/vault-lint.ps1` rather than to the repo: it asserts that every check the lint claims
+to make still fires, against corpora built to trigger each one, and `VAULT_LINT` points it
+at whichever implementation you're testing — `VAULT_LINT=bin/vault-lint.ps1 sh
+scripts/fixtures/run-fixtures.sh` runs the same 241 assertions against the PowerShell side.
+A check that stops firing and a check that was deleted look identical from the outside,
+which is why the assertion has to be written down rather than eyeballed.
 
-CI runs both, plus the checks in `.github/workflows/ci.yml` — each step's comment names
-the failure it prevents.
+The parity gate is the third half: `node scripts/parity/parity.mjs` runs both scripts
+across 9 modes × 18 fixture vaults and fails on any byte-level disagreement between their
+output — key order, an escaped character, row order, a path separator. The fixtures suite
+proves each script still does what it claims; the parity gate proves the two scripts still
+agree with each other — a check that stops firing in only *one* implementation is invisible
+to a fixtures run pointed at the other, so this is a different failure and neither catches
+it for you. Run both whenever you touch either script.
+
+CI runs all three, plus the checks in `.github/workflows/ci.yml` — each step's comment
+names the failure it prevents.
 
 ## Writing skills
 
@@ -208,32 +219,38 @@ bin/vault-lint.sh             SHIPPED — POSIX sh; paired with a required Power
                                bin/vault-lint.ps1 (rule 3), both land on the user's PATH
 scripts/check.mjs             the repo gate — Node, contributors only
 scripts/fixtures/             vault-lint's own suite — contributor test data, not shipped
+scripts/parity/               parity.mjs — the JSON diff gate holding bin/vault-lint.sh
+                               and bin/vault-lint.ps1 to each other, contributors only
 CHANGELOG.md                  what each pinned version actually changed
 ```
 
-`vault-lint.sh` ships to users and runs read-only against a vault path: no arguments beyond
-`--vault` (or `VAULT_PATH`) for the checks, `--json` for an agent consumer, `--unverified`
-for the notes asserted with nothing behind them, `--used-in` for whether each note's
-citation target still resolves, `--supersession-sweep` for the document sections a
-supersession put in doubt, `--red-team` for whether every dispatched panel lens wrote
-objection rows, `--roadmap-table` for whether the plan's roadmap table still matches the
-milestone set it renders, `--binding-driver` for whether a target verdict's driver and the
-evidence under it survive contact with the plan section that renders them, `--release-gate` for
-all six of those run as one call, and
+`vault-lint.sh` and `vault-lint.ps1` ship to users and run read-only against a vault path:
+no arguments beyond `--vault` (or `VAULT_PATH`) for the checks, `--json` for an agent
+consumer, `--unverified` for the notes asserted with nothing behind them, `--used-in` for
+whether each note's citation target still resolves, `--supersession-sweep` for the
+document sections a supersession put in doubt, `--red-team` for whether every dispatched
+panel lens wrote objection rows, `--roadmap-table` for whether the plan's roadmap table
+still matches the milestone set it renders, `--binding-driver` for whether a target
+verdict's driver and the evidence under it survive contact with the plan section that
+renders them, `--release-gate` for all six of those run as one call, and
 `graph <ID>` for one note's neighbourhood. This sentence is
-exhaustive on purpose, so **a new flag lands here in the same PR that adds it** — an
-enumeration that has gone stale reads exactly like one that is complete. Rule 3 above has
-the reasoning for why `bin/` and `scripts/` sit under different constraints.
+exhaustive on purpose, so **a new flag lands here in the same PR that adds it, in both
+scripts** — an enumeration that has gone stale reads exactly like one that is complete.
+Rule 3 above has the reasoning for why `bin/` and `scripts/` sit under different
+constraints.
 
-**A new mode is a row in `MODE_TABLE`, not an arm of the argument `case`.** The table near the
-top of `bin/vault-lint.sh` holds one row per mode — the selector, whether `--release-gate` runs
-it, and the heading the gate prints above it — and both the flag parser and the gate's
-composition read it. The MODE token is the selector with its leading `--` stripped, which is a
-rule a new mode follows rather than a column that would restate its neighbour on every row.
-Adding a mode is that row, a block in `usage()` appended immediately before the `graph` one, and
-the mode's own dispatch. It is a table because a release that adds three modes would otherwise
-be three edits to the same `case` block, and git resolves two of those textually clean while the
-third silently loses the arm that parses its flag.
+**A new mode is a row in `MODE_TABLE`, not an arm of the argument `case`.** Each of
+`bin/vault-lint.sh` and `bin/vault-lint.ps1` holds its own table near the top, one row per
+mode — the selector, whether `--release-gate` runs it, and the heading the gate prints
+above it — and both the flag parser and the gate's composition read it. The MODE token is
+the selector with its leading `--` stripped, which is a rule a new mode follows rather than
+a column that would restate its neighbour on every row. Adding a mode is that row, a block
+in `usage()` appended immediately before the `graph` one, and the mode's own dispatch —
+each done once per script, since the two are separate files with no shared source. It is a
+table because a release that adds three modes would otherwise be three edits to the same
+`case` block, and git resolves two of those textually clean while the third silently loses
+the arm that parses its flag; `node scripts/parity/parity.mjs` is what catches a mode added
+to one script's table and not its twin's.
 
 `--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
 `--supersession-sweep`, `--red-team`, `--roadmap-table` and `--binding-driver` as separate
@@ -367,10 +384,15 @@ to the verdict half would pay an exemption's whole cost over an empty population
 `binding_driver` the cheapest way past every rule that reads it — and a dodge available by omission
 is not an exemption, which is why `--red-team` checks its roster both ways too.
 
-**Every invocation in `skills/` is bare — `vault-lint.sh …`, never a path**, and CI rejects
-the path form. The pre-plugin layout used a relative path, which resolves against the
-*user's own project directory*, where nothing of the sort exists.
+**Every invocation in `skills/` is bare — `vault-lint.sh …` or `vault-lint.ps1 …`, never a
+path**, and CI rejects the path form of either. The pre-plugin layout used a relative path,
+which resolves against the *user's own project directory*, where nothing of the sort
+exists. A skill's prose doesn't choose the extension — the session does, by picking
+whichever matches its shell tool — so every bare invocation in `skills/` already reads
+correctly under that rule without being rewritten per site; see
+[vault.md](skills/business-plan/references/vault.md#a-session-invokes-whichever-script-its-shell-tool-can-run)
+for where that choice is stated.
 
 `scripts/fixtures/run-fixtures.sh` is the one place that does use a path — it reaches across
-to `../../bin/vault-lint.sh`, because the corpora are contributor test data and stay out of
-a user's `PATH`.
+to `../../bin/vault-lint.sh` by default, or to whatever `VAULT_LINT` names, because the
+corpora are contributor test data and stay out of a user's `PATH`.

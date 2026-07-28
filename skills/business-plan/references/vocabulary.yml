@@ -184,12 +184,12 @@
 #      candidate.
 #   5. Anything else is an UNKNOWN-SUBJECT ERROR with no suggestion.
 #
-# EDIT DISTANCE IS DELIBERATELY NOT USED. The lint is POSIX shell with no runtime beyond
-# it, and a Levenshtein routine there is a nested loop per candidate pair over the whole
-# term list — slow enough on a few hundred notes that people stop running the lint, and a
-# check nobody runs catches nothing. Rules 3 and 4 catch the near-misses that actually
-# occur (case, separator, singular or plural, and a shorter form of a longer term) at grep
-# speed.
+# EDIT DISTANCE IS DELIBERATELY NOT USED. The lint has no runtime beyond its own shell —
+# POSIX sh or PowerShell, whichever implementation is running — and a Levenshtein routine
+# there is a nested loop per candidate pair over the whole term list — slow enough on a few
+# hundred notes that people stop running the lint, and a check nobody runs catches nothing.
+# Rules 3 and 4 catch the near-misses that actually occur (case, separator, singular or
+# plural, and a shorter form of a longer term) at grep speed.
 #
 # ---------------------------------------------------------------------------------------
 # 6. Format rules for this file

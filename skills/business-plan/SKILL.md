@@ -81,7 +81,10 @@ and is never restated here.
     claim return two drafts later with its cause of death erased.
 15. **Lint is a gate, not a report.** The shipped `vault-lint.sh` runs at Phase 2's
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
-    turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
+    turn, and again in Phase 5 before anything renders. (A session with only the PowerShell
+    tool runs `vault-lint.ps1` instead — same modes, same output; see
+    [vault.md](references/vault.md#a-session-invokes-whichever-script-its-shell-tool-can-run)
+    for which one a given session picks.) A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
     bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table` and
     `--binding-driver`, and exits

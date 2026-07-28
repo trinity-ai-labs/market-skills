@@ -480,7 +480,7 @@ the vault's required fields plus the ones below.
 
 **`option_evidence` is a flat block list of strings, not a nested mapping**, and the delimiter
 is ` :: ` rather than `: `. Two reasons, both practical: a flat list of strings stays checkable
-by the line-oriented POSIX-shell lint that ships with this skill, and a `: ` delimiter turns the
+by the line-oriented lint that ships with this skill, and a `: ` delimiter turns the
 value into a nested mapping the instant somebody drops the quotes — a delimiter that only works
 while quoted is one edit away from silently changing shape. The text before ` :: ` must match an
 `options` entry verbatim, same rule as `chosen`.
