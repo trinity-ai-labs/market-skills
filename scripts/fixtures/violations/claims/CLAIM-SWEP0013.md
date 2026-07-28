@@ -8,6 +8,14 @@ confidence_own: M
 created: "2026-03-18"
 subject: "timing-window"
 stale_after: "2099-12-31"
+# Stamped because this vault moved to schemaVersion 2, where the sweep fails a
+# supersession carrying no `reconciled:` date. This note is here for
+# `supersedes-status` and for the sweep's DEDUP, and it has to keep the sweep
+# exiting 0 over this vault: that exit code is what asserts the worklist is a
+# report rather than a failure, and it would be asserting nothing if the
+# corpus it ran over failed the verdict for an unrelated reason. The vault
+# built for the verdict is `unreconciled/`.
+reconciled: "2026-03-18"
 supersedes:
   - CLAIM-STAL0006
   - CLAIM-UNKN0001

@@ -76,6 +76,14 @@ playbook is registered everywhere it gets dispatched from, and that a cited `## 
 resolves to one a template writes. Each of those fails when its own pattern matches
 nothing, because a check that stops matching prints the same green as one that passed.
 
+**A `{#anchor}` attribute goes only on a heading inside a fenced block, and the gate
+enforces it.** Those fenced headings are `plan-template.md`'s templates, where the
+attribute is the address a claim note's `used_in` names in the *user's* plan document.
+On a live heading in this repo it is silent damage: `slugify()` folds `{`, `#` and `}`
+away, so `## Foo {#bar}` slugs to `foo-bar`, and every Contents link pointing at `#foo`
+goes dead while the file still reads correct. The same check counts the fenced ones and
+fails at zero, so the prohibition cannot outlive the contract it exists to protect.
+
 The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` rather than
 to the repo: it asserts that every check the lint claims to make still fires, against
 corpora built to trigger each one. Run it whenever you touch that script. A check that
@@ -227,7 +235,7 @@ older tool half-reading a newer vault reports a clean bill of health over every 
 saw. Adding a check that fires unconditionally on every existing corpus is the thing this
 mechanism exists to make unnecessary.
 
-`--used-in` is a mode rather than part of `check` because it reads documents outside the six
+`--used-in` is a mode rather than part of `check` because it reads documents outside the
 note directories, and it is a verdict rather than a report: it exits 1 when a target file is
 missing or a `#anchor` names no heading. **Its boundary is deliberate and belongs in any change
 to it** — it asserts that the citation resolves, never that the named section carries the claim.

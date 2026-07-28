@@ -3,12 +3,13 @@
 The document both superseded claims reached, under two different spellings of
 one heading.
 
-**This vault is exercised with `--supersession-sweep` alone.** An explicit
-`{#anchor}` attribute is a citation contract `--used-in` learns to resolve in
-its own slice; until that lands, the mode reads the attribute as part of the
-heading text and neither spelling here resolves. The sweep never opens a
-document to decide whether a citation resolves — that boundary is deliberate —
-so its worklist is well-defined either way, and that is what is asserted here.
+**Both spellings genuinely resolve**, which is what makes this a dedup case
+rather than two strings somebody asserted about. `--used-in` registers the
+explicit `{#anchor}` and the slug of the heading text it was stripped from —
+both, so a vault authored before the template carried attributes does not start
+failing the day its author pastes a newer one in. The suite asserts that here
+as well as the row count: a fixture where one of the two addresses were dead
+would prove nothing about collapsing them.
 
 ## Business model & pricing {#business-model}
 

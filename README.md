@@ -159,9 +159,10 @@ lives inside it:
 ~/Documents/go-to-market/<product-slug>/
 ├── .vault/config.json       # schemaVersion — a directory without it is not a vault
 ├── _vocab.yml               # controlled subject vocabulary
-├── sources/ facts/ claims/ assumptions/ questions/ decisions/ # one file per note
+├── sources/ facts/ claims/ assumptions/ questions/ decisions/ milestones/ # one file per note
 ├── research/                # all prose — market-analysis dimensions, product-dossier.md,
-│                            #   founder-brief.md — untouched by the vault machinery
+│                            #   founder-brief.md — untouched by the vault machinery.
+│                            #   timeline.md is the exception: generated from milestones/
 ├── sources.md               # the [S#] index
 ├── one-pager.md  business-plan.md  financial-model.md  red-team.md # plan documents
 ├── deliverables/            # rendered business-plan.html/.pdf, one-pager.html/.pdf
@@ -192,7 +193,9 @@ The plugin ships one executable. `business-plan` builds a claim vault at
 `~/Documents/go-to-market/<product-slug>/` — every load-bearing number traced to a dated
 source — and `vault-lint.sh` is the read-only whole-corpus check that gates it: dangling edges,
 confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
-still cited.
+still cited, and — on a vault at `schemaVersion: 2` — a roadmap whose order contradicts itself,
+either a prerequisite scheduled after the item that needs it or two items competing for one
+constrained resource while the plan asserts they run side by side.
 
 Claude Code puts an enabled plugin's `bin/` on the Bash tool's `PATH`, so the skills invoke it
 bare, from whatever directory the user happens to be working in:
@@ -211,6 +214,14 @@ vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 cited into, and this opens each one to check the file is there and the `#anchor` names a real
 heading, exiting 1 when it does not. It stops at whether the citation **resolves** — whether the
 section still *carries* the claim is a read, and `--help` says why a tool cannot do it.
+
+A heading offers two addresses and either resolves. The plan templates put an explicit
+`{#anchor}` attribute on every heading — `## Competition & moat {#competition}` — and that is
+the one to cite, because those same templates require a heading to state the current finding, so
+its text gets reworded and an anchor tracking the text would take every citation into that
+section down with it. The GitHub slug of the heading text, with the attribute stripped off,
+resolves too, so a vault written before its documents carried attributes keeps passing with
+nothing back-filled.
 
 `--supersession-sweep` is what makes that read a short one. Replacing a note is recorded on the
 note, and nothing tells the documents that were built on the old one — so this walks every

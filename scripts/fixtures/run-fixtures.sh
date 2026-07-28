@@ -31,9 +31,12 @@
 #   7. --release-gate runs every part and carries the worst verdict any of
 #      them returned, including when only one part fails.
 #   8. A schemaVersion 2 vault is read, and a version from the future is not.
-#   9. The sweep carries a verdict at schemaVersion 2 - it fails an absent or
+#   9. An explicit `{#anchor}` attribute resolves, the slug of the heading text
+#      it was stripped from still resolves too, and the attribute carries the
+#      citation across a rewording of that text.
+#  10. The sweep carries a verdict at schemaVersion 2 - it fails an absent or
 #      stale `reconciled:` - and the same notes at 1 do not fail.
-#  10. --red-team fails a rostered lens with no rows and a row with no roster
+#  11. --red-team fails a rostered lens with no rows and a row with no roster
 #      entry, and fails a missing roster at schemaVersion 2 only.
 
 set -u
@@ -50,7 +53,8 @@ dangling-edge decision-brief-incomplete duplicate-id duplicate-url
 filename-mismatch folded-scalar frontmatter inline-flow-list malformed-edge
 near-miss-subject null-value orphan-source required-field stale-claim
 supersedes-reason supersedes-status type-agreement unknown-subject
-unparsed-line"
+unparsed-line
+dependency-after-dependent false-independence sequence-not-orderable"
 
 # Every mode the lint answers to, and the second census in this file for the
 # same reason as EXPECTED: a mode whose help block was never written and one
@@ -63,16 +67,12 @@ MODES="check --unverified --used-in --supersession-sweep --release-gate --red-te
 PASS=0
 FAIL=0
 
+# -r, because one of the scratch paths below is a whole copied vault rather than
+# a file: the rewording assertion needs a corpus it can edit, and a plain rm -f
+# would leave that directory behind on every run.
 PAIRS_FILE=$(mktemp "${TMPDIR:-/tmp}/run-fixtures.XXXXXX") || exit 2
-
-# A writable copy of one fixture, so the same notes can be read at a second
-# schemaVersion. Hand-writing a twin corpus at 1 would assert the same thing
-# until the day one of the two is edited, and then it would assert that two
-# different vaults behave differently - which is not the claim.
-AT_1=$(mktemp -d "${TMPDIR:-/tmp}/run-fixtures-at-1.XXXXXX") || exit 2
-
-trap 'rm -f "$PAIRS_FILE" "$PAIRS_FILE".*; rm -rf "$AT_1"' EXIT
-trap 'rm -f "$PAIRS_FILE" "$PAIRS_FILE".*; rm -rf "$AT_1"; exit 2' HUP INT TERM
+trap 'rm -rf "$PAIRS_FILE" "$PAIRS_FILE".*' EXIT
+trap 'rm -rf "$PAIRS_FILE" "$PAIRS_FILE".*; exit 2' HUP INT TERM
 
 ok() {
 	PASS=$((PASS + 1))
@@ -312,6 +312,46 @@ case "$UJSON" in
 *) no "--used-in failure_count is not 2 - a resolving target was reported dead, or a broken one was not" ;;
 esac
 
+# --- explicit {#anchor} attributes -------------------------------------------
+# Appended at the end of the used_in block and deliberately unnumbered: three
+# slices append to this file in the same release, and renumbering 2e onward to
+# make room is exactly the edit git merges textually clean while dropping
+# somebody else's assertions.
+#
+# Three of the four assertions are already carried by the clean vault being
+# required to report nothing, and each fails in its own direction.
+# CLAIM-RR55TT19 cites `#competition`, which resolves only through the attribute
+# on `## Competition & moat {#competition}` - the slug of that text is
+# `competition--moat`. It cites `#business-model--pricing`, the slug of a heading
+# whose attribute is `{#business-model}`, so an implementation that let the
+# explicit anchor REPLACE the slug fails an entry an existing vault legitimately
+# holds. And it cites `#business-model` alongside it, so slugging the raw heading
+# line - which would yield `business-model--pricing-business-model` - fails both.
+#
+# The fourth needs its own corpus, because it is the only reason to write an
+# explicit anchor at all: the citation has to survive a rewording of the heading
+# TEXT. The copy is rewritten with awk rather than sed -i, which is not portable,
+# and the new text is chosen to share no slug with the old, so `#competition` can
+# resolve through nothing but the attribute.
+printf '\nexplicit anchors\n'
+
+REWORD="$PAIRS_FILE.reword"
+rm -rf "$REWORD"
+cp -R "$HERE/clean" "$REWORD"
+awk '{ if ($0 == "## Competition & moat {#competition}") print "## Why the moat holds {#competition}"; else print }' \
+	"$HERE/clean/business-plan.md" >"$REWORD/business-plan.md"
+
+if grep -q '^## Why the moat holds {#competition}$' "$REWORD/business-plan.md"; then
+	ok "the reworded copy carries the new heading text"
+else
+	no "the rewording rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+
+REWORD_OUT=$("$LINT" --used-in --vault "$REWORD" 2>&1)
+REWORD_STATUS=$?
+[ "$REWORD_STATUS" = "0" ] && ok "--used-in still resolves every citation after the heading text is reworded" ||
+	no "--used-in failed a rewording the explicit anchor should have survived (got $REWORD_STATUS: $REWORD_OUT)"
+
 # --- 2e. the supersession sweep, on both vaults ------------------------------
 # The sweep is a REPORT and its defining property is that it is not a failure,
 # so the assertion with teeth is the pair: it names a worklist AND the vault it
@@ -427,11 +467,15 @@ esac
 # appears exactly once" stays green throughout, because under the bug the two
 # rows carry genuinely different target strings. What has teeth is the count.
 #
-# Exercised with --supersession-sweep alone. Resolving an explicit anchor is
-# --used-in's own contract and lands with it; the sweep never opens a document
-# to decide whether a citation resolves, so its worklist is well-defined here
-# either way.
+# The --used-in call is not decoration. It asserts that the two spellings are
+# two live addresses of one heading rather than two strings this file made up,
+# and a fixture where either of them were dead would prove nothing at all about
+# collapsing them.
 printf '\nanchor aliases\n'
+
+AA_UI=$(run_status "$HERE/anchor-alias" --used-in)
+[ "$AA_UI" = "0" ] && ok "both spellings resolve - the explicit anchor and the slug beside it" ||
+	no "one of the two spellings does not resolve, so the dedup below asserts nothing (got $AA_UI)"
 
 AA=$("$LINT" --supersession-sweep --vault "$HERE/anchor-alias" --json 2>/dev/null)
 case "$AA" in
@@ -511,7 +555,9 @@ esac
 # The same notes at schemaVersion 1, which is the assertion that the upgrade
 # path is not a wall. Copied rather than kept as a second fixture: a hand-written
 # twin asserts this until the day one of the two is edited.
-cp -R "$HERE/unreconciled/." "$AT_1/"
+AT_1="$PAIRS_FILE.at-1"
+rm -rf "$AT_1"
+cp -R "$HERE/unreconciled" "$AT_1"
 printf '{\n  "schemaVersion": 1,\n  "created": "2026-07-27"\n}\n' >"$AT_1/.vault/config.json"
 
 AT1_STATUS=$(run_status "$AT_1" --supersession-sweep)
@@ -719,7 +765,12 @@ esac
 # the refusal path would look identical and every real corpus would be dead.
 printf '\nschema versions\n'
 
-S=$(run_status "$HERE/schema-2")
+# Captured once and sliced again in section 8, per the rule stated above VJSON:
+# --json changes the output format and not what gets computed, so a second
+# invocation to read the same result costs a full re-parse of the vault for
+# nothing.
+M2=$("$LINT" --vault "$HERE/schema-2" --json 2>/dev/null)
+S=$?
 [ "$S" = "0" ] && ok "a schemaVersion 2 vault is read and reports nothing" ||
 	no "a schemaVersion 2 vault should exit 0 (got $S)"
 
@@ -753,6 +804,89 @@ while read -r mode; do
 	*) no "--help has no block for $mode" ;;
 	esac
 done <"$PAIRS_FILE.modes"
+
+# --- 8. the milestone type, its two order rules, and the schema gate ---------
+# The census above already asserts that each new check FIRES. What it cannot see
+# is the half that decides whether these rules are usable: where each one has to
+# stay SILENT. A concurrency rule keyed on `sequence` alone, or an order rule
+# that ran at every schemaVersion, fires everywhere the census looks and fails
+# only real vaults - and a check that cries wolf gets switched off, taking the
+# working half with it.
+printf '\nmilestones\n'
+
+# Rule 4 is a rule about a PAIR, and this is the side the per-file `Violates:`
+# machinery structurally cannot assert: that the check stays SILENT. schema-2/
+# carries two milestones at the same `sequence` with different `resource`
+# values - concurrent by design, because one is gated on an external clock the
+# founder cannot compress - so a check keyed on the sequence alone would fail
+# the vault this suite requires clean. That both members of a real pair are
+# reported is already asserted in 2b, where each declares the check.
+case "$M2" in
+*false-independence*) no "false-independence fired on two milestones that differ on resource" ;;
+*) ok "false-independence stays silent on one sequence across two resources" ;;
+esac
+
+# `moves` and `depends_on` are walked by graph because they are in EDGE_FIELDS,
+# and `unlocks` is DERIVED rather than stored - vault.md bans mirrored edges, so
+# what an item unlocks is the reverse of somebody else's depends_on and is read
+# off the same traversal that answers `rested on by` for rests_on.
+MG=$("$LINT" graph MILESTONE-SV2EE005 --vault "$HERE/schema-2" --depth 1 2>&1)
+case "$MG" in
+*'moves ->'*ASSUMPTION-SV2DD004*) ok "graph walks moves out of a milestone" ;;
+*) no "graph did not walk moves (got: $MG)" ;;
+esac
+case "$MG" in
+*MILESTONE-SV2FF006*'(via depends_on)'*) ok "graph derives what a milestone unlocks from the reverse of depends_on" ;;
+*) no "graph did not derive the inbound depends_on edge (got: $MG)" ;;
+esac
+
+# Both halves of defect 7 on `moves`, and the line between them. 2b already
+# asserts that each fixture fires the check it declares; what it cannot see is
+# that the two arms stay SEPARATE and keep their own messages. A `moves` value
+# that is a well-formed ID naming no note is dangling-edge - something is missing
+# from the vault. A value that is not an ID at all is malformed-edge - nothing is
+# missing, the field never named a note. Collapsing either into the other sends
+# the author to the wrong fix.
+MOVE_MALF=$(printf '%s\n' "$VJSON" | grep 'MILESTONE-ROWL0008.md' | grep 'malformed-edge')
+case "$MOVE_MALF" in
+*'A-n'*'note ID'*) ok "the moves malformed-edge message names the row label and the note ID that replaces it" ;;
+*) no "the moves malformed-edge message does not name the A-n row label (got: $MOVE_MALF)" ;;
+esac
+case "$MOVE_MALF" in
+*'blast-radius edge'*) no "the moves malformed-edge message reuses the rests_on sentence - the two fields cost different things" ;;
+*) ok "the moves malformed-edge message is written for moves, not shared with rests_on" ;;
+esac
+RESTS_MALF=$(printf '%s\n' "$VJSON" | grep 'FACT-MALF0005.md' | grep 'malformed-edge')
+case "$RESTS_MALF" in
+*'rests_on is the blast-radius edge'*) ok "rests_on keeps its own malformed-edge message" ;;
+*) no "the rests_on malformed-edge message changed (got: $RESTS_MALF)" ;;
+esac
+case "$(printf '%s\n' "$VJSON" | grep 'MILESTONE-MOVE0004.md')" in
+*malformed-edge*) no "a well-formed moves target that names no note reported malformed-edge instead of dangling-edge" ;;
+*dangling-edge*) ok "a well-formed moves target that names no note is still dangling-edge, not malformed-edge" ;;
+*) no "MILESTONE-MOVE0004 reported neither dangling-edge nor malformed-edge" ;;
+esac
+
+# The gate on every version-2 rule, asserted from the version-1 side. Its two
+# notes share a `resource` and a `sequence`, so at 2 they are false-independence
+# and at 1 they are simply not a type this vault may carry. Asserting only that
+# the checks fire at 2 would pass a build with no gate at all, which is the
+# upgrade that turns every finished corpus red on the day the skill updates.
+S1M=$("$LINT" --vault "$HERE/schema-1-milestone" --json 2>/dev/null)
+case "$S1M" in
+*'"check": "type-agreement"'*) ok "a milestone in a schemaVersion 1 vault is not a type it carries" ;;
+*) no "a schemaVersion 1 milestone did not fire type-agreement (got: $S1M)" ;;
+esac
+case "$S1M" in
+*schemaVersion*2*type*) ok "the message names the version that added the type" ;;
+*) no "the type-agreement message does not name schemaVersion 2" ;;
+esac
+for gated in false-independence dependency-after-dependent sequence-not-orderable required-field; do
+	case "$S1M" in
+	*"$gated"*) no "$gated fired on a schemaVersion 1 vault - the version gate is not holding" ;;
+	*) ok "$gated stays silent at schemaVersion 1" ;;
+	esac
+done
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

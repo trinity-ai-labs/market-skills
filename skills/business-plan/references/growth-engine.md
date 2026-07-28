@@ -101,4 +101,6 @@ direct edits.
 Each stage is a scheduled skill; the founder touches only the approval gate. Realistic total:
 marketing drops from ~20–30% of founder time to ~5–10%. The plan's milestone section states
 which pieces of the engine get built in which month — the engine is itself a roadmap item,
-not an assumption.
+not an assumption. So each piece is a `milestone` note like any other item, and the `resource`
+it declares is founder hours: the engine competes with everything else the founder builds, which
+is the fact a section that reads as automation makes easy to lose.

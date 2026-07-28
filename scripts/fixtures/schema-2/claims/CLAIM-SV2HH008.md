@@ -1,5 +1,5 @@
 ---
-id: CLAIM-SV2DD004
+id: CLAIM-SV2HH008
 type: claim
 title: "The buying window closes at the deadline"
 status: superseded

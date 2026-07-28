@@ -1,5 +1,5 @@
 ---
-id: CLAIM-SV2EE005
+id: CLAIM-SV2JJ009
 type: claim
 title: "The buying window stays open for a year past the deadline"
 status: current
@@ -10,7 +10,7 @@ subject: "timing-window"
 stale_after: "2099-12-31"
 reconciled: "2026-07-10"
 supersedes:
-  - CLAIM-SV2DD004
+  - CLAIM-SV2HH008
 supersedes_reason: "Producers that miss the deadline still have to re-label, so the demand moves rather than disappearing."
 rests_on:
   - FACT-SV2BB002

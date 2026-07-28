@@ -56,6 +56,45 @@ founder hands an investor without apologizing.
   second comparable — the comparison the pair exists to support then never happens, silently,
   with both charts looking fine.
 
+## An explicit `{#anchor}` is the citation address, because the heading text will be reworded
+
+A heading may end with an anchor attribute — `## Competition & moat {#competition}`, the anchor
+being `[A-Za-z0-9_-]+` after the `#`. It is an address, not decoration, and the rendering
+contract has two halves:
+
+- **Strip it from the heading text.** The rendered `<h2>` reads `Competition & moat`. A reader
+  who sees `{#competition}` in the HTML or the PDF is reading a bug, and it is the kind that
+  survives every layout check because the page paginates perfectly with it there.
+- **Emit it as the element `id`** — `<h2 id="competition">Competition &amp; moat</h2>` — so the
+  in-document link `#competition` lands on that section in the browser and in the PDF outline.
+
+**Both addresses stay live: the explicit anchor, and the GitHub slug of the heading text with
+the attribute stripped off.** Emit the explicit one as the `id`; the slug is what a citation
+written before the document carried attributes already names, and dropping it would fail an
+untouched corpus the moment its author pasted in a newer template.
+
+**The failure this prevents.** Action titles are rewritten constantly — the rule two sections up
+requires every heading to assert the current finding as a sentence, so a heading changes every
+time the finding sharpens. A section addressed only by the slug of its text loses its address on
+every one of those edits, silently: nothing in the document breaks, and the citations pointing
+into it go dead. In a business-plan engagement those citations are the `used_in` field of the
+claim vault, and `vault-lint.sh --used-in` reports each one as `used-in-dead-anchor` — after the
+render, when the only available fix is rewriting the notes, which re-breaks on the next
+rewording. An explicit anchor is the half of the heading the author agrees not to change.
+
+The second failure is narrower and fires on day one: the slug rule is not the anchor a human
+writes. `## Competition & moat` slugs to `competition--moat`, because `&` is dropped and both
+spaces that flanked it each become their own hyphen. The author writes `#competition`, which is
+correct-looking and dead. With the attribute on the heading, the anchor an author writes and the
+anchor the document offers are the same string by construction.
+
+**Which documents owe anchors: the ones something cites a section of.** In a business-plan
+engagement those are the plan documents, whose sections a claim note's `used_in` records — that
+skill's `plan-template.md` ships the attributes and owns the list, so it is not restated here to
+go stale. The research documents this skill writes are reached as evidence instead, through
+`[S#]` and a source note, and no `used_in` entry names a section of one: they carry no anchors,
+and adding them would be ceremony with no failure behind it.
+
 ## Print CSS — the pagination rules that actually work
 
 Chromium quirks are the difference between polished and embarrassing. Encode exactly this:
@@ -152,6 +191,10 @@ Render, then **Read the PDF back** (the Read tool renders PDF pages) and inspect
 6. Page count sane — a 40-page PDF from a 15-page report means a CSS break rule exploded.
 7. **Content actually present, not merely paginated.** Compare the rendered page against the
    source markdown section by section, not just for layout faults.
+8. **No `{#anchor}` attribute visible in any heading.** It renders as ordinary heading text if
+   the strip was skipped, so nothing errors and the layout is perfect — the only detector is
+   reading the headings. Grep the HTML for `{#` before rendering the PDF, and confirm each
+   anchor came out as the heading's `id` rather than as part of its text.
 
 **The Chromium two-column silent clip — this has bitten twice; check for it explicitly.** With
 a multi-column layout, headless Chromium can silently DROP overflow content instead of

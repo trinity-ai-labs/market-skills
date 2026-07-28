@@ -50,7 +50,7 @@ itself emits**, rather than a mechanical check:
 
 - `--used-in` proves the mechanical half: every target a note's `used_in` field names is a file
   that exists and an anchor inside it that resolves. This is unconditional and already
-  independent of the `[C#]` question — it fires for all six note types.
+  independent of the `[C#]` question — it fires for every note type, whatever the set is.
 - `--supersession-sweep` names the sections a supersession put in doubt: when a note's status
   moves to `superseded`, the sweep walks every `used_in` target that pointed at the old note and
   reports the section, so nothing has to be re-derived by hand.
