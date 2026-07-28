@@ -727,9 +727,13 @@ derived one gets quoted back in a meeting.
 
 **`moves` names note IDs, never the roadmap table's `A-n` row labels.** The plan's assumptions
 table keeps its prose labels for a reader; the note-level edge names the note. That is what makes
-"every roadmap item names the assumption it moves" mechanical rather than a rule nobody verified:
-`moves` is an edge, so an item naming an assumption that does not exist is the ordinary
-`dangling-edge` failure. Where an item aims at a multiple input rather than a model assumption
+"every roadmap item names the assumption it moves" mechanical rather than a rule nobody verified,
+and it is checked in both directions because an item can name a wrong assumption two ways: a
+well-formed ID that no note carries is the ordinary `dangling-edge` failure, and a value that is
+not an ID at all — the `A-n` row label, copied across from the table — is `malformed-edge`. The
+second is the one authors actually write, since the table is where they look before writing the
+note, and it is why the row label is worth naming here rather than leaving to the lint. Where an
+item aims at a multiple input rather than a model assumption
 ([roadmap-sequencing.md](roadmap-sequencing.md#rule-7--for-an-exit-target-an-item-may-move-a-multiple-input-rather-than-a-model-assumption)
 Rule 7), it names the `claim` carrying that input.
 
@@ -740,12 +744,13 @@ milestones declaring the same `resource` at the same `sequence` are a *false ind
 the lint fails. The cost of not catching it is the whole roadmap: a false independence claim
 licenses a naive value ranking, orders everything downstream of it, and nothing ever revisits it.
 
-**Four things the lint reads off this type**, each the mechanical form of a rule that was prose:
+**Five things the lint reads off this type**, each the mechanical form of a rule that was prose:
 `required-field` on a missing `moves` or `resource`, `dangling-edge` on a `moves` or `depends_on`
-target that no note carries, `dependency-after-dependent` where a prerequisite sequences at or
-after the item needing it, and `false-independence` on the shared `resource` and `sequence` pair.
+target that no note carries, `malformed-edge` on a `moves` value that is not a note ID at all,
+`dependency-after-dependent` where a prerequisite sequences at or after the item needing it, and
+`false-independence` on the shared `resource` and `sequence` pair.
 `sequence-not-orderable` guards the two order checks themselves: both skip a value they cannot
-compare, so a `sequence` of `M4` would take them down silently. All five fire only at
+compare, so a `sequence` of `M4` would take them down silently. All six fire only at
 `schemaVersion: 2` — a vault at 1 has no `milestones/` directory by construction and owes none of
 them.
 

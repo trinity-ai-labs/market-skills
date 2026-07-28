@@ -24,6 +24,14 @@ all is a `required-field` failure whose message says what the absence costs. The
 so an item could name an assumption that was never written, or name none, and the plan shipped
 looking exactly like one whose every row resolved.
 
+**`moves` holds the assumption's note ID. The `(A-n)` in the middle column below is the label the
+plan's assumptions table carries for a reader, and it never goes in the frontmatter** — a note ID
+resolves to a note, an `A-n` label resolves to a row in a document the vault cannot read. Writing
+the label into `moves` is a `malformed-edge` failure, named separately from `dangling-edge`
+because nothing is missing from the vault: the field never named a note. It is called out here
+rather than left to the lint because the table one paragraph down is where an author looks before
+writing the note, so the row label is the value that comes to hand first.
+
 | Item | Assumption moved | Direction & size | Confidence |
 |---|---|---|---|
 | New-platform GA | trial volume (A-n) | +X% trials from M6 | M — bound, not a date |
