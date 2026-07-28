@@ -33,8 +33,13 @@
 //      A file carrying a `## Contents` heading must offer at least one list-item
 //      anchor link, so an index rewritten out of link form cannot go unchecked
 //      while the rest of the file keeps this green
+//  10. A `{#anchor}` attribute appears only on a heading inside a fenced block —
+//      those are plan-template.md's template headings, where the attribute is the
+//      citation surface a `used_in` entry names. On a LIVE heading in this repo it
+//      would silently change that heading's own slug, repointing every Contents
+//      link check 9 validates
 //
-// Checks 6-9 each fail when their own source pattern matches NOTHING, because a
+// Checks 6-10 each fail when their own source pattern matches NOTHING, because a
 // check that quietly stops matching prints the same green as a check that passed.
 
 import { readdir, readFile, stat } from 'node:fs/promises';
@@ -331,6 +336,8 @@ async function checkCitedHeadingsExist() {
  *
  * A link whose path does not resolve is check 4's failure, not this one's — it
  * is skipped here rather than reported twice.
+ *
+ * Check 10 rides along here because it reads the same two views of each file.
  */
 async function checkAnchorsResolve() {
   const slugsFor = new Map();
@@ -340,6 +347,7 @@ async function checkAnchorsResolve() {
   };
 
   let anchors = 0;
+  let templateAnchors = 0;
   for await (const file of walk(SKILLS_DIR)) {
     if (!file.endsWith('.md')) continue;
     const text = await readFile(file, 'utf8');
@@ -374,8 +382,36 @@ async function checkAnchorsResolve() {
     if (/^##\s+Contents\s*$/m.test(body) && !/^\s*- \[.+?\]\(#[^)]+\)\s*$/m.test(body)) {
       fail(file, 'link', 'has a `## Contents` heading but no list-item anchor link — its index is unchecked');
     }
+
+    // Check 10 — a `{#anchor}` attribute belongs only to a FENCED heading.
+    //
+    // plan-template.md puts one on every template heading because that is the
+    // address a claim note's `used_in` names, and `vault-lint.sh --used-in`
+    // resolves it in the user's own plan document. Those headings are inside
+    // fences, so stripFences() has already removed them from `body` and they are
+    // counted rather than reported.
+    //
+    // On a live heading in THIS repo the attribute is silent damage: slugify()
+    // keeps only letters, numbers, `_`, whitespace and hyphens, so `{`, `#` and
+    // `}` all fold away and `## Foo {#bar}` slugs to `foo-bar`. The heading's own
+    // address changes without anything in the file looking different, and every
+    // Contents link check 9 validates now points at a slug nothing offers.
+    //
+    // The count below is what stops this from becoming a rule with no live
+    // population: if the template headings ever lose their attributes, the
+    // prohibition would keep passing over a contract nothing implements.
+    const anchored = /^#{1,6}[ \t]+\S.*\{#[A-Za-z0-9_-]+\}[ \t]*$/gm;
+    const all = text.match(anchored)?.length ?? 0;
+    const live = body.match(anchored) ?? [];
+    templateAnchors += all - live.length;
+    for (const heading of live) {
+      fail(file, 'link', `heading carries a {#anchor} attribute outside a code fence -> ${heading.trim()} — it changes this heading's own slug, so every link into it goes dead`);
+    }
   }
   if (anchors === 0) fail(SKILLS_DIR, 'link', 'no #anchor links found — check 9 ran on nothing');
+  if (templateAnchors === 0) {
+    fail(SKILLS_DIR, 'link', 'no fenced heading carries a {#anchor} attribute — check 10 ran on nothing, and the citation surface plan-template.md promises is gone');
+  }
 }
 
 async function main() {

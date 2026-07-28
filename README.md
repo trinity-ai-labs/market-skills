@@ -214,6 +214,14 @@ cited into, and this opens each one to check the file is there and the `#anchor`
 heading, exiting 1 when it does not. It stops at whether the citation **resolves** — whether the
 section still *carries* the claim is a read, and `--help` says why a tool cannot do it.
 
+A heading offers two addresses and either resolves. The plan templates put an explicit
+`{#anchor}` attribute on every heading — `## Competition & moat {#competition}` — and that is
+the one to cite, because those same templates require a heading to state the current finding, so
+its text gets reworded and an anchor tracking the text would take every citation into that
+section down with it. The GitHub slug of the heading text, with the attribute stripped off,
+resolves too, so a vault written before its documents carried attributes keeps passing with
+nothing back-filled.
+
 `--supersession-sweep` is what makes that read a short one. Replacing a note is recorded on the
 note, and nothing tells the documents that were built on the old one — so this walks every
 superseded note and prints the document sections its citations reached, grouped one row per

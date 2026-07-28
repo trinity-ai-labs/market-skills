@@ -744,7 +744,10 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   paragraph is standing on it, so the re-check gets deferred because nobody can size it. The
   same field is what closes the claim: per invariant 20 it stays open until the named section
   carries it, and a claim minted after that section was drafted is subject to that exactly as
-  one minted while it was being written.
+  one minted while it was being written. **Name the heading's `{#anchor}` attribute, which
+  `plan-template.md` puts on every heading, rather than the slug of its text** — the headings
+  are action titles you will reword as the finding sharpens, and a citation written against the
+  text dies on the first rewording with nothing reporting it until the render gate runs.
 - **The thesis traces.** The plan's core bet restates the analysis's whitespace recommendation,
   sharpened by the founder's unfair advantages — traceably, not vibes-first.
 - **Cite by code, and there is no third kind.** `[S#]` resolves through `sources.md`, `[F#]`

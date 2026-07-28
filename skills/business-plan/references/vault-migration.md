@@ -76,6 +76,11 @@ Three things the manifest buys beyond the list itself:
   code, so the claims written in stage 3 carry `used_in` at authoring time rather than as a
   retrofit nobody schedules. Without it, a stale claim tells you it needs re-checking but not
   which paragraph is standing on it, so the re-check is deferred because nobody can size it.
+  A migrated plan document usually predates the `{#anchor}` attributes
+  [plan-template.md](plan-template.md) ships, so its slugs are what the entries name — and they
+  resolve, which is why nothing has to be back-filled. Add the attributes to the document in
+  this same pass anyway, and cite those: the migration is followed by an editing pass, and every
+  heading reworded in it silently kills the citations the migration just wrote.
 - **A budget.** `| wc -l` on the first grep is the note count, and the note count is the day
   count — see [the cost section](#budget-a-day-per-hundred-notes-and-finish-a-stage-or-revert-it).
 

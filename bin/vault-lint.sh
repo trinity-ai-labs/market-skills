@@ -83,6 +83,12 @@ vault-lint.sh - read-only checks over a claim vault.
       verdict - it exits 1 on any failure. Kept out of `check` because it reads
       documents outside the note directories, which is a different surface.
 
+      An anchor resolves two ways, and a heading offers both. A heading ending
+      in an explicit `{#anchor}` attribute answers to that attribute, which is
+      what survives a rewording; every heading also answers to the GitHub slug
+      of its text with the attribute stripped off, which is what a citation
+      written before the document carried attributes still names.
+
       It checks that the target RESOLVES, never that the section CARRIES the
       claim. Plan prose cites [S#] and [F#] codes and a claim note carries no
       citation code at all, so matching note IDs against prose would report a
@@ -1426,7 +1432,31 @@ if [ "$MODE" = "used-in" ]; then
 		# Setext headings (a title underlined with ===) are deliberately not read.
 		# They are document titles and a #fragment cites a section, so reading
 		# them would mean carrying a line of lookbehind for a case nothing cites.
-		function scan(doc,   path, line, t, c, n, fc, fn, h) {
+		#
+		# A trailing `{#anchor}` attribute is the citation address of the heading
+		# itself. It is stripped from the heading text before the slug rule runs
+		# and registered as an anchor in its own right. What a rendered document owes
+		# it - strip it from the visible heading, emit it as the element id, so no
+		# reader ever sees `{#foo}` on the page - is the contract in
+		# market-analysis/references/rendering.md, which both skills share.
+		#
+		# BOTH the explicit anchor and the slug of the stripped text are
+		# registered, rather than the explicit one replacing the slug. A vault
+		# authored before the template carried attributes cites the slug, and
+		# those notes must not start failing the moment their author pastes a
+		# newer template into the same document - an upgrade that fails an
+		# untouched corpus is one nobody takes. Rewording protection is unaffected
+		# by registering both: a heading whose TEXT changes loses its old slug
+		# under either design, and the explicit anchor is the half that survives,
+		# which is the whole reason to write one.
+		#
+		# The attribute is matched as ASCII - [A-Za-z0-9_-] - because that is the
+		# character set an anchor is allowed to carry, and because a byte-oriented
+		# awk reading a class over anything wider would strike the continuation
+		# byte of an unrelated letter. Nothing below it changes: the heading TEXT
+		# still goes through slug(), with UNIPUNCT removed as whole sequences and
+		# whitespace runs left uncollapsed.
+		function scan(doc,   path, line, t, c, n, fc, fn, h, a) {
 			path = root "/" doc
 			fc = ""; fn = 0
 			while ((getline line < path) > 0) {
@@ -1446,6 +1476,18 @@ if [ "$MODE" = "used-in" ]; then
 				h = substr(t, RLENGTH + 1)
 				sub(/[ \t]*#+[ \t]*$/, "", h)
 				sub(/[ \t]+$/, "", h)
+				# Braces written as bracket expressions rather than escaped. A
+				# backslash-brace is an interval expression to some awks and a
+				# literal to others, and which one runs this is a property of the
+				# user machine rather than of this file.
+				if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
+					a = substr(h, RSTART, RLENGTH)
+					sub(/^[{]#/, "", a)
+					sub(/[}]$/, "", a)
+					HAS[doc SUBSEP a] = 1
+					h = substr(h, 1, RSTART - 1)
+					sub(/[ \t]+$/, "", h)
+				}
 				HAS[doc SUBSEP slug(h)] = 1
 			}
 			close(path)
@@ -1482,7 +1524,7 @@ if [ "$MODE" = "used-in" ]; then
 					if (anchor == "") continue
 					if (!(doc in SCANNED)) { SCANNED[doc] = 1; scan(doc) }
 					if (!((doc SUBSEP anchor) in HAS))
-						report(f, "used-in-dead-anchor", id, "`used_in` names `" entry "` and no heading in " doc " slugs to `" anchor "`. A heading was renamed or cut while the note went on naming it, so the claim reads as cited into a section nobody can find - and a stale_after that fires sends its reader to a document with no such paragraph in it")
+						report(f, "used-in-dead-anchor", id, "`used_in` names `" entry "` and no heading in " doc " carries `{#" anchor "}` or slugs to `" anchor "`. A heading was renamed or cut while the note went on naming it, so the claim reads as cited into a section nobody can find - and a stale_after that fires sends its reader to a document with no such paragraph in it")
 				}
 			}
 		}

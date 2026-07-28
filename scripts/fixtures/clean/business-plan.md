@@ -20,6 +20,25 @@ regulatory function buy tooling rather than build it. [F1]
 
 Producers treat the deadline as optional until a peer is fined. [F1]
 
+## Competition & moat {#competition}
+
+`CLAIM-RR55TT19` cites this section as `business-plan.md#competition` — the
+explicit attribute, not the slug. The slug of this heading's text is
+`competition--moat`: the `&` is dropped and both spaces that flanked it each
+become their own hyphen, so the short anchor an author actually writes resolves
+only through the attribute. This is the heading `run-fixtures.sh` rewords, to
+assert the attribute is what carries the citation rather than the text.
+
+## Business model & pricing {#business-model}
+
+Cited both ways on purpose. `business-plan.md#business-model` resolves through
+the attribute, and `business-plan.md#business-model--pricing` through the slug
+of the heading text with the attribute stripped off — the entry a vault authored
+before the template carried attributes already holds. Slugging the raw heading
+line instead would yield `business-model--pricing-business-model`, which is
+neither, so this pair is what asserts the strip happens before the slug rule
+runs.
+
 ## Not a heading
 
 ```sh
