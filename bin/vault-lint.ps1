@@ -163,11 +163,24 @@ function Remove-TrailingCr {
 # FullName into a path relative to it. Returns '' when the directory cannot be
 # resolved, which the caller reads as "nothing to walk" - the shell's `find`
 # prints nothing and moves on in the same case.
+#
+# READ OFF A DirectoryInfo, not off Resolve-Path, because the only consumer of
+# this string is Substring against a FullName that Get-ChildItem produced - and
+# both walks below now root that Get-ChildItem AT this string. Get-Item and
+# Get-ChildItem hand back the same object type from the same .NET enumeration,
+# so the prefix and the paths it is stripped from spell the directory the same
+# way by construction. Resolve-Path is a separate normalization that need not
+# agree: on Windows a directory reached through an 8.3 short name - which is
+# what %TEMP% is for any user whose name is over eight characters, so it is the
+# ordinary spelling of a temp path rather than a curiosity - has two spellings
+# of DIFFERENT LENGTHS, and a Substring against the wrong one cuts into the file
+# name rather than off it.
 function Get-PathPrefix {
 	param([string]$Directory)
-	$resolved = Resolve-Path -LiteralPath $Directory -ErrorAction SilentlyContinue
-	if ($null -eq $resolved) { return '' }
-	$full = $resolved.ProviderPath
+	$item = Get-Item -LiteralPath $Directory -Force -ErrorAction SilentlyContinue
+	if ($null -eq $item) { return '' }
+	$full = $item.FullName
+	if ($full.Length -eq 0) { return '' }
 	if ($full.EndsWith([string][System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::Ordinal)) { return $full }
 	return $full + [System.IO.Path]::DirectorySeparatorChar
 }
@@ -562,7 +575,44 @@ function Get-ModeForFlag {
 # part returned, not the last one and not a flattened 1.
 # ----------------------------------------------------------------------------
 function Invoke-ModeReleaseGate {
-	Exit-NotPorted '--release-gate'
+	# The running host's own executable, not a bare 'pwsh' on PATH: this process
+	# is already running under whichever host was invoked (powershell.exe 5.1 or
+	# pwsh), and re-invoking through that same binary is what MainModule.FileName
+	# gives - a bare 'pwsh' would silently switch hosts mid-gate on a machine that
+	# has both installed, which is not what "the same host you are running
+	# under" means.
+	$hostExe = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+
+	$gateStatus = 0
+	$gateFailed = ''
+	Write-OutText ('vault-lint release-gate: ' + $script:VAULT + "`n")
+
+	# EACH PART IS A FRESH INVOCATION OF THIS SCRIPT, not a function call - see
+	# bin/vault-lint.sh:474-480. check and --used-in share one failure file, so
+	# running two of them in one process would mean threading a reset between
+	# them and letting one mode's failures land in the other's verdict. A process
+	# boundary is the cheapest thing that cannot get that wrong.
+	foreach ($row in (Get-ModeRows)) {
+		if ($row.Gate -cne 'gate') { continue }
+		Write-OutText ("`n--- " + $row.Selector + ': ' + $row.Part + " ---`n")
+
+		& $hostExe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $script:PSCommandPath $row.Selector '--vault' $script:VAULT
+		$partStatus = $LASTEXITCODE
+
+		# THE EXIT STATUS IS THE WORST STATUS ANY PART RETURNED, not the last one
+		# and not a flattened 1 - bin/vault-lint.sh:486-490. A refusal (2) and a
+		# failed check (1) are different answers, and reporting both as 1 sends a
+		# reader hunting for a failure in a check that never ran.
+		if ($partStatus -gt $gateStatus) { $gateStatus = $partStatus }
+		if ($partStatus -ne 0) { $gateFailed = $gateFailed + ' ' + $row.Selector }
+	}
+
+	if ($gateStatus -eq 0) {
+		Write-OutText ("`nvault-lint release-gate: every part passed - " + $script:VAULT + "`n")
+	} else {
+		Write-ErrText ("`nvault-lint release-gate: did not pass -" + $gateFailed + "`n")
+	}
+	exit $gateStatus
 }
 
 # ----------------------------------------------------------------------------
@@ -3811,7 +3861,18 @@ foreach ($d in $NOTE_DIRS) {
 	# hidden: without it a `.draft.md` left in a note directory is invisible here
 	# and read there, which is a note the two implementations disagree about the
 	# existence of.
-	foreach ($entry in (Get-ChildItem -LiteralPath $dirPath -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+	#
+	# THE WALK STARTS AT $prefix, NOT AT $dirPath, so the string being stripped
+	# below is the string the enumeration was rooted at. Two resolutions of one
+	# directory do not have to spell it the same way: on Windows a path reached
+	# through an 8.3 short name (`C:\Users\RUNNER~1\...`, which is what %TEMP%
+	# hands a process for a long user name) resolves to a longer spelling, and
+	# Substring against a prefix of the other length cuts into the file name
+	# instead of off it. Every note then points at a path that does not exist -
+	# and because a note that cannot be read is reported as a parse failure
+	# rather than as a missing index, a mode that only counts notes of one type
+	# sees a vault with none of them and reports agreement.
+	foreach ($entry in (Get-ChildItem -LiteralPath $prefix -Recurse -File -Force -ErrorAction SilentlyContinue)) {
 		# -cnotlike, not -notlike: `find -name '*.md'` matches case-sensitively
 		# even on a case-insensitive filesystem, and PowerShell's -like does not.
 		# A README.MD picked up here would be parsed as a note and reported as
@@ -3872,9 +3933,20 @@ $RX_LEADING_ZERO = [regex]'\A0[0-9]+\z'
 # L alone - so the pass is skipped entirely for them rather than parsed into
 # output nobody reads.
 #
-# A trailing CR is NOT stripped here, and that is a transcription rather than an
-# oversight: the shell's awk does not strip it either, so a CRLF _vocab.yml
-# fails the term-key pattern identically on both implementations.
+# A TRAILING CR IS STRIPPED, exactly as the note parser strips one on every line
+# it reads. An earlier comment here claimed the opposite was a faithful
+# transcription - that the shell's awk leaves the CR in place too, so a CRLF
+# _vocab.yml fails the term-key pattern identically on both implementations.
+# That is false on the one platform this file exists for: Git for Windows'
+# awk reads in text mode and hands the pattern a line with no CR, so the shell
+# parses a CRLF vocabulary and the port did not. The whole vocabulary went empty
+# and `check` silently stopped asking three of its questions - unknown-subject,
+# near-miss-subject and coverage-gap all need a term to compare against, and a
+# vault with none reports no subject failures rather than reporting that it
+# could not check any. A Windows user's _vocab.yml is CRLF by default, so that
+# is the ordinary case, not the corner: the vault lints clean while carrying
+# unknown subjects and a thin spine, which is the exact silence this lint exists
+# to break.
 # ----------------------------------------------------------------------------
 
 if ($HAS_VOCAB -eq 1 -and $MODE -ceq 'check') {
@@ -3883,7 +3955,8 @@ if ($HAS_VOCAB -eq 1 -and $MODE -ceq 'check') {
 	$term = ''
 	$field = ''
 
-	foreach ($line in (Read-TextLines $VOCAB)) {
+	foreach ($rawLine in (Read-TextLines $VOCAB)) {
+		$line = Remove-TrailingCr $rawLine
 		if ($RX_COMMENT.IsMatch($line)) { continue }
 		if ($RX_BLANK.IsMatch($line)) { continue }
 
@@ -4230,7 +4303,13 @@ $TODAY = (Get-Date).ToString('yyyy-MM-dd', [System.Globalization.CultureInfo]::I
 $PATHIDX = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
 $VAULT_PREFIX = Get-PathPrefix $VAULT
 if ($VAULT_PREFIX.Length -gt 0) {
-	foreach ($entry in (Get-ChildItem -LiteralPath $VAULT -Recurse -Force -ErrorAction SilentlyContinue)) {
+	# Rooted at $VAULT_PREFIX rather than at $VAULT for the reason the note walk
+	# above is: the prefix stripped from each result has to be the prefix the
+	# results were built from. Here the mismatch is silent rather than loud - the
+	# StartsWith guard below drops every entry - so the index comes back empty
+	# and every vault-relative path in the corpus is reported as resolving to
+	# nothing.
+	foreach ($entry in (Get-ChildItem -LiteralPath $VAULT_PREFIX -Recurse -Force -ErrorAction SilentlyContinue)) {
 		$full = $entry.FullName
 		if (-not $full.StartsWith($VAULT_PREFIX, [System.StringComparison]::Ordinal)) { continue }
 		[void]$PATHIDX.Add((Get-RelativeSlashPath $full $VAULT_PREFIX))

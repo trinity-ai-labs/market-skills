@@ -831,18 +831,32 @@ HELP_STATUS=$?
 # being asserted rather than the exact synopsis punctuation.
 HELP_FLAT=$(printf '%s\n' "$HELP" | tr -d '[]')
 
-# Matched against the basename of $LINT, not a literal `vault-lint.sh`: this
-# census runs against whichever implementation VAULT_LINT names, and a
-# hardcoded literal either fails the port for a cosmetic reason (its own
-# --help correctly names itself vault-lint.ps1) or forces the port to print a
-# command its reader does not have, just to satisfy this assertion.
-LINT_PROG=$(basename "$LINT")
+# Anchored on the name the help text gives ITSELF - the first word of its own
+# banner - and never on a literal `vault-lint.sh` or on the basename of $LINT.
+#
+# A literal fails the port for a cosmetic reason: its --help correctly names
+# itself vault-lint.ps1, and matching a literal would force it to print a
+# command its reader does not have. The basename of $LINT fails for a worse
+# reason: VAULT_LINT may name an INDIRECTION rather than the tool. CI pins the
+# port to Windows PowerShell 5.1 through a one-line wrapper script, and
+# `vault-lint-ps1-winps51.sh` can never appear in a synopsis line - so every
+# mode is reported as having no help block on a tool whose help is complete,
+# and nine assertions go red without a single one of them being about help text.
+#
+# Reading the name out of the output tests the property this census is for -
+# each mode has a block - through the indirection instead of past it. The banner
+# and the synopsis lines are rendered from the same string on both
+# implementations, so a mode that loses its block still fails here: nothing in
+# the wrapper, or in any future one, can put `<prog> <mode>` back.
+HELP_PROG=$(printf '%s\n' "$HELP_FLAT" | sed -n '1s/^\([^ ][^ ]*\).*/\1/p')
+[ -n "$HELP_PROG" ] && ok "--help opens by naming the tool it documents" ||
+	no "--help has no program name on its first line - the census below would have nothing to anchor on"
 
 printf '%s\n' "$MODES" | tr ' ' '\n' | grep -v '^$' >"$PAIRS_FILE.modes"
 while read -r mode; do
 	[ -n "${mode:-}" ] || continue
 	case "$HELP_FLAT" in
-	*"$LINT_PROG $mode"*) ok "--help documents $mode" ;;
+	*"$HELP_PROG $mode"*) ok "--help documents $mode" ;;
 	*) no "--help has no block for $mode" ;;
 	esac
 done <"$PAIRS_FILE.modes"
