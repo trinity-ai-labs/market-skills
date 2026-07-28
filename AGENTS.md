@@ -188,7 +188,8 @@ CHANGELOG.md                  what each pinned version actually changed
 `--vault` (or `VAULT_PATH`) for the checks, `--json` for an agent consumer, `--unverified`
 for the notes asserted with nothing behind them, `--used-in` for whether each note's
 citation target still resolves, `--supersession-sweep` for the document sections a
-supersession put in doubt, `--release-gate` for all three of those run as one call, and
+supersession put in doubt, `--red-team` for whether every dispatched panel lens wrote
+objection rows, `--release-gate` for all four of those run as one call, and
 `graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it** — an
 enumeration that has gone stale reads exactly like one that is complete. Rule 3 above has
@@ -204,11 +205,12 @@ the mode's own dispatch. It is a table because a release that adds three modes w
 be three edits to the same `case` block, and git resolves two of those textually clean while the
 third silently loses the arm that parses its flag.
 
-`--release-gate` is a composite rather than a fourth check surface: it runs `check`, `--used-in`
-and `--supersession-sweep` as separate invocations of the script and exits with the **worst**
-status any part returned, so a refusal (2) is never reported as a failed check (1). It exists
-because the render gate was three calls made from memory — which of them ran was a matter of
-recall — and because the bare run's success line used to read as a whole-corpus verdict. That
+`--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
+`--supersession-sweep` and `--red-team` as separate invocations of the script and exits with the
+**worst** status any part returned, so a refusal (2) is never reported as a failed check (1). It
+exists because the render gate was several calls made from memory — which of them ran was a
+matter of recall — and because the bare run's success line used to read as a whole-corpus
+verdict. That
 line now names what it checked and what it did not, with the *did not* half read off the same
 table, and `run-fixtures.sh` asserts the new wording rather than the substring `clean`. It also
 carries a `MODES` census asserting that every mode has a block in `usage()` — the one thing the
@@ -217,8 +219,10 @@ loses its block still works.
 
 **`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2`) and refuses anything else.** A vault at
 1 is held to exactly the rules it was written under; version 2 is where a check that an existing
-corpus could not owe goes, and the found version is passed into the checks awk as `schema` so a
-new check can gate on it. Refusing a version from the future stays the point of the field: an
+corpus could not owe goes, and the found version is passed into the checks awk and the
+`--supersession-sweep` awk as `schema` so a new check can gate on it. Two rules are behind it
+today: the sweep's `reconciled:` verdict, and `--red-team`'s demand for a roster in a
+`red-team.md` that has none. Refusing a version from the future stays the point of the field: an
 older tool half-reading a newer vault reports a clean bill of health over every field it never
 saw. Adding a check that fires unconditionally on every existing corpus is the thing this
 mechanism exists to make unnecessary.
@@ -231,17 +235,46 @@ Plan prose cites `[S#]` and `[F#]` codes and a claim note carries no citation co
 scan matching note IDs against prose fires on every correctly cited claim; a check that cries
 wolf gets switched off, and switching it off takes the working half with it.
 
-`--supersession-sweep` is the other half of that boundary and is a **report, not a verdict — it
-exits 0 whether or not it finds anything**, the contract `--unverified` carries. It answers the
-question `--used-in` deliberately leaves open, by naming the sections somebody has to re-read:
-when B supersedes A, every document section in A's `used_in` is now suspect, and supersession is
-visible in the note and invisible everywhere the note was cited. Two properties are load-bearing
-in any change to it. It **groups by section and dedupes**, because the unit of work is *re-read
-this section* and a list repeating the section per note makes a two-item job look like six. And
-it **reports the row count**, because the gate that consumes it is a read and a read is bounded
-only if its size is visible before it starts — that count is also the instrument
+`--supersession-sweep` is the other half of that boundary. It answers the question `--used-in`
+deliberately leaves open, by naming the sections somebody has to re-read: when B supersedes A,
+every document section in A's `used_in` is now suspect, and supersession is visible in the note
+and invisible everywhere the note was cited. Two properties are load-bearing in any change to
+it. It **groups by section and dedupes**, because the unit of work is *re-read this section* and
+a list repeating the section per note makes a two-item job look like six. Deduping means
+resolving two spellings of one heading onto one row: a heading is addressable by an explicit
+`{#anchor}` attribute *and* by the slug of its text, both, so one section can be reached under
+two strings. **The sweep folds an anchor to its alphanumeric bytes and matches that against the
+document's headings — deliberately looser than `--used-in`'s slug rule, and not a copy of it.**
+That rule decides whether an anchor *resolves* and has to be exact; this decides whether two
+anchors are the *same section*, so it can drop every character the slug rule drops without
+knowing which those are, which is what keeps it from drifting out of step with a rule it does not
+own. A fold key claimed by two different headings is retired rather than resolved, so ambiguity
+falls back to two rows — being wrong here costs a section nobody re-reads, so it refuses. And it
+**reports the row count**, because the gate that consumes it is a read and a read is bounded only
+if its size is visible before it starts — that count is also the instrument
 `docs/specs/2026-07-27-claim-citation-codes.md` names as the trigger that would reopen its
 decision, so it is part of the product rather than a nicety.
+
+**The worklist is a report and the verdict is a separate question, and the distinction is the
+one thing to keep precise here.** Finding rows is not a failure — a healthy vault exits 0 with a
+worklist in it, because a supersession with a blast radius is the corpus working and a mode that
+went non-zero on that would train its caller to ignore the exit code the checks depend on. What
+**fails** is a note carrying `supersedes` with no `reconciled:` date, or one earlier than that
+note's own `created`. Both are plain string comparisons over quoted ISO dates, which is the
+payoff `vault.md` claims for coercing nothing. Gated on `schemaVersion` 2, so a corpus written
+before the field cannot owe it. A date can be stamped without reading anything, so this asserts
+that the read was *claimed*, not that it was done — what it removes is skipping it by default,
+which is what a worklist nobody was obliged to finish had been shipping.
+
+`--red-team` is the same shape one document over. `red-team.md` carries a `## Lenses dispatched`
+roster — a `| Round | Lens |` table — and the mode fails when a lens named there has no row in
+the objection table, and when a row names a lens the roster does not. **Both directions are
+load-bearing:** with only the forward one, the cheapest way past a lens that returned nothing is
+to delete it from the roster. A vault with no `red-team.md` dispatched no panel and passes; a
+`red-team.md` with no roster fails at `schemaVersion` 2 and passes at 1. Rows inside fenced
+blocks are skipped, because the document carries its own row template and would otherwise fail
+for documenting its own format, and lens names are matched case-folded with whitespace runs
+collapsed — a check that fires on capitalisation is one somebody switches off.
 
 **Every invocation in `skills/` is bare — `vault-lint.sh …`, never a path**, and CI rejects
 the path form. The pre-plugin layout used a relative path, which resolves against the

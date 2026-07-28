@@ -83,21 +83,25 @@ and is never restated here.
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
-    bare check, then `--used-in`, then `--supersession-sweep`, and exits non-zero unless every
-    part passes. It is one call because it was three, and three calls made from memory is a set
+    bare check, `--used-in`, `--supersession-sweep` and `--red-team`, and exits non-zero unless
+    every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
     success line said `clean` over a corpus with dozens of dead anchors. That line now names what
-    it checked and what it did not, and the gate carries one exit status for all three.
+    it checked and what it did not, and the gate carries one exit status for all of them.
     `--used-in` stays a separate mode *inside* the gate rather than folding into `check`, because
     it reads documents outside the six note directories: the default run never opens a citation
     target, so a plan clears the bare gate while carrying a citation to a document that was
     renamed or a section that was cut, and the next thing that happens is a rendered PDF
-    asserting it to the one reader with no way to check. The sweep is the report half and fails
-    nothing; it is in the gate because Phase 4's dispositions mint supersessions *after*
-    invariant 19's sweep has already run, which makes the render the only point they are read at
-    all — the worklist the gate prints is read to its end before the first render, or the
-    deliverable ships the version the panel corrected while `red-team.md` records that row as
-    fixed. **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
+    asserting it to the one reader with no way to check. The sweep prints a worklist and **fails
+    when nothing records that it was read** — a `reconciled:` date absent from the superseding
+    note, or earlier than that note's own `created`; it is in the gate because Phase 4's
+    dispositions mint supersessions *after* invariant 19's sweep has already run, which makes the
+    render the only point they are read at all — the worklist the gate prints is read to its end
+    before the first render, or the deliverable ships the version the panel corrected while
+    `red-team.md` records that row as fixed. `--red-team` is in the gate for the mirror-image
+    reason: it fails when a lens named in `red-team.md`'s `## Lenses dispatched` roster wrote no
+    objection row, and the last thing a plan does before rendering is cite objection codes into
+    that table. **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
     cites it, so the gate's second part would check an empty set there, and running the whole
     gate anyway teaches it as cadence-wide when it belongs to one phase.
     **That same gate reads the dimension's own file, never the summary its author
@@ -144,23 +148,42 @@ nearest-reachable solve and the negotiation script are in
     Lint runs at Phase 2's per-dimension checkpoint and again in Phase 5 before rendering;
     between drafting and the panel there is nothing, and a panel briefed on a plan the ledger has
     already moved past returns objections about a version nobody is shipping, at full panel cost.
-    Three steps, and the third is the gate — the first two bound it rather than replace it.
+    **Three named calls and then the read** — the calls bound the read rather than replace it.
     `vault-lint.sh --used-in` **fails**: a citation resolving to a file or a section that is not
     there is not a judgment call. `vault-lint.sh --supersession-sweep` **emits the worklist** —
-    every section a supersession put in doubt. Then **the read**: every `current` claim whose
+    every section a supersession put in doubt — and **fails** when a superseding note carries no
+    `reconciled:` date, or one predating its own `created`. `vault-lint.sh --red-team` **fails**
+    when a lens named in a closed round's roster wrote no objection row; on the first dispatch
+    there is no closed round and it passes, and on a re-dispatch it is the cheapest moment a
+    silent lens is still fixable. Then **the read**: every `current` claim whose
     `used_in` names a plan document is reconciled against that document, and every superseded
-    claim's `used_in` targets are re-read. It is a read and not a grep, because plan prose cites
+    claim's `used_in` targets are re-read, and the date that read happened is stamped as
+    `reconciled:` on each superseding note. It is a read and not a grep, because plan prose cites
     `[S#]` and `[F#]` codes while a claim carries no code at all, so nothing mechanical can tell
-    whether a section still says what the note says. The two lint calls are what keep the read
+    whether a section still says what the note says. The lint calls are what keep the read
     bounded and therefore done: a reconciliation stated as "check the plan against the vault" is
     a task nobody can size, and a task nobody can size is a task nobody starts. The gate sits on
     the dispatch rather than the phase boundary, because a panelist already briefed cannot be
     un-briefed.
 
+    **This stays three named calls rather than becoming `--release-gate`, and the reason is
+    worth holding.** The gate composite also runs `check`, which this gate deliberately does
+    not: Phase 2's checkpoint owns note well-formedness while the authoring context is live, and
+    a malformed note written during drafting should not block a panel dispatch on a fix that has
+    nothing to do with whether the plan and the ledger agree. The stronger reason is that
+    invariant 15 gives `--release-gate` one home, at the render, and a call with two homes makes
+    "did the gate run" a question of recall again — which is the defect the composite was built
+    to remove. **And the failing halves have not made the read optional.** `reconciled:` records
+    that the read was claimed, not that it was done: a date can be stamped without opening a
+    document. What the verdicts remove is skipping it silently.
+
 20. **A claim is not finished when the note is written; it is finished when the prose it names
     carries it.** Writing the note and writing `used_in` are one act, and the claim stays open
     until the section `used_in` names actually says what the note says — invariant 19 is where
-    that gets read. This is an invariant rather than a Phase 3 step because the obligation
+    that gets read. **Where the note is a supersession, the closing edit is the `reconciled:`
+    date on it**, which is the one form of this obligation the corpus can see: the sweep fails a
+    supersession carrying none, so the open claim is visible from outside instead of being a
+    thing the conductor is trusted to remember. This is an invariant rather than a Phase 3 step because the obligation
     outlives Phase 3: the vault keeps growing through drafting and into the red team, and a
     claim minted while the panel is running is subject to it exactly as one minted while the
     plan was being written. Written into the drafting phase, the rule would stop applying at
@@ -821,9 +844,11 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
   price, from what they use today?
 
 **The target list is generated, not read.** Invariant 19's reconciliation runs before any of this
-and gates the dispatch — its two lint calls, `vault-lint.sh --used-in` and `vault-lint.sh
---supersession-sweep`, belong beside the query below rather than in a block of their own, and no
-brief is written until the read behind them is done. Two further queries then run before the panel
+and gates the dispatch — its three lint calls, `vault-lint.sh --used-in`, `vault-lint.sh
+--supersession-sweep` and `vault-lint.sh --red-team`, belong beside the query below rather than in
+a block of their own, and no brief is written until the read behind them is done. On a first
+dispatch `--red-team` has no closed round to check and passes; on a re-dispatch it is what stops
+a second panel being briefed over a first one whose objections were never written down. Two further queries then run before the panel
 is briefed: `vault-lint.sh --unverified`, and every claim that reached the plan carrying
 `confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the attack
 surface each panelist's brief carries in its lens. "Read the plan and object" produces objections
@@ -953,7 +978,36 @@ this engagement, starting at 1 and incrementing on each re-dispatch (a plan revi
 session); objection numbering restarts at `O1` inside each round, so the round prefix is what
 keeps round 2's `O1` and round 4's `O1` from colliding on whichever a reader finds first. **Once
 cited, a code is never renumbered** — invariant 21 states the same rule for `[F#]` and for the
-same reason: renumbering silently repoints every citation already written. Fold: fix what's
+same reason: renumbering silently repoints every citation already written.
+
+**`red-team.md` also carries the roster of what was dispatched, under `## Lenses dispatched`, and
+a lens on it owes at least one row.** It is a two-column table — `| Round | Lens |`, one row per
+lens per round, the round written as `R1` so it reads as the same namespace the objection IDs
+carry:
+
+```
+## Lenses dispatched
+
+| Round | Lens |
+|---|---|
+| R1 | Capital skeptic |
+| R1 | Operator |
+| R1 | Target customer |
+```
+
+**The failure its absence costs:** a lens returns, its findings get folded into two documents,
+and its objection rows are never written here at all — and from outside, that is indistinguishable
+from a lens that had no objections. Silence and thoroughness read the same, so the plan cites
+objection codes into a table that never carried them and nothing says so. Nothing else in the
+corpus records which lenses were sent, which is why the roster has to be created before it can
+be enforced. `vault-lint.sh --red-team` checks it both ways: a rostered lens with no rows, and a
+row whose lens is not on the roster — the second direction because otherwise the check clears by
+deleting a line rather than by dispatching a lens. **Write a round's roster rows in the same edit
+that folds that round's objections**, not at dispatch: a roster written ahead of the rows fails
+the check for the whole time the round is in flight, and a gate that fails on the normal case is
+one people learn to skip.
+
+Fold: fix what's
 fixable; every row disposed "moved to Risks" appears in the plan's Key risks section by its
 round-qualified ID — a plan that pre-states its best objections beats one that hides them.
 **A surviving objection also lands in the vault**, as a `claim` that `supersedes` what it
@@ -968,10 +1022,11 @@ one before anything renders: invariant 22's sweep runs over it before this phase
 ## Phase 5 — Deliverables
 
 **Lint is the release gate, and it runs before the first render.** One call —
-`vault-lint.sh --release-gate --vault "$VAULT_PATH"` — which invariant 15 breaks into its three
-parts and says what each is for. It exits non-zero unless every part passes, so the gate is a
+`vault-lint.sh --release-gate --vault "$VAULT_PATH"` — which invariant 15 breaks into its parts
+and says what each is for. It exits non-zero unless every part passes, so the gate is a
 verdict rather than a set of calls somebody has to remember making, and the sweep worklist it
-prints is read to its end before anything renders. The
+prints is read to its end before anything renders — every supersession Phase 4 minted stamped
+with the `reconciled:` date of that read, which is what the sweep fails on when it is missing. The
 vault comes back clean or nothing renders: a plan citing a retracted or superseded source does
 not ship, and neither does one whose citation names a document that was renamed or a section
 that was cut. The failure this stops is the worst one available — a polished PDF asserting
@@ -1031,10 +1086,15 @@ three milestones, and where everything landed. Invite pushback on the specific b
   as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault at the per-dimension gate, and the render gate ran
   `vault-lint.sh --release-gate` to a zero exit — every part, one verdict — with the
-  `--supersession-sweep` worklist it printed read to its end. The bare run is a strict subset of
+  `--supersession-sweep` worklist it printed read to its end and every superseded pair carrying
+  the `reconciled:` date of that read. The bare run is a strict subset of
   the checks that exist and its success line now says so, so a plan clears it while citing a
   document nobody can open — and the last thing standing between that citation and a rendered
   PDF is this gate.
+- Every lens dispatched to the panel wrote at least one row in `red-team.md`, and every row's lens
+  is named in its `## Lenses dispatched` roster. A lens whose findings were folded into two
+  documents and never written down reads exactly like a lens that had no objections, and the
+  plan then cites an objection code into a table that does not carry it.
 - The plan states the strongest claim its evidence supports, and a claim weaker than its evidence
   is an error of the same class as one stronger. Understatement is not caution: an overclaim gets
   challenged, an understatement gets believed. Every other bar on this list fires on optimism, so
@@ -1101,7 +1161,8 @@ three milestones, and where everything landed. Invite pushback on the specific b
   failing corner is usually the one the founder was aiming at.
 - The plan matches the founder's stated ambition, not a template's default ambition.
 - Nothing was dispatched to the red team until the plan and the vault were reconciled: the
-  `--used-in` pass clean, the `--supersession-sweep` worklist read to its end, and every
+  `--used-in` pass clean, the `--supersession-sweep` worklist read to its end and stamped
+  `reconciled:`, `--red-team` clean over every closed round, and every
   superseded claim's citation sites re-read. The panel is the most expensive read the plan gets,
   and a panelist already briefed cannot be un-briefed — the objections come back about a version
   nobody is shipping and are paid for in full.

@@ -608,8 +608,10 @@ One row per document section, however many superseded claims reached it, each na
 its replacement and the `supersedes_reason` — which is the whole rewrite list for the amendment
 you just reconciled, sized by the count it prints first. Deriving it by hand means one `grep` per
 superseded claim and then merging the results, which is the step that gets shortened to "the ones
-I remember". It exits 0 whether or not it finds anything, so it is a target list rather than
-another census entry to clear.
+I remember". A migrated vault is at schemaVersion 1, where the mode exits 0 whether or not it
+finds anything — so here it is a target list rather than another census entry to clear. At 2 it
+additionally fails a supersession carrying no `reconciled:` date, which means the rewrite you
+just did has a date to stamp: put it on each superseding note in the same edit.
 
 **Adopt the amended definition last, and stamp the copy.** Once every claim under the term is
 reconciled, replace that one term's `definition` in the vault's `_vocab.yml` with the shipped
@@ -643,7 +645,7 @@ Clean looks like this, and exits 0:
 
 ```
 vault-lint: note-level checks passed - /Users/example/Documents/go-to-market/example-product.
-Not opened: citation targets, supersession blast radius - --release-gate asks all of them.
+Not opened: citation targets, supersession blast radius, panel objection rows - --release-gate asks all of them.
 ```
 
 The line is deliberately narrower than "clean". This run reads note fields and opens no
@@ -719,7 +721,9 @@ vault-lint.sh --unverified --vault "$VAULT_PATH"
 # The sections a supersession put in doubt. A migration that imported prose saying
 # "superseded by F38" wrote those edges in stage 3, and the documents the old notes were
 # cited into still carry the old assertion. One row per section, with the reason, and a
-# count so the re-read can be sized. A target list, not a verdict - it exits 0.
+# count so the re-read can be sized. A migrated vault is at schemaVersion 1, where this
+# is a target list and exits 0; at 2 it also fails a supersession carrying no
+# `reconciled:` date, which is the last stage of the upgrade below.
 vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 
 # One chain, end to end. Pick a sentence in the plan, take the claim it cites, and confirm
@@ -727,8 +731,9 @@ vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
-**Before the first render — not here — the first and third of those are one call.**
-`vault-lint.sh --release-gate` runs the bare check, `--used-in` and the sweep together and exits
+**Before the first render — not here — the first and third of those are part of one call.**
+`vault-lint.sh --release-gate` runs the bare check, `--used-in`, the sweep and `--red-team`
+together and exits
 non-zero unless every part passes, which is what the render gate is held to. It is deliberately
 not the migration's acceptance test: `coverage-gap` and `orphan-source` legitimately survive a
 finished migration, so the gate exits 1 over a corpus that is done, and the census above is the
@@ -763,7 +768,22 @@ already requires.
    ```
 
    Everything it reports beyond the two that legitimately survive any finished migration
-   (`coverage-gap`, `orphan-source`) is upgrade work.
+   (`coverage-gap`, `orphan-source`) is upgrade work. Two rules only exist at 2, and both are
+   back-fill rather than repair:
+
+   - **`reconciled:` on every note carrying `supersedes`.** The sweep names the sections each
+     supersession put in doubt; **read them, then stamp the date you read them on the superseding
+     note.** Stamping first inverts the whole point — the field asserts the read happened, so a
+     date written to clear a red is a false assertion in the ledger, and it is exactly the
+     assertion the render gate downstream is trusting. If the corpus has more supersessions than
+     the session has room for, that is the signal to revert the `2` and come back, not to stamp
+     the rest.
+   - **A `## Lenses dispatched` roster in `red-team.md`**, if the engagement has one. Write the
+     round and lens for each round already folded into the table, reading the lens names off the
+     rows themselves; a round whose rows are all present needs no more than transcribing. A lens
+     you know was dispatched and that wrote nothing is the finding, not an obstacle — record it
+     and go get the rows.
+
 3. **Fix the corpus, never the number.** If the worklist is bigger than the session, revert the
    `2` and leave the vault at 1 — it is correct at 1 and it keeps rendering. A vault left
    committed at 2 mid-upgrade puts the render gate permanently red for reasons that have nothing
