@@ -798,3 +798,478 @@ if ($MODE -ceq 'release-gate') {
 	Invoke-ModeReleaseGate
 }
 
+# ----------------------------------------------------------------------------
+# the three things every mode below reads
+#
+# Ports bin/vault-lint.sh:519-548.
+# ----------------------------------------------------------------------------
+
+$VOCAB = $VAULT + '/_vocab.yml'
+$HAS_VOCAB = 0
+if (Test-Path -LiteralPath $VOCAB -PathType Leaf) { $HAS_VOCAB = 1 }
+
+# The rendered plan at the vault root, and whether it is there. Three modes read
+# it - --roadmap-table for the roadmap section, --binding-driver for the verdict
+# section, and --used-in through the path index - so the predicate is computed
+# once here beside HAS_VOCAB rather than per mode with a prefix on the name. Two
+# prefixed copies of a one-line test is how a third arrives.
+$PLAN = $VAULT + '/business-plan.md'
+$HAS_PLAN = 0
+if (Test-Path -LiteralPath $PLAN -PathType Leaf) { $HAS_PLAN = 1 }
+
+# Every field whose block-list items name other notes. DELIBERATELY wider than
+# vault.md's six edges: `covers` is a question field and `assumptions_low` and
+# `option_evidence` come from decisions.md, and none of the three is called an
+# edge anywhere - but each holds note IDs, so each has to be followed for a
+# dangling target and walked by `graph`. Declared once and consumed by both
+# traversals: two copies would let `graph` and `check` disagree about which
+# fields exist, which is the tool shrinking its own blast radius exactly the way
+# it warns notes not to.
+#
+# `depends_on` and `moves` are here unconditionally rather than behind the
+# schema gate. A vault at 1 carries neither field, so listing them costs nothing
+# there - and gating them would mean the schema-2 check that `moves` names a
+# note that exists is a rule of its own instead of the dangling-edge rule every
+# other edge already gets.
+$EDGE_FIELDS = 'rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence'
+
+# ----------------------------------------------------------------------------
+# the record stream
+#
+# Ports bin/vault-lint.sh:549-888. The shell writes three scratch files under a
+# mktemp directory because each of its passes is a separate awk process and a
+# pipe cannot be re-read. This file holds the same three streams as in-process
+# lists, under the same names, which removes the temp directory and with it the
+# EXIT/HUP/INT/TERM traps that clean it up: PowerShell 5.1 has no reliable
+# equivalent of a signal trap, so a scratch directory here would be one this
+# tool leaks on every interrupt.
+#
+#   $RECORDS   the tab-separated record stream, in the order the shell appends
+#              it - pass 1's A rows, then its T rows, then pass 2's N/S/L/E rows
+#   $FILES     the note file list, one path per entry, sorted in byte order
+#   $FAILURES  the rows a verdict mode accumulates and Render-Failures renders,
+#              `file <TAB> check <TAB> id <TAB> detail`
+#
+# EVERY PATH IN THESE STREAMS IS VAULT-RELATIVE WITH `/` SEPARATORS, normalized
+# HERE, once, where Get-ChildItem replaces `find` - never per mode. Get-ChildItem
+# yields `\` on Windows, and a `\` both diverges from the shell AND is then
+# doubled by the JSON escaper, so an unnormalized path produces a silently
+# different document rather than an obviously broken one.
+# ----------------------------------------------------------------------------
+
+# The generic type names are QUOTED. Unquoted, PowerShell parses
+# `Dictionary[string, string]` as an array argument to New-Object rather than
+# as a type parameter list, and the failure is a runtime cast error deep in the
+# vocabulary pass - not a parse error where the type is written. Quoting every
+# one of them is a single rule with no exception to remember.
+$RECORDS = New-Object 'System.Collections.Generic.List[string]'
+$FILES = New-Object 'System.Collections.Generic.List[string]'
+$FAILURES = New-Object 'System.Collections.Generic.List[string]'
+
+# One directory per type, one file per note. Anything outside these seven - the
+# research prose, an editor sidecar - is not a note and is never read. These are
+# the plural directory names; the singular type names are the req[] keys in the
+# checks pass, and vault.md closes the set at seven, so both lists are written
+# out by hand and have to move together.
+#
+# `milestones` is read at every schemaVersion even though the type is only
+# legitimate at 2, because a vault at 1 has no such directory by construction -
+# so the only vault this reads it in is one that grew the directory without
+# moving its version, and reading it there is what makes the checks pass say so
+# (`type-agreement`) instead of skipping the notes in silence.
+$NOTE_DIRS = @('sources', 'facts', 'claims', 'assumptions', 'questions', 'decisions', 'milestones')
+
+foreach ($d in $NOTE_DIRS) {
+	$dirPath = $VAULT + '/' + $d
+	if (-not (Test-Path -LiteralPath $dirPath -PathType Container)) { continue }
+	$prefix = Get-PathPrefix $dirPath
+	if ($prefix.Length -eq 0) { continue }
+	# -Force, because `find` lists dot-prefixed files and PowerShell marks them
+	# hidden: without it a `.draft.md` left in a note directory is invisible here
+	# and read there, which is a note the two implementations disagree about the
+	# existence of.
+	foreach ($entry in (Get-ChildItem -LiteralPath $dirPath -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+		# -cnotlike, not -notlike: `find -name '*.md'` matches case-sensitively
+		# even on a case-insensitive filesystem, and PowerShell's -like does not.
+		# A README.MD picked up here would be parsed as a note and reported as
+		# one missing every required field.
+		if ($entry.Name -cnotlike '*.md') { continue }
+		[void]$FILES.Add($VAULT + '/' + $d + '/' + (Get-RelativeSlashPath $entry.FullName $prefix))
+	}
+}
+
+# `LC_ALL=C sort` is byte order, so the comparer is ordinal - never
+# Sort-Object's culture-aware default, which would reorder the note list and
+# every failure row at once and make each mode's JSON diff read as a bug in
+# whichever mode the reader happened to check first. Ordinal compares UTF-16
+# code units rather than UTF-8 bytes, which agrees with byte order everywhere
+# except between an astral character and U+E000..U+FFFF - a distinction no note
+# path has ever made.
+$FILES_SORTED = $FILES.ToArray()
+[System.Array]::Sort($FILES_SORTED, [System.StringComparer]::Ordinal)
+$FILES.Clear()
+foreach ($f in $FILES_SORTED) { [void]$FILES.Add($f) }
+
+# ----------------------------------------------------------------------------
+# the patterns both parsers run
+#
+# Held as Regex objects rather than passed as strings to [regex]::IsMatch. The
+# static overloads look the pattern up in a process-wide cache of fifteen on
+# every call, and the note parser below runs several of these per line of every
+# note in the corpus - so on a vault of any size that lookup, not the matching,
+# is what the parse costs. Declared once here because the vocabulary pass and
+# the note pass share several of them; the patterns that run a handful of times
+# per process (the --depth check, the schemaVersion scan) stay inline, where
+# hoisting would buy nothing and only move them away from their one reader.
+# ----------------------------------------------------------------------------
+
+$RX_COMMENT = [regex]'\A[ \t]*#'
+$RX_BLANK = [regex]'\A[ \t]*\z'
+$RX_VOCAB_TERM = [regex]'\A  [A-Za-z][A-Za-z0-9_-]*:[ \t]*\z'
+$RX_VOCAB_FIELD = [regex]'\A    [A-Za-z][A-Za-z0-9_-]*:'
+$RX_VOCAB_FIELD_NAME = [regex]'\A[A-Za-z][A-Za-z0-9_-]*:'
+$RX_VOCAB_ALIAS = [regex]'\A      -[ \t]+'
+$RX_TOP_KEY = [regex]'\A[A-Za-z_][A-Za-z0-9_-]*:'
+$RX_LIST_ITEM = [regex]'\A[ \t]*-[ \t]+'
+$RX_ISO_DATE = [regex]'\A[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\z'
+$RX_LEADING_ZERO = [regex]'\A0[0-9]+\z'
+
+# ----------------------------------------------------------------------------
+# pass 1 - the vocabulary
+#
+# Ports bin/vault-lint.sh:586-646. Appends to the record stream, tab separated:
+#   T <term> <required>     one per term, in file order
+#   A <alias> <term>        one per alias, mapped to its canonical key
+#
+# _vocab.yml at the vault root is the file this reads, never the vocabulary.yml
+# that ships with the skill: a vault must stay checkable against the vocabulary
+# it was written under even after the skill ships new terms.
+#
+# Only `check` consumes T and A records - graph and --unverified match N, S and
+# L alone - so the pass is skipped entirely for them rather than parsed into
+# output nobody reads.
+#
+# A trailing CR is NOT stripped here, and that is a transcription rather than an
+# oversight: the shell's awk does not strip it either, so a CRLF _vocab.yml
+# fails the term-key pattern identically on both implementations.
+# ----------------------------------------------------------------------------
+
+if ($HAS_VOCAB -eq 1 -and $MODE -ceq 'check') {
+	$vocabOrder = New-Object 'System.Collections.Generic.List[string]'
+	$vocabRequired = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$term = ''
+	$field = ''
+
+	foreach ($line in (Read-TextLines $VOCAB)) {
+		if ($RX_COMMENT.IsMatch($line)) { continue }
+		if ($RX_BLANK.IsMatch($line)) { continue }
+
+		# A term key: two spaces of indent, nothing after the colon.
+		if ($RX_VOCAB_TERM.IsMatch($line)) {
+			$term = $line.Substring(2) -creplace ':[ \t]*\z', ''
+			[void]$vocabOrder.Add($term)
+			$vocabRequired[$term] = ''
+			$field = ''
+			continue
+		}
+
+		# A field of the current term. Seeing one resets `field`, which is what
+		# stops a continuation line of a multi-line plain `definition` being read
+		# as a key - and why the format bans ": " inside a definition.
+		if ($RX_VOCAB_FIELD.IsMatch($line)) {
+			$rest = $line.Substring(4)
+			$m = $RX_VOCAB_FIELD_NAME.Match($rest)
+			$field = $rest.Substring(0, $m.Length - 1)
+			$v = $rest.Substring($m.Length).Trim($SPACE_TAB)
+			if ($field -ceq 'required') { $vocabRequired[$term] = $v }
+			continue
+		}
+
+		if ($RX_VOCAB_ALIAS.IsMatch($line)) {
+			if ($field -ceq 'aliases') {
+				$alias = ($line -creplace '\A[ \t]*-[ \t]+', '').TrimEnd($SPACE_TAB)
+				[void]$RECORDS.Add("A`t" + $alias + "`t" + $term)
+			}
+			continue
+		}
+	}
+
+	# The T rows are emitted after every A row, in term order, because the shell
+	# emits them from awk's END block. A consumer that aggregates by key does not
+	# care, but the record stream is compared byte for byte through `check`, so
+	# the order is part of the contract rather than an accident of structure.
+	foreach ($t in $vocabOrder) { [void]$RECORDS.Add("T`t" + $t + "`t" + $vocabRequired[$t]) }
+}
+
+# ----------------------------------------------------------------------------
+# pass 2 - the notes
+#
+# Ports bin/vault-lint.sh:648-883. Appends to the record stream, tab separated:
+#   N <relpath> <dir> <basename>
+#   S <relpath> <key> <value>     scalar, block-scalar body, or a joined
+#                                 multi-line plain scalar. A newline inside a
+#                                 value is stored as the two characters \n.
+#   L <relpath> <key> <item>      one line per block-list item
+#   E <relpath> <check> <detail>  a parse failure, riding the same stream so it
+#                                 can be re-emitted with the note ID attached
+#                                 once every note has been read
+#
+# The frontmatter reader is a subset parser over flat scalars, block lists, and
+# the four fields allowed a literal block scalar. It COERCES NOTHING - every
+# value is treated as text. That is what makes a parser this small adequate: a
+# reader that does no type coercion cannot diverge from a real YAML parser,
+# because there is nothing left to be wrong about. The schema bans the values a
+# YAML parser would coerce, and the ambiguous-value check reports them.
+# ----------------------------------------------------------------------------
+
+# The closed set: a literal block scalar is allowed on these four fields and
+# nowhere else. They are the only values that must survive exactly as written -
+# a verbatim source passage, and the founder reasoning, skill reasoning and
+# reopen trigger on a decision.
+$BLOCK_OK = @{ 'quote' = $true; 'reasoning' = $true; 'reopen_if' = $true; 'founder_reasoning' = $true }
+
+function Get-Indent {
+	param([string]$Text)
+	$i = 0
+	while ($i -lt $Text.Length) {
+		$c = $Text[$i]
+		if ($c -ne [char]32 -and $c -ne [char]9) { break }
+		$i++
+	}
+	return $i
+}
+
+# Join a multi-line value onto one record line. A newline becomes the two
+# characters backslash-n, which is what keeps one record on one line.
+function ConvertTo-FlatValue {
+	param([string]$Text)
+	return ($Text.Replace([char]9, [char]32).Split([char]10) -join '\n')
+}
+
+# Strip one layer of matching quotes and undo the escape each style uses.
+function Remove-YamlQuotes {
+	param([string]$Text)
+	$n = $Text.Length
+	if ($n -lt 2) { return $Text }
+	$q = $Text[0]
+	if ($q -ne [char]34 -and $q -ne [char]39) { return $Text }
+	if ($Text[$n - 1] -ne $q) { return $Text }
+	$inner = $Text.Substring(1, $n - 2)
+	if ($q -eq [char]34) { return $inner.Replace('\"', '"') }
+	return $inner.Replace("''", "'")
+}
+
+# The coerce-nothing invariant as a test. Returns what leaving the value as
+# written costs, or '' when the value is unambiguous text.
+function Test-AmbiguousValue {
+	param([string]$Value)
+	if ($Value.Length -eq 0) { return '' }
+	if ($Value[0] -eq [char]34 -or $Value[0] -eq [char]39) { return '' }
+	$lv = $Value.ToLowerInvariant()
+	if ($lv -ceq 'yes' -or $lv -ceq 'no' -or $lv -ceq 'on' -or $lv -ceq 'off' -or
+		$lv -ceq 'true' -or $lv -ceq 'false' -or $lv -ceq 'y' -or $lv -ceq 'n') {
+		return 'YAML 1.1 reads it as a boolean and YAML 1.2 as the text ' + $lv + ', so the note means one thing to the editor and another to every reader'
+	}
+	if ($RX_ISO_DATE.IsMatch($Value)) {
+		return 'unquoted it is a date object in most parsers and text in the rest, and the plain string comparison every staleness query relies on stops working'
+	}
+	if ($RX_LEADING_ZERO.IsMatch($Value)) {
+		return 'unquoted leading zeros are read as octal by some parsers and truncated by others'
+	}
+	if ($Value.Contains(': ')) {
+		return 'an unquoted colon-space splits the value into a nested mapping, so the field stops holding what it reads as holding'
+	}
+	return ''
+}
+
+# Parse failures ride the same record stream as everything else, tagged E. A
+# side channel would need a second pass purely to prefix the tag, and that
+# reshaping pass re-splits on tabs, which truncates any detail carrying one -
+# unparsed-line embeds raw file content, so it can. Pass 3 aggregates by key
+# rather than by order, so an E record arriving before its note's N record is
+# fine.
+function Add-ParseError {
+	param([string]$Rel, [int]$LineNo, [string]$Check, [string]$Detail)
+	[void]$script:RECORDS.Add("E`t" + $Rel + "`t" + $Check + "`tline " + $LineNo + ': ' + $Detail.Replace([char]9, [char]32))
+}
+
+# Emit whatever key is open. Printing is the only side effect, so the caller
+# resets its own state.
+function Add-FlushedKey {
+	param([string]$Rel, [string]$Key, [string]$State, [string]$Value, [int]$KeyLine)
+	if ($State -ceq 'scalar' -or $State -ceq 'block') {
+		[void]$script:RECORDS.Add("S`t" + $Rel + "`t" + $Key + "`t" + (ConvertTo-FlatValue $Value))
+	} elseif ($State -ceq 'pending') {
+		Add-ParseError $Rel $KeyLine 'null-value' ('field `' + $Key + '` is present holding nothing. A present key holding nothing is not the same as an absent key, and a consumer expecting a list gets a type it did not plan for - if there is nothing to list, omit the key')
+	}
+}
+
+function Read-NoteFile {
+	param([string]$Path, [string]$Rel)
+
+	$lines = $null
+	try {
+		$lines = Read-TextLines $Path
+	} catch {
+		Add-ParseError $Rel 0 'frontmatter' 'the file cannot be read'
+		return
+	}
+	if ($lines.Count -eq 0) {
+		Add-ParseError $Rel 0 'frontmatter' 'the file is empty, so it carries no note fields at all'
+		return
+	}
+
+	$lineno = 1
+	$infm = 0
+	$state = ''
+	$key = ''
+	$keyline = 0
+	$keyindent = 0
+	$val = ''
+	$bindent = -1
+
+	if ((Remove-TrailingCr $lines[0]) -cne '---') {
+		Add-ParseError $Rel 1 'frontmatter' 'the file does not open with a --- fence, so it is not a note: every field in it is invisible to every query, and the note reads as absent rather than as broken'
+		return
+	}
+	$infm = 1
+
+	for ($li = 1; $li -lt $lines.Count; $li++) {
+		$lineno++
+		$line = Remove-TrailingCr $lines[$li]
+		# `\A[ \t]*\z` without the regex: the indent scan has already walked the
+		# leading space and tab, so a line is blank exactly when that scan
+		# consumed all of it. One pass over the prefix instead of two.
+		$ind = Get-Indent $line
+		$blank = ($ind -eq $line.Length)
+
+		# Inside a block scalar, everything indented further than the key belongs
+		# to the value, line by line, until the first line that dedents back to
+		# the key indentation or less. A reader that stops at the first blank
+		# line returns a note that parsed without error and has no quote in it.
+		if ($state -ceq 'block') {
+			if ($blank) { $val = $val + "`n"; continue }
+			if ($ind -gt $keyindent) {
+				if ($bindent -lt 0) { $bindent = $ind }
+				if ($val.Length -ne 0) { $val = $val + "`n" }
+				# substr past the end of the string is '' in awk and an exception
+				# here, and it is reachable: a later block line may be indented
+				# past the key but short of the first line's indent.
+				if ($bindent -lt $line.Length) { $val = $val + $line.Substring($bindent) }
+				continue
+			}
+			Add-FlushedKey $Rel $key $state $val $keyline
+			$state = ''; $val = ''; $bindent = -1
+			# fall through: this line closes the block and is itself a key
+		}
+
+		if ($blank) { continue }
+		# `\A[ \t]*#` off the same scan. $blank is false here, so $ind indexes a
+		# real character - the first one that is neither space nor tab.
+		if ($line[$ind] -eq [char]35) { continue }
+
+		if ($ind -eq 0 -and $line -ceq '---') {
+			Add-FlushedKey $Rel $key $state $val $keyline
+			$state = ''; $val = ''
+			$infm = 0
+			break
+		}
+
+		# Matched only where it can match. An indented line is never a top-level
+		# key and a top-level line is never a list item, so guarding each regex
+		# by the indent it needs means a line pays for at most one of them.
+		$keyMatch = $null
+		if ($ind -eq 0) { $keyMatch = $RX_TOP_KEY.Match($line) }
+		if ($null -ne $keyMatch -and $keyMatch.Success) {
+			Add-FlushedKey $Rel $key $state $val $keyline
+			$state = ''; $val = ''; $bindent = -1
+
+			$k = $line.Substring(0, $keyMatch.Length - 1)
+			$v = $line.Substring($keyMatch.Length).Trim($SPACE_TAB)
+			$key = $k; $keyline = $lineno; $keyindent = $ind
+
+			if ($v.Length -eq 0) {
+				$state = 'pending'
+			} elseif ($v[0] -eq [char]124) {
+				# Read the block properly whether or not this field is allowed
+				# one. Bailing here would leave every indented line that follows
+				# to be read as the next key.
+				if (-not $BLOCK_OK.ContainsKey($k)) {
+					Add-ParseError $Rel $lineno 'block-scalar-field' ('field `' + $k + '` uses a literal block scalar. The block form is allowed on quote, reasoning, reopen_if and founder_reasoning and nowhere else - a reader that tolerates a fifth field has to special-case a sixth and a seventh, and the closed set is what lets it reject instead of guess')
+				}
+				$state = 'block'; $val = ''; $bindent = -1
+			} elseif ($v[0] -eq [char]62) {
+				Add-ParseError $Rel $lineno 'folded-scalar' ('field `' + $k + '` uses a folded block scalar. Folded style reflows the block onto single lines at read time, joining line breaks into spaces - on a verbatim passage that means it stops being verbatim, which is the one job the field has. Write | instead')
+				$state = 'block'; $val = ''; $bindent = -1
+			} elseif ($v[0] -eq [char]91) {
+				Add-ParseError $Rel $lineno 'inline-flow-list' ('field `' + $k + '` is an inline flow list. Obsidian rewrites inline lists into block form when it saves a note, so every edge here is lost the first time somebody opens the vault in an editor - and the blast-radius query then returns a clean result over a corpus it can no longer see, which nobody investigates')
+				[void]$script:RECORDS.Add("S`t" + $Rel + "`t" + $k + "`t" + (ConvertTo-FlatValue $v))
+				$state = ''
+			} elseif ($v.ToLowerInvariant() -ceq 'null' -or $v -ceq '~') {
+				Add-ParseError $Rel $lineno 'null-value' ('field `' + $k + '` is set to ' + $v + '. A present key holding nothing is not the same as an absent key - omit the key instead')
+				$state = ''
+			} else {
+				$wh = Test-AmbiguousValue $v
+				if ($wh.Length -ne 0) {
+					Add-ParseError $Rel $lineno 'ambiguous-value' ('field `' + $k + '` has the unquoted value ' + $v + ' - ' + $wh + '. Quote it')
+				}
+				$state = 'scalar'; $val = (Remove-YamlQuotes $v)
+			}
+			continue
+		}
+
+		$itemMatch = $null
+		if ($ind -gt 0 -and ($state -ceq 'pending' -or $state -ceq 'list')) { $itemMatch = $RX_LIST_ITEM.Match($line) }
+		if ($null -ne $itemMatch -and $itemMatch.Success) {
+			$item = $line.Substring($itemMatch.Length).TrimEnd($SPACE_TAB)
+			$state = 'list'
+			$wh = Test-AmbiguousValue $item
+			if ($wh.Length -ne 0) {
+				Add-ParseError $Rel $lineno 'ambiguous-value' ('list item `' + $item + '` under `' + $key + '` is unquoted - ' + $wh + '. Quote it')
+			}
+			[void]$script:RECORDS.Add("L`t" + $Rel + "`t" + $key + "`t" + (ConvertTo-FlatValue (Remove-YamlQuotes $item)))
+			continue
+		}
+
+		# An indented line after a scalar is a multi-line plain scalar
+		# continuation. Tolerated rather than rejected: that is the shape the
+		# vocabulary file uses, and a reader that chokes on it is one people
+		# stop running.
+		if ($ind -gt 0 -and $state -ceq 'scalar') {
+			$val = $val + ' ' + $line.Trim($SPACE_TAB)
+			continue
+		}
+
+		Add-ParseError $Rel $lineno 'unparsed-line' ('this line is neither a key, a block-list item, a comment, nor the closing fence, so whatever it was meant to record is not in the ledger: ' + $line)
+	}
+
+	if ($infm -eq 1) {
+		Add-ParseError $Rel $lineno 'frontmatter' 'the frontmatter block is never closed by a --- fence, so where the ledger ends and the prose begins is undefined and every reader draws the line somewhere different'
+	}
+}
+
+foreach ($path in $FILES) {
+	if ($path.Length -eq 0) { continue }
+	$rel = $path
+	if ($rel.StartsWith($VAULT, [System.StringComparison]::Ordinal) -and $rel.Length -gt $VAULT.Length) {
+		$rel = $rel.Substring($VAULT.Length + 1)
+	}
+	$seg = $rel.Split([char]47)
+	$dirSeg = ''
+	if ($seg.Count -gt 1) { $dirSeg = $seg[$seg.Count - 2] }
+	[void]$RECORDS.Add("N`t" + $rel + "`t" + $dirSeg + "`t" + $seg[$seg.Count - 1])
+	Read-NoteFile $path $rel
+}
+
+# ----------------------------------------------------------------------------
+# DISPATCH POINT 2 - after the record stream, before the path index
+#
+# None of these three produces a failure row, and the path index costs a walk
+# over the whole vault, so all three exit above it - the same positions as
+# bin/vault-lint.sh:889, :1019 and :1129.
+# ----------------------------------------------------------------------------
+
+if ($MODE -ceq 'graph') { Invoke-ModeGraph }
+if ($MODE -ceq 'unverified') { Invoke-ModeUnverified }
+if ($MODE -ceq 'supersession-sweep') { Invoke-ModeSupersessionSweep }
+
