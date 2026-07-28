@@ -562,7 +562,44 @@ function Get-ModeForFlag {
 # part returned, not the last one and not a flattened 1.
 # ----------------------------------------------------------------------------
 function Invoke-ModeReleaseGate {
-	Exit-NotPorted '--release-gate'
+	# The running host's own executable, not a bare 'pwsh' on PATH: this process
+	# is already running under whichever host was invoked (powershell.exe 5.1 or
+	# pwsh), and re-invoking through that same binary is what MainModule.FileName
+	# gives - a bare 'pwsh' would silently switch hosts mid-gate on a machine that
+	# has both installed, which is not what "the same host you are running
+	# under" means.
+	$hostExe = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+
+	$gateStatus = 0
+	$gateFailed = ''
+	Write-OutText ('vault-lint release-gate: ' + $script:VAULT + "`n")
+
+	# EACH PART IS A FRESH INVOCATION OF THIS SCRIPT, not a function call - see
+	# bin/vault-lint.sh:474-480. check and --used-in share one failure file, so
+	# running two of them in one process would mean threading a reset between
+	# them and letting one mode's failures land in the other's verdict. A process
+	# boundary is the cheapest thing that cannot get that wrong.
+	foreach ($row in (Get-ModeRows)) {
+		if ($row.Gate -cne 'gate') { continue }
+		Write-OutText ("`n--- " + $row.Selector + ': ' + $row.Part + " ---`n")
+
+		& $hostExe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $script:PSCommandPath $row.Selector '--vault' $script:VAULT
+		$partStatus = $LASTEXITCODE
+
+		# THE EXIT STATUS IS THE WORST STATUS ANY PART RETURNED, not the last one
+		# and not a flattened 1 - bin/vault-lint.sh:486-490. A refusal (2) and a
+		# failed check (1) are different answers, and reporting both as 1 sends a
+		# reader hunting for a failure in a check that never ran.
+		if ($partStatus -gt $gateStatus) { $gateStatus = $partStatus }
+		if ($partStatus -ne 0) { $gateFailed = $gateFailed + ' ' + $row.Selector }
+	}
+
+	if ($gateStatus -eq 0) {
+		Write-OutText ("`nvault-lint release-gate: every part passed - " + $script:VAULT + "`n")
+	} else {
+		Write-ErrText ("`nvault-lint release-gate: did not pass -" + $gateFailed + "`n")
+	}
+	exit $gateStatus
 }
 
 # ----------------------------------------------------------------------------
