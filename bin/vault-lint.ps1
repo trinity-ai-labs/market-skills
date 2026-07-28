@@ -3933,9 +3933,20 @@ $RX_LEADING_ZERO = [regex]'\A0[0-9]+\z'
 # L alone - so the pass is skipped entirely for them rather than parsed into
 # output nobody reads.
 #
-# A trailing CR is NOT stripped here, and that is a transcription rather than an
-# oversight: the shell's awk does not strip it either, so a CRLF _vocab.yml
-# fails the term-key pattern identically on both implementations.
+# A TRAILING CR IS STRIPPED, exactly as the note parser strips one on every line
+# it reads. An earlier comment here claimed the opposite was a faithful
+# transcription - that the shell's awk leaves the CR in place too, so a CRLF
+# _vocab.yml fails the term-key pattern identically on both implementations.
+# That is false on the one platform this file exists for: Git for Windows'
+# awk reads in text mode and hands the pattern a line with no CR, so the shell
+# parses a CRLF vocabulary and the port did not. The whole vocabulary went empty
+# and `check` silently stopped asking three of its questions - unknown-subject,
+# near-miss-subject and coverage-gap all need a term to compare against, and a
+# vault with none reports no subject failures rather than reporting that it
+# could not check any. A Windows user's _vocab.yml is CRLF by default, so that
+# is the ordinary case, not the corner: the vault lints clean while carrying
+# unknown subjects and a thin spine, which is the exact silence this lint exists
+# to break.
 # ----------------------------------------------------------------------------
 
 if ($HAS_VOCAB -eq 1 -and $MODE -ceq 'check') {
@@ -3944,7 +3955,8 @@ if ($HAS_VOCAB -eq 1 -and $MODE -ceq 'check') {
 	$term = ''
 	$field = ''
 
-	foreach ($line in (Read-TextLines $VOCAB)) {
+	foreach ($rawLine in (Read-TextLines $VOCAB)) {
+		$line = Remove-TrailingCr $rawLine
 		if ($RX_COMMENT.IsMatch($line)) { continue }
 		if ($RX_BLANK.IsMatch($line)) { continue }
 
