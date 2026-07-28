@@ -934,10 +934,17 @@ away *compute*; they do not let it give away *correctness*, which is engineering
 commoditisation argument that doesn't name its layer overclaims in one direction, and a moat
 argument that ignores the layer it does reach overclaims in the other.
 
-Each panelist's objections land in `red-team.md`:
-`| # | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |`.
-Fold: fix what's fixable; every row disposed "moved to Risks" appears in the plan's Key risks
-section by its number — a plan that pre-states its best objections beats one that hides them.
+Each panelist's objections land in `red-team.md`, one row per objection, with an ID namespaced
+by round:
+`| R<round>-O<n> | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |` —
+round 4's third objection is `R4-O3`. Round is the count of times Phase 4 has been dispatched for
+this engagement, starting at 1 and incrementing on each re-dispatch (a plan revision, a follow-on
+session); objection numbering restarts at `O1` inside each round, so the round prefix is what
+keeps round 2's `O1` and round 4's `O1` from colliding on whichever a reader finds first. **Once
+cited, a code is never renumbered** — invariant 21 states the same rule for `[F#]` and for the
+same reason: renumbering silently repoints every citation already written. Fold: fix what's
+fixable; every row disposed "moved to Risks" appears in the plan's Key risks section by its
+round-qualified ID — a plan that pre-states its best objections beats one that hides them.
 **A surviving objection also lands in the vault**, as a `claim` that `supersedes` what it
 corrects or an `assumption` with a `validated_by` step. An objection disposed only in the table
 is one nothing downstream can find. That note is subject to invariant 20 like any other: it is

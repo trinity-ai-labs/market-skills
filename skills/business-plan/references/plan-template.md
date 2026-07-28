@@ -221,9 +221,9 @@ CAC payback + LTV:CAC (always paired), the milestone this capital buys>
 <[F#], unfair advantages made concrete>
 
 ## Key risks & mitigations
-<2–4 real ones, stated plainly (surviving red-team objections land HERE), each with a
-concrete mitigation or an honest open question. Naming your own risks is a credibility
-signal; defensive spin is not.
+<2–4 real ones, stated plainly (surviving red-team objections land HERE, by their
+round-qualified ID, e.g. R4-O1), each with a concrete mitigation or an honest open question.
+Naming your own risks is a credibility signal; defensive spin is not.
 
 The STRUCTURAL half of research/growth-curves.md's strategy record is routed here: every
 comparable growth strategy that record filed as gated on headcount, capital, an existing
