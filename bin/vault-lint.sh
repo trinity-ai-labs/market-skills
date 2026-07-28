@@ -1701,6 +1701,17 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
+		# THAT FENCE BLOCK IS ONE OF THREE COPIES in this file. The
+		# --supersession-sweep sections() and the --red-team row reader carry
+		# the same six lines, because all three read a document at the vault
+		# root and no one of them can call a function defined in another awk
+		# program. Change one, change all three.
+		#
+		# This copy is the one that most needed saying so. It has been edited
+		# twice already - the `{#anchor}` attribute below landed here alone -
+		# and a contract the other two copies knew about while this one did not
+		# would have made this the safe-looking place to edit by itself.
+		#
 		# Setext headings (a title underlined with ===) are deliberately not read.
 		# They are document titles and a #fragment cites a section, so reading
 		# them would mean carrying a line of lookbehind for a case nothing cites.
@@ -1877,6 +1888,12 @@ if [ "$MODE" = "red-team" ]; then
 				# and fail for documenting its own format. Tracked by marker
 				# character and run length so a longer nested fence cannot
 				# close its parent early.
+				#
+				# One of three copies of those six lines: the --used-in scan()
+				# and the --supersession-sweep sections() carry the same ones,
+				# for the same reason - three awk programs reading a document
+				# at the vault root, and no way to share a function across
+				# them. Change one, change all three.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
