@@ -188,10 +188,40 @@ CHANGELOG.md                  what each pinned version actually changed
 `--vault` (or `VAULT_PATH`) for the checks, `--json` for an agent consumer, `--unverified`
 for the notes asserted with nothing behind them, `--used-in` for whether each note's
 citation target still resolves, `--supersession-sweep` for the document sections a
-supersession put in doubt, and `graph <ID>` for one note's neighbourhood. This sentence is
+supersession put in doubt, `--release-gate` for all three of those run as one call, and
+`graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it** — an
 enumeration that has gone stale reads exactly like one that is complete. Rule 3 above has
 the reasoning for why `bin/` and `scripts/` sit under different constraints.
+
+**A new mode is a row in `MODE_TABLE`, not an arm of the argument `case`.** The table near the
+top of `bin/vault-lint.sh` holds one row per mode — the selector, whether `--release-gate` runs
+it, and the heading the gate prints above it — and both the flag parser and the gate's
+composition read it. The MODE token is the selector with its leading `--` stripped, which is a
+rule a new mode follows rather than a column that would restate its neighbour on every row.
+Adding a mode is that row, a block in `usage()` appended immediately before the `graph` one, and
+the mode's own dispatch. It is a table because a release that adds three modes would otherwise
+be three edits to the same `case` block, and git resolves two of those textually clean while the
+third silently loses the arm that parses its flag.
+
+`--release-gate` is a composite rather than a fourth check surface: it runs `check`, `--used-in`
+and `--supersession-sweep` as separate invocations of the script and exits with the **worst**
+status any part returned, so a refusal (2) is never reported as a failed check (1). It exists
+because the render gate was three calls made from memory — which of them ran was a matter of
+recall — and because the bare run's success line used to read as a whole-corpus verdict. That
+line now names what it checked and what it did not, with the *did not* half read off the same
+table, and `run-fixtures.sh` asserts the new wording rather than the substring `clean`. It also
+carries a `MODES` census asserting that every mode has a block in `usage()` — the one thing the
+table cannot absorb, since a help paragraph is hand-written at a shared anchor and a mode that
+loses its block still works.
+
+**`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2`) and refuses anything else.** A vault at
+1 is held to exactly the rules it was written under; version 2 is where a check that an existing
+corpus could not owe goes, and the found version is passed into the checks awk as `schema` so a
+new check can gate on it. Refusing a version from the future stays the point of the field: an
+older tool half-reading a newer vault reports a clean bill of health over every field it never
+saw. Adding a check that fires unconditionally on every existing corpus is the thing this
+mechanism exists to make unnecessary.
 
 `--used-in` is a mode rather than part of `check` because it reads documents outside the six
 note directories, and it is a verdict rather than a report: it exits 1 when a target file is

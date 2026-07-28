@@ -199,6 +199,7 @@ bare, from whatever directory the user happens to be working in:
 
 ```sh
 vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
+vault-lint.sh --release-gate --vault "$VAULT_PATH"
 vault-lint.sh --unverified --vault "$VAULT_PATH"
 vault-lint.sh --used-in --vault "$VAULT_PATH"
 vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
@@ -218,6 +219,19 @@ it was replaced. It prints the row count first, because a list you can size befo
 one that gets read. It is a **report and not a verdict: it exits 0 whether or not it finds
 anything**, since a supersession with a blast radius is the corpus doing its job — a mode that
 went red on a healthy vault would teach you to ignore the exit code the real checks depend on.
+
+`--release-gate` is the call before a render, and the only one that asks all three questions. It
+runs the bare check, then `--used-in`, then `--supersession-sweep`, prints each part under its
+own heading, and exits with the worst status any part returned — so the gate is clean only when
+every part is. The alternative was three calls made from memory, and which of them actually ran
+was a matter of recall.
+
+**The bare run's success line says what it checked and what it did not**, because it used to say
+`clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
+checks passed … not opened: citation targets, supersession blast radius* — and the list of what
+it skipped is read off the same mode table `--release-gate` composes itself from, so a mode
+added to the gate cannot leave the line quietly overstating what it covered. A success line is
+what somebody renders on, so it has to be narrower than the verdict its reader wants it to be.
 
 It is POSIX `/bin/sh` with zero dependencies — no Node, no Python, no jq. A tool that reads an
 entire private business corpus should not carry a transitive dependency tree, and a runtime
