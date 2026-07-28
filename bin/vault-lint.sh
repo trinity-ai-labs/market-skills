@@ -136,10 +136,13 @@ vault-lint.sh - read-only checks over a claim vault.
       that failed to read it.
 
   vault-lint.sh --release-gate [--vault PATH]
-      Run every mode a release owes, in order - `check`, --used-in,
-      --supersession-sweep and --red-team - printing each part's output under
-      its own heading. The exit status is the worst status any part returned,
-      so the gate is clean only when every part is.
+      Run every mode a release owes, in order, printing each part's output
+      under its own heading. Which modes those are is the gate column of the
+      mode table and not a list written out here: this block already went
+      one mode short once, because a hand-written enumeration beside a table
+      that composes itself is the half nobody edits. The exit status is the
+      worst status any part returned, so the gate is clean only when every
+      part is.
 
       It exists because the alternative was three calls made from memory, and
       which of them actually ran was a matter of recall. The bare run's
@@ -195,6 +198,70 @@ vault-lint.sh - read-only checks over a claim vault.
       business-plan.md fails: the roadmap is in the ledger and nowhere a
       reader can see it. Gated on schemaVersion 2, which is where the
       milestone type was added - a vault at 1 carries none and cannot owe this.
+
+  vault-lint.sh --binding-driver [--vault PATH] [--json]
+      Check a target verdict against the plan section that renders it: the
+      driver that binds, that driver's kind, and the evidence underneath it.
+      A verdict - it exits 1 on any of its four failures.
+
+      A verdict is a `claim` or an `assumption` carrying a subject of
+      target-verdict or steady-state-ceiling, plus binding_driver,
+      driver_kind, evidence_n and evidence_counterparties - and
+      conditional_on on top of those four exactly when driver_kind is policy
+      or policy-within-band, since a structural verdict has no choice to
+      name. The two rules that read nothing but the note - the fields are
+      owed as a set, and driver_kind takes one of three words - are in
+      `check`. This mode is the half that has to open business-plan.md.
+
+      verdict-unconditional: driver_kind is policy or policy-within-band and
+      conditional_on does not appear in the plan section the note renders
+      into. `Your target is unreachable` and `your target is unreachable at
+      six hours a week across two channels` are indistinguishable in a
+      rendered plan, at the same confidence letter, and only the second one
+      is true.
+
+      verdict-kind-mismatch: the corner verdict table under the
+      {#target-verdict} anchor renders its Kind column off driver_kind, so a
+      cell that disagrees with the note its Binding driver cell names is a
+      kind the plan asserts and the ledger does not hold. Checked in BOTH
+      directions - a verdict note whose driver no row carries fails too,
+      because otherwise the rule above is cleared by editing a cell.
+
+      verdict-thin-evidence: the closure under the note reaches fewer than
+      three distinct source notes, or they all share one counterparty, and
+      the note's own evidence_n / evidence_counterparties are not what the
+      closure holds. A single counterparty is reportable at any n - three
+      deals from one counterparty is the terms of one relationship reported
+      as the terms of a market, and a source count of three reads as the
+      opposite. Counterparty comes from `counterparty`, then `publisher`,
+      then the host of url_canonical. The stored pair is the only thing that
+      counts as surfacing it: reading the prose for the two numbers would
+      make an unrelated pair of digits silence the rule, and `check` already
+      owes both fields on every note this mode reads.
+
+      verdict-unfiled: a non-empty section at the {#target-verdict} anchor
+      with no verdict note behind it. This is --roadmap-table inverted - that
+      mode fails milestone notes with no business-plan.md to render them, and
+      this fails a rendered section with nothing in the ledger behind it.
+      WHAT TRIGGERS IT IS THE PRESENCE OF THE SECTION and never a reading of
+      the prose inside it. There is deliberately no {#steady-state}
+      equivalent: a ceiling section in an existing plan legitimately has no
+      field-carrying note behind it.
+
+      Both strings a document renders off a note - conditional_on and the
+      Kind cell - are matched VERBATIM, the same rule --roadmap-table holds a
+      milestone title to. There is no phrase list and no sentence-shape
+      inference anywhere in this mode: a check that cries wolf gets switched
+      off, and switching it off takes the half that worked with it.
+
+      THERE IS NO schemaVersion GATE, and the two subjects trigger
+      differently. target-verdict is a term this release introduces, so no
+      existing corpus carries it and the fields are owed whatever else the
+      note carries - a note under that subject holding none of them fails.
+      steady-state-ceiling predates its amendment and is required, so every
+      existing vault already holds one - there the trigger is field
+      presence, and a ceiling claim carrying none of the five owes none of
+      them. A vault with no verdict note passes.
 
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
@@ -262,6 +329,7 @@ check                gate  note-level checks
 --release-gate       -     -
 --red-team           gate  panel objection rows
 --roadmap-table      gate  roadmap table against the milestone set
+--binding-driver     gate  verdict drivers and the evidence under them
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -449,6 +517,15 @@ fi
 VOCAB="$VAULT/_vocab.yml"
 HAS_VOCAB=0
 [ -f "$VOCAB" ] && HAS_VOCAB=1
+
+# The rendered plan at the vault root, and whether it is there. Three modes read
+# it - --roadmap-table for the roadmap section, --binding-driver for the verdict
+# section, and --used-in through the path index - so the predicate is computed
+# once here beside HAS_VOCAB rather than per mode with a prefix on the name. Two
+# prefixed copies of a one-line test is how a third arrives.
+PLAN="$VAULT/business-plan.md"
+HAS_PLAN=0
+[ -f "$PLAN" ] && HAS_PLAN=1
 
 # Every field whose block-list items name other notes. This is DELIBERATELY
 # wider than vault.md's six edges: `covers` is a question field and
@@ -1179,7 +1256,9 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		}
 
 		# Register one fold key against one heading, or RETIRE it when a second
-		# heading claims the same key. Retiring is the whole safety property:
+		# heading claims the same key. --binding-driver carries the second copy,
+		# as claimkey(), so a grep for `claim(` does not find it: change one,
+		# change both. Retiring is the whole safety property:
 		# two headings that differ only in the punctuation the fold drops are
 		# indistinguishable here, so the key resolves to nothing and both
 		# citations keep the rows they get today. Zero is the retired marker
@@ -1198,15 +1277,17 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		# Every heading a document offers, as fold keys pointing at the
 		# heading ordinal. Read once per document, on first sight.
 		#
-		# The fence tracking is one of four copies in this file - --used-in
-		# scans headings under the same rule, and so do --red-team and
-		# --roadmap-table. All four are the same six lines: a `#` inside a
-		# fenced block is an example rather than a section anyone can jump to,
-		# and the marker and run length are tracked so a longer nested fence
-		# cannot close its parent early. Change one, change all four.
+		# The fence tracking is one of five copies in this file - --used-in
+		# scans headings under the same rule, and so do --red-team,
+		# --roadmap-table and --binding-driver. All five are the same six
+		# lines: a `#` inside a fenced block is an example rather than a section
+		# anyone can jump to, and the marker and run length are tracked so a
+		# longer nested fence cannot close its parent early. Change one, change
+		# all five.
 		#
-		# The fold() below has a second copy too, in --roadmap-table, which
-		# resolves the roadmap heading by the same rule and for the same reason.
+		# The fold() below has two more copies, in --roadmap-table and
+		# --binding-driver, which resolve their own section headings by the same
+		# rule and for the same reason.
 		function sections(doc,   path, line, t, c, n, fc, fn, h, ex, id) {
 			path = vault "/" doc
 			fc = ""; fn = 0; id = 0
@@ -1387,8 +1468,9 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					# note writing ./business-plan.md#why-now and another writing
 					# business-plan.md#why-now would be two rows for one section -
 					# which is the double-counting this mode exists to avoid.
-					# The five lines below are byte-identical to the copy in
-					# --used-in on purpose: change one, change the other. What
+					# The five lines below are byte-identical to the copies in
+					# --used-in and --binding-driver on purpose, so a diff of the
+					# three proves they agree: change one, change all three. What
 					# follows them is a step of its own - collapsing two
 					# spellings of one heading onto one key, per the block
 					# above tnote.
@@ -1519,13 +1601,16 @@ if [ "$MODE" = "supersession-sweep" ]; then
 fi
 
 # ----------------------------------------------------------------------------
-# what the two verdict modes share
+# what every verdict mode shares
 #
-# `check` and `--used-in` both emit failure rows and both carry a verdict out in
-# their exit status, so the date, the path index and the renderer are built once
-# here rather than twice. graph, --unverified and --supersession-sweep have
-# already exited: none of the three produces a failure row, and the path index
-# costs a find over the whole vault.
+# Every mode that emits failure rows and carries a verdict out in its exit status
+# builds on what follows, so the date, the path index and the renderer are built
+# once here rather than once per mode. That is `check`, --used-in, --red-team,
+# --roadmap-table and --binding-driver today, and a mode joins the list by being
+# dispatched below this point rather than by registering anywhere - which is why
+# this comment names them and the code does not. graph, --unverified and
+# --supersession-sweep have already exited above: none of the three produces a
+# failure row, and the path index costs a find over the whole vault.
 # ----------------------------------------------------------------------------
 
 TODAY=$(date +%Y-%m-%d)
@@ -1734,11 +1819,12 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
-		# THAT FENCE BLOCK IS ONE OF FOUR COPIES in this file. The
-		# --supersession-sweep sections(), the --red-team row reader and the
-		# --roadmap-table readplan() carry the same six lines, because all four
-		# read a document at the vault root and no one of them can call a
-		# function defined in another awk program. Change one, change all four.
+		# THAT FENCE BLOCK IS ONE OF FIVE COPIES in this file. The
+		# --supersession-sweep sections(), the --red-team row reader, the
+		# --roadmap-table readplan() and the --binding-driver readdoc() carry the
+		# same six lines, because all five read a document at the vault root and
+		# no one of them can call a function defined in another awk program.
+		# Change one, change all five.
 		#
 		# This copy is the one that most needed saying so. It has been edited
 		# twice already - the `{#anchor}` attribute below landed here alone -
@@ -1818,10 +1904,11 @@ if [ "$MODE" = "used-in" ]; then
 					# The split below - document, #anchor, and the leading ./ and
 					# trailing / stripped off - is duplicated in the
 					# --supersession-sweep pass, which groups its worklist on the
-					# result. Change one, change the other: if the two stop
-					# agreeing on what counts as the same target, the sweep emits
-					# two rows for a section this mode resolved once, and nothing
-					# fails to say so.
+					# result, and in --binding-driver, which resolves the section
+					# a verdict renders into. Change one, change all three: if
+					# they stop agreeing on what counts as the same target, the
+					# sweep emits two rows for a section this mode resolved once,
+					# and nothing fails to say so.
 					p = index(entry, "#")
 					doc = (p > 0) ? substr(entry, 1, p - 1) : entry
 					anchor = (p > 0) ? substr(entry, p + 1) : ""
@@ -1922,11 +2009,12 @@ if [ "$MODE" = "red-team" ]; then
 				# character and run length so a longer nested fence cannot
 				# close its parent early.
 				#
-				# One of four copies of those six lines: the --used-in scan(),
-				# the --supersession-sweep sections() and the --roadmap-table
-				# readplan() carry the same ones, for the same reason - four awk
-				# programs reading a document at the vault root, and no way to
-				# share a function across them. Change one, change all four.
+				# One of five copies of those six lines: the --used-in scan(),
+				# the --supersession-sweep sections(), the --roadmap-table
+				# readplan() and the --binding-driver readdoc() carry the same
+				# ones, for the same reason - five awk programs reading a
+				# document at the vault root, and no way to share a function
+				# across them. Change one, change all five.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
@@ -2069,10 +2157,6 @@ fi
 # ----------------------------------------------------------------------------
 
 if [ "$MODE" = "roadmap-table" ]; then
-	ROADMAP_PLAN="$VAULT/business-plan.md"
-	ROADMAP_HAS_PLAN=0
-	[ -f "$ROADMAP_PLAN" ] && ROADMAP_HAS_PLAN=1
-
 	# The success line comes back on stdout and is captured the way FOUND_SCHEMA
 	# is, because what `clean` means here depends on what there was to compare:
 	# a line saying the table agrees, printed over a vault with no milestones or
@@ -2080,7 +2164,7 @@ if [ "$MODE" = "roadmap-table" ]; then
 	# bare run success line already had once. Failures go to $FAILURES through
 	# report() like every other mode, so stdout carries this line and nothing
 	# else.
-	ROADMAP_OK=$(LC_ALL=C awk -v out="$FAILURES" -v plan="$ROADMAP_PLAN" -v hasplan="$ROADMAP_HAS_PLAN" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' '
+	ROADMAP_OK=$(LC_ALL=C awk -v out="$FAILURES" -v plan="$PLAN" -v hasplan="$HAS_PLAN" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' '
 			$1 == "N" { files[++nf] = $2; next }
 			$1 == "S" { V[$2, $3] = $4; next }
 
@@ -2097,7 +2181,8 @@ if [ "$MODE" = "roadmap-table" ]; then
 			# whether an anchor resolves. Every character the slug rule drops is
 			# dropped here too, so any spelling that rule resolves to the roadmap
 			# heading folds onto it without this program having to know which
-			# characters those are. Change one, change both.
+			# characters those are. --binding-driver carries the third copy, for
+			# the verdict heading. Change one, change all three.
 			function fold(s,   i, c, o) {
 				o = ""
 				for (i = 1; i <= length(s); i++) {
@@ -2110,6 +2195,12 @@ if [ "$MODE" = "roadmap-table" ]; then
 			}
 
 			# The item cells of the first table under the roadmap heading.
+			#
+			# THE ROW PARSER IS ONE OF TWO COPIES: --binding-driver readdoc()
+			# reads the corner verdict table under the same rules - strip the
+			# outer pipes, split on `|`, spot the all-dashes alignment rule, read
+			# the header for which column matters, and treat a table with no rule
+			# as no table. Change one, change both.
 			#
 			# THE HEADER ROW AND THE |---| RULE ARE BOTH DROPPED, and they are
 			# dropped by one test rather than by counting lines. A row whose
@@ -2143,10 +2234,11 @@ if [ "$MODE" = "roadmap-table" ]; then
 			#
 			# The fence tracking is the FOURTH copy in this file - --used-in
 			# scan(), --supersession-sweep sections() and --red-team carry the
-			# same six lines, because each reads a document at the vault root and
-			# no one of them can call a function defined in another awk program.
-			# A `#` or a `|` inside a fenced block is an example rather than
-			# anything a reader can act on. Change one, change all four.
+			# same six lines and --binding-driver readdoc() carries the fifth,
+			# because each reads a document at the vault root and no one of them
+			# can call a function defined in another awk program. A `#` or a `|`
+			# inside a fenced block is an example rather than anything a reader
+			# can act on. Change one, change all five.
 			# The read STOPS the moment the answer can no longer change - at the
 			# heading that closes the section, or at the line that ends the first
 			# table in it. SEENRM makes the section unre-enterable and only the
@@ -2314,6 +2406,556 @@ if [ "$MODE" = "roadmap-table" ]; then
 fi
 
 # ----------------------------------------------------------------------------
+# --binding-driver - the verdict driver, and the evidence under it
+#
+# Invariant 16 second clause and the thin-evidence rule were prose, and nothing
+# read either. A verdict whose binding driver is `policy` is supposed to render
+# as *unreachable at six hours a week across two channels* rather than
+# *unreachable* - and the second one rendered, at the same confidence letter,
+# with nothing in the tool able to tell them apart. Both defects came from the
+# same place: a verdict was an ordinary claim, so there was no field for a check
+# to read. There is now, and this is the half of the reading that has to open a
+# document.
+#
+# THE TRIGGER IS THE SUBJECT AND THERE IS NO schemaVersion GATE, and the two
+# subjects trigger differently on purpose. `target-verdict` is a term this
+# release introduces, so no note in any existing corpus carries it: the four
+# fields owed outright are owed there whatever the note carries, and a note
+# carrying none of them fails. `steady-state-ceiling` is required and predates
+# its amendment, so every existing vault already holds one: there the trigger is
+# FIELD PRESENCE, which is what exempts a claim written before the fields
+# existed. Extending that leniency to the verdict half would pay an exemption
+# whole cost over an empty population, and the cost is exact - omitting
+# `binding_driver` would become the cheapest way past every rule below. A dodge
+# available by omission is not an exemption, which is the same reason --red-team
+# checks its roster both ways.
+#
+# BOTH STRINGS A DOCUMENT RENDERS OFF A NOTE ARE MATCHED VERBATIM - the
+# `conditional_on` phrase and the corner table Kind cell - which is the
+# --roadmap-table argument one document section over. Where one side renders off
+# the other, an exact match is a check: a mismatch means somebody wrote the
+# sentence by hand. There is no phrase list here and no sentence-shape
+# inference, because a check that cries wolf gets switched off and switching it
+# off takes the half that worked with it.
+#
+# WHAT SECTION A NOTE RENDERS INTO is the anchor its subject renders into in
+# business-plan.md - `{#target-verdict}` or `{#steady-state}` - and, only where
+# the plan carries no such section, the sections its `used_in` names. The anchor
+# comes FIRST rather than joining a union with used_in, and that ordering is
+# load-bearing: under a union, a note that also cites `## Why now` clears the
+# condition check whenever the phrase appears there, so the verdict corner can
+# read *does not clear* and pass. The union looked more permissive in the right
+# way and was more permissive in the wrong one. The used_in fallback is what
+# keeps a plan that renders its verdict under some other heading checkable at
+# all. A note that reaches no section either way is silent rather than failing -
+# the failure this exists for is a rendered plan that says less than it knows,
+# and a verdict written before the plan has a section for it has nothing
+# rendered to be wrong.
+#
+# It is a mode rather than a check for the reason --used-in, --red-team and
+# --roadmap-table are: it reads a document at the vault root rather than a note
+# in one of the seven directories, which is a different surface. It shares the
+# failure renderer, so it reports one row per failure with the same JSON shape.
+#
+# LC_ALL=C for the reason --used-in found the hard way: a plan section is free
+# prose and a `conditional_on` phrase is written by a founder, so both carry em
+# dashes and curly quotes - and macOS awk in a UTF-8 locale aborts the record on
+# the first sequence it cannot decode, which would stop the read partway and
+# report the notes after it against a section it never finished.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "binding-driver" ]; then
+	# The success line is captured off stdout the way --roadmap-table one is,
+	# because what `clean` means here depends on what there was to compare: a
+	# line saying the verdict agrees with the plan, printed over a vault that
+	# carries no verdict, reads as a verdict that was checked.
+	BD_OK=$(LC_ALL=C awk -v out="$FAILURES" -v vault="$VAULT" -v hasplan="$HAS_PLAN" -F '\t' '
+			BEGIN {
+				# The two driver_kind values that make a verdict conditional.
+				# The full closed word list, and the rule that rejects a fourth
+				# word, belong to the checks pass - this program branches on
+				# policy-or-not and needs no more than that.
+				COND["policy"] = 1
+				COND["policy-within-band"] = 1
+
+				# The subject a verdict carries, and the fold key of the plan
+				# anchor it renders into. plan-template.md writes those two
+				# headings as `## Target & verdict {#target-verdict}` and
+				# `## Steady state ... {#steady-state}`.
+				ANCHOR["target-verdict"] = "targetverdict"
+				ANCHOR["steady-state-ceiling"] = "steadystate"
+
+				# The one document section whose table rows are read, so every
+				# other section is parsed and discarded rather than stored. The
+				# corner verdict table is a property of the verdict anchor and
+				# the ceiling section carries none, so recording rows anywhere
+				# else would be dead data with a sync obligation attached.
+				TABLEDOC = "business-plan.md"
+				TABLEKEY = "targetverdict"
+
+				# The five fields, in the order vault.md lists them. The checks
+				# pass carries the same set split four-plus-one, because it is
+				# the half that reports a missing field and `conditional_on` is
+				# owed conditionally; here the whole set is only ever counted,
+				# so it stays one list. Change one, change both.
+				nv = split("binding_driver driver_kind conditional_on evidence_n evidence_counterparties", vf, " ")
+			}
+
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+			$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# The same present() the checks pass uses, and copied verbatim
+			# rather than written as `V[f, k] != ""` for one reason: both
+			# programs implement the same trigger, and a field authored as a
+			# one-item block list is present to one test and absent to the
+			# other. That divergence fails a note in the checks pass while
+			# silently skipping it here, which is a half-checked verdict with
+			# nothing saying so. Change one, change both.
+			function present(f, k) { return (V[f, k] != "" || LN[f SUBSEP k] > 0) }
+
+			function trim(s) {
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# The third copy of the --supersession-sweep fold, answering the
+			# same question --roadmap-table asks it: which heading is THIS
+			# section, rather than whether an anchor resolves. Every character
+			# the slug rule drops is dropped here too, so any spelling that rule
+			# resolves to the verdict heading folds onto it without this program
+			# having to know which characters those are. Change one, change all
+			# three.
+			function fold(s,   i, c, o) {
+				o = ""
+				for (i = 1; i <= length(s); i++) {
+					c = substr(s, i, 1)
+					if (c >= "a" && c <= "z") { o = o c; continue }
+					if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
+					if (c >= "0" && c <= "9") { o = o c; continue }
+				}
+				return o
+			}
+
+			# Register one fold key against one heading ordinal, or RETIRE it
+			# when a second heading claims the same key. The second copy of the
+			# --supersession-sweep claim(), which states the safety property:
+			# two headings differing only in the punctuation the fold drops are
+			# indistinguishable here, so an ambiguous key resolves to nothing
+			# rather than to a guess. Being wrong costs a section read against
+			# the wrong note. Change one, change both.
+			function claimkey(doc, k, ord,   ak) {
+				if (k == "") return
+				ak = doc SUBSEP k
+				if (ak in ALIAS) {
+					if (ALIAS[ak] != ord) ALIAS[ak] = 0
+					return
+				}
+				ALIAS[ak] = ord
+			}
+
+			# One document at the vault root, read once, into three things:
+			# every heading as fold keys pointing at its ordinal, the text of
+			# every section, and the corner verdict rows of the one section that
+			# has them. Memoised on SCANNED, so a document cited by four notes
+			# is opened once.
+			#
+			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is looser
+			# than the rule --roadmap-table readplan() uses (next heading of the
+			# same depth or shallower). Nothing in plan-template.md puts a
+			# subsection under the verdict anchor, so the two agree today; if
+			# one is ever added, the phrase a reader sees inside that subsection
+			# is outside the body this reads and the condition check would cry
+			# wolf. That is the trigger to adopt readplan() depth rule here.
+			#
+			# THE CORNER TABLE IS IDENTIFIED BY ITS HEADER rather than by being
+			# the first table in the section, which is tighter than
+			# --roadmap-table needs and for a reason: the verdict section
+			# legitimately carries other tables - the stated range and the
+			# evidenced range as two labelled rows, and the multiple band an
+			# exit target carries - so a positional rule would read one of those
+			# and report every row of a correct table as a kind with no note
+			# behind it. A table is the corner table when its header names both
+			# a `Binding driver` column and a `Kind` column, matched by the same
+			# fold as everything else here; the FIRST such table in the section
+			# is read and any later one is skipped, so a document quoting its
+			# own format below the real table cannot double-count.
+			#
+			# THE ROW PARSER IS THE SECOND COPY of the one in --roadmap-table
+			# readplan(): strip the outer pipes, split on `|`, spot the
+			# all-dashes alignment rule, treat everything above it as header and
+			# read the header for which column matters. Both carry the rule that
+			# a table with NO alignment rule is not a table to any renderer, so
+			# its rows are not rows. Change one, change both.
+			#
+			# The fence tracking is the FIFTH copy in this file - --used-in
+			# scan(), --supersession-sweep sections(), --red-team and
+			# --roadmap-table readplan() carry the same six lines, because each
+			# reads a document at the vault root and no one of them can call a
+			# function defined in another awk program. A `#` or a `|` inside a
+			# fenced block is an example rather than an assertion the document
+			# makes, which is also why fenced lines never reach BODY: a fenced
+			# template carrying a condition would otherwise satisfy the check
+			# for a section that renders nothing. Change one, change all five.
+			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, alldash, hdr, dcol, kcol, intable, wanttable, kk, dv, kv) {
+				if (doc in SCANNED) return
+				SCANNED[doc] = 1
+				path = vault "/" doc
+				fc = ""; fn = 0; ord = 0
+				hdr = ""; intable = 0; dcol = 0; kcol = 0; wanttable = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+						c = substr(t, 1, 1)
+						n = 0
+						while (substr(t, n + 1, 1) == c) n++
+						if (fc == "") { fc = c; fn = n }
+						else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+						continue
+					}
+					if (fc != "") continue
+
+					if (match(t, /^#+[ \t]+/)) {
+						h = substr(t, RLENGTH + 1)
+						sub(/[ \t]*#+[ \t]*$/, "", h)
+						h = trim(h)
+						ex = ""
+						# Braces written as bracket expressions rather than
+						# escaped, for the reason scan() states: a
+						# backslash-brace is an interval expression to some
+						# awks and a literal to others, and which one runs
+						# this is a property of the user machine.
+						if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
+							ex = substr(h, RSTART, RLENGTH)
+							sub(/^[{]#/, "", ex)
+							sub(/[}]$/, "", ex)
+							h = trim(substr(h, 1, RSTART - 1))
+						}
+						ord++
+						# Both addresses registered, not one: a vault written
+						# before the template carried attributes cites the
+						# slug, and an implementation where the attribute
+						# REPLACED it would stop resolving those entries the
+						# day the author pasted a newer template in.
+						if (ex != "") claimkey(doc, fold(ex), ord)
+						claimkey(doc, fold(h), ord)
+						wanttable = (doc == TABLEDOC && (fold(ex) == TABLEKEY || fold(h) == TABLEKEY))
+						hdr = ""; intable = 0
+						continue
+					}
+
+					if (ord == 0) continue
+					# A blank line closes a table to every renderer, so it
+					# closes one here - otherwise two tables separated by a
+					# paragraph read as one and the rows of the second land
+					# under the header of the first.
+					if (t == "") { hdr = ""; intable = 0; continue }
+
+					BODY[doc, ord] = BODY[doc, ord] t "\n"
+					if (substr(t, 1, 1) != "|") { hdr = ""; intable = 0; continue }
+					if (!wanttable) continue
+
+					row = t
+					sub(/^\|/, "", row)
+					sub(/\|[ \t]*$/, "", row)
+					nc = split(row, cell, "|")
+					if (nc < 1) continue
+					alldash = 1
+					for (i = 1; i <= nc; i++)
+						if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { alldash = 0; break }
+
+					kk = doc SUBSEP ord
+					if (alldash) {
+						# The row directly above the rule is the header, and
+						# it is read for nothing but which two columns matter.
+						dcol = 0; kcol = 0
+						if (hdr != "" && KN[kk] == 0) {
+							n = split(hdr, cell, "|")
+							for (i = 1; i <= n; i++) {
+								if (fold(cell[i]) == "bindingdriver") dcol = i
+								else if (fold(cell[i]) == "kind") kcol = i
+							}
+						}
+						intable = 1
+						continue
+					}
+
+					if (!intable) { hdr = row; continue }
+					if (dcol == 0 || kcol == 0) continue
+					dv = (dcol <= nc) ? trim(cell[dcol]) : ""
+					kv = (kcol <= nc) ? trim(cell[kcol]) : ""
+					KDRV[kk, ++KN[kk]] = dv
+					KKND[kk, KN[kk]] = kv
+				}
+				close(path)
+			}
+
+			# One of three identical copies - the graph pass and the checks pass
+			# carry the other two, neither annotated. Change one, change all
+			# three.
+			function target_of(item) {
+				return (index(item, " :: ") > 0) ? substr(item, index(item, " :: ") + 4) : item
+			}
+
+			# The counterparty fallback chain vault.md documents, last rung: the
+			# host of the canonical URL. It errs toward collapsing two unrelated
+			# deals covered by one publication onto one party, which is why the
+			# field is authored rather than inferred - and dropping the chain
+			# instead errs the other way, where an unwritten field reads as *no
+			# counterparty* and every note counts as its own party, so a corpus
+			# written before the field reports perfect diversity.
+			function hostof(u,   p) {
+				if (u == "") return ""
+				p = index(u, "/")
+				if (p > 0) u = substr(u, 1, p - 1)
+				sub(/^www\./, "", u)
+				return u
+			}
+
+			# The transitive closure over rests_on, down to the source notes,
+			# counting distinct sources and distinct counterparties as it goes.
+			# The same downward walk `graph` performs in walkout(), narrowed to
+			# the one edge that carries provenance: a copy rather than a call
+			# because each mode is a separate awk process, and hoisting would
+			# mean assembling awk source in a shell variable and costing every
+			# program in this file its top-to-bottom readability. SEEN is what
+			# makes a cycle terminate and what stops a diamond counting one
+			# source twice; the caller resets it, along with the two counters
+			# and the two sets, before each walk.
+			function closure(id,   f, k, j, cp) {
+				if (id == "" || (id in SEEN)) return
+				SEEN[id] = 1
+				f = BYID[id]
+				if (f == "") return
+				if (V[f, "type"] == "source") {
+					SRC[id] = 1
+					nsrc++
+					cp = V[f, "counterparty"]
+					if (cp == "") cp = V[f, "publisher"]
+					if (cp == "") cp = hostof(V[f, "url_canonical"])
+					if (cp != "" && !(cp in CP)) { CP[cp] = 1; ncp++ }
+				}
+				k = f SUBSEP "rests_on"
+				for (j = 1; j <= LN[k]; j++) closure(target_of(LI[k, j]))
+			}
+
+			# Whether a corner row states a kind at all. plan-template.md writes
+			# one of the three words for every corner where a driver binds, and
+			# an em dash both for a corner where nothing binds and for one whose
+			# verdict is undetermined - so a cell with no alphanumeric byte in
+			# it asserts no kind and there is nothing for a note to disagree
+			# with. The test is emptiness after the fold rather than membership
+			# of the three words, so a cell carrying a fourth word or a typo
+			# still fails against the note instead of slipping out of the check.
+			function stateskind(s) { return (fold(s) != "") }
+
+			END {
+				for (i = 1; i <= nf; i++) if (V[files[i], "id"] != "") BYID[V[files[i], "id"]] = files[i]
+
+				# The verdict section of business-plan.md, resolved once. Its
+				# ordinal is what both the corner table and verdict-unfiled
+				# hang off, so it is looked up before any note is read.
+				tvord = 0
+				if (hasplan == "1") {
+					readdoc("business-plan.md")
+					ak = "business-plan.md" SUBSEP "targetverdict"
+					if ((ak in ALIAS) && ALIAS[ak] > 0) tvord = ALIAS[ak]
+				}
+				tvkk = "business-plan.md" SUBSEP tvord
+				nrow = KN[tvkk] + 0
+
+				# THE ASYMMETRIC TRIGGER, in one place. A target-verdict note is
+				# read whatever it carries; a ceiling note is read only once it
+				# carries one of the five, which is the exemption for every
+				# ceiling claim written before the fields existed.
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					ty = V[f, "type"]
+					if (ty != "claim" && ty != "assumption") continue
+					sj = V[f, "subject"]
+					if (!(sj in ANCHOR)) continue
+					if (sj == "target-verdict") nvt++
+					else {
+						carried = 0
+						for (j = 1; j <= nv && !carried; j++) if (present(f, vf[j])) carried = 1
+						if (!carried) continue
+					}
+					VN[++nvn] = f
+				}
+
+				for (v = 1; v <= nvn; v++) {
+					f = VN[v]
+					sj = V[f, "subject"]
+					id = V[f, "id"]
+					bd = V[f, "binding_driver"]
+					dk = V[f, "driver_kind"]
+
+					# The section this verdict renders into: the anchor its
+					# subject renders into, and only where the plan carries no
+					# such section, the sections its used_in names.
+					ncand = 0
+					if (hasplan == "1") {
+						ak = "business-plan.md" SUBSEP ANCHOR[sj]
+						if ((ak in ALIAS) && ALIAS[ak] > 0) CK[++ncand] = "business-plan.md" SUBSEP ALIAS[ak]
+					}
+					k = f SUBSEP "used_in"
+					for (j = 1; ncand == 0 && j <= LN[k]; j++) {
+						entry = LI[k, j]
+						# The third copy of the --used-in split: document,
+						# #anchor, and the leading ./ and trailing / stripped
+						# off. Byte-identical to the copies in --used-in and
+						# --supersession-sweep on purpose, so a diff of the
+						# three proves they agree on what an entry names - the
+						# `..` guard below is the one deliberate difference.
+						# Change one, change all three.
+						p = index(entry, "#")
+						doc = (p > 0) ? substr(entry, 1, p - 1) : entry
+						anc = (p > 0) ? substr(entry, p + 1) : ""
+						sub(/^[ \t]+/, "", doc); sub(/[ \t]+$/, "", doc)
+						sub(/^\.\//, "", doc)
+						sub(/\/+$/, "", doc)
+
+						if (doc == "" || anc == "") continue
+						# A path that climbs out of the vault is not opened.
+						# --used-in reports it missing rather than reading it,
+						# and this mode has no business reading it either.
+						if (doc ~ /(^|\/)\.\.(\/|$)/) continue
+						readdoc(doc)
+						ak = doc SUBSEP fold(anc)
+						if ((ak in ALIAS) && ALIAS[ak] > 0) CK[++ncand] = doc SUBSEP ALIAS[ak]
+					}
+
+					# --- the condition a policy-bound verdict owes ----------
+					# `conditional_on` absent is verdict-fields-incomplete from
+					# `check` and is not reported twice here under a name about
+					# the plan: with no string there is nothing for a section to
+					# be missing.
+					co = V[f, "conditional_on"]
+					if ((dk in COND) && co != "" && ncand > 0) {
+						found = 0
+						for (c = 1; c <= ncand; c++)
+							if (index(BODY[CK[c]], co) > 0) { found = 1; break }
+						if (!found)
+							report(f, "verdict-unconditional", id, "`driver_kind` is `" dk "` and `conditional_on` is `" co "`, and the section this note renders into does not carry that string. A policy-bound verdict is not that the target is unreachable - it is unreachable in the stated configuration, and the plan has to say so in the words the note stores. `Your target is unreachable` and `your target is unreachable at " co "` render at the same confidence letter and only the second one is true, so the founder is stopped over a decision they could revisit this week. The match is verbatim because the section renders off this field; render the phrase, or correct the field to the words the section uses")
+					}
+
+					# --- the kind, both directions, in one row scan ----------
+					# The forward failure is a Kind cell that disagrees with the
+					# note its Binding driver cell names. The reverse is a
+					# verdict in the ledger that no row names at all, and it is
+					# what keeps the forward one honest: with only the forward
+					# direction the cheapest way past both is to edit the driver
+					# cell until it matches no note.
+					#
+					# The reverse asks whether a row NAMES the driver and not
+					# whether that row states a kind, and the difference is a
+					# deliberate trade. plan-template.md writes an em dash in
+					# the Kind cell of an undetermined corner whose driver IS
+					# named, so a rule that demanded a kind there would report
+					# the shipped template. What that leaves open is blanking
+					# the Kind cell of a corner that does bind, which the
+					# forward half then skips; the template names that as a
+					# contract violation, and a check that fires on the worked
+					# example is one somebody switches off, which costs both
+					# halves.
+					#
+					# A cell naming no note is NOT a failure either way: a
+					# corner that clears legitimately writes an em dash or a
+					# parenthetical in that column, and reporting those would be
+					# the crying wolf this whole file refuses.
+					if (sj == "target-verdict" && nrow > 0 && bd != "" && dk != "") {
+						hit = 0
+						for (r = 1; r <= nrow; r++) {
+							if (KDRV[tvkk, r] != bd) continue
+							hit = 1
+							if (!stateskind(KKND[tvkk, r])) continue
+							if (KKND[tvkk, r] == dk) continue
+							report("business-plan.md", "verdict-kind-mismatch", id, "the corner verdict row for driver `" bd "` carries `Kind` cell `" KKND[tvkk, r] "` and " id " carries `driver_kind: " dk "`. The column renders off the field, so the two cannot drift unless the cell was edited by hand - and the direction that matters is a cell reading `structural` over a note reading `policy`, which reports a decision the founder made as a category floor at the same confidence letter as an observation somebody read off a page. Match the field verbatim, or correct the field")
+						}
+						if (!hit)
+							report(f, "verdict-kind-mismatch", id, "`binding_driver` is `" bd "` and no row of the corner verdict table under `{#target-verdict}` names that driver. The table renders its `Binding driver` and `Kind` columns off this note, so a verdict in the ledger that the table never lists is a corner the reader cannot see - and it is the direction that makes the cell check worth having, because a cell edited until it matches nothing would otherwise clear both. Render the row with the driver verbatim, or correct the field to the driver the table names")
+					}
+
+					# --- the evidence under the binding driver --------------
+					# A SINGLE COUNTERPARTY IS REPORTABLE AT ANY n. Three deals
+					# from one counterparty is the terms of one relationship
+					# reported as the terms of a market, and a source count of
+					# three reads as the opposite - which is the half no other
+					# field in the corpus can recover.
+					#
+					# WHAT COUNTS AS SURFACING IT IS THE STORED PAIR AND NOTHING
+					# IN THE PROSE. vault.md allows a rendered section to say so
+					# instead, and an earlier draft here scanned the section for
+					# the two numbers as whole-word tokens. That branch is
+					# unreachable in a corpus this tool passes - `check` owes
+					# `evidence_n` and `evidence_counterparties` on every note
+					# this mode reads - so the only note it could ever excuse is
+					# one whose stored counts are WRONG, which is the case least
+					# worth excusing. It was also the one place in this mode
+					# that read prose for meaning: two unrelated numbers in a
+					# paragraph silenced the rule. Deleting it makes the rule
+					# strictly stricter and removes the inference.
+					#
+					# It fires on absent counts as well as on wrong ones, and
+					# that is deliberately not the `conditional_on` treatment
+					# above. There, with no string stored, the question this
+					# mode asks has no answer. Here the closure answers it
+					# either way, and the number is the product: `check` says a
+					# field is owed, and this says what the evidence actually
+					# holds.
+					split("", SEEN); split("", SRC); split("", CP)
+					nsrc = 0; ncp = 0
+					closure(id)
+
+					if ((nsrc < 3 || ncp < 2) &&
+					    (V[f, "evidence_n"] != (nsrc "") || V[f, "evidence_counterparties"] != (ncp "")))
+						report(f, "verdict-thin-evidence", id, "the closure under this note reaches " nsrc " distinct source note" (nsrc == 1 ? "" : "s") " and " ncp " distinct counterpart" (ncp == 1 ? "y" : "ies") ", and the note does not say so" (present(f, "evidence_n") ? " - it states `evidence_n: \"" V[f, "evidence_n"] "\"` and `evidence_counterparties: \"" V[f, "evidence_counterparties"] "\"`, which is not what the closure holds" : "") ". A verdict resting on two deals renders identically to one resting on twenty, because `confidence` is a letter about the weakest link and says nothing about how many links there are - and three deals from one counterparty is the terms of one relationship reported as the terms of a market. State the counts, or widen the evidence under the driver")
+				}
+
+				# --- a verdict that reached the plan and never the ledger ---
+				# --roadmap-table inverted: that mode fails milestone notes with
+				# no business-plan.md to render them, and this fails a rendered
+				# section with nothing behind it. WHAT TRIGGERS IT IS THE
+				# PRESENCE OF A NON-EMPTY SECTION and never a reading of the
+				# prose inside it, for the same reason conditional_on is matched
+				# verbatim: a check that infers a verdict from sentence shape
+				# cries wolf, and one that cries wolf gets switched off.
+				#
+				# THERE IS DELIBERATELY NO {#steady-state} EQUIVALENT. A ceiling
+				# section in an existing plan legitimately has no
+				# field-carrying note behind it - the same asymmetry the trigger
+				# above carries, one document over - so a mirror rule here would
+				# fail every plan written before this release.
+				#
+				# `nvt` is the count of target-verdict notes taken in the
+				# classification loop, because that subject is admitted to VN
+				# unconditionally: a second pass over every note would be the
+				# same question asked a third time.
+				if (tvord > 0 && BODY["business-plan.md", tvord] != "" && !nvt)
+					report("business-plan.md", "verdict-unfiled", "", "business-plan.md carries a non-empty section at the `{#target-verdict}` anchor and no `claim` or `assumption` under `subject: target-verdict` stands behind it. Everything else this mode checks presumes a note exists, and a verdict written straight into the plan has none of the properties the ledger gives a number: no `rests_on`, so no confidence derivation and no cap; no `stale_after`, so nothing ever comes up for re-checking; no supersession when the target is renegotiated, so the superseded finding is simply overwritten; and `--supersession-sweep` cannot name this section when something under it moves. It is the one output of this skill most likely to make a founder stop, held to less than a sourced market-size figure")
+
+				if (nvn == 0 && tvord == 0) {
+					if (hasplan == "1")
+						printf("no verdict note and no section at the {#target-verdict} anchor of business-plan.md - there is no verdict on either side, which is every vault before a target has one - %s\n", vault)
+					else
+						printf("no verdict note and no business-plan.md at the vault root - there is no verdict on either side, which is every vault before a target has one - %s\n", vault)
+					exit
+				}
+				printf("%d verdict note%s against %d corner verdict row%s under the {#target-verdict} anchor, matched verbatim - %s\n",
+					nvn, (nvn == 1 ? "" : "s"), nrow, (nrow == 1 ? "" : "s"), vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint binding-driver" "$BD_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
 # pass 3 - the checks
 #
 # Reads the record stream plus the parse errors, and emits one failure per line:
@@ -2406,6 +3048,15 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		why["likelihood_range"]   = "the band term drifts between readers far enough to justify different choices, and neither reader learns they disagreed"
 		why["evidence_grade"]     = "the register of the recommendation is set by how the author felt about the call rather than by the evidence"
 
+		# The verdict fields, reached from the verdict check rather than from
+		# required-field: no type requires them, and the question the table
+		# answers is the same one - what the absence of this field costs.
+		why["binding_driver"]  = "the two counts beside it are over nothing in particular, because distinct sources under the verdict is most of the corpus while distinct sources under the driver that binds is a number worth printing - and the binding driver moves, so this is also the record of which driver the stored counts were taken under"
+		why["driver_kind"]     = "nothing downstream can tell a constraint the founder chose from one the category sets, so a policy-bound verdict renders at the same confidence letter as a structural one and the founder is talked out of something they could revisit this week"
+		why["conditional_on"]  = "the policy variable the verdict is conditional on exists only inside a sentence, so a rendered section that dropped it reads exactly like one that kept it - and only one of the two is true"
+		why["evidence_n"]      = "the corpus knows how thin the tail is and the rendered figure does not say so, because confidence is a letter about the weakest link and says nothing about how many links there are"
+		why["evidence_counterparties"] = "three deals from one counterparty is the terms of one relationship reported as the terms of a market, and this is the half that cannot be recovered from anything else the corpus records - two write-ups of one party genuinely are two documents with two canonical URLs"
+
 		# What a brief-backed decision note owes, from the field table in
 		# references/decisions.md. Keep this list and the trigger split below in
 		# sync with that table required column: a field added there, or moved
@@ -2437,6 +3088,50 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		brief = "criteria criteria_ranked_by option_evidence do_nothing founder_reasoning likelihood likelihood_range evidence_grade"
 		nbrief = split(brief, brieff, " ")
 		notrigger["founder_reasoning"] = 1
+
+		# What a target verdict owes, from the verdict block in vault.md. The
+		# first four are owed outright; `conditional_on` sits last in the list
+		# and is owed on top of them exactly when `driver_kind` is one of the
+		# two policy values, which `condonly` marks - a structural verdict has
+		# no choice to name, and a rule demanding a condition from every verdict
+		# would be met by inventing one. Marking the exception the way the
+		# decision brief marks `notrigger` next door keeps one list and one
+		# walk. Keep this list and both triggers below in sync with that block,
+		# and with the copy in the --binding-driver pass, which counts the same
+		# five: a field added there has to be added in both places.
+		verdict = "binding_driver driver_kind evidence_n evidence_counterparties conditional_on"
+		nverdict = split(verdict, verdictf, " ")
+		condonly["conditional_on"] = 1
+
+		# THE FIVE FIELDS HANG OFF THE SUBJECT RATHER THAN THE TYPE, because
+		# one verdict is filed under both types inside a single engagement -
+		# an `assumption` before the research that settles it and a `claim`
+		# after. A rule keyed to `type: claim` would exempt every verdict
+		# written before the research came back, which is every verdict at the
+		# point where a wrong one is cheapest to fix.
+		#
+		# THE TWO SUBJECTS TRIGGER DIFFERENTLY AND THAT IS THE DESIGN.
+		# `target-verdict` is a term this release introduces, so no note in any
+		# existing corpus carries it: the four fields are owed there whatever
+		# the note carries, including nothing. `steady-state-ceiling` is
+		# required and predates its amendment, so every existing vault already
+		# holds one: there the trigger is field PRESENCE, which is the
+		# exemption a version would otherwise have to buy. Extending the
+		# leniency to the verdict half would spend that exemption over an empty
+		# population and make omitting `binding_driver` the cheapest way past
+		# every rule that reads it - and a dodge available by omission is not
+		# an exemption, which is why --red-team checks its roster both ways.
+		vsubject["target-verdict"] = 1
+		vsubject["steady-state-ceiling"] = 1
+
+		# The closed driver_kind word list, duplicated in the --binding-driver
+		# pass, which owns the four rules that read a document. Each awk
+		# program is a separate process and cannot call the other. Change one,
+		# change both.
+		nkind = split("structural policy policy-within-band", kindw, " ")
+		for (ki = 1; ki <= nkind; ki++) knownkind[kindw[ki]] = 1
+		condkind["policy"] = 1
+		condkind["policy-within-band"] = 1
 
 		nedge = split(edgefields, edgef, " ")
 		rank["L"] = 1; rank["M"] = 2; rank["H"] = 3
@@ -2556,6 +3251,67 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 						if (present(f, bf)) continue
 						report(f, "decision-brief-incomplete", id, "carries the decision-brief field" (ncarried > 1 ? "s" : "") " " carried " but not `" bf "`. A decision note carrying none of the option-grid fields is a founder who simply decided, and is correct as written - only a guided fork produces a brief. One carrying some of them is a brief-backed decision that lost a field, and it reads as complete to every consumer while the missing part answers nothing. Without " bf ", " why[bf])
 					}
+				}
+
+				# --- a verdict owes its fields as a set, and its kind is ---
+				# --- one of three words -----------------------------------
+				# The same shape as the decision brief above, one type over
+				# and keyed on the subject rather than on the type: a note
+				# carrying some of them reads complete to every consumer,
+				# while the missing field is precisely the one that would
+				# have qualified the number. A verdict naming its driver and
+				# labelling it `policy` with no counts is a fully qualified
+				# finding to every reader and to every tool, and what it is
+				# not saying is that the two deals underneath it came from
+				# one counterparty.
+				#
+				# One report per missing field, same as required-field and
+				# the decision brief: four costs concatenated into a single
+				# message is a paragraph nobody reads to the end.
+				#
+				# The four rules that need business-plan.md are
+				# --binding-driver, not here. These two read nothing but the
+				# note, which is what keeps them in the pass that runs on
+				# every bare invocation.
+				if ((ty == "claim" || ty == "assumption") && (V[f, "subject"] in vsubject)) {
+					vsj = V[f, "subject"]
+					vcar = ""; nvcar = 0
+					for (b = 1; b <= nverdict; b++) {
+						if (!present(f, verdictf[b])) continue
+						vcar = vcar (nvcar++ ? ", " : "") "`" verdictf[b] "`"
+					}
+					dk = V[f, "driver_kind"]
+
+					if (vsj == "target-verdict")
+						vwhy = "A target verdict owes them whatever else it carries: the subject is a term this release introduces, so no note written before the fields existed can be exempted by omitting one - and omission would otherwise be the cheapest way past every rule that reads them."
+					else
+						vwhy = "A ceiling claim carrying none of the five owes none of them, which is what exempts every claim written before the fields existed; carrying one makes the rest owed, because a note carrying some of them reads complete to every consumer while the missing part is the one that would have qualified the number."
+
+					if (vsj == "target-verdict" || nvcar > 0) {
+						for (b = 1; b <= nverdict; b++) {
+							bf = verdictf[b]
+							# `conditional_on` is owed only where the kind
+							# makes it owed. Demanding it of a structural
+							# verdict would be met by inventing a condition,
+							# which is worse than the omission because an
+							# invented one renders.
+							if ((bf in condonly) && !(dk in condkind)) continue
+							if (present(f, bf)) continue
+							if (nvcar > 0)
+								vhead = "carries the verdict field" (nvcar > 1 ? "s" : "") " " vcar " but not `" bf "`"
+							else
+								vhead = "carries `subject: target-verdict` and none of the fields a verdict owes outright, `" bf "` among them"
+							report(f, "verdict-fields-incomplete", id, vhead ". " vwhy " Without `" bf "`, " why[bf])
+						}
+					}
+
+					# A fourth word is a classification no downstream rule
+					# knows how to read, so it takes the structural path by
+					# default and buys exactly the exemption invariant 18
+					# exists to refuse - with a typo indistinguishable from a
+					# deliberate call.
+					if (dk != "" && !(dk in knownkind))
+						report(f, "driver-kind-unknown", id, "`driver_kind` is `" dk "` and the enumeration is closed at `structural`, `policy` and `policy-within-band`. Everything downstream branches on policy or not - a policy-bound verdict owes a stated condition and a structural one does not - so an unrecognised value takes the structural path by default, which is the exemption invariant 18 exists to refuse. A typo is then indistinguishable from a deliberate classification, and the plan reports a decision the founder made as a category floor")
 				}
 
 				# --- the type is stated three times and all three agree ----
