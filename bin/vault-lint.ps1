@@ -789,7 +789,145 @@ function Invoke-ModeGraph {
 # routing through Render-Failures, and change all three together or none.
 # ----------------------------------------------------------------------------
 function Invoke-ModeUnverified {
-	Exit-NotPorted '--unverified'
+	$sep = [char]28
+
+	# Same N/S/L index-building loop as Invoke-ModeGraph, kept as its own copy
+	# rather than a shared helper - see the comment at the top of that function
+	# for why.
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$v = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$li = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	foreach ($rec in $script:RECORDS) {
+		$p = $rec.Split([char]9)
+		if ($p[0] -ceq 'N') { [void]$files.Add($p[1]); continue }
+		if ($p[0] -ceq 'S') { $v[$p[1] + $sep + $p[2]] = $p[3]; continue }
+		if ($p[0] -ceq 'L') {
+			$k = $p[1] + $sep + $p[2]
+			$items = $null
+			if (-not $li.TryGetValue($k, [ref]$items)) {
+				$items = New-Object 'System.Collections.Generic.List[string]'
+				$li[$k] = $items
+			}
+			[void]$items.Add($p[3])
+			continue
+		}
+	}
+
+	function Get-UnverifiedValue {
+		param([string]$File, [string]$Key)
+		$k = $File + $sep + $Key
+		if ($v.ContainsKey($k)) { return $v[$k] }
+		return ''
+	}
+
+	# One of three identical copies - see the note beside the
+	# --supersession-sweep one, bin/vault-lint.sh:1660, for why they stay
+	# copies and what would change that. Change one, change all three.
+	function ConvertTo-UnverifiedJsonEscaped {
+		param([string]$Text)
+		$out = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$c = $Text[$i]
+			if ($c -eq [char]34) { [void]$out.Append('\"') }
+			elseif ($c -eq [char]92) { [void]$out.Append('\\') }
+			elseif ($c -eq [char]9) { [void]$out.Append([char]32) }
+			else { [void]$out.Append($c) }
+		}
+		return $out.ToString()
+	}
+
+	function Get-UnverifiedJsonList {
+		param([string]$File, [string]$Key)
+		$k = $File + $sep + $Key
+		$out = '['
+		if ($li.ContainsKey($k)) {
+			$items = $li[$k]
+			for ($i = 0; $i -lt $items.Count; $i++) {
+				if ($i -ne 0) { $out = $out + ', ' }
+				$out = $out + '"' + (ConvertTo-UnverifiedJsonEscaped $items[$i]) + '"'
+			}
+		}
+		return $out + ']'
+	}
+
+	function Get-UnverifiedPlain {
+		param([string]$File, [string]$Key, [string]$Indent)
+		$k = $File + $sep + $Key
+		$out = ''
+		if (-not $li.ContainsKey($k)) { return $out }
+		foreach ($item in $li[$k]) { $out = $out + $Indent + $Key + ': ' + $item + "`n" }
+		return $out
+	}
+
+	function Get-UnverifiedText {
+		param([string]$File, [string]$Id)
+		$out = '    ' + $Id + '  ' + (Get-UnverifiedValue $File 'type') + '  confidence ' + (Get-UnverifiedValue $File 'confidence') + '  status ' + (Get-UnverifiedValue $File 'status') + "`n"
+		$out = $out + '      ' + (Get-UnverifiedValue $File 'title') + "`n"
+		$sensitivity = Get-UnverifiedValue $File 'sensitivity'
+		if ($sensitivity.Length -gt 0) { $out = $out + '      sensitivity: ' + $sensitivity + "`n" }
+		$out = $out + (Get-UnverifiedPlain $File 'validated_by' '      ')
+		$out = $out + (Get-UnverifiedPlain $File 'used_in' '      ')
+		return $out
+	}
+
+	$unverified = New-Object 'System.Collections.Generic.List[string]'
+	$lowConfidence = New-Object 'System.Collections.Generic.List[string]'
+	$reason = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	foreach ($f in $files) {
+		$id = Get-UnverifiedValue $f 'id'
+		if ($id.Length -eq 0) { continue }
+		if ((Get-UnverifiedValue $f 'status') -ceq 'unverified') {
+			[void]$unverified.Add($f)
+			$reason[$f] = 'status-unverified'
+		} elseif ((Get-UnverifiedValue $f 'confidence') -ceq 'L') {
+			[void]$lowConfidence.Add($f)
+			$reason[$f] = 'low-confidence'
+		}
+	}
+	$total = $unverified.Count + $lowConfidence.Count
+
+	if ($script:JSON -eq 1) {
+		$sb = New-Object System.Text.StringBuilder
+		[void]$sb.Append("{`n")
+		[void]$sb.Append('  "vault": "' + (ConvertTo-UnverifiedJsonEscaped $script:VAULT) + "`",`n")
+		[void]$sb.Append('  "unverified_count": ' + $total + ",`n")
+		[void]$sb.Append('  "notes": [')
+		$n = 0
+		for ($pass = 1; $pass -le 2; $pass++) {
+			$pool = $unverified
+			if ($pass -eq 2) { $pool = $lowConfidence }
+			foreach ($f in $pool) {
+				$n++
+				if ($n -eq 1) { [void]$sb.Append("`n    {") } else { [void]$sb.Append(",`n    {") }
+				[void]$sb.Append('"id": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'id')) + '", ')
+				[void]$sb.Append('"file": "' + (ConvertTo-UnverifiedJsonEscaped $f) + '", ')
+				[void]$sb.Append('"type": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'type')) + '", ')
+				[void]$sb.Append('"status": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'status')) + '", ')
+				[void]$sb.Append('"confidence": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'confidence')) + '", ')
+				[void]$sb.Append('"reason": "' + (ConvertTo-UnverifiedJsonEscaped $reason[$f]) + '", ')
+				[void]$sb.Append('"title": "' + (ConvertTo-UnverifiedJsonEscaped (Get-UnverifiedValue $f 'title')) + '", ')
+				[void]$sb.Append('"used_in": ' + (Get-UnverifiedJsonList $f 'used_in') + '}')
+			}
+		}
+		if ($n -eq 0) { [void]$sb.Append("]`n}`n") } else { [void]$sb.Append("`n  ]`n}`n") }
+		Write-OutText $sb.ToString()
+		exit 0
+	}
+
+	$plural = 's'
+	if ($total -eq 1) { $plural = '' }
+	$sb = New-Object System.Text.StringBuilder
+	[void]$sb.Append('vault-lint unverified: ' + $total + ' note' + $plural + " asserted with nothing behind them`n")
+	[void]$sb.Append('  vault: ' + $script:VAULT + "`n")
+	[void]$sb.Append("`n  asserted, nothing behind it yet (status: unverified)`n")
+	if ($unverified.Count -eq 0) { [void]$sb.Append("    (none)`n") }
+	foreach ($f in $unverified) { [void]$sb.Append((Get-UnverifiedText $f (Get-UnverifiedValue $f 'id'))) }
+	[void]$sb.Append("`n  carried at Low confidence - the weakest link in the chain below it is thin`n")
+	if ($lowConfidence.Count -eq 0) { [void]$sb.Append("    (none)`n") }
+	foreach ($f in $lowConfidence) { [void]$sb.Append((Get-UnverifiedText $f (Get-UnverifiedValue $f 'id'))) }
+
+	Write-OutText $sb.ToString()
+	exit 0
 }
 
 # ----------------------------------------------------------------------------
