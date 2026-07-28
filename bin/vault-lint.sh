@@ -297,7 +297,15 @@ CONFIG="$VAULT/.vault/config.json"
 [ -f "$CONFIG" ] ||
 	die "not a vault - no .vault/config.json under $VAULT. Refusing rather than walking an arbitrary directory of Markdown as if it were a corpus."
 
-SUPPORTED_SCHEMA=1
+# The versions this tool can read, oldest first. A SET rather than a single
+# number, because both directions of the mismatch are not the same problem. A
+# vault at 1 predates the checks version 2 added and cannot owe them, so
+# refusing it would fail every corpus that existed before they did - the tool
+# reads it and holds it to exactly the rules it was written under. A version
+# from the FUTURE stays refused, which is the whole reason the field exists: an
+# older tool half-reading a newer vault reports a clean bill of health over
+# every field it never saw.
+SUPPORTED_SCHEMA="1 2"
 FOUND_SCHEMA=$(awk '
 	match($0, /"schemaVersion"[ \t]*:[ \t]*[0-9]+/) {
 		s = substr($0, RSTART, RLENGTH)
@@ -307,8 +315,10 @@ FOUND_SCHEMA=$(awk '
 
 [ -n "$FOUND_SCHEMA" ] ||
 	die "$CONFIG carries no schemaVersion. A tool that guesses half-reads the vault and reports a clean bill of health over every field it never saw."
-[ "$FOUND_SCHEMA" = "$SUPPORTED_SCHEMA" ] ||
-	die "vault schemaVersion is $FOUND_SCHEMA and this tool supports $SUPPORTED_SCHEMA. Refusing rather than processing the parts it recognises - a green result from a half-read vault is exactly what somebody acts on."
+case " $SUPPORTED_SCHEMA " in
+*" $FOUND_SCHEMA "*) ;;
+*) die "vault schemaVersion is $FOUND_SCHEMA and this tool reads only these versions: $SUPPORTED_SCHEMA. Refusing rather than processing the parts it recognises - a green result from a half-read vault is exactly what somebody acts on." ;;
+esac
 
 # ----------------------------------------------------------------------------
 # --release-gate - every mode a release owes, in one call
@@ -1481,7 +1491,12 @@ fi
 # message that only restates the rule gives them nothing to decide with.
 # ----------------------------------------------------------------------------
 
-awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields="$EDGE_FIELDS" -v pathidx="$PATHIDX" -F '\t' '
+# `schema` is the version found in the vault's own config, passed in so a check
+# added under a later schema can stay silent on a vault written before it. A
+# corpus at 1 owes exactly the rules it was written under; failing it on a rule
+# that did not exist when it was authored is an upgrade that breaks every
+# existing vault, which is what schemaVersion exists to make unnecessary.
+awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields="$EDGE_FIELDS" -v pathidx="$PATHIDX" -v schema="$FOUND_SCHEMA" -F '\t' '
 	BEGIN {
 		BS = sprintf("%c", 92)
 

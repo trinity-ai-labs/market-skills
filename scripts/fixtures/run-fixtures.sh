@@ -30,6 +30,7 @@
 #   6. The two refusal paths refuse, and exit 2.
 #   7. --release-gate runs all three parts and carries the worst verdict any of
 #      them returned, including when only one part fails.
+#   8. A schemaVersion 2 vault is read, and a version from the future is not.
 
 set -u
 
@@ -513,7 +514,21 @@ case "$RG_JSON" in
 *) no "--release-gate did not refuse --json clearly (got: $RG_JSON)" ;;
 esac
 
-# --- 6. every mode has help text ---------------------------------------------
+# --- 6. the supported schemaVersion set ------------------------------------
+# Asserting only that 99 is refused would pass a tool that had narrowed the set
+# back to a single version and started refusing every vault scaffolded since -
+# the refusal path would look identical and every real corpus would be dead.
+printf '\nschema versions\n'
+
+S=$(run_status "$HERE/schema-2")
+[ "$S" = "0" ] && ok "a schemaVersion 2 vault is read and reports nothing" ||
+	no "a schemaVersion 2 vault should exit 0 (got $S)"
+
+S=$(run_status "$HERE/schema-2" --release-gate)
+[ "$S" = "0" ] && ok "--release-gate is clean over a schemaVersion 2 vault" ||
+	no "--release-gate over a schemaVersion 2 vault (got $S)"
+
+# --- 7. every mode has help text ---------------------------------------------
 # The one thing MODE_TABLE cannot absorb. A mode registers its flag by adding a
 # row, but its paragraph in `usage()` is written by hand at a shared anchor -
 # and a release that adds three modes is three inserts at the same point, two

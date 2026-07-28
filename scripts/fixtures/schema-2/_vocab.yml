@@ -1,0 +1,16 @@
+# The smallest vocabulary a clean vault can carry: one required subject, one
+# claim under it. This fixture exists to assert that schemaVersion 2 is READ
+# rather than refused, so it stays minimal deliberately - the corpus-wide
+# checks are already asserted against clean/ and violations/, and a second full
+# corpus to keep in step with those would drift from them the first time one of
+# them changes.
+
+terms:
+
+  timing-window:
+    definition: The shift that makes this product possible or necessary now, and how long
+      the window it opens stays open. The mechanism, not the narrative.
+    aliases:
+      - why-now
+      - market-timing
+    required: true
