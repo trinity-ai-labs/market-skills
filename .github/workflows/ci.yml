@@ -22,17 +22,59 @@ jobs:
   # The matrix adds macos-latest because bin/vault-lint.sh ships to users on
   # both platforms and Linux CI can't catch a macOS-only shell divergence (BSD
   # vs GNU awk/grep/sed, no bash-only leaks in a POSIX-sh script) before a
-  # user's machine does. version-bump below stays single-OS: it diffs git
+  # user's machine does. windows-latest is the other half of the port:
+  # bin/vault-lint.ps1 exists for a session with no POSIX shell at all, and this
+  # image carries one anyway (Git for Windows' Git Bash) - several steps below
+  # run under it explicitly, a dependency worth stating since it is not this
+  # repo's own tooling. version-bump below stays single-OS: it diffs git
   # history and the manifest, and a second OS proves nothing there.
   checks:
     name: gate, shipped tooling, public-repo hygiene
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    # bash is already the default on ubuntu/macos runners; stating it here is
+    # what makes windows-latest use Git for Windows' Git Bash too, instead of
+    # its own default of pwsh, which cannot parse the `[ ... ]`/heredoc syntax
+    # several steps below use. One place to say this, rather than repeating
+    # `shell: bash` on every step that needs it and silently missing the next
+    # one that's added.
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
+
+      - name: A core.autocrlf=true checkout still runs bin/vault-lint.sh
+        if: always() && matrix.os == 'windows-latest'
+        # Git for Windows installs default to core.autocrlf=true, which rewrites
+        # a checked-out text file's LF to CRLF unless .gitattributes says
+        # otherwise — the shebang becomes `#!/bin/sh\r` and the script dies with
+        # "bad interpreter" before any Windows-specific behaviour is even
+        # reachable. .gitattributes pins *.sh (and *.ps1) to `eol=lf` for
+        # exactly that reason, but the checkout above ran under whatever
+        # autocrlf this runner happens to default to, which proves nothing about
+        # a user who installed Git for Windows with ITS recommended default. So
+        # this clones fresh with autocrlf forced on and checks the result
+        # directly — no carriage return in the shebang, and the script actually
+        # runs — rather than trusting that .gitattributes merely exists.
+        run: |
+          set -eu
+          rm -rf "$RUNNER_TEMP/autocrlf-check"
+          git clone --quiet --config core.autocrlf=true . "$RUNNER_TEMP/autocrlf-check"
+          cd "$RUNNER_TEMP/autocrlf-check"
+          [ "$(git config --local core.autocrlf)" = "true" ] ||
+            { echo "::error::core.autocrlf=true did not take effect on this clone — the check below would not be testing anything"; exit 1; }
+          first_line=$(head -n 1 bin/vault-lint.sh)
+          case "$first_line" in
+            *"$(printf '\r')")
+              echo "::error::bin/vault-lint.sh checks out with a CRLF shebang under core.autocrlf=true — .gitattributes did not hold"
+              exit 1 ;;
+          esac
+          sh bin/vault-lint.sh --help >/dev/null
+          echo "core.autocrlf=true checkout runs bin/vault-lint.sh cleanly"
 
       - name: The repo gate — structure, frontmatter, every reference resolves
         # scripts/check.mjs is the same command a contributor runs before opening
@@ -51,6 +93,37 @@ jobs:
         # in a later PR is measured against.
         run: sh scripts/fixtures/run-fixtures.sh
 
+      - name: A VAULT_LINT wrapper that pins the port to the PowerShell Windows actually ships
+        if: always() && matrix.os == 'windows-latest'
+        # bin/vault-lint.ps1's shebang is `#!/usr/bin/env pwsh`, so invoking it
+        # directly — which is what run-fixtures.sh does through "$LINT" — follows
+        # PATH to whichever `pwsh` this runner finds first, and this image ships
+        # PowerShell 7 on PATH ahead of the in-box Windows PowerShell 5.1 the port
+        # is actually written for (see the file's own TARGET comment) and that a
+        # Windows user actually has. A suite that only ever ran through 7 would
+        # not catch a 5.1-only parse failure — the file bans ??, ?., the ternary
+        # and -Parallel for exactly that reason — before a user's own machine
+        # did. VAULT_LINT can only name one executable, so this thin wrapper is
+        # what makes the fixture suite drive the port through powershell.exe
+        # explicitly, bypassing the shebang's own PATH search. cygpath turns the
+        # checkout's POSIX-style path into the Windows-style one powershell.exe —
+        # a native Windows binary, not an MSYS one — needs.
+        run: |
+          set -eu
+          winpath=$(cygpath -w "$PWD/bin/vault-lint.ps1")
+          wrapper="$RUNNER_TEMP/vault-lint-ps1-winps51.sh"
+          printf '#!/bin/sh\nexec powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%s" "$@"\n' "$winpath" >"$wrapper"
+          chmod +x "$wrapper"
+          echo "VAULT_LINT_WINPS51=$wrapper" >>"$GITHUB_ENV"
+
+      - name: The shipped lint's own suite, against the port under Windows PowerShell 5.1
+        if: always() && matrix.os == 'windows-latest'
+        # The same 241 assertions "The shipped lint's own suite" above holds the
+        # shell to — this is the first PR where every one of them can also run
+        # against the PowerShell port, and the wrapper above is what makes this
+        # run go through 5.1 rather than whatever pwsh happens to be on PATH.
+        run: VAULT_LINT="$VAULT_LINT_WINPS51" sh scripts/fixtures/run-fixtures.sh
+
       - name: The two lint implementations answer the same thing, mode by mode
         if: always()
         # bin/vault-lint.ps1 is a SECOND implementation of the same 3,600-line
@@ -65,6 +138,29 @@ jobs:
         # slice PR from now until then — the printed count is the progress report.
         run: node scripts/parity/parity.mjs
 
+      - name: The unported allowlist has emptied out for good
+        if: always() && matrix.os == 'ubuntu-latest'
+        # scripts/parity/unported/<mode> marker files are what let the parity
+        # gate above stay green (exit 0) while a mode is still unported — see its
+        # own comment. That printed "M allowlisted" count is only a real
+        # terminal state if something eventually forces it back to zero;
+        # otherwise a slice could allowlist a mode forever and nobody has to act
+        # on the number. This is that something: a non-empty directory here is a
+        # hard failure. Git does not track empty directories, so once the LAST
+        # marker file is removed the directory itself stops existing on a fresh
+        # checkout — that is the done state, not a broken checkout, so a missing
+        # directory is treated the same as an empty one rather than failing on
+        # ENOENT. Pure repo-content inspection with no OS-dependent behaviour, so
+        # one OS is exhaustive — same reasoning as the shellcheck step below.
+        run: |
+          set -eu
+          if [ -d scripts/parity/unported ] && [ -n "$(ls -A scripts/parity/unported)" ]; then
+            echo "::error::scripts/parity/unported/ still names a mode — the port is not done"
+            ls -A scripts/parity/unported | sed 's/^/  /'
+            exit 1
+          fi
+          echo "scripts/parity/unported/ is empty — every mode is ported"
+
       - name: Every shell script holds to the shell its shebang declares
         if: always() && matrix.os == 'ubuntu-latest'
         # bin/ runs on a user's machine, so a bashism there is a runtime failure
@@ -77,18 +173,20 @@ jobs:
         # one OS is exhaustive and a matrix run buys nothing here.
         run: shellcheck -S warning bin/*.sh scripts/fixtures/*.sh
 
-      - name: Skills invoke vault-lint.sh bare, never by path
+      - name: Skills invoke vault-lint bare, never by path
         if: always()
         # This is the invariant the scripts/ -> bin/ move exists to establish, and
         # prose alone does not hold it. A skill runs inside the USER's project
         # directory, so any path-prefixed invocation resolves against their tree
         # and fails at the moment of use — on their machine, never in CI and never
-        # on the author's. bin/ is on the Bash tool's PATH; bare is the only form
-        # that resolves.
+        # on the author's. bin/ is on PATH either way; bare is the only form that
+        # resolves. Both extensions are checked — a Windows session reaches for
+        # vault-lint.ps1 exactly as a POSIX one reaches for vault-lint.sh, and a
+        # path-prefixed form of either fails the same way.
         run: |
           set -eu
-          if grep -rnE '/vault-lint\.sh' skills --include='*.md'; then
-            echo "::error::a path-prefixed vault-lint.sh in skills/ — invoke it bare"
+          if grep -rnE '/vault-lint\.(sh|ps1)' skills --include='*.md'; then
+            echo "::error::a path-prefixed vault-lint.sh or vault-lint.ps1 in skills/ — invoke it bare"
             exit 1
           fi
           echo "all invocations bare"
@@ -127,7 +225,17 @@ jobs:
         # that lands on a user's PATH without its executable bit.
         run: |
           set -eu
-          [ -x bin/vault-lint.sh ] || { echo "::error::bin/vault-lint.sh is not executable — a command-not-found mid-run"; exit 1; }
+          if [ "${RUNNER_OS:-}" = "Windows" ]; then
+            # A checkout on Windows carries no POSIX executable bit to test — NTFS
+            # has no such concept, so [ -x ... ] would prove nothing there rather
+            # than proving the wrong thing. Both bin/*.sh and bin/*.ps1 ship mode
+            # 100755 in the git tree, and that is what ubuntu-latest and
+            # macos-latest below actually verify.
+            echo "skipping the executable-bit check on Windows — see the comment above"
+          else
+            [ -x bin/vault-lint.sh ] || { echo "::error::bin/vault-lint.sh is not executable — a command-not-found mid-run"; exit 1; }
+            [ -x bin/vault-lint.ps1 ] || { echo "::error::bin/vault-lint.ps1 is not executable — a command-not-found mid-run"; exit 1; }
+          fi
           python3 - <<'PY'
           import json, pathlib, re, sys
 
