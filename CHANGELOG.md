@@ -2,6 +2,59 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.11.0
+
+- **The plan's roadmap table is now read against the milestone set it renders —
+  `vault-lint.sh --roadmap-table`, both directions — and the reason 1.10.0 gave for scoping it
+  out does not hold.** That release made the *note* side mechanical: `moves` must name a real
+  note, `resource` and `sequence` are checked, and `research/timeline.md` is generated rather
+  than hand-maintained. It left the table-to-note correspondence unchecked, so an item could sit
+  in the plan a reader actually sees with no note behind it at all — the same class of hole the
+  release was closing, moved one layer out. **The stated blocker was that both sides are prose**,
+  so any match would be fuzzy, would fire on correctly-written rows whose wording drifted, and a
+  check that cries wolf gets switched off — taking the working half with it. But
+  `plan-template.md`, written in that same release, says the roadmap table **renders off the
+  notes**. A table rendered off the notes carries the milestone `title` as its item cell, so the
+  key is that title matched **verbatim** rather than fuzzily: a correctly generated table agrees
+  character for character by construction, and a mismatch means somebody hand-edited the table,
+  which is the failure the check exists for. No `MILESTONE-` ID column in a document a founder
+  hands an investor, and no template contract change. **The instrument is already house style** —
+  `vault.md` holds `chosen` to a verbatim match against an entry in `options`, for the same
+  reason: a paraphrase makes the record unreadable later. Recording the fix without recording
+  that the previous reason was wrong is what invites the same reasoning again. **Both directions
+  fail, and each costs something different**: a roadmap row matching no milestone title is an
+  item that escaped the ledger, so it moves no assumption anybody can name; a milestone the table
+  never lists is a dated change to an assumption row the plan does not show, so the model's curve
+  has a step the reader cannot see. Milestone notes with no `business-plan.md`, no roadmap
+  heading in it, or no table under that heading are reported once against the document rather
+  than once per note — the fix is one thing, and eight rows for one job is a report people stop
+  reading.
+- **Two reading rules are what keep the check from crying wolf, and both ship as things the
+  writer has to get right rather than as behaviour buried in the lint.** Only the **first** table
+  under the roadmap heading is read, because `roadmap-sequencing.md` Rule 3's permutation
+  comparison legitimately lands in that same section and its first column is an *order* — reading
+  it would report every one of its rows as an item that escaped the ledger. And the item column
+  is the one **headed `Item`**, falling back to the first cell: the generated
+  `research/timeline.md` heads its table `| # | Item | … |`, and a numbered roadmap is the shape
+  a plan reaches for the moment its rows are numbered, so always taking cell 1 would report the
+  ordinals as items with no notes behind them, on a table whose every row resolves. Both worked
+  tables in `roadmap-sequencing.md` already head that column `Item`, so this reads a signal the
+  method already emits rather than inventing a contract. Getting either wrong reproduces exactly
+  the failure this check was scoped out for once already, which is why `plan-template.md` now
+  states the order the section is written in instead of leaving it to the lint.
+- **The mode is gated on `schemaVersion` 2 like every other milestone check, so a vault at 1 is
+  untouched, and the fixture suite went from 174 assertions to 192.** A vault at 1 has no
+  `milestones/` directory by construction and owes no roadmap; there the mode reports that the
+  rule was not applied rather than printing agreement, which is the distinction
+  `--supersession-sweep` already draws. Two new corpora each fail exactly one direction — one row
+  with no note, one note with no row — and the second is written in the `| # | Item | … |` shape
+  so the header path is covered rather than assumed. `vault-migration.md` gained the back-fill
+  note that follows from the gate: stamping 2 is what puts an existing plan's already-written
+  table under this check, so each milestone note is minted from the row it renders and the item
+  cell is copied into `title` unchanged. A title tidied up on the way in fails twice over — once
+  as a row with no note behind it, once as a note the table never lists — and the back-fill is
+  the one moment the two lists sit side by side and can be made to agree for free.
+
 ## 1.10.0
 
 - **The Phase 5 release gate is one call — `vault-lint.sh --release-gate` — rather than three a

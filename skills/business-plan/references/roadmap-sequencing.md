@@ -24,6 +24,16 @@ all is a `required-field` failure whose message says what the absence costs. The
 so an item could name an assumption that was never written, or name none, and the plan shipped
 looking exactly like one whose every row resolved.
 
+**The item cell is the milestone `title`, character for character, and
+`vault-lint.sh --roadmap-table` reads the two against each other both ways.** The table renders
+off the notes, so a correct one matches verbatim by construction — the same rule `chosen` is held
+to against `options`, and for the same reason: a paraphrase makes the record unreadable later.
+A row matching no note is an item that escaped the ledger; a note the table never lists is a
+dated change to an assumption row the plan does not show, so the curve gets a step the reader
+cannot see. **The failure that closes:** the split above made the note checkable and left the
+TABLE hand-maintained, so a row could be reworded, added or dropped after the notes were written
+and nothing in the corpus could tell.
+
 **`moves` holds the assumption's note ID. The `(A-n)` in the middle column below is the label the
 plan's assumptions table carries for a reader, and it never goes in the frontmatter** — a note ID
 resolves to a note, an `A-n` label resolves to a row in a document the vault cannot read. Writing
@@ -194,15 +204,19 @@ the sale month rather than at a fixed twelve.
 
 One `milestone` note per roadmap item, before the table is written. The table is a rendering of
 that set — the item, its `moves` target, its `resource` and its `sequence` — so writing the notes
-first is what stops the two from being two hand-maintained lists that drift. The generated
+first is what stops the two from being two hand-maintained lists that drift, and
+`vault-lint.sh --roadmap-table` is what makes that a check rather than an instruction. The generated
 `research/timeline.md` is the other rendering: state at M0, the sequence with what each item
 unlocks, and the chains a proposal has to walk to reach the month it would land in.
 
 ## What lands in the plan
 
-- The **assumption-moved table** (Rule 1) in or beside the roadmap section.
+- The **assumption-moved table** (Rule 1) in or beside the roadmap section, and **first** in it.
+  Only the first table under the roadmap heading is read against the ledger, and the item column
+  is the one headed `Item` — so the permutation table below it, whose first column is an order,
+  is not mistaken for a set of items with no notes behind them.
 - The **chosen sequence with its permutation comparison** (Rule 3), compressed to the winning
-  order and the runner-up.
+  order and the runner-up, **below** the item table.
 - The **resource label** per item and the concurrency call that falls out of Rule 4.
 - The **cheap levers**, called out as such.
 - The **binding constraint**, once (Rule 6).

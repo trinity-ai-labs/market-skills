@@ -573,13 +573,15 @@ that bounds it: it names the sections a supersession put in doubt, so the read i
 rather than over every citation in the corpus.
 
 **Before a render, all of them are one call: `vault-lint.sh --release-gate`.** It runs the bare
-check, `--used-in`, the sweep and `--red-team`, and exits non-zero unless every part passes. The
+check, `--used-in`, the sweep, `--red-team` and `--roadmap-table`, and exits non-zero unless every
+part passes. The
 separate modes are still there and are what you reach for mid-engagement — a citation question,
-a supersession question and a panel question are different questions — but the gate before
+a supersession question, a panel question and a roadmap question are different questions — but the
+gate before
 anything ships is one invocation with one verdict, because a set of invocations made from memory
 is a set nobody can be held to. The bare run's own success line says as much: it reports that the
-note-level checks passed and that the citation targets, the supersession blast radius and the
-panel objection rows were **not** opened.
+note-level checks passed and that the citation targets, the supersession blast radius, the
+panel objection rows and the roadmap table were **not** opened.
 
 ### The assumption note is what you would believe with no evidence
 
@@ -769,13 +771,24 @@ milestones declaring the same `resource` at the same `sequence` are a *false ind
 the lint fails. The cost of not catching it is the whole roadmap: a false independence claim
 licenses a naive value ranking, orders everything downstream of it, and nothing ever revisits it.
 
+**`title` is the key the plan's roadmap table is matched on, verbatim.** The table renders
+`sequence`, `moves` and `resource` off these notes, so its item cell is this `title` character for
+character — which is what lets `vault-lint.sh --roadmap-table` read the two against each other
+both ways with no ID column in the plan and no fuzzy comparison anywhere. It is the same rule
+`chosen` is held to against `options` above, for the same reason: a row that paraphrases its note
+has stopped being a rendering of it, and nothing else in the corpus can tell. **Reword the title
+and the row together, or neither** — a note whose title moved alone is reported as a milestone the
+plan never lists, and its old row as an item that escaped the ledger.
+
 **Five things the lint reads off this type**, each the mechanical form of a rule that was prose:
 `required-field` on a missing `moves` or `resource`, `dangling-edge` on a `moves` or `depends_on`
 target that no note carries, `malformed-edge` on a `moves` value that is not a note ID at all,
 `dependency-after-dependent` where a prerequisite sequences at or after the item needing it, and
 `false-independence` on the shared `resource` and `sequence` pair.
 `sequence-not-orderable` guards the two order checks themselves: both skip a value they cannot
-compare, so a `sequence` of `M4` would take them down silently. All six fire only at
+compare, so a `sequence` of `M4` would take them down silently. `--roadmap-table` is the seventh
+and the only one that leaves the note directories, since the other half of what it compares is a
+document. All of them fire only at
 `schemaVersion: 2` — a vault at 1 has no `milestones/` directory by construction and owes none of
 them.
 
@@ -964,6 +977,7 @@ not exist when a version-1 corpus was written:
 | roadmap order | `check` | `dependency-after-dependent`, `false-independence`, and `sequence-not-orderable` |
 | `reconciled:` on a supersession | `--supersession-sweep` | a note carrying `supersedes` with no `reconciled:` date, or one earlier than that note's own `created` |
 | the lens roster | `--red-team` | a `red-team.md` carrying no `## Lenses dispatched` roster |
+| the roadmap table renders this set | `--roadmap-table` | a roadmap row whose item cell matches no milestone `title` verbatim, a milestone the table never lists, and milestones with no `business-plan.md` to render them |
 
 **This table is the only enumeration of the set** — the paragraph above points at it rather than
 restating it, because a version that adds a rule in one release and a second in the next ends up

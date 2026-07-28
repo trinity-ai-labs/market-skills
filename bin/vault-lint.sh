@@ -167,6 +167,35 @@ vault-lint.sh - read-only checks over a claim vault.
       with no roster fails at schemaVersion 2, where the roster is part of the
       schema, and passes at 1, which predates it.
 
+  vault-lint.sh --roadmap-table [--vault PATH] [--json]
+      Check the roadmap table in business-plan.md against the milestone notes,
+      both directions. A verdict - it exits 1 on either.
+
+      The table renders sequence, moves and resource off the notes, so its
+      item cell IS the milestone title and a correctly generated table matches
+      by construction. The match is VERBATIM, character for character, the same
+      rule `chosen` is held to against `options` and for the same reason: a row
+      that paraphrases its note has stopped being a rendering of it, and
+      nothing else in the corpus can tell.
+
+      A row matching no milestone title is an item that escaped the ledger, so
+      it moves no assumption anybody can name and the model carries a dated
+      change with nothing behind it. A milestone the table never lists is a
+      dated change to an assumption row the plan does not show, so the curve
+      has a step the reader cannot see.
+
+      Only the FIRST table under the roadmap heading is read. The section
+      legitimately carries a second one - the permutation comparison of
+      roadmap-sequencing.md Rule 3, whose first column is an ORDER rather than
+      an item - and reading it would report every one of its rows as an item
+      that escaped the ledger.
+
+      A vault with no milestone notes owes no roadmap and passes, whether or
+      not it has a business-plan.md. A vault WITH milestone notes and no
+      business-plan.md fails: the roadmap is in the ledger and nowhere a
+      reader can see it. Gated on schemaVersion 2, which is where the
+      milestone type was added - a vault at 1 carries none and cannot owe this.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -232,6 +261,7 @@ check                gate  note-level checks
 --supersession-sweep gate  supersession blast radius
 --release-gate       -     -
 --red-team           gate  panel objection rows
+--roadmap-table      gate  roadmap table against the milestone set
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -1168,12 +1198,15 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		# Every heading a document offers, as fold keys pointing at the
 		# heading ordinal. Read once per document, on first sight.
 		#
-		# The fence tracking is the third copy in this file - --used-in scans
-		# headings under the same rule and so does --red-team. All three are
-		# the same six lines: a `#` inside a fenced block is an example rather
-		# than a section anyone can jump to, and the marker and run length are
-		# tracked so a longer nested fence cannot close its parent early. Change
-		# one, change all three.
+		# The fence tracking is one of four copies in this file - --used-in
+		# scans headings under the same rule, and so do --red-team and
+		# --roadmap-table. All four are the same six lines: a `#` inside a
+		# fenced block is an example rather than a section anyone can jump to,
+		# and the marker and run length are tracked so a longer nested fence
+		# cannot close its parent early. Change one, change all four.
+		#
+		# The fold() below has a second copy too, in --roadmap-table, which
+		# resolves the roadmap heading by the same rule and for the same reason.
 		function sections(doc,   path, line, t, c, n, fc, fn, h, ex, id) {
 			path = vault "/" doc
 			fc = ""; fn = 0; id = 0
@@ -1701,15 +1734,15 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
-		# THAT FENCE BLOCK IS ONE OF THREE COPIES in this file. The
-		# --supersession-sweep sections() and the --red-team row reader carry
-		# the same six lines, because all three read a document at the vault
-		# root and no one of them can call a function defined in another awk
-		# program. Change one, change all three.
+		# THAT FENCE BLOCK IS ONE OF FOUR COPIES in this file. The
+		# --supersession-sweep sections(), the --red-team row reader and the
+		# --roadmap-table readplan() carry the same six lines, because all four
+		# read a document at the vault root and no one of them can call a
+		# function defined in another awk program. Change one, change all four.
 		#
 		# This copy is the one that most needed saying so. It has been edited
 		# twice already - the `{#anchor}` attribute below landed here alone -
-		# and a contract the other two copies knew about while this one did not
+		# and a contract the other copies knew about while this one did not
 		# would have made this the safe-looking place to edit by itself.
 		#
 		# Setext headings (a title underlined with ===) are deliberately not read.
@@ -1889,11 +1922,11 @@ if [ "$MODE" = "red-team" ]; then
 				# character and run length so a longer nested fence cannot
 				# close its parent early.
 				#
-				# One of three copies of those six lines: the --used-in scan()
-				# and the --supersession-sweep sections() carry the same ones,
-				# for the same reason - three awk programs reading a document
-				# at the vault root, and no way to share a function across
-				# them. Change one, change all three.
+				# One of four copies of those six lines: the --used-in scan(),
+				# the --supersession-sweep sections() and the --roadmap-table
+				# readplan() carry the same ones, for the same reason - four awk
+				# programs reading a document at the vault root, and no way to
+				# share a function across them. Change one, change all four.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
@@ -1991,6 +2024,292 @@ if [ "$MODE" = "red-team" ]; then
 	fi
 
 	render_failures "vault-lint red-team" "$RED_TEAM_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --roadmap-table - the rendered roadmap against the set it is rendered from
+#
+# plan-template.md states the contract this reads: every item in the roadmap
+# section is a `milestone` note written BEFORE the table, and the table renders
+# `sequence`, `moves` and `resource` off the notes - so the two cannot drift.
+# That claim was asserted and never checked, and the half that closed itself is
+# the other rendering: research/timeline.md is generated, so it cannot drift.
+# The hand-written table in business-plan.md can, and did not have to say so.
+#
+# THE KEY IS THE TITLE, MATCHED VERBATIM, and that is what makes this a check
+# rather than a similarity test. A table rendered off the notes carries the
+# milestone `title` as its item cell, so a correct table matches character for
+# character by construction and a mismatch means somebody edited the table by
+# hand. The instrument is already house style - vault.md requires `chosen` to
+# match an entry in `options` verbatim, because a paraphrase makes the record
+# unreadable later. Same shape, same reason. Nothing here is fuzzy, so nothing
+# here cries wolf: this needs no ID column in a document a founder hands an
+# investor, and no change to what the plan template says the columns are.
+#
+# BOTH DIRECTIONS, because each is a different failure. A row matching no
+# milestone is an item that escaped the ledger, so it moves no assumption
+# anybody can name and the model carries a dated change with nothing behind it.
+# A milestone the table never lists is a dated change to an assumption row the
+# plan does not show, so the curve has a step the reader cannot see.
+#
+# It is a mode rather than a check for the reason --used-in and --red-team are:
+# it reads a document at the vault root rather than a note in one of the seven
+# directories, which is a different surface. It shares the failure renderer, so
+# it reports one row per failure with the same JSON shape.
+#
+# GATED ON schemaVersion 2, like every other milestone rule. A vault at 1 has no
+# milestones/ directory by construction, cannot owe this, and passes.
+#
+# LC_ALL=C for the reason --used-in found the hard way: a milestone title and a
+# plan heading both carry free prose, and macOS awk in a UTF-8 locale aborts the
+# record on the first sequence it cannot decode - which would stop the read
+# partway and report the milestones after it as absent from a table it never
+# finished.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "roadmap-table" ]; then
+	ROADMAP_PLAN="$VAULT/business-plan.md"
+	ROADMAP_HAS_PLAN=0
+	[ -f "$ROADMAP_PLAN" ] && ROADMAP_HAS_PLAN=1
+
+	# The success line comes back on stdout and is captured the way FOUND_SCHEMA
+	# is, because what `clean` means here depends on what there was to compare:
+	# a line saying the table agrees, printed over a vault with no milestones or
+	# no document, reads as a roadmap that was checked - which is the failure the
+	# bare run success line already had once. Failures go to $FAILURES through
+	# report() like every other mode, so stdout carries this line and nothing
+	# else.
+	ROADMAP_OK=$(LC_ALL=C awk -v out="$FAILURES" -v plan="$ROADMAP_PLAN" -v hasplan="$ROADMAP_HAS_PLAN" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' '
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			function trim(s) {
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# The second copy of the --supersession-sweep fold, and it answers
+			# the same question: which heading is THIS section, rather than
+			# whether an anchor resolves. Every character the slug rule drops is
+			# dropped here too, so any spelling that rule resolves to the roadmap
+			# heading folds onto it without this program having to know which
+			# characters those are. Change one, change both.
+			function fold(s,   i, c, o) {
+				o = ""
+				for (i = 1; i <= length(s); i++) {
+					c = substr(s, i, 1)
+					if (c >= "a" && c <= "z") { o = o c; continue }
+					if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
+					if (c >= "0" && c <= "9") { o = o c; continue }
+				}
+				return o
+			}
+
+			# The item cells of the first table under the roadmap heading.
+			#
+			# THE HEADER ROW AND THE |---| RULE ARE BOTH DROPPED, and they are
+			# dropped by one test rather than by counting lines. A row whose
+			# every cell is dashes with optional colons is the alignment rule,
+			# and in a GFM table everything ABOVE that rule is the header - so
+			# seeing it discards whatever was buffered, and what survives to the
+			# end is the body. Counting instead would take the header as an item
+			# on a table written with two header lines, and would take the first
+			# real item as a header on a table written with none.
+			#
+			# THE HEADER ALSO SAYS WHICH COLUMN THE ITEM IS IN, and reading it
+			# is what keeps a numbered table from failing every row it has. Both
+			# worked tables in roadmap-sequencing.md head their item column
+			# `Item`, and the generated research/timeline.md puts an ordinal in
+			# column one ahead of it - so a rule that always took the first cell
+			# would report `1`, `2` and `3` as three items that escaped the
+			# ledger on a table whose every row resolves. The column whose
+			# header folds to `item` wins; with no such header, column one does,
+			# which is the shape the Rule 1 table is written in.
+			#
+			# ONLY THE FIRST TABLE IS READ. The section legitimately carries a
+			# second one - roadmap-sequencing.md Rule 3 puts the permutation
+			# comparison in the plan, and its first column is an ORDER rather
+			# than an item - so reading every table here would report each of
+			# those rows as an item that escaped the ledger. That is exactly the
+			# crying wolf this check was scoped out for once already.
+			#
+			# The section ends at the next heading of the same depth or
+			# shallower, so a subsection under the roadmap heading is still part
+			# of it.
+			#
+			# The fence tracking is the FOURTH copy in this file - --used-in
+			# scan(), --supersession-sweep sections() and --red-team carry the
+			# same six lines, because each reads a document at the vault root and
+			# no one of them can call a function defined in another awk program.
+			# A `#` or a `|` inside a fenced block is an example rather than
+			# anything a reader can act on. Change one, change all four.
+			# The read STOPS the moment the answer can no longer change - at the
+			# heading that closes the section, or at the line that ends the first
+			# table in it. SEENRM makes the section unre-enterable and only the
+			# first table is read, so every line after either point is parsed and
+			# discarded. On a plan written to the template that is the whole back
+			# half of the document, on every call, including the one folded into
+			# every --release-gate run.
+			function readplan(path,   line, t, c, n, fc, fn, nh, h, ex, level, inrm, intable, row, nc, cell, i, alldash, item, col, hdr, body) {
+				fc = ""; fn = 0; nh = 0; level = 0
+				inrm = 0; intable = 0; col = 1; hdr = ""; body = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+						c = substr(t, 1, 1)
+						n = 0
+						while (substr(t, n + 1, 1) == c) n++
+						if (fc == "") { fc = c; fn = n }
+						else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+						continue
+					}
+					if (fc != "") continue
+
+					if (match(t, /^#+[ \t]+/)) {
+						nh = 0
+						while (substr(t, nh + 1, 1) == "#") nh++
+						h = substr(t, RLENGTH + 1)
+						sub(/[ \t]*#+[ \t]*$/, "", h)
+						h = trim(h)
+						ex = ""
+						# Braces as bracket expressions rather than escaped, for
+						# the reason scan() states: a backslash-brace is an
+						# interval expression to some awks and a literal to
+						# others, and which one runs this is a property of the
+						# user machine.
+						if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
+							ex = substr(h, RSTART, RLENGTH)
+							sub(/^[{]#/, "", ex)
+							sub(/[}]$/, "", ex)
+							h = trim(substr(h, 1, RSTART - 1))
+						}
+						if (inrm && nh <= level) break
+						if (!SEENRM && (fold(ex) == "roadmap" || fold(h) == "roadmap")) {
+							inrm = 1; SEENRM = 1; level = nh
+						}
+						continue
+					}
+
+					if (!inrm) continue
+					if (substr(t, 1, 1) != "|") {
+						if (intable) break
+						continue
+					}
+					intable = 1
+
+					row = t
+					sub(/^\|/, "", row)
+					sub(/\|[ \t]*$/, "", row)
+					nc = split(row, cell, "|")
+					if (nc < 1) continue
+					alldash = 1
+					for (i = 1; i <= nc; i++)
+						if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { alldash = 0; break }
+					if (alldash) {
+						# The row directly above the rule is the header, and it
+						# is read for nothing but which column holds the item.
+						if (hdr != "") {
+							n = split(hdr, cell, "|")
+							for (i = 1; i <= n; i++)
+								if (fold(cell[i]) == "item") { col = i; break }
+						}
+						body = 1
+						continue
+					}
+
+					# Everything above the rule is header, everything below it
+					# is body, and the two are kept apart rather than buffered
+					# together and pruned. A table with NO rule is not a table
+					# to any renderer - it renders as the literal pipes a reader
+					# sees - so its rows stay out of the body and the section
+					# reports as one that lists no items, which is what the
+					# reader is actually looking at.
+					if (body) PEND[++NPEND] = row
+					else hdr = row
+				}
+				close(path)
+				for (i = 1; i <= NPEND; i++) {
+					n = split(PEND[i], cell, "|")
+					item = (col <= n) ? trim(cell[col]) : ""
+					if (item != "") ROW[++NROW] = item
+				}
+			}
+
+			END {
+				# GATED ON schemaVersion 2, branched inside the program the way
+				# --supersession-sweep, --red-team and the checks pass all branch
+				# on it, rather than by the shell choosing whether to run awk at
+				# all. A vault at 1 has no milestones/ directory by construction
+				# and cannot owe this. Saying the rule was not applied, rather
+				# than printing agreement, is the same distinction the sweep
+				# makes at 1: an unconditional clean line reports a roadmap as
+				# checked when nothing about it was asked.
+				if (schema + 0 < 2) {
+					printf("the roadmap table is a schemaVersion 2 rule and this vault is at %s - a vault at 1 carries no milestone notes, so there is no set for a table to be read against - %s\n", schema, vault)
+					exit
+				}
+
+				# Two milestones carrying one title are covered by one row.
+				# Nothing in the schema makes a title unique, and a check that
+				# demanded it would be a rule about note wording rather than
+				# about the table - which is a separate question from whether
+				# the table renders the set.
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					if (V[f, "type"] != "milestone") continue
+					MI[++nm] = f
+					if (V[f, "title"] != "") HAS[V[f, "title"]] = 1
+				}
+
+				if (hasplan == "1") readplan(plan)
+
+				# The roadmap is in the ledger and nowhere a reader can see it.
+				# Reported ONCE against the document rather than once per
+				# milestone: the fix is one thing - render the section - and a
+				# reader who is handed eight rows for one job stops reading.
+				if (nm > 0 && NROW == 0) {
+					if (hasplan != "1")
+						report("business-plan.md", "roadmap-table-missing", "",
+							"the vault carries " nm " milestone note" (nm == 1 ? "" : "s") " and there is no business-plan.md at the vault root. The roadmap is in the ledger and nowhere a reader can see it: every item is a dated change to an assumption row, so a plan that never renders them hands its reader a curve whose steps have no stated cause")
+					else if (!SEENRM)
+						report("business-plan.md", "roadmap-table-missing", "",
+							"the vault carries " nm " milestone note" (nm == 1 ? "" : "s") " and no heading in business-plan.md answers to `roadmap`. The items exist in the ledger and the plan has no section that shows them, so the curve has steps the reader cannot see and no place to go and ask what moved them. The plan template heading is `## Milestones & roadmap {#roadmap}`, which is also what every milestone `used_in` names")
+					else
+						report("business-plan.md", "roadmap-table-missing", "",
+							"the roadmap section of business-plan.md lists no items and the vault carries " nm " milestone note" (nm == 1 ? "" : "s") ". A roadmap left as prose is one nothing can check - which is what let an item name an assumption that was never written - and the reader gets a section describing a sequence it never lists")
+					printf("%d milestone note%s and no roadmap the plan renders - %s\n", nm, (nm == 1 ? "" : "s"), vault)
+					exit
+				}
+
+				for (i = 1; i <= NROW; i++) {
+					if (ROW[i] in HAS) { HIT[ROW[i]] = 1; continue }
+					report("business-plan.md", "roadmap-row-no-milestone", "",
+						"row `" ROW[i] "` in the roadmap section matches no `milestone` note title in this vault, character for character. The table renders `sequence`, `moves` and `resource` off the notes, so a row matching none of them was written by hand: it moves no assumption anybody can name, which roadmap-sequencing.md Rule 1 files as maintenance rather than as a roadmap item, and the model then carries a dated change with nothing behind it. Match the title verbatim, the way `chosen` matches an entry in `options` - or write the milestone note this row is missing")
+				}
+
+				for (i = 1; i <= nm; i++) {
+					f = MI[i]
+					ti = V[f, "title"]
+					if (ti in HIT) continue
+					report(f, "milestone-not-in-roadmap", V[f, "id"],
+						"`title` is `" ti "` and no row in the roadmap section of business-plan.md carries it. The item is a dated change to an assumption row that the plan never shows, so the curve has a step the reader cannot see and cannot ask about - and the table stops being a rendering of this set the moment one member is absent from it. Render the row with the title verbatim, or retract the note")
+				}
+
+				if (nm == 0 && NROW == 0)
+					printf("no milestone notes and no roadmap rows under %s - there is no roadmap on either side, which is every vault before the plan has one\n", vault)
+				else
+					printf("%d roadmap row%s against %d milestone note%s, matched verbatim - %s\n",
+						NROW, (NROW == 1 ? "" : "s"), nm, (nm == 1 ? "" : "s"), vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint roadmap-table" "$ROADMAP_OK"
 	exit $?
 fi
 

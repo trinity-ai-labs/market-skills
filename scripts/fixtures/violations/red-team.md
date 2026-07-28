@@ -6,8 +6,10 @@ Both directions of the roster check, in one document. The `Violates:` line above
 is read by `run-fixtures.sh` exactly as it is on a violating note — which mode
 reports a check is not the document's business.
 
-This vault is at `schemaVersion` 1, so `red-team-no-roster` cannot fire here even
-if the roster were deleted. That case is the whole content of `panel-gap/`.
+The roster below is present, so `red-team-no-roster` has nothing to fire on here.
+The version gate on that third check — it fires at `schemaVersion` 2 and stays
+silent at 1 — is the whole content of `panel-gap/` and of the copy
+`run-fixtures.sh` stamps back down to 1.
 
 ## Lenses dispatched
 

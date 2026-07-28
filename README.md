@@ -195,7 +195,8 @@ source — and `vault-lint.sh` is the read-only whole-corpus check that gates it
 confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
 still cited, and — on a vault at `schemaVersion: 2` — a roadmap whose order contradicts itself,
 either a prerequisite scheduled after the item that needs it or two items competing for one
-constrained resource while the plan asserts they run side by side.
+constrained resource while the plan asserts they run side by side. It also reads the roadmap
+table in the plan against the milestone notes it was rendered from, in both directions.
 
 Claude Code puts an enabled plugin's `bin/` on the Bash tool's `PATH`, so the skills invoke it
 bare, from whatever directory the user happens to be working in:
@@ -207,6 +208,7 @@ vault-lint.sh --unverified --vault "$VAULT_PATH"
 vault-lint.sh --used-in --vault "$VAULT_PATH"
 vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 vault-lint.sh --red-team --vault "$VAULT_PATH"
+vault-lint.sh --roadmap-table --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
@@ -247,15 +249,35 @@ plan then cites objection codes into a file carrying none of them. The reverse d
 checked because otherwise the gate clears by deleting a line from the roster. A vault with no
 `red-team.md` dispatched no panel and passes.
 
+`--roadmap-table` holds the plan's roadmap to the milestone notes it is supposed to be rendered
+from. The plan template already says the two cannot drift — every item in that section is a
+`milestone` note written before the table, and the table renders `sequence`, `moves` and
+`resource` off the notes — which makes the item cell the milestone `title`, and the key a
+**verbatim** match rather than a fuzzy one. A correct table matches character for character by
+construction, so this needs no ID column in a document a founder hands an investor; a mismatch
+means somebody edited the table by hand. It fails both ways: a row matching no milestone is an
+item that escaped the ledger, so it moves no assumption anybody can name; a milestone the table
+never lists is a dated change to an assumption row the plan doesn't show, so the curve has a
+step the reader can't see. A vault with no milestone notes owes no roadmap and passes; one with
+milestone notes and no `business-plan.md` fails. Gated on `schemaVersion` 2, where the milestone
+type was added.
+
+Only the **first** table under the roadmap heading is read, and the column headed `Item` is the
+one compared — the section legitimately carries a second table (the permutation comparison of
+`roadmap-sequencing.md` Rule 3, whose first column is an *order*), and a numbered roadmap puts an
+ordinal ahead of the item. Reading either wrong would report every row of a correct table as an
+item with no note behind it, which is the crying wolf this check was scoped out for once already.
+
 `--release-gate` is the call before a render, and the only one that asks every question. It runs
-the bare check, `--used-in`, `--supersession-sweep` and `--red-team`, prints each part under its
-own heading, and exits with the worst status any part returned — so the gate is clean only when
-every part is. The alternative was several calls made from memory, and which of them actually
-ran was a matter of recall.
+the bare check, `--used-in`, `--supersession-sweep`, `--red-team` and `--roadmap-table`, prints
+each part under its own heading, and exits with the worst status any part returned — so the gate
+is clean only when every part is. The alternative was several calls made from memory, and which
+of them actually ran was a matter of recall.
 
 **The bare run's success line says what it checked and what it did not**, because it used to say
 `clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
-checks passed … not opened: citation targets, supersession blast radius, panel objection rows* —
+checks passed … not opened: citation targets, supersession blast radius, panel objection rows,
+roadmap table against the milestone set* —
 and the list of what it skipped is read off the same mode table `--release-gate` composes itself
 from, so a mode added to the gate cannot leave the line quietly overstating what it covered. A
 success line is what somebody renders on, so it has to be narrower than the verdict its reader

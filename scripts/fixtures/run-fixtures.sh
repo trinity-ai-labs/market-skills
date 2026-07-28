@@ -38,6 +38,9 @@
 #      stale `reconciled:` - and the same notes at 1 do not fail.
 #  11. --red-team fails a rostered lens with no rows and a row with no roster
 #      entry, and fails a missing roster at schemaVersion 2 only.
+#  12. --roadmap-table matches the plan's roadmap rows against the milestone
+#      titles verbatim, fails in both directions and when the roadmap is
+#      rendered nowhere at all, and stays silent at schemaVersion 1.
 
 set -u
 
@@ -62,7 +65,7 @@ dependency-after-dependent false-independence sequence-not-orderable"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table graph"
 
 PASS=0
 FAIL=0
@@ -165,6 +168,11 @@ UI_VIOL_STATUS=$?
 RTJSON=$("$LINT" --red-team --vault "$HERE/violations" --json 2>/dev/null)
 RT_VIOL_STATUS=$?
 
+# The fourth. --roadmap-table reports against business-plan.md rather than
+# against a note, and that document carries its own `Violates:` line for the
+# same reason red-team.md does: the promise is made by the file about a check.
+RMJSON=$("$LINT" --roadmap-table --vault "$HERE/violations" --json 2>/dev/null)
+
 FIRED=$(printf '%s\n' "$VJSON" |
 	awk -F'"check": "' 'NF > 1 { split($2, a, "\""); print a[1] }' |
 	LC_ALL=C sort -u)
@@ -200,7 +208,7 @@ done <"$PAIRS_FILE.got"
 # resolution order that has stopped resolving. Every violating note declares its
 # own checks on a `Violates:` line, and each is asserted against that file.
 printf '\nper-file expectations\n'
-PAIRS=$(printf '%s\n%s\n%s\n' "$VJSON" "$UJSON" "$RTJSON" |
+PAIRS=$(printf '%s\n%s\n%s\n%s\n' "$VJSON" "$UJSON" "$RTJSON" "$RMJSON" |
 	awk -F'"file": "' 'NF > 1 {
 		split($2, a, "\"")
 		split($0, b, "\"check\": \"")
@@ -692,7 +700,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -887,6 +895,112 @@ for gated in false-independence dependency-after-dependent sequence-not-orderabl
 	*) ok "$gated stays silent at schemaVersion 1" ;;
 	esac
 done
+
+# --- 9. the roadmap table against the milestone set --------------------------
+# The check plan-template.md promised and nothing read: the table renders
+# `sequence`, `moves` and `resource` off the notes, so its item cell IS the
+# milestone title and the two cannot drift. The key is that title matched
+# VERBATIM, which is what makes the passing side an assertion rather than a
+# tautology - a rule keyed on anything looser passes schema-2/ whatever it does.
+#
+# Each direction gets a vault of its own, because a single fixture failing both
+# would pass a check that had collapsed them into one message. And each of those
+# vaults renders its OTHER item correctly, so the failure COUNT is what has
+# teeth: a check reporting every row fires the same check name on the same file
+# and would clear a name census untouched.
+printf '\nroadmap table\n'
+
+RM_S2=$("$LINT" --roadmap-table --vault "$HERE/schema-2" 2>&1)
+RM_S2_STATUS=$?
+[ "$RM_S2_STATUS" = "0" ] && ok "a table rendered off the notes agrees with them" ||
+	no "--roadmap-table should exit 0 over schema-2 (got $RM_S2_STATUS: $RM_S2)"
+
+# The success line names what it compared, for the reason the bare run's does:
+# a line saying the table agrees, printed over a vault with nothing to compare,
+# reads as a roadmap that was checked. Three rows, three notes - and the second
+# table in that section, the Rule 3 permutation comparison, contributes none of
+# them.
+case "$RM_S2" in
+*'3 roadmap rows against 3 milestone notes'*) ok "the success line names both sides it matched" ;;
+*) no "the success line does not name what it compared (got: $RM_S2)" ;;
+esac
+
+RM_X=$("$LINT" --roadmap-table --vault "$HERE/roadmap-extra-row" --json 2>/dev/null)
+RM_X_STATUS=$?
+[ "$RM_X_STATUS" = "1" ] && ok "a row naming no milestone fails" ||
+	no "a row naming no milestone should exit 1 (got $RM_X_STATUS)"
+case "$RM_X" in
+*'"failure_count": 1'*) ok "only the row that escaped the ledger is reported" ;;
+*) no "--roadmap-table did not report exactly one row over roadmap-extra-row (got: $RM_X)" ;;
+esac
+case "$RM_X" in
+*'"check": "roadmap-row-no-milestone"'*'Mobile client parity'*) ok "the failure names the row it could not resolve" ;;
+*) no "the failure does not name the planted row (got: $RM_X)" ;;
+esac
+
+RM_M=$("$LINT" --roadmap-table --vault "$HERE/roadmap-missing-row" --json 2>/dev/null)
+RM_M_STATUS=$?
+[ "$RM_M_STATUS" = "1" ] && ok "a milestone the table never lists fails" ||
+	no "an unlisted milestone should exit 1 (got $RM_M_STATUS)"
+# The count is what catches the two over-firings that would each look like a
+# real finding, so a red here is worth reading before anything else: reading the
+# header row as an item reports `Item` as a row with no note behind it on every
+# correctly written table there is, and roadmap-missing-row/ heads its table
+# `| # | Item | ... |` - the shape research/timeline.md is generated in - so
+# taking the FIRST cell rather than the one the header names reports the ordinal
+# `1` the same way. Both fire the same check name as a genuine extra row and are
+# invisible to a name census; both push this count to 2.
+case "$RM_M" in
+*'"failure_count": 1'*) ok "only the milestone the table omits is reported" ;;
+*) no "--roadmap-table did not report exactly one note over roadmap-missing-row (got: $RM_M)" ;;
+esac
+case "$RM_M" in
+*'"check": "milestone-not-in-roadmap"'*MILESTONE-MR1BB002*) ok "the failure lands on the note the table left out" ;;
+*) no "the failure does not name MILESTONE-MR1BB002 (got: $RM_M)" ;;
+esac
+
+# A vault with milestones and no business-plan.md at all. The roadmap is in the
+# ledger and nowhere a reader can see it, which is a failure rather than an
+# absent document to skip - and it is asserted on a COPY of the version-1
+# fixture stamped up to 2, so the same notes carry the gate in both directions.
+NO_PLAN="$PAIRS_FILE.no-plan"
+rm -rf "$NO_PLAN"
+cp -R "$HERE/schema-1-milestone" "$NO_PLAN"
+printf '{\n  "schemaVersion": 2,\n  "created": "2026-07-27"\n}\n' >"$NO_PLAN/.vault/config.json"
+
+NP=$("$LINT" --roadmap-table --vault "$NO_PLAN" 2>&1)
+NP_STATUS=$?
+[ "$NP_STATUS" = "1" ] && ok "milestones with no business-plan.md fail" ||
+	no "a vault with milestones and no plan should exit 1 (got $NP_STATUS: $NP)"
+case "$NP" in
+*roadmap-table-missing*) ok "the absent document is reported by name" ;;
+*) no "--roadmap-table did not fire roadmap-table-missing (got: $NP)" ;;
+esac
+
+# The same notes at the version that predates the type. Asserting only that the
+# checks fire at 2 would pass a build with no gate at all, which is the upgrade
+# that turns every finished corpus red on the day the skill updates.
+RM_S1=$("$LINT" --roadmap-table --vault "$HERE/schema-1-milestone" 2>&1)
+RM_S1_STATUS=$?
+[ "$RM_S1_STATUS" = "0" ] && ok "the same notes at schemaVersion 1 do not owe a roadmap table" ||
+	no "schemaVersion 1 must not owe a roadmap table (got $RM_S1_STATUS: $RM_S1)"
+case "$RM_S1" in
+*'schemaVersion 2 rule and this vault is at 1'*) ok "at 1 the mode says it did not ask, rather than reporting agreement" ;;
+*) no "at 1 the mode reported a clean table instead of saying it did not ask (got: $RM_S1)" ;;
+esac
+
+# The two silent sides that would otherwise fail a real vault. panel-gap/ is at
+# schemaVersion 2 with no milestones and no business-plan.md, so a mode that
+# demanded a roadmap of every version-2 vault would fail every corpus before the
+# plan has one. unreconciled/ is the harder half: it HAS a business-plan.md, with
+# no roadmap section in it, and no milestones to render there.
+RM_PG=$(run_status "$HERE/panel-gap" --roadmap-table)
+[ "$RM_PG" = "0" ] && ok "no milestones and no business-plan.md is not a roadmap failure" ||
+	no "a vault with no roadmap on either side should pass (got $RM_PG)"
+
+RM_UR=$(run_status "$HERE/unreconciled" --roadmap-table)
+[ "$RM_UR" = "0" ] && ok "a plan with no roadmap section is not a failure when nothing owes one" ||
+	no "a plan with no milestones behind it should pass (got $RM_UR)"
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
