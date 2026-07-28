@@ -41,6 +41,19 @@
 #  12. --roadmap-table matches the plan's roadmap rows against the milestone
 #      titles verbatim, fails in both directions and when the roadmap is
 #      rendered nowhere at all, and stays silent at schemaVersion 1.
+#  13. --binding-driver reads a verdict note against the plan section it renders
+#      into: the fields are owed as a set under a trigger that is strict for
+#      `target-verdict` and lenient for `steady-state-ceiling`, the driver_kind
+#      word list is closed, a policy-bound verdict states its configuration
+#      verbatim, the corner table's Kind column matches its note in both
+#      directions, a thin tail is surfaced in BOTH the note's counts and the line
+#      the section renders off them, and a rendered verdict section has a note
+#      behind it. Each of those has a silent
+#      side asserted beside it - a structural verdict owing no condition, an
+#      em-dash corner owing no note, the undetermined corner the template ships,
+#      a ceiling section owing no note, an empty section owing none either, a
+#      well-evidenced verdict owing no evidence line, and a legacy ceiling claim
+#      carrying none of the fields - and none of them is gated on schemaVersion.
 
 set -u
 
@@ -57,7 +70,8 @@ filename-mismatch folded-scalar frontmatter inline-flow-list malformed-edge
 near-miss-subject null-value orphan-source required-field stale-claim
 supersedes-reason supersedes-status type-agreement unknown-subject
 unparsed-line
-dependency-after-dependent false-independence sequence-not-orderable"
+dependency-after-dependent false-independence sequence-not-orderable
+driver-kind-unknown verdict-fields-incomplete"
 
 # Every mode the lint answers to, and the second census in this file for the
 # same reason as EXPECTED: a mode whose help block was never written and one
@@ -65,7 +79,7 @@ dependency-after-dependent false-independence sequence-not-orderable"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver graph"
 
 PASS=0
 FAIL=0
@@ -173,6 +187,12 @@ RT_VIOL_STATUS=$?
 # same reason red-team.md does: the promise is made by the file about a check.
 RMJSON=$("$LINT" --roadmap-table --vault "$HERE/violations" --json 2>/dev/null)
 
+# The fifth. --binding-driver reports against business-plan.md for the section
+# with no note behind it and against a note for everything else, so both kinds of
+# `Violates:` promise in the violating vault are read from this one document.
+BDJSON=$("$LINT" --binding-driver --vault "$HERE/violations" --json 2>/dev/null)
+BD_VIOL_STATUS=$?
+
 FIRED=$(printf '%s\n' "$VJSON" |
 	awk -F'"check": "' 'NF > 1 { split($2, a, "\""); print a[1] }' |
 	LC_ALL=C sort -u)
@@ -208,7 +228,7 @@ done <"$PAIRS_FILE.got"
 # resolution order that has stopped resolving. Every violating note declares its
 # own checks on a `Violates:` line, and each is asserted against that file.
 printf '\nper-file expectations\n'
-PAIRS=$(printf '%s\n%s\n%s\n%s\n' "$VJSON" "$UJSON" "$RTJSON" "$RMJSON" |
+PAIRS=$(printf '%s\n%s\n%s\n%s\n%s\n' "$VJSON" "$UJSON" "$RTJSON" "$RMJSON" "$BDJSON" |
 	awk -F'"file": "' 'NF > 1 {
 		split($2, a, "\"")
 		split($0, b, "\"check\": \"")
@@ -700,7 +720,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -1001,6 +1021,303 @@ RM_PG=$(run_status "$HERE/panel-gap" --roadmap-table)
 RM_UR=$(run_status "$HERE/unreconciled" --roadmap-table)
 [ "$RM_UR" = "0" ] && ok "a plan with no roadmap section is not a failure when nothing owes one" ||
 	no "a plan with no milestones behind it should pass (got $RM_UR)"
+
+# --- 10. the verdict, its binding driver, and the evidence under it ----------
+# The census above already asserts that the two note-level codes FIRE. What it
+# cannot see is the half that decides whether these rules are usable at all:
+# where each has to stay SILENT. There is no schemaVersion gate anywhere in this
+# mode, so getting the trigger wrong in the strict direction reddens every
+# existing vault's legacy ceiling claim on the day the plugin updates, and in the
+# lenient direction leaves the omission dodge open. Both sides are asserted.
+printf '\nverdict drivers\n'
+
+[ "$BD_VIOL_STATUS" = "1" ] && ok "--binding-driver exits 1 on the violating vault" ||
+	no "--binding-driver exits 1 on the violating vault (got $BD_VIOL_STATUS)"
+
+# clean/ is at schemaVersion 1 and carries a complete verdict note, a corner
+# table that renders it, and a ceiling claim holding none of the five. Section 1
+# already requires that vault to report nothing, so this asserts the mode was
+# actually asked - and asked over a version-1 corpus, which is what says the
+# trigger is the subject rather than the version.
+BD_CLEAN=$("$LINT" --binding-driver --vault "$HERE/clean" 2>&1)
+BD_CLEAN_STATUS=$?
+[ "$BD_CLEAN_STATUS" = "0" ] && ok "a complete verdict at schemaVersion 1 passes - the trigger is the subject, not the version" ||
+	no "--binding-driver should exit 0 over clean (got $BD_CLEAN_STATUS: $BD_CLEAN)"
+
+# The success line names both sides it compared, for the reason the bare run's
+# does: a line saying the verdict agrees, printed over a vault with nothing to
+# compare, reads as a verdict that was checked. One verdict note and two corner
+# rows - the ceiling claim is not counted, because carrying none of the five is
+# what exempts it.
+case "$BD_CLEAN" in
+*'1 verdict note against 2 corner verdict rows'*) ok "the success line names both sides it matched" ;;
+*) no "the success line does not name what it compared (got: $BD_CLEAN)" ;;
+esac
+
+# THE ASYMMETRY, asserted from the side that would break every existing vault.
+# CLAIM-VD05EE55 carries `subject: steady-state-ceiling` and none of the five
+# fields, which is the shape every vault authored before this release holds. It
+# has to be READ and still not fail - a graph call is what proves it was read,
+# because a mode that skipped the note would pass this suite in silence.
+BD_CEIL=$("$LINT" graph CLAIM-VD05EE55 --vault "$HERE/clean" --depth 1 2>&1)
+case "$BD_CEIL" in
+*CLAIM-VD05EE55*steady-state-ceiling*) ok "the legacy ceiling claim is read, and owes none of the five" ;;
+*) no "CLAIM-VD05EE55 was not read (got: $BD_CEIL)" ;;
+esac
+
+# The lenient half of the trigger, counted rather than pattern-matched: a check
+# that named one missing field and stopped would still match every substring
+# assertion here. CLAIM-VDCE0014 is a ceiling claim carrying `binding_driver` and
+# nothing else, so the three siblings owed outright are reported and
+# `conditional_on` is not - with no `driver_kind`, nothing says the driver is
+# policy, and demanding a condition of every verdict would be met by inventing
+# one.
+CEILP=$(printf '%s\n' "$VJSON" | grep -c 'CLAIM-VDCE0014.md.*verdict-fields-incomplete')
+[ "$CEILP" = "3" ] && ok "a ceiling claim carrying one of the five owes the other three" ||
+	no "a partial ceiling should fail 3 times, got $CEILP"
+case "$(printf '%s\n' "$VJSON" | grep 'CLAIM-VDCE0014.md')" in
+*conditional_on*) no "conditional_on was demanded of a note with no policy driver_kind - a structural verdict owes no condition" ;;
+*) ok "conditional_on is not demanded where driver_kind is not policy" ;;
+esac
+
+# THE STRICT HALF, and the release's headline behaviour: a `target-verdict` note
+# carrying NONE of the fields owed outright fails, because no corpus written
+# before this release carries that subject and an omission would otherwise be the
+# cheapest way past every rule that reads one of them. Asserted by count for the
+# reason above, and CLAIM-VDTV0016 carries no `driver_kind` either, so the four
+# owed outright are reported and `conditional_on` is not - which is what says the
+# two halves of the trigger differ in what they demand and not in how they
+# enumerate it.
+TVP=$(printf '%s\n' "$VJSON" | grep -c 'CLAIM-VDTV0016.md.*verdict-fields-incomplete')
+[ "$TVP" = "4" ] && ok "a target-verdict note carrying none of the fields owes all four" ||
+	no "a bare target verdict should fail 4 times, got $TVP"
+case "$(printf '%s\n' "$VJSON" | grep 'CLAIM-VDTV0016.md')" in
+*'none of the fields a verdict owes outright'*) ok "the message says the subject owes them whatever else the note carries" ;;
+*) no "the bare-target-verdict message does not name the unconditional trigger" ;;
+esac
+
+# The one document-level code, and the trigger that is deliberately not a read of
+# the prose. Its vault carries a non-empty `{#target-verdict}` section and no
+# notes at all, so the section is the whole trigger - and a non-empty
+# `{#steady-state}` section beside it, which must NOT fire: there is deliberately
+# no equivalent there, because a ceiling section in an existing plan legitimately
+# has no field-carrying note behind it. The failure count is what asserts the
+# second half; a mirror rule would report two.
+BD_UF=$("$LINT" --binding-driver --vault "$HERE/verdict-unfiled" --json 2>/dev/null)
+BD_UF_STATUS=$?
+[ "$BD_UF_STATUS" = "1" ] && ok "a rendered verdict section with no note behind it fails" ||
+	no "verdict-unfiled should exit 1 (got $BD_UF_STATUS)"
+case "$BD_UF" in
+*'"failure_count": 1'*) ok "the rendered ceiling section beside it owes no note" ;;
+*) no "--binding-driver did not report exactly one failure over verdict-unfiled (got: $BD_UF)" ;;
+esac
+case "$BD_UF" in
+*'"check": "verdict-unfiled"'*'business-plan.md'*) ok "the failure lands on the document, not on a note" ;;
+*) no "verdict-unfiled did not report against business-plan.md (got: $BD_UF)" ;;
+esac
+
+# And the trigger is PRESENCE of a non-empty section, so an empty one at the same
+# anchor owes nothing. Asserted on a copy with the section body stripped, the way
+# the rewording and schemaVersion assertions above build the corpus they need -
+# a hand-written twin asserts this until the day one of the two is edited. Getting
+# this wrong fails every plan that has scaffolded its headings and not yet written
+# the verdict, which is every plan before Phase 5.
+EMPTY_UF="$PAIRS_FILE.empty-verdict"
+rm -rf "$EMPTY_UF"
+cp -R "$HERE/verdict-unfiled" "$EMPTY_UF"
+awk 'BEGIN { drop = 0 }
+	/^## Target & verdict \{#target-verdict\}$/ { print; drop = 1; next }
+	/^## / { drop = 0 }
+	drop { next }
+	{ print }' "$HERE/verdict-unfiled/business-plan.md" >"$EMPTY_UF/business-plan.md"
+
+if grep -q '^## Target & verdict {#target-verdict}$' "$EMPTY_UF/business-plan.md" &&
+	! grep -q 'Reach binds' "$EMPTY_UF/business-plan.md"; then
+	ok "the emptied copy keeps the heading and loses its body"
+else
+	no "the section-stripping rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+
+EMPTY_UF_STATUS=$(run_status "$EMPTY_UF" --binding-driver)
+[ "$EMPTY_UF_STATUS" = "0" ] && ok "an empty section at the verdict anchor owes no note" ||
+	no "an empty verdict section must not fail (got $EMPTY_UF_STATUS)"
+
+# A vault with no verdict note and no rendered verdict section passes, and says
+# which rather than reporting agreement. Failing it would fail every corpus
+# before a target has been stated, which is the shape of check that gets switched
+# off rather than satisfied.
+BD_NONE=$("$LINT" --binding-driver --vault "$HERE/panel-gap" 2>&1)
+BD_NONE_STATUS=$?
+[ "$BD_NONE_STATUS" = "0" ] && ok "a vault with no verdict on either side passes" ||
+	no "a vault with no verdict should pass (got $BD_NONE_STATUS: $BD_NONE)"
+case "$BD_NONE" in
+*'no verdict note and no'*) ok "the absent verdict is named rather than reported clean" ;;
+*) no "--binding-driver did not say there was no verdict (got: $BD_NONE)" ;;
+esac
+
+# A schemaVersion 2 corpus carrying no verdict subject at all. This is the
+# upgrade case: every existing vault is one of these, and a rule that fired here
+# would turn a finished corpus red on the day the plugin updates.
+BD_S2=$(run_status "$HERE/schema-2" --binding-driver)
+[ "$BD_S2" = "0" ] && ok "a schemaVersion 2 corpus with no verdict subject exits 0" ||
+	no "a corpus with no verdict subject must not fail (got $BD_S2)"
+
+# Each of the four document-facing codes gets a vault of its own, and each of
+# those vaults renders its OTHER verdict correctly - so the failure COUNT is what
+# has teeth. A check that reported every verdict fires the same check name on the
+# same file and would clear a name census untouched.
+BD_UC=$("$LINT" --binding-driver --vault "$HERE/verdict-unconditional" --json 2>/dev/null)
+BD_UC_STATUS=$?
+[ "$BD_UC_STATUS" = "1" ] && ok "a policy-bound verdict whose section drops the configuration fails" ||
+	no "verdict-unconditional should exit 1 (got $BD_UC_STATUS)"
+case "$BD_UC" in
+*'"failure_count": 1'*) ok "only the policy-bound verdict is reported" ;;
+*) no "--binding-driver did not report exactly one note over verdict-unconditional (got: $BD_UC)" ;;
+esac
+# The negative case, and it carries as much weight as the positive one: a rule
+# demanding a condition from every verdict would be met by inventing one, which
+# renders. CLAIM-BD1DD004 is structural and sits in the same section.
+case "$BD_UC" in
+*CLAIM-BD1DD004*) no "a structural verdict was asked for a conditional_on - it has no choice to name" ;;
+*) ok "a structural binding driver owes no conditional_on" ;;
+esac
+case "$BD_UC" in
+*'"check": "verdict-unconditional"'*'six hours a week across two channels'*) ok "the failure names the string the section does not carry" ;;
+*) no "the failure does not name the conditional_on string (got: $BD_UC)" ;;
+esac
+
+# Both directions of the Kind column, one vault each. A single fixture failing
+# both would pass a check that had collapsed them into one message - and without
+# the reverse direction, editing a driver cell until it matches no note is the
+# cheapest way past the forward one.
+BD_KC=$("$LINT" --binding-driver --vault "$HERE/verdict-kind-cell" --json 2>/dev/null)
+BD_KC_STATUS=$?
+[ "$BD_KC_STATUS" = "1" ] && ok "a Kind cell disagreeing with its note fails" ||
+	no "verdict-kind-cell should exit 1 (got $BD_KC_STATUS)"
+case "$BD_KC" in
+*'"failure_count": 1'*) ok "only the row whose kind disagrees is reported" ;;
+*) no "--binding-driver did not report exactly one row over verdict-kind-cell (got: $BD_KC)" ;;
+esac
+# The em-dash corner is the over-firing that would look like a real finding, and
+# the count above is what catches it: `plan-template.md` writes an em dash in both
+# cells for a corner where nothing binds, so a rule that demanded a note for every
+# row would report that row too - the same check name as a genuine mismatch, and
+# invisible to a name census.
+case "$BD_KC" in
+*'"file": "business-plan.md"'*'structural'*) ok "the failure names the cell and the note it disagrees with" ;;
+*) no "the failure does not name the planted cell (got: $BD_KC)" ;;
+esac
+
+BD_KU=$("$LINT" --binding-driver --vault "$HERE/verdict-kind-unrendered" --json 2>/dev/null)
+BD_KU_STATUS=$?
+[ "$BD_KU_STATUS" = "1" ] && ok "a verdict note whose driver no row names fails" ||
+	no "verdict-kind-unrendered should exit 1 (got $BD_KU_STATUS)"
+case "$BD_KU" in
+*'"failure_count": 1'*) ok "only the verdict the table omits is reported" ;;
+*) no "--binding-driver did not report exactly one note over verdict-kind-unrendered (got: $BD_KU)" ;;
+esac
+case "$BD_KU" in
+*'"check": "verdict-kind-mismatch"'*CLAIM-BD3DD004*) ok "the failure lands on the note the table left out" ;;
+*) no "the failure does not name CLAIM-BD3DD004 (got: $BD_KU)" ;;
+esac
+# The second silent side of the reverse direction, and the reason it asks only
+# whether a row NAMES the driver: that vault carries the shape the template
+# writes for an undetermined corner - `| multiple | - |`, driver named and kind an
+# em dash. Nothing carries `multiple` as a binding driver there, so it demands no
+# note, and a rule requiring a kind wherever a driver was named would report the
+# worked example the template ships.
+case "$BD_KU" in
+*multiple*) no "the undetermined corner plan-template.md ships was reported - the check would fire on the template" ;;
+*) ok "an undetermined corner naming its driver with an em-dash kind demands no note" ;;
+esac
+
+BD_TE=$("$LINT" --binding-driver --vault "$HERE/verdict-thin-evidence" --json 2>/dev/null)
+BD_TE_STATUS=$?
+[ "$BD_TE_STATUS" = "1" ] && ok "a closure that reaches one counterparty fails at any n" ||
+	no "verdict-thin-evidence should exit 1 (got $BD_TE_STATUS)"
+# Two of the three notes fail and for different reasons - one states no counts,
+# one states a pair the closure does not hold - and the third states the pair
+# correctly and is silent. The count is what has teeth: a rule that only checked
+# whether the fields were PRESENT would report one instead of two and still fire
+# the same check name on the same vault.
+case "$BD_TE" in
+*'"failure_count": 2'*) ok "an absent pair and a wrong pair are both reported, and the correct one is not" ;;
+*) no "--binding-driver did not report exactly two notes over verdict-thin-evidence (got: $BD_TE)" ;;
+esac
+# The wrong-pair note is reported for its PAIR and not for its missing line: a
+# wrong pair cannot render a right line, so correcting the field comes first and a
+# message sending its reader to the section would send them to the wrong fix.
+case "$BD_TE" in
+*CLAIM-BD4GG007*'does not carry'*) no "the wrong-pair note was reported against the section - the field is the thing to correct first" ;;
+*) ok "a wrong pair is reported against the field, not against the section" ;;
+esac
+# The count is computed rather than read, and the concentration is the half no
+# other field can recover: three source notes with three distinct canonical URLs
+# and one counterparty. A rule keyed on the source count alone passes this vault
+# whatever it does.
+case "$BD_TE" in
+*'3 distinct source notes and 1 distinct counterparty'*) ok "the closure count and the counterparty count are both computed" ;;
+*) no "the failure does not report 3 sources and 1 counterparty (got: $BD_TE)" ;;
+esac
+case "$BD_TE" in
+*CLAIM-BD4EE005*) ok "a thin closure with no counts stated is reported" ;;
+*) no "the note stating no counts was not reported (got: $BD_TE)" ;;
+esac
+# The wrong-pair half names what the note claims as well as what the closure
+# holds, because the fix is to correct the field and a message that reported only
+# the computed numbers leaves the reader diffing two documents to find which.
+case "$BD_TE" in
+*CLAIM-BD4GG007*'evidence_counterparties: \"3\"'*) ok "a stated pair the closure does not hold is reported, with both numbers named" ;;
+*) no "the note stating a wrong pair was not reported with its own numbers (got: $BD_TE)" ;;
+esac
+# The silent side, and the reason the count above is the assertion: the rule asks
+# that the concentration be surfaced, not that it be absent. Its pair matches the
+# closure AND its section carries the line those two generate, so both halves of
+# the conjunction are satisfied - a check that ignored either would report it.
+case "$BD_TE" in
+*CLAIM-BD4FF006*) no "a thin closure stated in the note and rendered in the section was reported - both halves are satisfied" ;;
+*) ok "a thin closure stated in the note and rendered in the section is not reported" ;;
+esac
+
+# --- the rendered half of the conjunction, on its own vault ------------------
+# The gap a disjunction between the note and the section could never see: the
+# ledger is honest and the plan renders nothing. Both verdicts here state a pair
+# the closure holds, so the note-side half passes for both and only the rendered
+# half can separate them - which is what makes the failure count the assertion.
+BD_EU=$("$LINT" --binding-driver --vault "$HERE/verdict-evidence-unrendered" --json 2>/dev/null)
+BD_EU_STATUS=$?
+[ "$BD_EU_STATUS" = "1" ] && ok "honest counts with nothing rendered beside them fail" ||
+	no "verdict-evidence-unrendered should exit 1 (got $BD_EU_STATUS)"
+case "$BD_EU" in
+*'"failure_count": 1'*) ok "only the corner whose line is missing is reported" ;;
+*) no "--binding-driver did not report exactly one note over verdict-evidence-unrendered (got: $BD_EU)" ;;
+esac
+# The message quotes the exact string the writer has to render, because the line
+# is generated off the two fields and matched verbatim - a failure naming only the
+# counts leaves its reader guessing at the wording, and a guess is a mismatch.
+case "$BD_EU" in
+*CLAIM-EU1FF006*'Evidence: 1 source, 1 counterparty'*) ok "the failure quotes the line the section is missing" ;;
+*) no "the failure does not quote the generated line (got: $BD_EU)" ;;
+esac
+# Each noun pluralises on its own numeral, and this vault is where that is
+# asserted in both directions at once: the silent corner renders `2 sources, 2
+# counterparties` and the failing one owes `1 source, 1 counterparty`. A generator
+# that pluralised off the wrong numeral, or off neither, matches one and not the
+# other, so the count above moves.
+case "$BD_EU" in
+*CLAIM-EU1EE005*) no "the corner whose line IS rendered was reported - the plural form did not match" ;;
+*) ok "a rendered line matching the note verbatim satisfies the rule" ;;
+esac
+
+# A well-evidenced verdict owes no line at all, which is what stops this becoming
+# a line on every plan that everyone learns to skip. clean/ carries a verdict
+# whose closure reaches three sources from three counterparties, and its section
+# carries no `Evidence:` line anywhere - section 1 already requires that vault to
+# report nothing, so this asserts the reason.
+case "$(cat "$HERE/clean/business-plan.md")" in
+*'Evidence:'*) no "the clean plan carries an Evidence line - the healthy case must owe none" ;;
+*) ok "a well-evidenced verdict owes no evidence line" ;;
+esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

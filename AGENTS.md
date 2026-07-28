@@ -198,7 +198,9 @@ for the notes asserted with nothing behind them, `--used-in` for whether each no
 citation target still resolves, `--supersession-sweep` for the document sections a
 supersession put in doubt, `--red-team` for whether every dispatched panel lens wrote
 objection rows, `--roadmap-table` for whether the plan's roadmap table still matches the
-milestone set it renders, `--release-gate` for all five of those run as one call, and
+milestone set it renders, `--binding-driver` for whether a target verdict's driver and the
+evidence under it survive contact with the plan section that renders them, `--release-gate` for
+all six of those run as one call, and
 `graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it** — an
 enumeration that has gone stale reads exactly like one that is complete. Rule 3 above has
@@ -215,7 +217,8 @@ be three edits to the same `case` block, and git resolves two of those textually
 third silently loses the arm that parses its flag.
 
 `--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
-`--supersession-sweep`, `--red-team` and `--roadmap-table` as separate invocations of the script and exits with the
+`--supersession-sweep`, `--red-team`, `--roadmap-table` and `--binding-driver` as separate
+invocations of the script and exits with the
 **worst** status any part returned, so a refusal (2) is never reported as a failed check (1). It
 exists because the render gate was several calls made from memory — which of them ran was a
 matter of recall — and because the bare run's success line used to read as a whole-corpus
@@ -303,6 +306,47 @@ header names `Item`**, defaulting to the first (a numbered roadmap puts an ordin
 the shape the generated `research/timeline.md` uses). Getting either wrong reports every row of a
 correct table as an item with no note behind it — which is what this check was scoped out of
 1.10.0 for, on the mistaken premise that the only available key was a fuzzy one.
+
+`--binding-driver` is the fourth document, and the one mode whose trigger is a **`subject`** rather
+than a version or a directory. A target verdict is a `claim` or an `assumption` carrying
+`subject: target-verdict` or `steady-state-ceiling` plus `binding_driver`, `driver_kind`,
+`conditional_on`, `evidence_n` and `evidence_counterparties`; the two rules that read nothing but
+the note — the fields are owed as a set, and `driver_kind` takes one of three words — are in
+`check`, and the four that have to open `business-plan.md` are here. **Its boundary is that the two
+strings the document renders off a note are matched verbatim and no prose is read for meaning
+anywhere**: the `conditional_on` phrase against the section the verdict renders into, and the corner
+table's `Kind` cell against `driver_kind`, both directions. There is no phrase list and no
+sentence-shape inference, for `--roadmap-table`'s reason one section over — a check that infers a
+verdict from how a sentence reads cries wolf, and switching it off takes the half that worked with
+it. Three things it deliberately does not do belong in any change to it. **The section a verdict
+renders into is the anchor its subject names, and only where the plan has no such section the ones
+its `used_in` names** — read as a union instead, a note that also cites `## Why now` clears the
+condition check whenever the phrase turns up there, so the verdict corner may read *does not clear*
+and pass. **`verdict-thin-evidence` is a conjunction and both halves are load-bearing**: the note's
+`evidence_n` and `evidence_counterparties` must be what the closure holds, *and* the section must
+carry the one line those two generate — `Evidence: 2 sources, 1 counterparty`, matched verbatim like
+`conditional_on`. Written as a disjunction it can never be both-false, because `check` already owes
+both fields on every note the mode reads, so it collapses to a rule about the ledger alone and leaves
+the reported failure shipping: honest counts, and a section that renders the finding with nothing
+saying it rests on two deals with one party. The line is generated rather than grepped for, because a
+scan for the two numbers as tokens lets an unrelated pair of digits silence it — and it is owed only
+where the tail is thin, so a well-evidenced verdict carries nothing and this never becomes a line on
+every plan.
+**`verdict-unfiled` fires on the presence of a non-empty section at the `{#target-verdict}` anchor
+and never on a reading of the prose inside it, and there is no `{#steady-state}` equivalent**,
+because a ceiling section in an existing plan legitimately has no field-carrying note behind it.
+
+**The two subjects trigger differently, and the asymmetry is the design rather than an
+inconsistency.** `target-verdict` is a term 1.12.0 introduces, so no existing corpus carries it and
+the four fields owed outright are owed whatever the note carries — a note under that subject holding
+none of them fails. `steady-state-ceiling` is `required: true` and predates its 1.3.0 amendment, so
+every vault already holds one, and there the trigger is **field presence**. That is the exemption
+`schemaVersion` exists to provide, obtained without spending a version: a check firing
+unconditionally over a subject no older vault can carry fails nothing, while one firing over both
+subjects fails every vault authored before it on the day the plugin updates. Extending the leniency
+to the verdict half would pay an exemption's whole cost over an empty population and make omitting
+`binding_driver` the cheapest way past every rule that reads it — and a dodge available by omission
+is not an exemption, which is why `--red-team` checks its roster both ways too.
 
 **Every invocation in `skills/` is bare — `vault-lint.sh …`, never a path**, and CI rejects
 the path form. The pre-plugin layout used a relative path, which resolves against the

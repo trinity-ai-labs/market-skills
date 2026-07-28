@@ -91,12 +91,19 @@ attack is one nobody can trust either.
 A driver value is only a driver value if you can say where it came from. Every one of them has a
 home, and the home is not the same for all four:
 
-| driver | kind | where its value comes from |
+The `kind` column below is the prose name of each kind. **The token those names write to
+`driver_kind`, and to the plan's `Kind` cell, is one of `structural`, `policy` and
+`policy-within-band`** — so *policy within a structural band* and `policy-within-band` are the same
+kind stated two ways, and only the hyphenated one is a value. `vault-lint.sh --binding-driver`
+matches the cell against the field verbatim, so a `Kind` cell carrying the prose phrase fails
+against a note carrying the token, on a plan that is otherwise correct.
+
+| driver | kind (prose name · token) | where its value comes from |
 |---|---|---|
-| price | policy within a structural band | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
-| conversion | structural | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts; where `research/growth-curves.md` indexes a comparable that discloses it, the reference-class value at the month since origin the target counts is preferred to the benchmark, and a divergence between the two is recorded rather than averaged |
-| retention | policy within a structural band | the **band** from the same places conversion takes its value, and it is per-period, so the period is part of the value. The **position inside the band** is homed to the product — the depth of what it does, whether the valuable thing is reachable unassisted, and the friction between the two — as a `claim` carrying a sourced base with its magnitude labelled `measured`, `reference-class` or `assumed`, and an `assumed` one taking the both-directions test like any other input |
-| reach | policy | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput; where the indexed set covers the same months, a comparable's reach at that month since origin is the reference-class check on that figure — it does not replace it, because reach is this founder's channels and hours |
+| price | policy within a structural band · `policy-within-band` | the market analysis's pricing / willingness-to-pay dimension, as a `claim` with its subject from `_vocab.yml`, plus the founder's price instinct `[F#]` where the two differ |
+| conversion | structural · `structural` | a sourced category benchmark — a `source` note with its verbatim `quote` and its `url` — at the stage the target counts; where `research/growth-curves.md` indexes a comparable that discloses it, the reference-class value at the month since origin the target counts is preferred to the benchmark, and a divergence between the two is recorded rather than averaged |
+| retention | policy within a structural band · `policy-within-band` | the **band** from the same places conversion takes its value, and it is per-period, so the period is part of the value. The **position inside the band** is homed to the product — the depth of what it does, whether the valuable thing is reachable unassisted, and the friction between the two — as a `claim` carrying a sourced base with its magnitude labelled `measured`, `reference-class` or `assumed`, and an `assumed` one taking the both-directions test like any other input |
+| reach | policy · `policy` | what the founder's own channels support at their grilled hours and budget: the resource facts from the grill crossed with the channel's evidenced throughput; where the indexed set covers the same months, a comparable's reach at that month since origin is the reference-class check on that figure — it does not replace it, because reach is this founder's channels and hours |
 
 **`kind` records who sets the value, and it decides two things: where that value is allowed to come
 from, and what a negative verdict is later allowed to conclude.** A **structural** driver is set by
@@ -413,7 +420,9 @@ to a judgement can only be met with a counter-judgement.
 **Classify the binding driver before the verdict is written anywhere.** Read its `kind` off the
 driver-home table: **structural**, set by the category, **policy**, set by the founder and
 re-settable, or **policy within a structural band**, where the band is structural and the position
-inside it is not. Reach is the case that decides most runs, because reach is the driver that binds
+inside it is not — written to `driver_kind` and to the plan's `Kind` cell as `structural`, `policy`
+and `policy-within-band`, which is the third name in the form a value takes rather than a fourth
+kind. Reach is the case that decides most runs, because reach is the driver that binds
 most often and reach is policy — channels crossed with hours is a decision, and a decision is not a
 ceiling.
 

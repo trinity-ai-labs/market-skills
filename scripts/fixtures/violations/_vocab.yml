@@ -1,5 +1,5 @@
-# Fixture vocabulary - the vault's own _vocab.yml, trimmed to the four subjects
-# this fixture takes a position on. A real vault seeds this from the skill's
+# Fixture vocabulary - the vault's own _vocab.yml, trimmed to the subjects this
+# fixture takes a position on. A real vault seeds this from the skill's
 # vocabulary.yml reference and extends it per engagement, which is why the lint
 # reads this file and never the shipped one.
 
@@ -52,3 +52,21 @@ terms:
       - moat
       - barrier-to-entry
     required: true
+
+  steady-state-ceiling:
+    definition: The equilibrium the modelled configuration converges on, with every input
+      labelled structural or policy. Required, and carried here by a ceiling claim holding
+      one of the five verdict fields and not the rest - which is what field presence triggers.
+    aliases:
+      - ceiling
+      - steady-state
+    required: true
+
+  target-verdict:
+    definition: Whether the founder's stated target is reached by the stated date. Not
+      required, and carried here by a note holding none of the fields a verdict owes
+      outright, which is the case the strict half of the trigger exists for.
+    aliases:
+      - target-feasibility
+      - goal-verdict
+    required: false

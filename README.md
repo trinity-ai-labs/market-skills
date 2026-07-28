@@ -104,6 +104,14 @@ sets, and you are told which of the two you are looking at. Where the evidence c
 at all, it says so and names the cheapest test instead of guessing: a confident "no" resting on a
 guessed conversion rate talks you out of something the evidence never spoke to.
 
+**That is a checked rule now, not a promise the skill keeps by discipline.** The verdict is stored
+with the driver that binds, that driver's kind and the count of what stands under it, and
+`vault-lint.sh --binding-driver` holds the rendered plan to them: a section that says *unreachable*
+where the note says *unreachable at six hours a week across two channels* fails, and so does a
+finding whose evidence is two deals with the same counterparty and does not say so. Until this
+release both were prose that read correctly and nothing verified — and a verdict is the one output
+here most likely to make you stop, so it was the one held to the loosest standard.
+
 That scrutiny runs in **both directions**. A cautious number is a claim about your business
 exactly as an ambitious one is, so every value in the model names what drives it whichever way it
 points, and a low one with nothing behind it comes back *unmodelled, not conservative* rather than
@@ -209,6 +217,7 @@ vault-lint.sh --used-in --vault "$VAULT_PATH"
 vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 vault-lint.sh --red-team --vault "$VAULT_PATH"
 vault-lint.sh --roadmap-table --vault "$VAULT_PATH"
+vault-lint.sh --binding-driver --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
@@ -268,16 +277,47 @@ one compared — the section legitimately carries a second table (the permutatio
 ordinal ahead of the item. Reading either wrong would report every row of a correct table as an
 item with no note behind it, which is the crying wolf this check was scoped out for once already.
 
+`--binding-driver` does the same job for the verdict on your target. That verdict is stored as a
+note carrying the driver that binds, that driver's kind — one of `structural`, `policy` and
+`policy-within-band`, in those words and no fourth — the configuration a policy-bound one is
+conditional on, and how many distinct sources and distinct counterparties stand under the driver.
+This mode holds all of that against the section of the plan that renders it, and fails on four
+things: a policy-bound verdict whose section states the finding and drops the configuration, a
+corner table whose `Kind` cell disagrees with its note (both ways, because otherwise editing a cell
+is the cheapest way out), a tail that reaches fewer than three sources or all of them from one
+counterparty where the tail is not surfaced, and a rendered verdict section with no note behind it at
+all. **A single counterparty is reportable however many sources there are:** three deals from one
+counterparty is one relationship's terms reported as a market's, and a source count of three reads
+as the opposite.
+
+**Surfacing a thin tail takes both halves.** The note has to carry counts that match what the ledger
+actually reaches, *and* the section has to carry the one line those two numbers generate —
+`Evidence: 2 sources, 1 counterparty`. Counts that are right in the vault and absent from the plan
+leave the problem exactly where it was: the section still reads the same as one whose verdict rests
+on twenty deals across twelve parties, and the confidence letter cannot tell you which, because it
+is about the weakest link and says nothing about how many links there are. The line is owed only
+where the tail is genuinely thin, so a well-evidenced verdict carries nothing and this never becomes
+boilerplate you learn to skip.
+
+Both strings the plan renders off the note — the configuration phrase and the `Kind` cell — are
+matched **verbatim**, so a mismatch means somebody wrote the sentence by hand — and so is the
+evidence line, which is built from the note's two counts rather than searched for as a pair of
+numbers, because a stray pair of digits in the same paragraph would otherwise silence the rule.
+Nothing here reads your prose for sentiment or shape: the section-with-no-note check fires on the
+section being there and non-empty, never on what it says. A vault with no verdict passes, and so does an existing
+corpus's ceiling claim that carries none of the new fields — the fields are owed outright only under
+the subject this release introduced, which no corpus written before it can hold.
+
 `--release-gate` is the call before a render, and the only one that asks every question. It runs
-the bare check, `--used-in`, `--supersession-sweep`, `--red-team` and `--roadmap-table`, prints
-each part under its own heading, and exits with the worst status any part returned — so the gate
+the bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table` and
+`--binding-driver`, prints each part under its own heading, and exits with the worst status any part returned — so the gate
 is clean only when every part is. The alternative was several calls made from memory, and which
 of them actually ran was a matter of recall.
 
 **The bare run's success line says what it checked and what it did not**, because it used to say
 `clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
 checks passed … not opened: citation targets, supersession blast radius, panel objection rows,
-roadmap table against the milestone set* —
+roadmap table against the milestone set, verdict drivers and the evidence under them* —
 and the list of what it skipped is read off the same mode table `--release-gate` composes itself
 from, so a mode added to the gate cannot leave the line quietly overstating what it covered. A
 success line is what somebody renders on, so it has to be narrower than the verdict its reader
