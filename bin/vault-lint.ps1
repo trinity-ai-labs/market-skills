@@ -593,7 +593,437 @@ function Invoke-ModeUnverified {
 # exits above the shared render block for the reason stated there.
 # ----------------------------------------------------------------------------
 function Invoke-ModeSupersessionSweep {
-	Exit-NotPorted '--supersession-sweep'
+	# Parses the record stream into the same shape pass 2 emits it in: N rows
+	# give the file list in vault order, S rows are a scalar per (file, key) -
+	# the last one wins, exactly as awk's V[$2,$3]=$4 overwrites - and L rows
+	# are a key's block-list items in stream order. T/A/E rows are for `check`
+	# and the vocabulary pass; this mode never asked for them, and a bare
+	# pattern-match with no matching arm is how the shell skips them too.
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$V = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,string]]' ([System.StringComparer]::Ordinal)
+	$L = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]]' ([System.StringComparer]::Ordinal)
+
+	foreach ($rec in $script:RECORDS) {
+		$p = $rec.Split([char]9)
+		if ($p[0] -ceq 'N') {
+			[void]$files.Add($p[1])
+		} elseif ($p[0] -ceq 'S') {
+			if (-not $V.ContainsKey($p[1])) { $V[$p[1]] = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal) }
+			$V[$p[1]][$p[2]] = $p[3]
+		} elseif ($p[0] -ceq 'L') {
+			if (-not $L.ContainsKey($p[1])) { $L[$p[1]] = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' ([System.StringComparer]::Ordinal) }
+			if (-not $L[$p[1]].ContainsKey($p[2])) { $L[$p[1]][$p[2]] = New-Object 'System.Collections.Generic.List[string]' }
+			[void]$L[$p[1]][$p[2]].Add($p[3])
+		}
+	}
+
+	function Get-SweepValue {
+		param([string]$File, [string]$Key)
+		if (-not $V.ContainsKey($File)) { return '' }
+		if (-not $V[$File].ContainsKey($Key)) { return '' }
+		return $V[$File][$Key]
+	}
+
+	# The leading comma on every return is load-bearing, same as
+	# Split-TextLines above: without it, Write-Output enumerates the list on
+	# the way out, so a 0-item list vanishes to $null and a 1-item list comes
+	# back as a bare string instead of a list its caller can call .Count on.
+	function Get-SweepList {
+		param([string]$File, [string]$Key)
+		if (-not $L.ContainsKey($File)) { return , (New-Object 'System.Collections.Generic.List[string]') }
+		if (-not $L[$File].ContainsKey($Key)) { return , (New-Object 'System.Collections.Generic.List[string]') }
+		return , $L[$File][$Key]
+	}
+
+	# The 's' every count-driven line below needs unless the count is exactly
+	# one - three call sites (sections, superseded notes, unreconciled
+	# supersessions), one rule.
+	function Get-SweepPlural {
+		param([int]$Count)
+		if ($Count -eq 1) { return '' }
+		return 's'
+	}
+
+	# The third copy of the escaper --unverified and Render-Failures carry, one
+	# character at a time - see the comment beside bin/vault-lint.sh:1660's
+	# jesc() for why these stay three separate copies instead of one shared
+	# function. Change one, change all three, on both implementations.
+	function ConvertTo-SweepJsonEscaped {
+		param([string]$Text)
+		$sb = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$c = $Text[$i]
+			if ($c -eq [char]34) { [void]$sb.Append('\"') }
+			elseif ($c -eq [char]92) { [void]$sb.Append('\\') }
+			elseif ($c -eq [char]9) { [void]$sb.Append([char]32) }
+			else { [void]$sb.Append($c) }
+		}
+		return $sb.ToString()
+	}
+
+	# Folds a heading or a cited anchor to its bare alnum bytes, lower-cased -
+	# the loose equality bin/vault-lint.sh:1249-1256 explains: two spellings of
+	# one section (an explicit {#anchor} and the slug of its text) fold to the
+	# same key, without this function needing to know which characters the
+	# slug rule drops. Ordinal by construction - int comparisons on UTF-16 code
+	# units, never a culture-aware character class.
+	function Get-SweepFold {
+		param([string]$Text)
+		$sb = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$n = [int]$Text[$i]
+			if ($n -ge 97 -and $n -le 122) { [void]$sb.Append($Text[$i]); continue }
+			if ($n -ge 65 -and $n -le 90) { [void]$sb.Append([char]($n + 32)); continue }
+			if ($n -ge 48 -and $n -le 57) { [void]$sb.Append($Text[$i]); continue }
+		}
+		return $sb.ToString()
+	}
+
+	# One internal-only separator for the two composite keys below (a document
+	# paired with a fold key, and a worklist key paired with a note). Never
+	# emitted and never split back apart, so any byte that cannot occur in a
+	# vault-relative path or a folded heading key does - this one is chosen to
+	# stay clear of ordinary text rather than to mirror awk's SUBSEP verbatim.
+	$SS = [char]1
+
+	# Registers one fold key against one heading ordinal, or retires it when a
+	# second heading claims the same key - bin/vault-lint.sh:1259-1267's
+	# claim(), copied rather than hoisted for the reason the seam states.
+	$ALIAS = New-Object 'System.Collections.Generic.Dictionary[string,int]' ([System.StringComparer]::Ordinal)
+
+	function Set-SweepClaim {
+		param([string]$Doc, [string]$Key, [int]$Id)
+		if ($Key.Length -eq 0) { return }
+		$ak = $Doc + $SS + $Key
+		if ($ALIAS.ContainsKey($ak)) {
+			if ($ALIAS[$ak] -ne $Id) { $ALIAS[$ak] = 0 }
+			return
+		}
+		$ALIAS[$ak] = $Id
+	}
+
+	$RX_HEADING = [regex]'\A#+[ \t]+'
+	$RX_ANCHOR = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
+
+	# One of five copies of the same six-line fenced-block scan
+	# (bin/vault-lint.sh:1283-1285 names the other four) - a `#` inside a
+	# fenced block is an example, not a heading anyone can jump to, and the
+	# fence marker plus its run length are tracked so a longer nested fence
+	# cannot close its parent early. Kept local rather than hoisted: the other
+	# four copies belong to other mode slices, and reaching across them is
+	# exactly the cross-slice edit the stub seam exists to prevent.
+	function Read-SweepSections {
+		param([string]$Doc)
+		$path = $script:VAULT + '/' + $Doc
+		if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return }
+		$id = 0
+		$fc = ''
+		$fn = 0
+		foreach ($rawLine in (Read-TextLines $path)) {
+			$line = Remove-TrailingCr $rawLine
+			$t = $line.TrimStart($script:SPACE_TAB)
+
+			if ($t.Length -ge 3 -and ($t.Substring(0, 3) -ceq '```' -or $t.Substring(0, 3) -ceq '~~~')) {
+				$c = $t.Substring(0, 1)
+				$n = 0
+				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
+				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				continue
+			}
+			if ($fc.Length -gt 0) { continue }
+
+			$hm = $RX_HEADING.Match($t)
+			if (-not $hm.Success) { continue }
+			$h = $t.Substring($hm.Length)
+			$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
+			$h = $h.TrimEnd($script:SPACE_TAB)
+			$id++
+
+			# An explicit {#anchor} attribute is stripped from the heading text
+			# and registered beside it - what --used-in's scan does and what a
+			# renderer owes it, so a template that gains explicit anchors does
+			# not break an existing citation of the slug.
+			$am = $RX_ANCHOR.Match($h)
+			if ($am.Success) {
+				$ex = $am.Value.Substring(2, $am.Value.Length - 3)
+				Set-SweepClaim $Doc (Get-SweepFold $ex) $id
+				$h = $h.Substring(0, $am.Index)
+				$h = $h.TrimEnd($script:SPACE_TAB)
+			}
+			Set-SweepClaim $Doc (Get-SweepFold $h) $id
+		}
+	}
+
+	$SCANNED = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+
+	# The grouping key for one target: the heading ordinal it names when the
+	# document resolves it, the anchor as written when it does not. Namespaced
+	# ("h"/"a") so a raw anchor can never collide with a heading ordinal.
+	function Get-SweepResolve {
+		param([string]$Doc, [string]$Anchor)
+		if ($Anchor.Length -eq 0) { return 'a' }
+		if (-not $SCANNED.Contains($Doc)) {
+			[void]$SCANNED.Add($Doc)
+			Read-SweepSections $Doc
+		}
+		$k = $Doc + $SS + (Get-SweepFold $Anchor)
+		if ($ALIAS.ContainsKey($k) -and $ALIAS[$k] -gt 0) { return 'h' + $ALIAS[$k] }
+		return 'a' + $Anchor
+	}
+
+	# One superseded note for the JSON worklist - what it said, what replaced
+	# it, and why. $SbEntry is the [id, reason] pair half one or half two
+	# recorded for this note.
+	function Add-SweepNoteJson {
+		param([System.Text.StringBuilder]$Sb, [string]$File, [string[]]$SbEntry)
+		[void]$Sb.Append('{"id": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $File 'id')) + '", ')
+		[void]$Sb.Append('"file": "' + (ConvertTo-SweepJsonEscaped $File) + '", ')
+		[void]$Sb.Append('"type": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $File 'type')) + '", ')
+		[void]$Sb.Append('"title": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $File 'title')) + '", ')
+		[void]$Sb.Append('"superseded_by": "' + (ConvertTo-SweepJsonEscaped $SbEntry[0]) + '", ')
+		[void]$Sb.Append('"supersedes_reason": "' + (ConvertTo-SweepJsonEscaped $SbEntry[1]) + '"}')
+	}
+
+	# The same note, as the human report needs it.
+	function Add-SweepNoteText {
+		param([System.Text.StringBuilder]$Sb, [string]$File, [string[]]$SbEntry, [string]$Pad)
+		[void]$Sb.Append($Pad + (Get-SweepValue $File 'id') + '  ' + (Get-SweepValue $File 'type') + "`n")
+		[void]$Sb.Append($Pad + '  ' + (Get-SweepValue $File 'title') + "`n")
+		if ($SbEntry[0].Length -eq 0) {
+			[void]$Sb.Append($Pad + '  superseded by: nothing - `status: superseded` with no note naming it in `supersedes`, so the record says this was replaced and not by what' + "`n")
+		} else {
+			[void]$Sb.Append($Pad + '  superseded by ' + $SbEntry[0] + "`n")
+			$reasonText = $SbEntry[1]
+			if ($reasonText.Length -eq 0) { $reasonText = '(none recorded - `supersedes_reason` is absent, so why it was replaced is already gone)' }
+			[void]$Sb.Append($Pad + '  reason: ' + $reasonText + "`n")
+		}
+	}
+
+	# BYID: the file naming a given id - bin/vault-lint.sh:1436.
+	$BYID = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	foreach ($f in $files) {
+		$id = Get-SweepValue $f 'id'
+		if ($id.Length -gt 0) { $BYID[$id] = $f }
+	}
+
+	# ------------------------------------------------------------------------
+	# THE VERDICT - bin/vault-lint.sh:1440-1474. `reconciled:` asserts that the
+	# sections a note's own `supersedes` edge put in doubt have been read.
+	# Required whether or not the superseded note reached a document, and
+	# gated on schemaVersion 2 - a corpus written before the field existed
+	# cannot owe it.
+	# ------------------------------------------------------------------------
+	$UNREC = New-Object 'System.Collections.Generic.List[string]'
+	$UTGT = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$UWHY = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+
+	if ([int]$script:FOUND_SCHEMA -ge 2) {
+		foreach ($f in $files) {
+			$sup = Get-SweepList $f 'supersedes'
+			if ($sup.Count -eq 0) { continue }
+			$tg = [string]::Join(', ', $sup)
+			$rec = Get-SweepValue $f 'reconciled'
+			$cre = Get-SweepValue $f 'created'
+			$why = ''
+			if ($rec.Length -eq 0) {
+				$why = 'no `reconciled:` date. Nothing records that the sections this supersession put in doubt were read, so the worklist this mode prints is one nobody is obliged to finish - and the documents go on asserting what the ledger already replaced while every check stays green'
+			} elseif ($cre.Length -gt 0 -and ([string]::CompareOrdinal($rec, $cre) -lt 0)) {
+				$why = '`reconciled: ' + $rec + '` predates the `created: ' + $cre + '` on this same note, so the sections were read before the supersession that put them in doubt existed. A date carried over from an earlier pass reads exactly like one stamped after the read, and which of the two it is happens to be the only half of this a check can see'
+			}
+			if ($why.Length -eq 0) { continue }
+			[void]$UNREC.Add($f)
+			$UTGT[$f] = $tg
+			$UWHY[$f] = $why
+		}
+	}
+
+	# Half one: every note a `supersedes` edge names, walked from the
+	# superseding side because that is where the edge and the reason both live
+	# - bin/vault-lint.sh:1541-1554. A dangling target is skipped: `check`
+	# already reports a dangling supersedes edge, and inventing a worklist row
+	# for a note that is not in the vault would name a re-read nobody can do.
+	$SUPBY = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string[]]]' ([System.StringComparer]::Ordinal)
+	foreach ($f in $files) {
+		$sup = Get-SweepList $f 'supersedes'
+		if ($sup.Count -eq 0) { continue }
+		$fid = Get-SweepValue $f 'id'
+		$freason = Get-SweepValue $f 'supersedes_reason'
+		foreach ($tgt in $sup) {
+			if (-not $BYID.ContainsKey($tgt)) { continue }
+			$tf = $BYID[$tgt]
+			if (-not $SUPBY.ContainsKey($tf)) { $SUPBY[$tf] = New-Object 'System.Collections.Generic.List[string[]]' }
+			[void]$SUPBY[$tf].Add([string[]]@($fid, $freason))
+		}
+	}
+
+	# Half two, and the ordering pass for both - bin/vault-lint.sh:1556-1567.
+	# Walking $files rather than the edge loop above is what makes the output
+	# order the vault order instead of a hash order, so two runs over an
+	# unchanged vault produce the same worklist.
+	$SUP = New-Object 'System.Collections.Generic.List[string]'
+	foreach ($f in $files) {
+		$id = Get-SweepValue $f 'id'
+		if ($id.Length -eq 0) { continue }
+		$status = Get-SweepValue $f 'status'
+		$hasEntries = $SUPBY.ContainsKey($f) -and $SUPBY[$f].Count -gt 0
+		if (-not $hasEntries -and $status -cne 'superseded') { continue }
+		[void]$SUP.Add($f)
+		if (-not $hasEntries) {
+			if (-not $SUPBY.ContainsKey($f)) { $SUPBY[$f] = New-Object 'System.Collections.Generic.List[string[]]' }
+			[void]$SUPBY[$f].Add([string[]]@('', ''))
+		}
+	}
+
+	# The worklist itself - bin/vault-lint.sh:1569-1595. Grouped by target and
+	# deduped: two superseded notes citing the same section are one row naming
+	# both, and one note naming a section twice is still one re-read of it.
+	$NOUSE = New-Object 'System.Collections.Generic.List[string]'
+	$SEENT = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$TORDER = New-Object 'System.Collections.Generic.List[string]'
+	$TDOC = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$TANC = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$TSHOW = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$SEENR = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$ROW = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' ([System.StringComparer]::Ordinal)
+
+	foreach ($f in $SUP) {
+		$usedIn = Get-SweepList $f 'used_in'
+		if ($usedIn.Count -eq 0) { [void]$NOUSE.Add($f); continue }
+		foreach ($entry in $usedIn) {
+			$doc = $entry
+			$anc = ''
+			$hpos = $entry.IndexOf([char]35)
+			if ($hpos -ge 0) {
+				$doc = $entry.Substring(0, $hpos)
+				$anc = $entry.Substring($hpos + 1)
+			}
+			$doc = $doc.Trim($script:SPACE_TAB)
+			if ($doc.StartsWith('./', [System.StringComparison]::Ordinal)) { $doc = $doc.Substring(2) }
+			$doc = $doc.TrimEnd([char]47)
+
+			$key = $doc + $SS + (Get-SweepResolve $doc $anc)
+			if (-not $SEENT.Contains($key)) {
+				[void]$SEENT.Add($key)
+				[void]$TORDER.Add($key)
+				$TDOC[$key] = $doc
+				$TANC[$key] = $anc
+				$show = $doc
+				if ($anc.Length -gt 0) { $show = $doc + '#' + $anc }
+				$TSHOW[$key] = $show
+			}
+			$rk = $key + $SS + $f
+			if ($SEENR.Contains($rk)) { continue }
+			[void]$SEENR.Add($rk)
+			if (-not $ROW.ContainsKey($key)) { $ROW[$key] = New-Object 'System.Collections.Generic.List[string]' }
+			[void]$ROW[$key].Add($f)
+		}
+	}
+
+	$nt = $TORDER.Count
+	$nsup = $SUP.Count
+	$nu = $UNREC.Count
+	$nnou = $NOUSE.Count
+
+	if ($script:JSON -eq 1) {
+		$sb = New-Object System.Text.StringBuilder
+		[void]$sb.Append("{`n")
+		if ($nu -eq 0) { [void]$sb.Append('  "ok": true,' + "`n") } else { [void]$sb.Append('  "ok": false,' + "`n") }
+		[void]$sb.Append('  "vault": "' + (ConvertTo-SweepJsonEscaped $script:VAULT) + "`",`n")
+		[void]$sb.Append('  "worklist_count": ' + $nt + ",`n")
+		[void]$sb.Append('  "superseded_count": ' + $nsup + ",`n")
+		[void]$sb.Append('  "unreconciled_count": ' + $nu + ",`n")
+		[void]$sb.Append('  "unreconciled": [')
+		for ($i = 0; $i -lt $nu; $i++) {
+			$f = $UNREC[$i]
+			if ($i -eq 0) { [void]$sb.Append("`n    {") } else { [void]$sb.Append(",`n    {") }
+			[void]$sb.Append('"id": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'id')) + '", ')
+			[void]$sb.Append('"file": "' + (ConvertTo-SweepJsonEscaped $f) + '", ')
+			[void]$sb.Append('"type": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'type')) + '", ')
+			[void]$sb.Append('"title": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'title')) + '", ')
+			[void]$sb.Append('"supersedes": "' + (ConvertTo-SweepJsonEscaped $UTGT[$f]) + '", ')
+			[void]$sb.Append('"created": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'created')) + '", ')
+			[void]$sb.Append('"reconciled": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'reconciled')) + '", ')
+			[void]$sb.Append('"detail": "' + (ConvertTo-SweepJsonEscaped $UWHY[$f]) + '"}')
+		}
+		if ($nu -eq 0) { [void]$sb.Append('],' + "`n") } else { [void]$sb.Append("`n  ],`n") }
+		[void]$sb.Append('  "worklist": [')
+		for ($t = 0; $t -lt $nt; $t++) {
+			$key = $TORDER[$t]
+			if ($t -eq 0) { [void]$sb.Append("`n    {") } else { [void]$sb.Append(",`n    {") }
+			[void]$sb.Append('"target": "' + (ConvertTo-SweepJsonEscaped $TSHOW[$key]) + '", ')
+			[void]$sb.Append('"document": "' + (ConvertTo-SweepJsonEscaped $TDOC[$key]) + '", ')
+			[void]$sb.Append('"section": "' + (ConvertTo-SweepJsonEscaped $TANC[$key]) + '", ')
+			[void]$sb.Append('"notes": [')
+			$m = 0
+			$rows = $ROW[$key]
+			foreach ($rf in $rows) {
+				foreach ($entry in $SUPBY[$rf]) {
+					$m++
+					if ($m -eq 1) { [void]$sb.Append("`n      ") } else { [void]$sb.Append(",`n      ") }
+					Add-SweepNoteJson $sb $rf $entry
+				}
+			}
+			if ($m -eq 0) { [void]$sb.Append(']}') } else { [void]$sb.Append("`n    ]}") }
+		}
+		if ($nt -eq 0) { [void]$sb.Append('],' + "`n") } else { [void]$sb.Append("`n  ],`n") }
+		[void]$sb.Append('  "reached_no_document": [')
+		$m = 0
+		foreach ($f in $NOUSE) {
+			foreach ($entry in $SUPBY[$f]) {
+				$m++
+				if ($m -eq 1) { [void]$sb.Append("`n    ") } else { [void]$sb.Append(",`n    ") }
+				Add-SweepNoteJson $sb $f $entry
+			}
+		}
+		if ($m -eq 0) { [void]$sb.Append("]`n}`n") } else { [void]$sb.Append("`n  ]`n}`n") }
+		Write-OutText $sb.ToString()
+		if ($nu -eq 0) { exit 0 } else { exit 1 }
+	}
+
+	$sb = New-Object System.Text.StringBuilder
+	[void]$sb.Append('vault-lint supersession-sweep: ' + $nt + ' section' + (Get-SweepPlural $nt) + ' to re-read, from ' + $nsup + ' superseded note' + (Get-SweepPlural $nsup) + "`n")
+	[void]$sb.Append('  vault: ' + $script:VAULT + "`n")
+	[void]$sb.Append("`n  sections a supersession put in doubt - the note behind each was replaced and the prose was not`n")
+	if ($nt -eq 0) { [void]$sb.Append("    (none)`n") }
+	foreach ($key in $TORDER) {
+		[void]$sb.Append('    ' + $TSHOW[$key] + "`n")
+		foreach ($rf in $ROW[$key]) {
+			foreach ($entry in $SUPBY[$rf]) {
+				Add-SweepNoteText $sb $rf $entry '      '
+			}
+		}
+	}
+	[void]$sb.Append("`n  superseded notes that reached no document - nothing to re-read, which is the good case`n")
+	if ($nnou -eq 0) { [void]$sb.Append("    (none)`n") }
+	foreach ($f in $NOUSE) {
+		foreach ($entry in $SUPBY[$f]) {
+			Add-SweepNoteText $sb $f $entry '    '
+		}
+	}
+
+	# The verdict prints last, because it is the half a reader acts on and the
+	# worklist above it can run to dozens of rows. At schemaVersion 1 the
+	# section says the rule does not apply rather than printing an empty list.
+	if ([int]$script:FOUND_SCHEMA -lt 2) {
+		[void]$sb.Append("`n  reconciliation is a schemaVersion 2 rule and this vault is at " + $script:FOUND_SCHEMA + " - the worklist above is a report here, and nothing was asked about whether it was read`n")
+		Write-OutText $sb.ToString()
+		exit 0
+	}
+
+	[void]$sb.Append("`n  supersessions with nothing recording that the worklist was read`n")
+	if ($nu -eq 0) { [void]$sb.Append("    (none)`n") }
+	foreach ($f in $UNREC) {
+		[void]$sb.Append('    ' + (Get-SweepValue $f 'id') + '  ' + (Get-SweepValue $f 'type') + "`n")
+		[void]$sb.Append('      ' + (Get-SweepValue $f 'title') + "`n")
+		[void]$sb.Append('      supersedes ' + $UTGT[$f] + "`n")
+		[void]$sb.Append('      ' + $UWHY[$f] + "`n")
+	}
+	if ($nu -gt 0) {
+		[void]$sb.Append("`nvault-lint supersession-sweep: " + $nu + ' supersession' + (Get-SweepPlural $nu) + ' with nothing recording that its sections were read, under ' + $script:VAULT + "`n")
+	}
+	Write-OutText $sb.ToString()
+	if ($nu -eq 0) { exit 0 } else { exit 1 }
 }
 
 # ----------------------------------------------------------------------------
