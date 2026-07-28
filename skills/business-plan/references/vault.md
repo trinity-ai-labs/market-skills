@@ -602,11 +602,12 @@ rather than over every citation in the corpus.
 check, `--used-in`, the sweep, `--red-team`, `--roadmap-table` and `--binding-driver`, and exits
 non-zero unless every part passes. The separate modes are still there and are what you reach for
 mid-engagement — a citation question, a supersession question, a panel question, a roadmap question
-and a verdict question are different questions — but the gate before anything ships is one
-invocation with one verdict, because a set of invocations made from memory is a set nobody can be
-held to. The bare run's own success line says as much: it reports that the note-level checks passed
-and that the citation targets, the supersession blast radius, the panel objection rows, the roadmap
-table and the section a verdict renders into were **not** opened.
+and a question about the verdict drivers and the evidence under them are different questions — but
+the gate before anything ships is one invocation with one verdict, because a set of invocations made
+from memory is a set nobody can be held to. The bare run's own success line says as much: it reports
+that the note-level checks passed and that the citation targets, the supersession blast radius, the
+panel objection rows, the roadmap table and the verdict drivers and the evidence under them were
+**not** opened.
 
 ### The assumption note is what you would believe with no evidence
 
@@ -725,15 +726,44 @@ qualified the number. A verdict naming its driver and labelling it `policy` with
 fully qualified finding to every reader and to every tool, and what it is not saying is that the two
 deals underneath it came from one counterparty.
 
-**The subject is the trigger and `schemaVersion` is not, and that is deliberate.** A note carrying
-none of the five owes none of them, so a corpus written before these fields existed passes untouched
-at both `1` and `2` — including every `steady-state-ceiling` claim already filed, which is every
-vault, since that subject is required. This is the exemption the version field exists to provide,
-obtained without spending a version on it: a check written to fire unconditionally fails every vault
-authored before it on the day the skill updates, which is how a gate stops being run. What the
-set-or-none rule buys back is that a verdict cannot opt in halfway.
+**The trigger is the `subject` and `schemaVersion` is not — and the two subjects are triggered
+differently.** `target-verdict` is a term this release introduces, so no note in any existing corpus
+carries it at any version: under that subject the five fields are owed **unconditionally**, and a
+note missing them fails. `steady-state-ceiling` predates its 1.3.0 amendment and is `required: true`,
+so every vault already holds one: there the trigger is **field presence** — a ceiling claim carrying
+none of the five owes none of them, and carrying any one owes the set.
 
-**Five rules read these fields, and every one of them fails rather than printing a worklist.**
+**The asymmetry is the point, not an inconsistency to be tidied away later.** What field presence
+buys is an exemption for notes written before the fields existed, and only the ceiling half has such
+notes to exempt. Extending the same leniency to the verdict half would pay an exemption's whole cost
+over an empty population, and that cost is exact: omitting `binding_driver` would become the
+cheapest way past every rule below that reads the note. **A dodge available by omission is not an
+exemption.** `--red-team` checks its roster in both directions for this reason — with only the
+forward check, the cheapest way past a lens that returned nothing is to delete it from the roster.
+
+**This is still the exemption the version field exists to provide, obtained without spending a
+version on it**, and the split makes that argument stronger rather than weaker: a check firing
+unconditionally over a subject no older vault can carry fails nothing, while one firing
+unconditionally over every subject fails every vault authored before it on the day the skill
+updates, which is how a gate stops being run.
+
+**A verdict that reaches the plan without ever reaching the ledger is the last hole, and
+`verdict-unfiled` closes it.** Everything above presumes a note exists. Nothing yet stops the verdict
+sentence being written straight into `business-plan.md` under the `{#target-verdict}` anchor with no
+note behind it at all — and `target-verdict` is `required: false`, so the coverage query does not ask
+for one either. What that costs is every property the ledger exists to give a number: no `rests_on`,
+so no confidence derivation and no cap; no `stale_after`, so nothing ever comes up for re-checking;
+no supersession when the target is renegotiated, so the superseded finding is simply overwritten; and
+`--supersession-sweep` cannot name the section when something under it moves, because nothing records
+that the section was ever standing on anything. It is the one output of this skill most likely to
+make a founder stop, held to less than a sourced market-size figure. The check is `--roadmap-table`
+inverted — that mode fails milestone notes with no `business-plan.md` to render them, and this fails
+a rendered section with no note behind it. **What triggers it is a non-empty section at the anchor
+and never a reading of the prose inside it**, for the same reason `conditional_on` is matched
+verbatim: a check that infers a verdict from sentence shape cries wolf, and a check that cries wolf
+gets switched off.
+
+**Six rules stand on these fields, and every one of them fails rather than printing a worklist.**
 Unlike `--supersession-sweep`, a thin tail nobody surfaced is not the corpus working.
 
 | rule | mode | what fires |
@@ -743,6 +773,7 @@ Unlike `--supersession-sweep`, a thin tail nobody surfaced is not the corpus wor
 | a policy-bound verdict states its condition | `--binding-driver` | `verdict-unconditional` where `conditional_on` does not appear in the plan section `used_in` names |
 | the plan's `Kind` column renders off the note | `--binding-driver` | `verdict-kind-mismatch`, both directions — a cell hand-edited to `structural` is otherwise the cheapest way past the row above |
 | the evidence under the binding driver is surfaced | `--binding-driver` | `verdict-thin-evidence` where the closure reaches under three distinct sources, or one counterparty, and the note or the rendered section does not say so |
+| the plan's verdict is filed as a note | `--binding-driver` | `verdict-unfiled` — a `business-plan.md` carrying a non-empty section at the `{#target-verdict}` anchor with no `claim` or `assumption` under `subject: target-verdict` behind it |
 
 ### The question note records the gap, not the answer
 
