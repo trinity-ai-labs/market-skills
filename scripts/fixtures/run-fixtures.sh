@@ -31,6 +31,9 @@
 #   7. --release-gate runs all three parts and carries the worst verdict any of
 #      them returned, including when only one part fails.
 #   8. A schemaVersion 2 vault is read, and a version from the future is not.
+#   9. An explicit `{#anchor}` attribute resolves, the slug of the heading text
+#      it was stripped from still resolves too, and the attribute carries the
+#      citation across a rewording of that text.
 
 set -u
 
@@ -59,9 +62,12 @@ MODES="check --unverified --used-in --supersession-sweep --release-gate graph"
 PASS=0
 FAIL=0
 
+# -r, because one of the scratch paths below is a whole copied vault rather than
+# a file: the rewording assertion needs a corpus it can edit, and a plain rm -f
+# would leave that directory behind on every run.
 PAIRS_FILE=$(mktemp "${TMPDIR:-/tmp}/run-fixtures.XXXXXX") || exit 2
-trap 'rm -f "$PAIRS_FILE" "$PAIRS_FILE".*' EXIT
-trap 'rm -f "$PAIRS_FILE" "$PAIRS_FILE".*; exit 2' HUP INT TERM
+trap 'rm -rf "$PAIRS_FILE" "$PAIRS_FILE".*' EXIT
+trap 'rm -rf "$PAIRS_FILE" "$PAIRS_FILE".*; exit 2' HUP INT TERM
 
 ok() {
 	PASS=$((PASS + 1))
@@ -293,6 +299,46 @@ case "$UJSON" in
 *'"failure_count": 2'*) ok "--used-in reports exactly the two planted failures" ;;
 *) no "--used-in failure_count is not 2 - a resolving target was reported dead, or a broken one was not" ;;
 esac
+
+# --- explicit {#anchor} attributes -------------------------------------------
+# Appended at the end of the used_in block and deliberately unnumbered: three
+# slices append to this file in the same release, and renumbering 2e onward to
+# make room is exactly the edit git merges textually clean while dropping
+# somebody else's assertions.
+#
+# Three of the four assertions are already carried by the clean vault being
+# required to report nothing, and each fails in its own direction.
+# CLAIM-RR55TT19 cites `#competition`, which resolves only through the attribute
+# on `## Competition & moat {#competition}` - the slug of that text is
+# `competition--moat`. It cites `#business-model--pricing`, the slug of a heading
+# whose attribute is `{#business-model}`, so an implementation that let the
+# explicit anchor REPLACE the slug fails an entry an existing vault legitimately
+# holds. And it cites `#business-model` alongside it, so slugging the raw heading
+# line - which would yield `business-model--pricing-business-model` - fails both.
+#
+# The fourth needs its own corpus, because it is the only reason to write an
+# explicit anchor at all: the citation has to survive a rewording of the heading
+# TEXT. The copy is rewritten with awk rather than sed -i, which is not portable,
+# and the new text is chosen to share no slug with the old, so `#competition` can
+# resolve through nothing but the attribute.
+printf '\nexplicit anchors\n'
+
+REWORD="$PAIRS_FILE.reword"
+rm -rf "$REWORD"
+cp -R "$HERE/clean" "$REWORD"
+awk '{ if ($0 == "## Competition & moat {#competition}") print "## Why the moat holds {#competition}"; else print }' \
+	"$HERE/clean/business-plan.md" >"$REWORD/business-plan.md"
+
+if grep -q '^## Why the moat holds {#competition}$' "$REWORD/business-plan.md"; then
+	ok "the reworded copy carries the new heading text"
+else
+	no "the rewording rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+
+REWORD_OUT=$("$LINT" --used-in --vault "$REWORD" 2>&1)
+REWORD_STATUS=$?
+[ "$REWORD_STATUS" = "0" ] && ok "--used-in still resolves every citation after the heading text is reworded" ||
+	no "--used-in failed a rewording the explicit anchor should have survived (got $REWORD_STATUS: $REWORD_OUT)"
 
 # --- 2e. the supersession sweep, on both vaults ------------------------------
 # The sweep is a REPORT and its defining property is that it is not a failure,
