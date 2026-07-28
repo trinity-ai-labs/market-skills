@@ -623,7 +623,236 @@ function Invoke-ModeRedTeam {
 # roadmap heading, and stays silent at schemaVersion 1.
 # ----------------------------------------------------------------------------
 function Invoke-ModeRoadmapTable {
-	Exit-NotPorted '--roadmap-table'
+	# Local copies only - not shared with any other stub. bin/vault-lint.sh
+	# :1283-1285 names this fenced-block scan as one of five deliberate
+	# copies, one per mode that reads a document at the vault root; hoisting
+	# either helper below out from under this stub for another mode to reuse
+	# is the cross-slice edit the seam exists to prevent.
+
+	# The second copy of the --supersession-sweep fold(): strips to
+	# [a-z0-9], lowercasing letters, so any spelling the slug rule resolves
+	# to `roadmap` folds onto it here too without this function having to
+	# know which characters that rule drops. --binding-driver carries the
+	# third copy, for the verdict heading.
+	function ConvertTo-RoadmapFold {
+		param([string]$Text)
+		$sb = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$c = $Text[$i]
+			if ($c -ge [char]'a' -and $c -le [char]'z') { [void]$sb.Append($c); continue }
+			if ($c -ge [char]'A' -and $c -le [char]'Z') { [void]$sb.Append([char]([int]$c + 32)); continue }
+			if ($c -ge [char]'0' -and $c -le [char]'9') { [void]$sb.Append($c); continue }
+		}
+		return $sb.ToString()
+	}
+
+	# The item cells of the FIRST table under the roadmap heading. One of two
+	# copies of this row parser - --binding-driver readdoc() reads the
+	# corner verdict table under the same rules: strip the outer pipes,
+	# split on `|`, spot the all-dashes alignment rule, read the header row
+	# for which column holds the item, treat a table with no rule as no
+	# table at all. Change one, change both.
+	#
+	# Only the first table is read (AGENTS.md:303) - the section legitimately
+	# carries a second one, the permutation comparison of
+	# roadmap-sequencing.md Rule 3, whose first column is an ORDER rather
+	# than an item, and reading it would report every one of its rows as an
+	# item that escaped the ledger. The read stops the moment the answer can
+	# no longer change: at the heading that closes the section, or at the
+	# line that ends the first table in it.
+	function Read-PlanRoadmapTable {
+		param([string]$Path)
+
+		$fc = ''
+		$fn = 0
+		$seenHeading = $false
+		$level = 0
+		$inRoadmap = $false
+		$inTable = $false
+		$col = 1
+		$hdr = ''
+		$inBody = $false
+		$pending = New-Object 'System.Collections.Generic.List[string]'
+		$items = New-Object 'System.Collections.Generic.List[string]'
+
+		foreach ($rawLine in (Read-TextLines $Path)) {
+			$line = Remove-TrailingCr $rawLine
+			$t = $line.TrimStart($SPACE_TAB)
+
+			if ($t.Length -ge 3 -and ($t.Substring(0, 3) -ceq '```' -or $t.Substring(0, 3) -ceq '~~~')) {
+				$fenceChar = $t.Substring(0, 1)
+				$n = 0
+				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $fenceChar) { $n++ }
+				if ($fc -ceq '') { $fc = $fenceChar; $fn = $n }
+				elseif ($fenceChar -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				continue
+			}
+			if ($fc -cne '') { continue }
+
+			$headingMatch = [regex]::Match($t, '\A(#+)[ \t]+')
+			if ($headingMatch.Success) {
+				$nh = $headingMatch.Groups[1].Length
+				$h = $t.Substring($headingMatch.Length)
+				$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
+				$h = $h.Trim($SPACE_TAB)
+				$explicitAnchor = ''
+				$anchorMatch = [regex]::Match($h, '[{]#[A-Za-z0-9_-]+[}]\z')
+				if ($anchorMatch.Success) {
+					$explicitAnchor = $anchorMatch.Value -creplace '\A[{]#', ''
+					$explicitAnchor = $explicitAnchor -creplace '[}]\z', ''
+					$h = $h.Substring(0, $anchorMatch.Index).Trim($SPACE_TAB)
+				}
+				if ($inRoadmap -and $nh -le $level) { break }
+				if (-not $seenHeading -and ((ConvertTo-RoadmapFold $explicitAnchor) -ceq 'roadmap' -or (ConvertTo-RoadmapFold $h) -ceq 'roadmap')) {
+					$inRoadmap = $true; $seenHeading = $true; $level = $nh
+				}
+				continue
+			}
+
+			if (-not $inRoadmap) { continue }
+			if ($t.Length -eq 0 -or $t.Substring(0, 1) -cne '|') {
+				if ($inTable) { break }
+				continue
+			}
+			$inTable = $true
+
+			$row = $t -creplace '\A\|', ''
+			$row = $row -creplace '\|[ \t]*\z', ''
+			$cells = $row -split '\|'
+			if ($cells.Count -lt 1) { continue }
+			$allDash = $true
+			foreach ($cell in $cells) {
+				if (-not [regex]::IsMatch($cell, '\A[ \t]*:?-+:?[ \t]*\z')) { $allDash = $false; break }
+			}
+			if ($allDash) {
+				if ($hdr -cne '') {
+					$hdrCells = $hdr -split '\|'
+					for ($i = 0; $i -lt $hdrCells.Count; $i++) {
+						if ((ConvertTo-RoadmapFold $hdrCells[$i]) -ceq 'item') { $col = $i + 1; break }
+					}
+				}
+				$inBody = $true
+				continue
+			}
+
+			if ($inBody) { [void]$pending.Add($row) } else { $hdr = $row }
+		}
+
+		foreach ($p in $pending) {
+			$cells = $p -split '\|'
+			$item = ''
+			if ($col -le $cells.Count) { $item = $cells[$col - 1].Trim($SPACE_TAB) }
+			if ($item.Length -ne 0) { [void]$items.Add($item) }
+		}
+
+		return [pscustomobject]@{ Rows = $items; SeenHeading = $seenHeading }
+	}
+
+	function Add-RoadmapFailure {
+		param([string]$File, [string]$Check, [string]$Id, [string]$Detail)
+		[void]$FAILURES.Add($File + "`t" + $Check + "`t" + $Id + "`t" + $Detail)
+	}
+
+	# V[file, key] from awk - '' for a key the note never set, the same way
+	# an unset awk array element reads as ''. One lookup per call, not the
+	# ContainsKey-then-index pair a caller would otherwise repeat by hand.
+	function Get-NoteValue {
+		param([string]$File, [string]$Key)
+		$value = ''
+		[void]$noteValues.TryGetValue($File + "`t" + $Key, [ref]$value)
+		return $value
+	}
+
+	# GATED ON schemaVersion 2, branched here the way --supersession-sweep,
+	# --red-team and the checks pass all branch on it, rather than by the
+	# caller deciding whether to run this mode at all. A vault at 1 has no
+	# milestones/ directory by construction and cannot owe this rule -
+	# saying so, rather than printing agreement, is the same distinction the
+	# sweep makes at schemaVersion 1.
+	if ([int]$FOUND_SCHEMA -lt 2) {
+		$okLine = 'the roadmap table is a schemaVersion 2 rule and this vault is at ' + $FOUND_SCHEMA + ' - a vault at 1 carries no milestone notes, so there is no set for a table to be read against - ' + $VAULT
+		exit (Render-Failures 'vault-lint roadmap-table' $okLine)
+	}
+
+	# noteValues[file <TAB> key] from the S records; milestones in N-record
+	# (sorted-file) order; the set of milestone titles a rendered row may
+	# match. Two milestones carrying one title are covered by one row -
+	# nothing in the schema makes a title unique, and demanding it would be
+	# a rule about note wording rather than about the table.
+	$noteValues = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$noteFiles = New-Object 'System.Collections.Generic.List[string]'
+	foreach ($rec in $RECORDS) {
+		$f = $rec.Split([char]9)
+		if ($f[0] -ceq 'N') { [void]$noteFiles.Add($f[1]); continue }
+		if ($f[0] -ceq 'S') { $noteValues[$f[1] + "`t" + $f[2]] = $f[3]; continue }
+	}
+
+	# Title and id are read once here and carried on the record rather than
+	# looked up a second time in the milestone-not-in-roadmap loop below.
+	$milestones = New-Object 'System.Collections.Generic.List[psobject]'
+	$milestoneTitles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	foreach ($f in $noteFiles) {
+		if ((Get-NoteValue $f 'type') -cne 'milestone') { continue }
+		$title = Get-NoteValue $f 'title'
+		[void]$milestones.Add([pscustomobject]@{ File = $f; Title = $title; Id = (Get-NoteValue $f 'id') })
+		if ($title.Length -ne 0) { [void]$milestoneTitles.Add($title) }
+	}
+	$nm = $milestones.Count
+
+	$planRows = New-Object 'System.Collections.Generic.List[string]'
+	$seenRoadmapHeading = $false
+	if ($HAS_PLAN -eq 1) {
+		$plan = Read-PlanRoadmapTable $PLAN
+		$planRows = $plan.Rows
+		$seenRoadmapHeading = $plan.SeenHeading
+	}
+	$nrow = $planRows.Count
+
+	# The roadmap is in the ledger and nowhere a reader can see it. Reported
+	# ONCE against the document rather than once per milestone: the fix is
+	# one thing - render the section - and a reader handed one row per
+	# milestone stops reading.
+	if ($nm -gt 0 -and $nrow -eq 0) {
+		$plural = 's'
+		if ($nm -eq 1) { $plural = '' }
+		if ($HAS_PLAN -ne 1) {
+			Add-RoadmapFailure 'business-plan.md' 'roadmap-table-missing' '' ('the vault carries ' + $nm + ' milestone note' + $plural + ' and there is no business-plan.md at the vault root. The roadmap is in the ledger and nowhere a reader can see it: every item is a dated change to an assumption row, so a plan that never renders them hands its reader a curve whose steps have no stated cause')
+		} elseif (-not $seenRoadmapHeading) {
+			Add-RoadmapFailure 'business-plan.md' 'roadmap-table-missing' '' ('the vault carries ' + $nm + ' milestone note' + $plural + ' and no heading in business-plan.md answers to `roadmap`. The items exist in the ledger and the plan has no section that shows them, so the curve has steps the reader cannot see and no place to go and ask what moved them. The plan template heading is `## Milestones & roadmap {#roadmap}`, which is also what every milestone `used_in` names')
+		} else {
+			Add-RoadmapFailure 'business-plan.md' 'roadmap-table-missing' '' ('the roadmap section of business-plan.md lists no items and the vault carries ' + $nm + ' milestone note' + $plural + '. A roadmap left as prose is one nothing can check - which is what let an item name an assumption that was never written - and the reader gets a section describing a sequence it never lists')
+		}
+		$okLine = [string]$nm + ' milestone note' + $plural + ' and no roadmap the plan renders - ' + $VAULT
+		exit (Render-Failures 'vault-lint roadmap-table' $okLine)
+	}
+
+	# BOTH DIRECTIONS, because each is a different failure: a row matching no
+	# milestone is an item that escaped the ledger, so it moves no
+	# assumption anybody can name; a milestone the table never lists is a
+	# dated change to an assumption row the plan does not show, so the curve
+	# has a step the reader cannot see.
+	$hitTitles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	foreach ($row in $planRows) {
+		if ($milestoneTitles.Contains($row)) { [void]$hitTitles.Add($row); continue }
+		Add-RoadmapFailure 'business-plan.md' 'roadmap-row-no-milestone' '' ('row `' + $row + '` in the roadmap section matches no `milestone` note title in this vault, character for character. The table renders `sequence`, `moves` and `resource` off the notes, so a row matching none of them was written by hand: it moves no assumption anybody can name, which roadmap-sequencing.md Rule 1 files as maintenance rather than as a roadmap item, and the model then carries a dated change with nothing behind it. Match the title verbatim, the way `chosen` matches an entry in `options` - or write the milestone note this row is missing')
+	}
+
+	foreach ($m in $milestones) {
+		if ($hitTitles.Contains($m.Title)) { continue }
+		Add-RoadmapFailure $m.File 'milestone-not-in-roadmap' $m.Id ('`title` is `' + $m.Title + '` and no row in the roadmap section of business-plan.md carries it. The item is a dated change to an assumption row that the plan never shows, so the curve has a step the reader cannot see and cannot ask about - and the table stops being a rendering of this set the moment one member is absent from it. Render the row with the title verbatim, or retract the note')
+	}
+
+	if ($nm -eq 0 -and $nrow -eq 0) {
+		$okLine = 'no milestone notes and no roadmap rows under ' + $VAULT + ' - there is no roadmap on either side, which is every vault before the plan has one'
+	} else {
+		$rowPlural = 's'
+		if ($nrow -eq 1) { $rowPlural = '' }
+		$msPlural = 's'
+		if ($nm -eq 1) { $msPlural = '' }
+		$okLine = [string]$nrow + ' roadmap row' + $rowPlural + ' against ' + [string]$nm + ' milestone note' + $msPlural + ', matched verbatim - ' + $VAULT
+	}
+
+	exit (Render-Failures 'vault-lint roadmap-table' $okLine)
 }
 
 # ----------------------------------------------------------------------------
