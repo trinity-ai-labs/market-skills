@@ -1273,3 +1273,174 @@ if ($MODE -ceq 'graph') { Invoke-ModeGraph }
 if ($MODE -ceq 'unverified') { Invoke-ModeUnverified }
 if ($MODE -ceq 'supersession-sweep') { Invoke-ModeSupersessionSweep }
 
+# ----------------------------------------------------------------------------
+# what every verdict mode shares
+#
+# Ports bin/vault-lint.sh:1606-1708. Every mode that emits failure rows and
+# carries a verdict out in its exit status builds on what follows, so the date,
+# the path index and the renderer are built once here rather than once per mode.
+# That is `check`, --used-in, --red-team, --roadmap-table and --binding-driver
+# today, and a mode joins the list by being dispatched below this point rather
+# than by registering anywhere - which is why this comment names them and the
+# code does not.
+# ----------------------------------------------------------------------------
+
+# InvariantCulture, not the ambient one: a Windows install whose locale has a
+# non-Gregorian default calendar (th-TH is the usual one) formats 'yyyy' as the
+# Buddhist year, so `checked_on` would come out 543 years off on exactly the
+# machines this file exists for, and every JSON document would differ from the
+# shell's on that one line.
+$TODAY = (Get-Date).ToString('yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+
+# Every path that exists inside the vault, relative to its root - files AND
+# directories, which is what `find . -mindepth 1` gives. Read once rather than
+# shelling out per note: a source with no public URL carries a vault-relative
+# path, a used_in entry names a document at the vault root, and the only way to
+# know either resolves is to look. Answering from this index rather than from
+# the filesystem also keeps every lookup inside the vault - a used_in entry of
+# ../elsewhere.md is reported missing rather than opened.
+#
+# A set, because a set is all the shell's consumers make of it (`EXISTS[pl]=1`).
+# Enumeration order is `find`'s traversal order, which is unspecified, so no
+# mode may depend on it; a mode that needs an order sorts with
+# [StringComparer]::Ordinal.
+$PATHIDX = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+$VAULT_PREFIX = Get-PathPrefix $VAULT
+if ($VAULT_PREFIX.Length -gt 0) {
+	foreach ($entry in (Get-ChildItem -LiteralPath $VAULT -Recurse -Force -ErrorAction SilentlyContinue)) {
+		$full = $entry.FullName
+		if (-not $full.StartsWith($VAULT_PREFIX, [System.StringComparison]::Ordinal)) { continue }
+		[void]$PATHIDX.Add((Get-RelativeSlashPath $full $VAULT_PREFIX))
+	}
+}
+
+# Escaped one character at a time, exactly as the awk escaper is written. THE
+# SAME ESCAPER AS THE --unverified AND --supersession-sweep RENDERERS: all three
+# are short, stable and identical, and the moment any one of them grows a case
+# the others do not, that is the point to hoist it. Change one, change all
+# three - and on both implementations.
+#
+# ConvertTo-Json is not an option here and never will be: Windows PowerShell
+# 5.1's serializer differs from this in its escaping, its key order AND its
+# indentation, so a document it produced would fail the byte-for-byte comparison
+# on every fixture while looking perfectly well-formed to a reader.
+function ConvertTo-JsonEscaped {
+	param([string]$Text)
+	$sb = New-Object System.Text.StringBuilder
+	for ($i = 0; $i -lt $Text.Length; $i++) {
+		$c = $Text[$i]
+		if ($c -eq [char]34) { [void]$sb.Append('\"') }
+		elseif ($c -eq [char]92) { [void]$sb.Append('\\') }
+		elseif ($c -eq [char]9) { [void]$sb.Append([char]32) }
+		else { [void]$sb.Append($c) }
+	}
+	return $sb.ToString()
+}
+
+# A failure row's Nth tab-separated field, or '' when the row is short. awk
+# reads an absent field as the empty string; indexing a PowerShell array past
+# its end throws under StrictMode, which would turn a malformed row into a stack
+# trace instead of an empty cell.
+function Get-RowField {
+	param([string[]]$Fields, [int]$Index)
+	if ($Index -ge $Fields.Length) { return '' }
+	return $Fields[$Index]
+}
+
+# One renderer, branching on $JSON internally - the same shape --unverified
+# uses, so a further report mode has one pattern to copy rather than two. It
+# also carries the exit status out itself, which is what removes the separate
+# counting pass: it already knows how many rows it buffered. `Prog` is the name
+# the mode answers to, so a --used-in failure is not mistaken for a `check`
+# failure by whoever reads the terminal.
+#
+# Human output goes to stderr and JSON to stdout on purpose: a caller piping
+# --json into a parser gets only the document, and a human running it bare still
+# sees everything.
+#
+# `OkLine` is the line printed when nothing failed, and it is a parameter rather
+# than a constant because "clean" means something different in each mode.
+# `check` looks at note fields and never opens a document, so a corpus with
+# dozens of dead anchors used to print the same `clean` as a whole corpus in
+# order - and a success line read as a whole-corpus verdict is the thing
+# somebody renders on. --used-in's clean genuinely is what it says: every target
+# it was asked to open resolved. It keeps the default.
+#
+# RETURNS the exit status the mode exits with - 0 when nothing failed, 1
+# otherwise. The caller exits with it; nothing else in this file decides that.
+function Render-Failures {
+	param([string]$Prog, [string]$OkLine = '')
+
+	if ($OkLine.Length -eq 0) { $OkLine = 'clean - ' + $script:VAULT }
+
+	# `LC_ALL=C sort` over the failure rows. Ordinal, never Sort-Object's
+	# culture-aware default: all five modes that render through here inherit the
+	# ordering, so a culture-aware comparer reorders rows in every one of them at
+	# once and each JSON diff then reads as a bug in whichever mode was checked
+	# first.
+	$rows = $script:FAILURES.ToArray()
+	[System.Array]::Sort($rows, [System.StringComparer]::Ordinal)
+	$n = $rows.Length
+
+	if ($script:JSON -eq 1) {
+		$sb = New-Object System.Text.StringBuilder
+		[void]$sb.Append("{`n")
+		[void]$sb.Append('  "ok": ')
+		if ($n -eq 0) { [void]$sb.Append('true') } else { [void]$sb.Append('false') }
+		[void]$sb.Append(",`n")
+		[void]$sb.Append('  "vault": "' + (ConvertTo-JsonEscaped $script:VAULT) + "`",`n")
+		[void]$sb.Append('  "checked_on": "' + (ConvertTo-JsonEscaped $script:TODAY) + "`",`n")
+		[void]$sb.Append('  "failure_count": ' + $n + ",`n")
+		[void]$sb.Append('  "failures": [')
+		for ($i = 0; $i -lt $n; $i++) {
+			# Split on every tab and take the first four fields, which is what
+			# awk's split() with FS="\t" leaves in p[1]..p[4]. A detail carrying
+			# a tab is truncated identically on both sides rather than shifting
+			# the columns.
+			$p = $rows[$i].Split([char]9)
+			if ($i -ne 0) { [void]$sb.Append(',') }
+			[void]$sb.Append("`n    {")
+			[void]$sb.Append('"file": "' + (ConvertTo-JsonEscaped (Get-RowField $p 0)) + '", ')
+			[void]$sb.Append('"check": "' + (ConvertTo-JsonEscaped (Get-RowField $p 1)) + '", ')
+			[void]$sb.Append('"id": "' + (ConvertTo-JsonEscaped (Get-RowField $p 2)) + '", ')
+			[void]$sb.Append('"detail": "' + (ConvertTo-JsonEscaped (Get-RowField $p 3)) + '"}')
+		}
+		if ($n -ne 0) { [void]$sb.Append("`n  ") }
+		[void]$sb.Append("]`n}`n")
+		Write-OutText $sb.ToString()
+	} elseif ($n -eq 0) {
+		Write-OutText ($Prog + ': ' + $OkLine + "`n")
+	} else {
+		$plural = 's'
+		if ($n -eq 1) { $plural = '' }
+		Write-ErrText ($Prog + ': ' + $n + ' failure' + $plural + ' under ' + $script:VAULT + "`n")
+		$last = ''
+		for ($i = 0; $i -lt $n; $i++) {
+			$p = $rows[$i].Split([char]9)
+			$file = Get-RowField $p 0
+			if ($file -cne $last) {
+				Write-ErrText ("`n" + $file + "`n")
+				$last = $file
+			}
+			Write-ErrText ('  [' + (Get-RowField $p 1) + '] ' + (Get-RowField $p 3) + "`n")
+		}
+		Write-ErrText "`n"
+	}
+
+	if ($n -eq 0) { return 0 }
+	return 1
+}
+
+# ----------------------------------------------------------------------------
+# DISPATCH POINT 3 - the verdict modes
+#
+# `check` is last and unconditional because it is the default mode: the shell
+# runs off the end of the file into it (bin/vault-lint.sh:3003), so an `if` here
+# would leave a bare invocation doing nothing at all.
+# ----------------------------------------------------------------------------
+
+if ($MODE -ceq 'used-in') { Invoke-ModeUsedIn }
+if ($MODE -ceq 'red-team') { Invoke-ModeRedTeam }
+if ($MODE -ceq 'roadmap-table') { Invoke-ModeRoadmapTable }
+if ($MODE -ceq 'binding-driver') { Invoke-ModeBindingDriver }
+Invoke-ModeCheck
