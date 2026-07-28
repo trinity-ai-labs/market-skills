@@ -44,14 +44,18 @@ comparison, so a PR that ports or changes one side without the other fails loudl
 of shipping a silent behavioural gap between platforms.
 
 **Adding an executable means choosing a directory, and the choice is a promise.** A new
-shell script under `bin/` is on every user's `PATH` on the next version bump: it needs a
-`/bin/sh` shebang and no bashisms. Anything that is contributor tooling stays under
-`scripts/` — including the fixture corpora, which are test data for a shipped script but
-are not themselves shipped. Getting this backwards is silent in both directions: a bashism
-in `bin/` fails on a user's machine and never in CI on the author's, and a test corpus in
-`bin/` lands on strangers' `PATH`. Both halves are enforced in CI, so neither is a
-convention to remember: shellcheck reads each script's shebang, and a grep rejects any
-path-prefixed `vault-lint.sh` in `skills/`.
+executable under `bin/` is on every user's `PATH` on the next version bump, and the parity
+rule above makes that promise a pair: `bin/<name>.sh` needs a `/bin/sh` shebang and no
+bashisms, and it ships together with its `bin/<name>.ps1` twin — neither lands alone.
+Anything that is contributor tooling stays under `scripts/` — including the fixture
+corpora, which are test data for a shipped script but are not themselves shipped. Getting
+this backwards is silent in every direction: a bashism in `bin/*.sh` fails on a user's
+machine and never in CI on the author's, a `.sh` shipped without its `.ps1` twin is a
+promise the parity rule states but that no CI check reads yet, and a test corpus in `bin/`
+lands on strangers' `PATH`. Today CI enforces the `.sh` half and the
+`scripts/`-stays-out-of-`PATH` half: shellcheck reads each shell script's shebang, and a
+grep rejects any path-prefixed `vault-lint.sh` in `skills/`. The `.ps1` twin is the parity
+gate's job, not either of those checks — widening CI to enforce it is later work.
 
 Both tiers still have ZERO dependencies, but on supply-chain grounds rather than
 convenience: a tool that reads a user's entire private business corpus should not carry
