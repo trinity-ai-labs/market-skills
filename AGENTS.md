@@ -18,16 +18,30 @@ method and tools only, never user data.** Scripts are stateless: they take a pat
 operate on it. That separation is what lets the skills be public while the work stays
 private, and lets a user upgrade the skills without touching their corpus.
 
-**3. `bin/` is shipped and assumes only POSIX shell; `scripts/` is the repo gate and may
+**3. `bin/` is shipped and assumes only the platform's own shell — POSIX `sh` on macOS
+and Linux, Windows PowerShell 5.1 on Windows; `scripts/` is the repo gate and may
 assume Node.** The split is a directory, not a convention to remember. Everything under
 `bin/` runs on a *user's* machine — Claude Code puts an enabled plugin's `bin/` on the
-Bash tool's `PATH`, so `vault-lint.sh` is invoked bare, from whatever directory that user
-is working in — and must assume nothing beyond POSIX shell: a user installs a skill to
-use it, and a runtime prerequisite discovered at the moment of use is a broken product.
-Node is not present on a machine running Claude Code by default — the native installer,
-Homebrew, WinGet, apt, dnf and apk never install it. Everything under `scripts/`
-(`check.mjs`, `fixtures/`) runs only for contributors who have already cloned this repo
-to open a PR — it is never loaded and never reaches a user's `PATH` — so Node is fair there.
+shell tool's `PATH`, so a script there is invoked bare, from whatever directory that user
+is working in — and must assume nothing beyond the shell that ships with the platform: a
+user installs a skill to use it, and a runtime prerequisite discovered at the moment of
+use is a broken product. Windows PowerShell 5.1 ships in-box on Windows, so it is that
+platform's own shell exactly as `sh` is on macOS and Linux — it is not something a user
+must go install, and so it is not a discovered prerequisite either. Node is not present
+on a machine running Claude Code by default — the native installer, Homebrew, WinGet,
+apt, dnf and apk never install it. Everything under `scripts/` (`check.mjs`, `fixtures/`)
+runs only for contributors who have already cloned this repo to open a PR — it is never
+loaded and never reaches a user's `PATH` — so Node is fair there.
+
+**Every `bin/<name>.sh` has a `bin/<name>.ps1`, and the two are held to each other by a
+mechanical JSON parity gate; neither is added alone.** A second implementation of a large
+linter is a drift hazard — the shell and PowerShell sides answering the same flag
+differently is invisible to a reader of either file alone, and only gets worse the longer
+the two are allowed to diverge unchecked. A gate that diffs their `--json` output
+fixture-by-fixture is what makes maintaining two implementations tractable instead of a
+standing liability: it turns "do these still agree" from a manual re-read into a machine
+comparison, so a PR that ports or changes one side without the other fails loudly instead
+of shipping a silent behavioural gap between platforms.
 
 **Adding an executable means choosing a directory, and the choice is a promise.** A new
 shell script under `bin/` is on every user's `PATH` on the next version bump: it needs a
@@ -186,7 +200,8 @@ on purpose — a list of what *does* ship silently excuses the next directory so
 .github/workflows/ci.yml      every check, each commented with the failure it prevents
 skills/market-analysis/       SKILL.md + references/ — the research engine
 skills/business-plan/         SKILL.md + references/ — the plan conductor
-bin/vault-lint.sh             SHIPPED — POSIX sh only, lands on the user's PATH
+bin/vault-lint.sh             SHIPPED — POSIX sh; paired with a required PowerShell
+                               bin/vault-lint.ps1 (rule 3), both land on the user's PATH
 scripts/check.mjs             the repo gate — Node, contributors only
 scripts/fixtures/             vault-lint's own suite — contributor test data, not shipped
 CHANGELOG.md                  what each pinned version actually changed
