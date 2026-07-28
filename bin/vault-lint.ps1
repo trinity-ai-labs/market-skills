@@ -186,28 +186,27 @@ function Get-RelativeSlashPath {
 # ----------------------------------------------------------------------------
 # usage and refusals
 #
-# Transcribed verbatim from bin/vault-lint.sh's usage() heredoc. The two texts
-# are held together by `vault-lint.ps1 --help` against `vault-lint.sh --help`,
-# and by the fixture suite's --help census assertion, which runs against
-# whichever implementation VAULT_LINT names - so a paragraph added on one side
-# and not the other is a mode with a working flag and no help text, which reads
-# to its author exactly like a mode that was never added.
+# Transcribed verbatim from bin/vault-lint.sh's usage() heredoc, except for the
+# binary name itself (see the substitution at the end of Show-Usage). The two
+# texts are held together by `vault-lint.ps1 --help` against `vault-lint.sh
+# --help`, and by the fixture suite's --help census assertion, which runs
+# against whichever implementation VAULT_LINT names - so a paragraph added on
+# one side and not the other is a mode with a working flag and no help text,
+# which reads to its author exactly like a mode that was never added.
 #
 # ONE BLOCK PER MODE, IN MODE_TABLE ORDER, AND A NEW MODE APPENDS ITS BLOCK
 # IMMEDIATELY BEFORE THE `graph` ONE - the same rule bin/vault-lint.sh:71 states,
 # for the same reason: interleaving turns a release that adds three modes into
 # three edits to the same lines, and git merges two of them textually clean.
 #
-# THE SYNOPSIS LINES SAY `vault-lint.sh` EVEN HERE, AND THAT IS NOT RIGHT YET.
-# A session running this file has no `vault-lint.sh` to run - that is the whole
-# reason this file exists - so the help it prints names a command its reader
-# does not have. It stays that way for now because
-# scripts/fixtures/run-fixtures.sh:838 asserts the census by matching the
-# literal string `vault-lint.sh <mode>` against whatever VAULT_LINT points at,
-# so renaming the blocks here fails nine assertions on the port and zero on the
-# shell. Fixing it is one edit to that assertion plus one substitution here, and
-# it belongs in the slice that owns the fixture suite - not in a slice that is
-# forbidden to touch it.
+# THE SYNOPSIS LINES BELOW ARE WRITTEN AS `vault-lint.sh` AND RENDERED AS
+# $PROG. A session running this file has no `vault-lint.sh` to run - that is
+# the whole reason this file exists - so printing the literal would send its
+# reader after a command their machine does not have. The census assertion in
+# scripts/fixtures/run-fixtures.sh matches the basename of whichever
+# implementation VAULT_LINT names, not the literal `vault-lint.sh`, so this
+# substitution and that assertion move together rather than one hardcoding
+# what the other computes.
 # ----------------------------------------------------------------------------
 
 function Show-Usage {
@@ -426,6 +425,13 @@ Exit codes
   1  at least one check failed
   2  refused to run (no vault, no config, unsupported schemaVersion, bad usage)
 '@
+	# Substituted from $PROG rather than transcribed a second time: the shell's
+	# heredoc names itself literally because it IS vault-lint.sh, but this file is
+	# vault-lint.ps1, and a session that reaches for the command this text names
+	# would find nothing on a machine with no shell to run it. Routing through
+	# $PROG means the two can never drift apart the way two independent literals
+	# eventually would.
+	$text = $text -replace 'vault-lint\.sh', $PROG
 	Write-OutText (($text -replace "`r`n", "`n") + "`n")
 }
 
