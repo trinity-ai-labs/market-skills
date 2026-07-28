@@ -16,8 +16,9 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   `#!/bin/sh\r` and killed `vault-lint.sh` before any Windows-specific behaviour was reachable at
   all — `.gitattributes` now pins both scripts to LF endings.** Porting the lint to PowerShell into
   a checkout that still could not run the *original* script correctly would have shipped a second
-  bug on top of the first; CI now proves the fix on a clean clone with `core.autocrlf` on, before
-  either implementation is trusted.
+  bug on top of the first; pinning both scripts to LF is what stops `core.autocrlf=true` from
+  rewriting the shebang in the first place, so the checkout that broke the shell script can no
+  longer occur.
 - **macOS was never actually exercised by CI — the fixture suite ran only on `ubuntu-latest`, so a
   bashism or a GNU-only flag could ship and only ever surface on a contributor's own Mac.** CI now
   runs the full 241-assertion fixture suite on `macos-latest` too, which is the regression baseline
