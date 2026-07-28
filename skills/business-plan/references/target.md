@@ -424,6 +424,20 @@ hours, the channel count or the price point the stated target would need. The re
 kind alongside the driver, so the founder reads *reach binds, and reach is policy* rather than
 *reach binds* and supplies the second half themselves — usually as "so it cannot be done".
 
+**The classification is a record as well as a readout, and three fields on the verdict note are
+where it lands.** `binding_driver` holds the driver step 9 named, in the words the plan uses;
+`driver_kind` holds one of `structural`, `policy` or `policy-within-band`, unquoted, and the
+enumeration is closed at those three; `conditional_on` holds the policy variable verbatim as the
+rendered plan states it, owed whenever `driver_kind` is either policy value. **The failure this half
+prevents is not the readout's.** Left in the readout alone, the classification is a phrase inside a
+sentence, so nothing can tell a rendered section that carries the condition from one that dropped
+it — and the drop is invisible precisely because what remains still reads as a finished sentence.
+Recorded, it is a string `vault-lint.sh --binding-driver` matches against the plan section the
+note's `used_in` names, in the words the section itself uses. The full set — those three plus
+`evidence_n` and `evidence_counterparties` — and the rule that any one of them present makes the
+rest owed are
+[vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
+
 **A split driver makes the verdict conditional on where in its band the product sits, and the words
 change with it.** Where retention binds, the finding is *this product as built does not retain well
 enough for that target*, with the target under one changed position stated beside it — never *this
@@ -857,5 +871,18 @@ number a founder is most likely to want re-litigated later.
     below.
 11. **If it is negative, solve the counter-offer** on the stated resources and evidenced ranges,
     with the date held, as a band — then build the lever table separately.
-12. **Record it** — an `assumption` before research, a `claim` after — and supersede the earlier
-    verdict rather than editing it.
+12. **Record it** — an `assumption` before research, a `claim` after — under `subject:
+    target-verdict`, carrying the five fields the verdict owes, then supersede the earlier verdict
+    rather than editing it. The five: **`binding_driver`**, step 9's answer in the words the plan
+    uses; **`driver_kind`**, step 3's classification, one of `structural`, `policy` or
+    `policy-within-band` and unquoted; **`conditional_on`**, the policy variable verbatim as the
+    rendered plan states it, owed whenever `driver_kind` is either policy value; and
+    **`evidence_n`** and **`evidence_counterparties`**, the distinct source notes and the distinct
+    counterparties reached under the binding driver, as quoted whole numbers. Steps 3 and 9 already
+    produced the first three and step 4 walked the sources the last two count, so this step records
+    what the run computed rather than deciding anything new — which is exactly why it gets skipped.
+    Unrecorded, they are a sentence in a readout: `vault-lint.sh --binding-driver` has no string to
+    hold the rendered section against and no count to check the surfaced one against, so the
+    section that quietly dropped the condition renders at the same confidence letter as the one
+    that kept it. Any one of the five present makes the rest owed, per
+    [vault.md](vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type).
