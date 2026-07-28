@@ -39,6 +39,20 @@ jobs:
         # while broken.
         run: sh scripts/fixtures/run-fixtures.sh
 
+      - name: The two lint implementations answer the same thing, mode by mode
+        if: always()
+        # bin/vault-lint.ps1 is a SECOND implementation of the same 3,600-line
+        # linter, for a Windows session with no POSIX shell to run the first one.
+        # Two implementations that size drift silently — each keeps passing its
+        # own reading of the fixtures while answering a real vault differently,
+        # and the first person to notice is a user acting on a wrong answer. This
+        # runs every mode over every fixture through both and diffs the answers,
+        # so a divergence is a red PR rather than a Windows user's wrong result.
+        # It exits 0 while scripts/parity/unported/ still names a mode, because a
+        # gate that went red until the last port landed would be red on every
+        # slice PR from now until then — the printed count is the progress report.
+        run: node scripts/parity/parity.mjs
+
       - name: Every shell script holds to the shell its shebang declares
         if: always()
         # bin/ runs on a user's machine, so a bashism there is a runtime failure
