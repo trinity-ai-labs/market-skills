@@ -83,7 +83,8 @@ and is never restated here.
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
-    bare check, `--used-in`, `--supersession-sweep` and `--red-team`, and exits non-zero unless
+    bare check, `--used-in`, `--supersession-sweep`, `--red-team` and `--roadmap-table`, and exits
+    non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
     success line said `clean` over a corpus with dozens of dead anchors. That line now names what
@@ -101,7 +102,12 @@ and is never restated here.
     `red-team.md` records that row as fixed. `--red-team` is in the gate for the mirror-image
     reason: it fails when a lens named in `red-team.md`'s `## Lenses dispatched` roster wrote no
     objection row, and the last thing a plan does before rendering is cite objection codes into
-    that table. **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
+    that table. `--roadmap-table` is in the gate because the roadmap section is edited by hand
+    for as long as the plan is being written, while the notes it renders were minted once and
+    left alone: it matches each row's item cell against a milestone `title` verbatim, both ways,
+    so a row added late with no note behind it and a note the table quietly dropped both surface
+    before the render rather than in a reader's question nobody can answer.
+    **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
     cites it, so the gate's second part would check an empty set there, and running the whole
     gate anyway teaches it as cadence-wide when it belongs to one phase.
     **That same gate reads the dimension's own file, never the summary its author
@@ -1190,6 +1196,10 @@ three milestones, and where everything landed. Invite pushback on the specific b
   is exactly the claim a category-floor churn row asserts by construction.
 - Every roadmap item names the assumption it moves, and it names it in a `milestone` note rather
   than in the table alone — so the naming is a `moves` edge the lint resolves, not a sentence.
+- The roadmap table and the milestone set are the same set, and the item cell is the note `title`
+  verbatim. `vault-lint.sh --roadmap-table` reads it both ways: a row with no note behind it moves
+  no assumption anybody can name, and a note the table never lists is a dated change to an
+  assumption row the plan does not show — so the curve has a step its reader cannot see.
 - The roadmap's order survives its own two checks: no item sequences before a prerequisite it
   declares, and no two items sharing a constrained `resource` are asserted concurrent. Both are
   read off the notes by `vault-lint.sh`, and a plan that has a roadmap and no `milestones/`
