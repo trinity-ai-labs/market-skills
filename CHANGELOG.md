@@ -2,6 +2,180 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.10.0
+
+- **The Phase 5 release gate is one call — `vault-lint.sh --release-gate` — rather than three a
+  conductor has to remember.** 1.8.0 made that gate three named invocations (the default check,
+  `--used-in`, `--supersession-sweep`), which is three chances to run two, and the one most
+  likely to be dropped is the one whose failure is quietest. The composite runs each part under
+  its own heading and exits with the **worst** status any part returned, so a refusal is never
+  flattened into a failed check — the two mean different things and want different fixes.
+  `--json` is refused, because several JSON documents in sequence are not a JSON document. Each
+  part is a separate invocation of the script: two modes share one failure file, and a process
+  boundary is the cheapest thing that cannot let one mode's failures land in another's verdict.
+  **The bare run's success line was the other half of the same defect.** It said `clean`, and a
+  corpus with dozens of dead citation anchors said exactly that — a whole-corpus verdict printed
+  by a pass that never left the note directories. It now names the vault, says the *note-level*
+  checks passed, and lists what it did not open, read off the mode table rather than written by
+  hand, so a mode added to the gate cannot leave that line quietly overstating its own coverage.
+  A new mode is a row in that table plus its own dispatch, which is what kept four parallel
+  changes out of one another's argument parser.
+- **A heading's explicit `{#anchor}` attribute is the citation address; the slug is now the
+  fallback rather than the contract.** `used_in` entries name `document.md#anchor`, and how a
+  heading became that anchor was written down nowhere — so the lint applied the GitHub slug rule
+  and the shipped template disagreed with it about the template's own headings. `## Competition &
+  moat` slugs to `competition--moat`; an author citing that section writes `#competition`, and a
+  corpus authored exactly per `plan-template.md` failed `--used-in`. **The deeper half was that
+  there was no way to declare a stable anchor at all**, while the skill actively requires
+  headings to be reworded as the finding sharpens — so every sharpened heading silently
+  invalidated every citation into that section, and the only available fix was rewriting the
+  notes, which re-breaks on the next edit. `rendering.md` now carries the contract both skills
+  render against — strip the attribute from the visible heading, emit it as the element `id`, so
+  both addresses stay live — `plan-template.md` carries an anchor on every heading, and
+  `--used-in` registers **both** the explicit anchor and the slug of the remaining text.
+  Registering both is what keeps an existing vault passing: its notes cite the slug, and an
+  upgrade that fails an untouched corpus is one nobody takes. Rewording protection is unaffected
+  either way — a heading whose text changes loses its old slug under either design, and the
+  attribute is the half that survives. Inside this repo the attribute is allowed only in fenced
+  template blocks, enforced in both directions: a live heading carrying one would fold `{`, `#`
+  and `}` into its own slug and take every Contents link with it, and a count that fails at zero
+  stops the prohibition outliving the contract it exists for.
+- **A seventh note type, `milestone`, and a generated `research/timeline.md`, because nothing in
+  the corpus held what is true at a given month.** The method carries a full reference on roadmap
+  sequencing and requires that items unlock each other, but no artifact recorded position — so a
+  proposal was judged against the corpus's snapshot of today rather than against the state at the
+  month it would land. That is wrong in both directions: it kills a proposal over a gap that is a
+  dated roadmap item, and it credits a capability whose prerequisite has not shipped. **Both
+  directions read as rigour**, which is why nothing ever surfaced it. A milestone carries `moves`
+  (the note the item moves), `resource`, `sequence`, `depends_on` and `date_confidence`, and
+  three new checks read off them: `false-independence` when two milestones share a `resource`
+  **and** a `sequence`, which asserts them concurrent on one constrained resource;
+  `dependency-after-dependent` when a `depends_on` target sequences at or after the item needing
+  it; and `sequence-not-orderable`, which exists because both order checks skip a value they
+  cannot compare — a `sequence` of `M4` takes them down silently and prints the same green as a
+  roadmap that passed them. **"Every roadmap item names the assumption it moves" stops being
+  prose nobody verifies for one word**: `moves` joins the edge fields, so the existing
+  `dangling-edge` rule covers it. `research/timeline.md` joins the output contract as a **view
+  over these notes** rather than a seventh hand-maintained document — state at M0, the sequence
+  with what each item unlocks, and chains that walk a proposal to the month it lands with its
+  prerequisites counted. Two fields did not ship as originally sketched, and both changes are the
+  same argument: `unlocks` is derived from the reverse of `depends_on` rather than stored,
+  because a stored backlink is a second copy of a fact that can drift from the first and the two
+  queries then disagree with nothing able to say which is right; and `date_confidence` is
+  required rather than optional, because an absent field is indistinguishable from a forgotten
+  one, and without a positive record a skill-derived month and a founder-stated month are the
+  same string on the page.
+- **`vault.md` said "Resist adding a seventh" and this release overrules it, with the argument
+  written beside the rule it breaks.** A rule overruled in silence stops being a rule: the next
+  type arrives citing this one as precedent, and nothing on the page says what precedent it set.
+  The ceiling is real and its reasoning is unchanged — past about six types the taxonomy becomes
+  ceremony, authors stall between two types that differ only in emphasis, pick inconsistently,
+  and the query that depends on the type being right returns a partial answer. **What is written
+  beside it is the test an eighth type has to pass, not a licence for one.** Three things had to
+  hold. The stated harm cannot occur: nothing in the other six carries a position, a dependency
+  or a resource cost, so there is no pair to stall between — a note that says *when this happens*
+  is not a near-miss for a note that says *whether this is true*. The edge escape hatch does not
+  reach it: "structure that does not fit a type belongs on an edge" presumes two notes to hang
+  the edge between, and there was no note anywhere in the vault for a roadmap item. And the set
+  was never six grades: five are epistemic, `decision` is a record of a choice with a reopen
+  trigger, so a second record type for scheduled work follows that precedent instead of breaking
+  it.
+- **`--supersession-sweep` now carries a verdict — a supersession nothing says was read is a
+  failure.** 1.8.0 shipped the sweep as a report: it printed the sections a supersession put in
+  doubt, exited 0 either way, and the skill conceded it was the report half. **A worklist nobody
+  is forced to read is not a gate**, and the failure it exists for is the most damaging one
+  available — a correction lands in one document, its siblings go on asserting the superseded
+  version, and every check passes because every note is individually well-formed. `reconciled:`,
+  a quoted ISO date on the note carrying `supersedes`, is that assertion moved into the ledger:
+  the sweep fails when it is absent and when it predates that note's own `created`. Both dates
+  are quoted and both sides of the comparison are forced to strings, so it stays a plain string
+  comparison with no date library anywhere near it. **The worklist is still a report** — a fully
+  reconciled vault prints its rows, prints its count, and exits 0, because a supersession with a
+  blast radius is the corpus doing its job and a mode that went red on a healthy vault would
+  teach a reader to ignore the exit code the real checks depend on. And the field records that
+  the read was *claimed*, not that it was done; a date can be stamped without opening a document.
+  What the verdict removes is skipping it silently. The sweep also stopped double-counting a
+  section: now that a heading is addressable two ways, two `used_in` entries can name one
+  physical section and produce two worklist rows for one job — the double-count the row grouping
+  exists to prevent, on the count a read is sized by. Anchors are folded to their alphanumeric
+  bytes before grouping, deliberately looser than the rule that decides whether an anchor
+  *resolves*, and a fold key claimed by two different headings is retired rather than resolved:
+  being wrong there costs a section nobody re-reads, so it refuses rather than guesses.
+- **`--red-team` fails a dispatched lens that wrote no objection rows, because a silent lens and a
+  lens that found nothing are the same silence.** A panel lens returns, its findings get folded
+  into two documents, and its rows are never written to `red-team.md` at all — so plan prose
+  cites objection codes into a file carrying none of them, and nothing in the corpus could tell.
+  The check had to create the record before it could enforce it: `red-team.md` gains a `## Lenses
+  dispatched` roster, and the mode fails both when a rostered lens wrote no row **and** when a
+  row names a lens the roster does not — the second direction because otherwise the check clears
+  by deleting a line from the roster. No `red-team.md` means no panel was dispatched, and it
+  passes. **A round's roster rows are written in the edit that folds that round's objections, not
+  at dispatch**: a roster written ahead of its rows fails for the whole time the round is in
+  flight, and a gate that fails on the normal case is one people learn to skip. The mode also
+  joins invariant 19's pre-panel gate, which stays *named calls* rather than becoming
+  `--release-gate` — the composite also runs the default check, which that gate deliberately
+  excludes so a malformed note written during drafting cannot block a dispatch on a fix unrelated
+  to whether the plan and the ledger agree; and invariant 15 gives `--release-gate` one home, at
+  the render, because a call with two homes makes "did the gate run" a question of recall again,
+  which is the defect the composite was built to remove.
+- **Invariant 23 — steelman a founder's statement before checking it, because the cheapest
+  adjacent number is the one that gets checked.** The both-directions rules governed values in
+  the model and claims about the subject's own product; nothing covered a founder's offhand
+  assertion, and the failure shape is specific and repeatable. The founder means the *delivered*
+  thing, the analyst checks the *list price*, and the refutation comes back tidy, confident and
+  beside the point. Generic shape: a founder says a competing tool costs more than their own
+  seat; the competitor's list price is lower, so the claim is filed as false — but that
+  competitor bills separately for the compute underneath it, so the delivered cost is roughly
+  double the seat and the founder was right about the thing that matters. **This is invariant 3
+  aimed at a founder statement instead of at the model**: a metric chosen after the conclusion is
+  a conclusion wearing an instrument, and reaching for the checkable number rather than the
+  claimed one is that same move made in the analyst's own favour. It ships with its filing rule
+  in the same breath, because most of what it surfaces is not a note — a correction that moves no
+  number in the plan is a conversation.
+- **Objection IDs are namespaced by round — `R<round>-O<n>` — so a re-dispatched panel cannot
+  collide with the one before it.** The row template used a bare `#` with no round column, and
+  numbering restarts per dispatch, so in a multi-round engagement — a revision, a follow-on
+  session — round 2's `O1` and round 4's `O1` are one code for two different objections, and plan
+  prose citing that number resolves to whichever the reader happens to find. Round is the count
+  of Phase 4 dispatches for the engagement, and **a cited code is never renumbered**, which is
+  the rule `[F#]` codes already carry for the same reason: a renumber silently repoints every
+  citation already written. The plan template's surviving-objections section carries the
+  round-qualified shape too, because a format restated in a second file is only enforced where it
+  is restated correctly.
+- **`schemaVersion` moves to 2, and the tool reads both 1 and 2 — an existing vault keeps working
+  untouched and upgrades on its own schedule.** Every check this release adds that an older
+  corpus could not owe is gated on the version the vault declares rather than on a field being
+  present, so a vault at 1 behaves exactly as it did: it has no `milestones/` directory by
+  construction, it cannot owe a `reconciled:` date on a supersession written before the field
+  existed, and a `red-team.md` with no roster passes. A version from the future is still refused,
+  which is what the field is for — an older lint reading a newer vault is precisely the case
+  `schemaVersion` exists to catch, and that is why a bump is right here rather than optional.
+  `vault-migration.md` documents the 1→2 path with the stamp as the **last** step, after the
+  vault can already pass at 2: stamped first, the version asserts a shape the corpus does not yet
+  have, and every failure that follows reads as a broken vault rather than an unfinished
+  migration.
+- **The fixture suite went from 95 assertions to 174, and three of the new corpora exist to fail
+  exactly one mode.** A suite whose vaults agree across every part cannot catch a gate that
+  reports only its first part's verdict: `clean/` is green everywhere and `violations/` is red
+  everywhere, so both pass a composite that silently drops the rest. `dead-citation/` passes the
+  note-level check and fails `--used-in`; `unreconciled/` passes both of those and fails only the
+  sweep; `panel-gap/` fails only `--red-team`. `anchor-alias/` reaches one section by two
+  spellings and asserts it produces one worklist row rather than two. The schemaVersion-1 twins
+  are **copies** of their version-2 originals with the version rewritten, not hand-written second
+  corpora — a twin asserts the same thing only until the day one of the two is edited.
+- **The `roadmap-table-vs-milestone-set` drift check did not ship, and issue #92 carries why.**
+  The blocker is not which lint pass reads documents at the vault root; it is that there is **no
+  non-fuzzy key** between the two sides. A roadmap row in the plan is prose and a milestone note's
+  `title` is prose, so matching them is a similarity test that would fire on every
+  correctly-written row whose wording drifted from its note — and the lint's own boundary comment
+  says what that costs, since a check that cries wolf gets switched off and switching it off
+  takes the working half with it. Here the working half is the four milestone checks this release
+  did ship. The robust version needs the plan's roadmap table to render the `MILESTONE-` ID per
+  row, which changes what a founder hands an investor and earns its own pass rather than arriving
+  as the detail that made one lint rule convenient to write. **The half that mattered most is
+  already closed**: `research/timeline.md` is generated from the milestone notes, so it cannot
+  drift from them; what stays open is a hand-written table drifting from the same set.
+
 ## 1.9.0
 
 - **Phase 0 now inventories the founder's own artifacts before the grill, and measures them
