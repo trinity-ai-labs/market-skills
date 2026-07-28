@@ -603,7 +603,167 @@ function Invoke-ModeSupersessionSweep {
 # deliberately non-default ok line (bin/vault-lint.sh:1646).
 # ----------------------------------------------------------------------------
 function Invoke-ModeUsedIn {
-	Exit-NotPorted '--used-in'
+	# Non-ASCII punctuation a GitHub-slugged heading commonly carries, by CODE
+	# POINT rather than written literally - ports the enumeration at
+	# bin/vault-lint.sh:1749. A literal curly quote in this file is
+	# indistinguishable from a mistyped ASCII one to every linter and every
+	# reader; a .NET string is already Unicode text, so unlike the shell's
+	# UTF-8-byte-sequence trick there is no encoding step, only the same list
+	# of code points.
+	$uniPunctCodePoints = @(8211, 8212, 8213, 8216, 8217, 8218, 8220, 8221, 8222, 8226, 8230, 8224, 8225, 183, 176, 167, 182, 171, 187)
+	$uniPunct = New-Object 'System.Collections.Generic.HashSet[char]'
+	foreach ($cp in $uniPunctCodePoints) { [void]$uniPunct.Add([char]$cp) }
+
+	# The printable ASCII the slug rule drops, transcribed character for
+	# character from DROP at bin/vault-lint.sh:1741. `-` and `_` are not in
+	# it, and neither is space/tab - those are turned into a hyphen instead of
+	# being dropped, in the loop below.
+	$slugDrop = New-Object 'System.Collections.Generic.HashSet[char]'
+	foreach ($ch in [char[]]'!"#$%&''()*+,./:;<=>?@[\]^`{|}~') { [void]$slugDrop.Add($ch) }
+
+	# The GitHub slug rule: lowercase, drop punctuation, one hyphen per
+	# whitespace CHARACTER (runs are not collapsed). Ports slug() at
+	# bin/vault-lint.sh:1799. Case folding is ASCII-only by hand - a
+	# [char]::ToLowerInvariant() would fold every Unicode letter, and LC_ALL=C
+	# pins the shell's tolower() to bytes 65-90 only.
+	function Get-UsedInSlug {
+		param([string]$Heading)
+		$sb = New-Object System.Text.StringBuilder
+		foreach ($ch in $Heading.ToCharArray()) {
+			if ($uniPunct.Contains($ch)) { continue }
+			if ($ch -eq [char]32 -or $ch -eq [char]9) { [void]$sb.Append('-'); continue }
+			if ($slugDrop.Contains($ch)) { continue }
+			if ($ch -ge [char]65 -and $ch -le [char]90) { [void]$sb.Append([char]([int]$ch + 32)) }
+			else { [void]$sb.Append($ch) }
+		}
+		return $sb.ToString().Trim('-')
+	}
+
+	$rxHeading = [regex]'\A#+[ \t]+'
+	$rxAnchorAttr = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
+
+	# Every heading one document offers an anchor for, ATX form only. Ports
+	# scan() at bin/vault-lint.sh:1829 - ONE OF FIVE COPIES of the fenced-block
+	# scan bin/vault-lint.sh:1283-1285 names; this is the local --used-in copy,
+	# kept apart from --red-team's below for the reason THE STUB SEAM states.
+	# Setext headings are deliberately not read - they are document titles, not
+	# a section a #fragment cites.
+	function Get-UsedInHeadings {
+		param([string]$Doc)
+		$has = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+		$path = $script:VAULT + '/' + $Doc
+		if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $has }
+		$fc = ''
+		$fn = 0
+		foreach ($raw in (Read-TextLines $path)) {
+			$line = Remove-TrailingCr $raw
+			$t = $line.TrimStart($script:SPACE_TAB)
+
+			# Fences tracked by marker character and run length, so a longer
+			# nested fence cannot close its parent early.
+			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
+				$c = $t.Substring(0, 1)
+				$n = 0
+				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
+				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				continue
+			}
+			if ($fc.Length -ne 0) { continue }
+
+			$hm = $rxHeading.Match($t)
+			if (-not $hm.Success) { continue }
+			$h = $t.Substring($hm.Length)
+			$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
+			$h = $h.TrimEnd($script:SPACE_TAB)
+
+			# A trailing `{#anchor}` attribute is the heading's own citation
+			# address: stripped from the heading text and registered as an
+			# anchor in its own right. BOTH the explicit anchor and the slug of
+			# the stripped text are registered - the two-address rule - so a
+			# vault authored before the template carried attributes keeps
+			# citing the slug without starting to fail.
+			$am = $rxAnchorAttr.Match($h)
+			if ($am.Success) {
+				$a = $am.Value
+				$a = $a -creplace '\A[{]#', ''
+				$a = $a -creplace '[}]\z', ''
+				[void]$has.Add($a)
+				$h = $h.Substring(0, $am.Index)
+				$h = $h.TrimEnd($script:SPACE_TAB)
+			}
+			[void]$has.Add((Get-UsedInSlug $h))
+		}
+		return $has
+	}
+
+	# The record stream as this mode needs it: the file list in RECORDS order,
+	# each file's `id` field, and each file's `used_in` block-list items in
+	# order. Ports the $1=="N"/"S"/"L" branches at bin/vault-lint.sh:1774-1776.
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$idByFile = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$usedInByFile = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+
+	foreach ($rec in $script:RECORDS) {
+		$f = $rec.Split([char]9)
+		if ($f.Length -lt 2) { continue }
+		if ($f[0] -ceq 'N') { [void]$files.Add($f[1]); continue }
+		if ($f[0] -ceq 'S') {
+			if ($f.Length -ge 4 -and $f[2] -ceq 'id') { $idByFile[$f[1]] = $f[3] }
+			continue
+		}
+		if ($f[0] -ceq 'L') {
+			if ($f.Length -ge 4 -and $f[2] -ceq 'used_in') {
+				if (-not $usedInByFile.ContainsKey($f[1])) { $usedInByFile[$f[1]] = New-Object 'System.Collections.Generic.List[string]' }
+				[void]$usedInByFile[$f[1]].Add($f[3])
+			}
+			continue
+		}
+	}
+
+	# THE BOUNDARY IS THE POINT (bin/vault-lint.sh:1712): this asserts a
+	# `used_in` target RESOLVES - the document exists and the anchor names a
+	# real heading - and never that the section still carries the claim.
+	$scannedDocs = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.HashSet[string]]'
+
+	foreach ($f in $files) {
+		if (-not $usedInByFile.ContainsKey($f)) { continue }
+		$id = ''
+		if ($idByFile.ContainsKey($f)) { $id = $idByFile[$f] }
+
+		foreach ($entry in $usedInByFile[$f]) {
+			# The split - document, #anchor, and the leading ./ and trailing /
+			# stripped off - is duplicated in --supersession-sweep and
+			# --binding-driver (bin/vault-lint.sh:1908-1913 says so). Change
+			# one, change all three.
+			$p = $entry.IndexOf('#')
+			if ($p -ge 0) { $doc = $entry.Substring(0, $p); $anchor = $entry.Substring($p + 1) }
+			else { $doc = $entry; $anchor = '' }
+			$doc = $doc.Trim($script:SPACE_TAB)
+			$doc = $doc -creplace '\A\./', ''
+			$doc = $doc -creplace '/+\z', ''
+
+			if ($doc.Length -eq 0) {
+				[void]$script:FAILURES.Add($f + "`t" + 'used-in-missing-file' + "`t" + $id + "`t" + '`used_in` names `' + $entry + '`, which is an anchor with no document in front of it. A bare fragment resolves against nothing, so the note reads as cited while naming no artifact at all - and when its stale_after fires there is no document to go and re-check')
+				continue
+			}
+			if (-not $script:PATHIDX.Contains($doc)) {
+				[void]$script:FAILURES.Add($f + "`t" + 'used-in-missing-file' + "`t" + $id + "`t" + '`used_in` names `' + $entry + '` and nothing exists at ' + $doc + ' under the vault root. Either the document was renamed after the claim was cited into it, or used_in was back-filled onto a note nothing cites - either way the blast radius points at a document no reader can open, so the re-check its stale_after fires has nowhere to go')
+				continue
+			}
+			if ($anchor.Length -eq 0) { continue }
+			if (-not $scannedDocs.ContainsKey($doc)) { $scannedDocs[$doc] = Get-UsedInHeadings $doc }
+			if (-not $scannedDocs[$doc].Contains($anchor)) {
+				[void]$script:FAILURES.Add($f + "`t" + 'used-in-dead-anchor' + "`t" + $id + "`t" + '`used_in` names `' + $entry + '` and no heading in ' + $doc + ' carries `{#' + $anchor + '}` or slugs to `' + $anchor + '`. A heading was renamed or cut while the note went on naming it, so the claim reads as cited into a section nobody can find - and a stale_after that fires sends its reader to a document with no such paragraph in it')
+			}
+		}
+	}
+
+	# One argument, deliberately: --used-in's clean genuinely is what it says
+	# (bin/vault-lint.sh:1646), so it keeps Render-Failures' default OkLine
+	# rather than supplying its own.
+	$status = Render-Failures 'vault-lint used-in'
+	exit $status
 }
 
 # ----------------------------------------------------------------------------
