@@ -1,0 +1,6 @@
+Not ported to bin/vault-lint.ps1 yet, so scripts/parity/parity.mjs excuses `binding-driver` instead of
+comparing it. Delete this file in the slice that ports the mode - the gate then compares it
+over every fixture and fails if the two implementations disagree. An empty directory here is
+the definition of done, which is why the explanation lives in parity.mjs and not in a README
+beside these markers: a file that can never be deleted would keep the directory non-empty
+forever.
