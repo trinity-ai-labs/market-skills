@@ -9,10 +9,20 @@ two documents look consistent because neither references the other. They aren't 
 is a set of claims about when the model's inputs change, and if it never says which ones, the
 model's curve is decoration.
 
-## Rule 1 — every roadmap item names the assumption it moves
+## Rule 1 — every roadmap item names the assumption it moves, and the note is what names it
 
 An item that moves no assumption is not a roadmap item. It's maintenance, and it belongs in a
 maintenance line, not in a plan a reader is asked to believe.
+
+**Every item in this table is a `milestone` note, and `moves` is where the middle column is
+recorded.** The table is what a reader sees; the note is what anything can check. That split is
+the whole of the mechanism: `moves` is a block list of note IDs, so an item naming an assumption
+the vault does not carry is an ordinary `dangling-edge` failure, and an item with no `moves` at
+all is a `required-field` failure whose message says what the absence costs. The schema is
+[vault.md](vault.md#the-milestone-note-carries-a-position-a-cost-and-the-assumption-it-moves).
+**The failure this closes:** this rule was prose for as long as it existed and nothing read it,
+so an item could name an assumption that was never written, or name none, and the plan shipped
+looking exactly like one whose every row resolved.
 
 | Item | Assumption moved | Direction & size | Confidence |
 |---|---|---|---|
@@ -107,6 +117,15 @@ value-ranking will serialise them and lose the difference.
 Practical form: start the long-lead external dependency **on its original calendar date,
 regardless of its rank**, and fill the wait with whatever is gated on a resource you control.
 
+**The label is the `resource` field on the milestone note, and it is what makes this rule the
+only one here a tool can settle** — two items declaring the same `resource` at the same
+`sequence` are a `false-independence` failure, and two declaring different resources at the same
+`sequence` pass, which is the worked example above exactly. The field and what its absence costs
+are in
+[vault.md](vault.md#the-milestone-note-carries-a-position-a-cost-and-the-assumption-it-moves).
+**The failure this closes:** a *false* independence claim is the one this rule already warned
+about and nothing could see, because the plan it produces reads as though both items land.
+
 ## Rule 5 — a cheap item that moves an assumption beats an expensive one that doesn't
 
 Rank by *value per unit of the constrained resource*, not by value. A one-line constant change
@@ -122,6 +141,13 @@ One sentence naming the binding constraint across the whole roadmap — founder 
 a hire, an external clock. Every downstream milestone claim inherits it. A roadmap that doesn't
 name its constraint reads as though everything can happen at once, which no reader believes and
 which destroys the credibility of the items that *are* real.
+
+**Write the sentence from the notes rather than from memory: the binding constraint is whichever
+`resource` value the most items declare, and it is a count, not a judgement.** A roadmap whose
+`resource` labels say `founder-hours` on six of eight items is gated on founder hours whatever
+the plan's prose says, and the two disagreeing is worth noticing before a reader does it for you.
+`research/timeline.md` carries the same set per item, so the sentence and the artifact under it
+can be read against each other in one pass.
 
 ## Rule 7 — for an exit target, an item may move a multiple input rather than a model assumption
 
@@ -155,6 +181,14 @@ reached by it. This is the one place sequencing-is-projection has a wrong answer
 the order maximising 12-month cumulative can be the order that arrives at the sale month
 decelerating, and Rule 3's permutation table will rank it first unless its column is measured at
 the sale month rather than at a fixed twelve.
+
+## What lands in the vault
+
+One `milestone` note per roadmap item, before the table is written. The table is a rendering of
+that set — the item, its `moves` target, its `resource` and its `sequence` — so writing the notes
+first is what stops the two from being two hand-maintained lists that drift. The generated
+`research/timeline.md` is the other rendering: state at M0, the sequence with what each item
+unlocks, and the chains a proposal has to walk to reach the month it would land in.
 
 ## What lands in the plan
 

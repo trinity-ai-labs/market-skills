@@ -89,7 +89,7 @@ and is never restated here.
     success line said `clean` over a corpus with dozens of dead anchors. That line now names what
     it checked and what it did not, and the gate carries one exit status for all three.
     `--used-in` stays a separate mode *inside* the gate rather than folding into `check`, because
-    it reads documents outside the six note directories: the default run never opens a citation
+    it reads documents outside the note directories: the default run never opens a citation
     target, so a plan clears the bare gate while carrying a citation to a document that was
     renamed or a section that was cut, and the next thing that happens is a rendered PDF
     asserting it to the one reader with no way to check. The sweep is the report half and fails
@@ -119,14 +119,18 @@ nearest-reachable solve and the negotiation script are in
     decision of theirs can move.
 
 17. **The vault is a git repo (Phase 0): commit at every meaningful write, regenerate the vault's
-    `README.md` in the commit that changes a fact it states, and where a remote exists — the
+    `README.md` and `research/timeline.md` in the commit that changes a fact either one states,
+    and where a remote exists — the
     Phase 5 consent gate — push every commit.** Phase boundaries are too coarse a unit of loss for
     a phase that writes dozens of files: a crash mid-phase should cost one file, not a day of
-    research. They are the same wrong unit for the generated README, which states the current
-    target and its verdict status while both move *inside* Phase 3 — so pinned to the boundary it
+    research. They are the same wrong unit for both generated files, and for the same reason. The
+    README states the current target and its verdict status while both move *inside* Phase 3; the
+    timeline states what is true at a given month while the milestone set and its order move
+    inside that same phase — so pinned to the boundary either one
     spends most of a phase asserting what the ledger beneath it has already superseded, and it
     reads as current because its last line says it is generated rather than hand-edited. The
-    fields whose change triggers a regeneration are named in the output contract below, so the
+    fields whose change triggers a regeneration are named per file in the output contract below —
+    four for the README, four for the timeline — so the
     rule is decidable at commit time without re-reading the file. A remote is created only on the
     founder's explicit answer to both destination and visibility, and past that an unpushed commit
     is worse than no remote — it reads as a backup, so the founder believes the corpus is in two
@@ -233,10 +237,11 @@ carries `.vault/config.json`, and everything else lives inside it:
 ~/Documents/go-to-market/<product-slug>/  # ← this directory is the vault
   .vault/config.json        # schemaVersion — a directory without it is not a vault
   _vocab.yml                # controlled subjects, seeded from references/vocabulary.yml
-  sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note, <ID>.md
+  sources/ facts/ claims/ assumptions/ questions/ decisions/ milestones/  # one note, <ID>.md
   research/                 # ALL prose, untouched by the vault — market-analysis dimensions,
     product-dossier.md      #   profiles/, plus these two written here in Phase 0 / Phase 1
     founder-brief.md        #   the grill's numbered [F#] facts — the plan cites these
+    timeline.md             # GENERATED from milestones/, never hand-edited — see below
   sources.md                # the [S#] index (market-analysis)
   one-pager.md              # the door-opener — always produced first, every track
   business-plan.md          # the main artifact — SHAPE DEPENDS ON TRACK (see below)
@@ -344,10 +349,12 @@ no-op, but a re-scaffold that rewrites its files is not.
 drafted section. The phase-boundary commit keeps its own job on top of those — it is where
 `.gitignore` is regenerated, and it is one of the points where `README.md` is.
 
-Two files are **generated** at scaffold, and their cadences part after that, because only one of
-them tracks what the corpus asserts: **`.gitignore` is regenerated at every phase boundary and
-committed there; `README.md` is regenerated in the same commit as any write that changes a fact it
-states** (the fields are named below). Neither is hand-edited.
+Three files are **generated**, never hand-edited, and their cadences differ because they track
+different things: **`.gitignore` is regenerated at every phase boundary and committed there;
+`README.md` is regenerated in the same commit as any write that changes a fact it states; and
+`research/timeline.md` is regenerated in the same commit as any write that changes the milestone
+set or its order** (both field lists are named below). The first two exist from scaffold; the
+timeline appears with the first milestone note, in Phase 3.
 
 - **`.gitignore`** — editor and OS state only: `.DS_Store`, and an editor's per-window workspace
   file (Obsidian rewrites `.obsidian/workspace.json` on every open, so unignored it makes each
@@ -357,7 +364,7 @@ states** (the fields are named below). Neither is hand-edited.
   shared vault exists to share, and a repo whose deliverables are ignored hands a recipient the
   working notes and none of the output.
 - **`README.md`** at the vault root — what the product is; what this corpus is and which skill
-  produced it; the note-type map (the six types and what each asserts); where to start reading
+  produced it; the note-type map (the seven types and what each asserts); where to start reading
   (`one-pager.md`, then `business-plan.md`); the current target and its verdict status; which
   phase the corpus is in; and the `vault-lint.sh` invocation for checking the corpus. Its last
   line states that it is generated and regenerated rather than hand-edited. Without it a shared
@@ -380,6 +387,26 @@ states** (the fields are named below). Neither is hand-edited.
   one of the first two fields, so under the old cadence the file spent most of a phase stating a
   settled-looking target the ledger underneath it had already superseded, with nothing marking the
   disagreement. A stale README on a shared repo is worse than none, because it reads as current.
+- **`research/timeline.md`** — the artifact that holds what is true at a given month, generated
+  from `milestones/` and carrying three sections: **state at M0** (each item shipped or absent,
+  and what each absence costs), **the sequence** with what each item unlocks and the resource it
+  consumes, and **chains** — walking a proposal to the month it would land, with its prerequisites
+  counted. It is a *view* over the notes, not an eighth hand-maintained document: a file that
+  mirrors the plan's roadmap table drifts from it, and nothing in the corpus can tell.
+
+  **The failure it closes:** nothing else in this contract holds state over time, so a proposal
+  gets judged against the corpus's snapshot of today rather than against the state at the month it
+  would land. That is wrong in both directions — it kills a proposal over a gap that is a dated
+  roadmap item, and it credits a capability whose prerequisite has not shipped. Both read as
+  rigour, which is why neither gets caught.
+
+  **Four writes regenerate it, named for the same reason the README's four are:** a milestone
+  written or retired, a `sequence` change, a `depends_on` or `resource` change, and an M0 state
+  change (an item shipping, or a shipped one being pulled). Anything else — a `title` reworded, a
+  `date_stated` corrected — leaves it alone. The trigger has to be decidable from the write
+  itself, because a rule that required re-reading the generated file before every commit is one
+  that gets skipped, and a timeline that lags the ledger is worse than none: it reads as the
+  answer to *what is true in month N*, which is exactly the question nobody re-derives.
 
 Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
 dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet —
@@ -766,6 +793,13 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   concurrently, which a naive value-ranking will serialise and lose. Load
   [references/roadmap-sequencing.md](references/roadmap-sequencing.md) and follow it whenever
   the plan has a roadmap.
+  **Write the `milestone` notes before the roadmap table, not after.** One note per item, each
+  carrying its `sequence`, the `resource` it consumes, and the `moves` edge naming the note it
+  changes ([references/vault.md](references/vault.md#the-milestone-note-carries-a-position-a-cost-and-the-assumption-it-moves)).
+  The table and `research/timeline.md` are both renderings of that set. Written the other way
+  round they are two hand-maintained lists, and the lint has nothing to read: "every item names
+  the assumption it moves" and "two items on one resource are not concurrent" are exactly the two
+  rules that were prose nobody verified until the notes existed to carry them.
 - **The plan ships a growth engine, not a marketing wishlist.** The GTM section's execution
   half is the mostly-automated weekly machine from
   [references/growth-engine.md](references/growth-engine.md) — the three per-product skills
@@ -1091,7 +1125,12 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - A plan whose roadmap improves the product states what that does to retention, or states that it
   does nothing to it and why. Silence is read as no effect, which is a claim nobody made — and it
   is exactly the claim a category-floor churn row asserts by construction.
-- Every roadmap item names the assumption it moves.
+- Every roadmap item names the assumption it moves, and it names it in a `milestone` note rather
+  than in the table alone — so the naming is a `moves` edge the lint resolves, not a sentence.
+- The roadmap's order survives its own two checks: no item sequences before a prerequisite it
+  declares, and no two items sharing a constrained `resource` are asserted concurrent. Both are
+  read off the notes by `vault-lint.sh`, and a plan that has a roadmap and no `milestones/`
+  directory has neither check run over it — which prints the same green as one that passed them.
 - The financial model's assumptions table is complete — no number appears in a projection that
   isn't a named assumption row.
 - A ranged target's readout is the set of corner verdicts, with the binding driver and its `kind`

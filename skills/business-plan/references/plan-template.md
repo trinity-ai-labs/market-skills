@@ -211,7 +211,15 @@ a checkpoint falls in month N because the trajectory says a named driver has to 
 value by then (the failure this prevents is strategy-sim.md §5's). Alongside: validation gates
 from the plan's validation section, the growth-engine build-out items (which automation skill
 lands in which month), and the funding/path gate each milestone feeds. This is the section the
-operator red-team lens attacks.>
+operator red-team lens attacks.
+
+Every item in this section is a `milestone` note in the vault, written before the table is —
+the table renders `sequence`, `moves` and `resource` off the notes, so the two cannot drift.
+Writing the table first leaves the roadmap as prose nothing can check, which is what let an
+item name an assumption that was never written. The generated `research/timeline.md` is the
+other rendering of the same set, and it is what a later proposal is judged against: it holds
+what is shipped and what is absent at a given month, so a gap that is a dated item on this
+roadmap does not read as a gap in the product.>
 
 ## Financial summary
 <the 5 numbers from financial-model.md: burn, runway, base-case revenue at horizon,
