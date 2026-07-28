@@ -304,6 +304,7 @@ url_canonical: "example.com/reports/2026/pricing"
 pulled: "2026-07-26"
 quote: |
   The load-bearing passage, verbatim, exactly as printed.
+counterparty: "Example Platform Ltd"   # optional — omit unless a party is on the other side
 ---
 ```
 
@@ -321,7 +322,7 @@ gaps:
 ---
 ```
 
-Five rules bind both, and every one of them fails silently rather than loudly:
+Six rules bind both, and every one of them fails silently rather than loudly:
 
 - **Block lists, never `[a, b]`.** Obsidian rewrites an inline flow list into block form when it
   saves, so a vault authored inline loses those values the first time somebody opens a note, and
@@ -338,6 +339,20 @@ Five rules bind both, and every one of them fails silently rather than loudly:
   slash, keep every query parameter that selects content. Two researchers citing one page from
   a newsletter link and a search result otherwise produce two notes, and a claim resting on both
   looks doubly sourced when it rests on one document.
+- **`counterparty` names the party on the other side of a deal or a datum, and is omitted where
+  there is none.** The platform whose take rate this is, the distributor whose terms these are, the
+  one customer both quotes came from — a published report has no counterparty and omits the key
+  rather than guessing one. This is the one field `url_canonical` structurally cannot reach: two
+  deals with the same counterparty, written up on two separate passes, are two source notes with
+  two canonical URLs, and deduplication cannot touch them because they genuinely are two documents
+  — distinct pages, distinct pulls, neither a duplicate. The only thing they share is the party, and
+  nothing but this field records it. Unwritten, the count of sources under a finding says two and
+  the concentration says nothing: one relationship's terms stand in for a market's, at the same
+  confidence letter as two independent ones, and a count of two reads as the opposite of what is
+  there. A consumer that needs the value falls back to `publisher` and then to the `url_canonical`
+  host, which is why an unwritten field degrades quietly instead of erroring — the chain, and which
+  way it errs, are in
+  [the vault schema](../business-plan/references/vault.md#the-source-note-keeps-the-quote-that-outlives-the-url).
 - **One assertion per note.** `status` and `confidence` are per-note fields, so a note asserting
   two things has no correct move when half of it is disproved.
 
