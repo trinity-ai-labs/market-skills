@@ -1,0 +1,13 @@
+# No required subject, so `check` has nothing to report over a corpus of
+# well-formed notes. That silence is the point of this fixture: it is the vault
+# where the note-level checks pass, every citation resolves, and the sweep is
+# the only part of the gate that fails.
+
+terms:
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver behind
+      it.
+    aliases:
+      - growth-rate
+    required: false

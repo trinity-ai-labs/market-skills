@@ -28,12 +28,16 @@
 #      both, deduped by section.
 #   5. Both JSON outputs are well-formed enough to slice by field.
 #   6. The two refusal paths refuse, and exit 2.
-#   7. --release-gate runs all three parts and carries the worst verdict any of
+#   7. --release-gate runs every part and carries the worst verdict any of
 #      them returned, including when only one part fails.
 #   8. A schemaVersion 2 vault is read, and a version from the future is not.
 #   9. An explicit `{#anchor}` attribute resolves, the slug of the heading text
 #      it was stripped from still resolves too, and the attribute carries the
 #      citation across a rewording of that text.
+#  10. The sweep carries a verdict at schemaVersion 2 - it fails an absent or
+#      stale `reconciled:` - and the same notes at 1 do not fail.
+#  11. --red-team fails a rostered lens with no rows and a row with no roster
+#      entry, and fails a missing roster at schemaVersion 2 only.
 
 set -u
 
@@ -58,7 +62,7 @@ dependency-after-dependent false-independence sequence-not-orderable"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team graph"
 
 PASS=0
 FAIL=0
@@ -106,7 +110,7 @@ case "$CLEAN_OUT" in
 *) no "the success line does not name what it checked (got: $CLEAN_OUT)" ;;
 esac
 case "$CLEAN_OUT" in
-*--release-gate*) ok "the success line names the mode that asks all three" ;;
+*--release-gate*) ok "the success line names the mode that asks all of them" ;;
 *) no "the success line does not point at --release-gate (got: $CLEAN_OUT)" ;;
 esac
 
@@ -150,9 +154,16 @@ VJSON=$("$LINT" --vault "$HERE/violations" --json 2>/dev/null)
 # separate modes and a check name that moved between them should turn something
 # red. The per-file `Violates:` contract in 2b is the opposite case: it is a
 # promise made by one note about one check, and which mode reports it is not the
-# note's business, so that assertion reads both documents.
+# note's business, so that assertion reads every mode that reports one.
 UJSON=$("$LINT" --used-in --vault "$HERE/violations" --json 2>/dev/null)
 UI_VIOL_STATUS=$?
+
+# The third document the per-file machinery reads. --red-team reports against
+# red-team.md rather than against a note, and that document carries its own
+# `Violates:` line exactly as a violating note does - the promise is made by the
+# file about a check, and which mode reports it is not the file's business.
+RTJSON=$("$LINT" --red-team --vault "$HERE/violations" --json 2>/dev/null)
+RT_VIOL_STATUS=$?
 
 FIRED=$(printf '%s\n' "$VJSON" |
 	awk -F'"check": "' 'NF > 1 { split($2, a, "\""); print a[1] }' |
@@ -189,7 +200,7 @@ done <"$PAIRS_FILE.got"
 # resolution order that has stopped resolving. Every violating note declares its
 # own checks on a `Violates:` line, and each is asserted against that file.
 printf '\nper-file expectations\n'
-PAIRS=$(printf '%s\n%s\n' "$VJSON" "$UJSON" |
+PAIRS=$(printf '%s\n%s\n%s\n' "$VJSON" "$UJSON" "$RTJSON" |
 	awk -F'"file": "' 'NF > 1 {
 		split($2, a, "\"")
 		split($0, b, "\"check\": \"")
@@ -447,6 +458,174 @@ case "$SN" in
 *) no "an empty worklist is not a sliceable object (got: $SN)" ;;
 esac
 
+# --- 2f. two spellings of one section are one row ----------------------------
+# The dedup assertion above cannot catch this one. A heading is addressable by
+# an explicit {#anchor} attribute AND by the slug of its text - both, so a vault
+# citing the slug keeps working once a template declares anchors - so two
+# used_in entries can name the same physical section under different strings.
+# Grouping on the raw anchor emits two rows for one job, and "every target
+# appears exactly once" stays green throughout, because under the bug the two
+# rows carry genuinely different target strings. What has teeth is the count.
+#
+# The --used-in call is not decoration. It asserts that the two spellings are
+# two live addresses of one heading rather than two strings this file made up,
+# and a fixture where either of them were dead would prove nothing at all about
+# collapsing them.
+printf '\nanchor aliases\n'
+
+AA_UI=$(run_status "$HERE/anchor-alias" --used-in)
+[ "$AA_UI" = "0" ] && ok "both spellings resolve - the explicit anchor and the slug beside it" ||
+	no "one of the two spellings does not resolve, so the dedup below asserts nothing (got $AA_UI)"
+
+AA=$("$LINT" --supersession-sweep --vault "$HERE/anchor-alias" --json 2>/dev/null)
+case "$AA" in
+*'"worklist_count": 1'*) ok "one section reached by two spellings is one row" ;;
+*) no "two spellings of one section made two rows (got: $AA)" ;;
+esac
+case "$AA" in
+*'"superseded_count": 2'*) ok "both superseded notes are still counted" ;;
+*) no "collapsing the rows lost a superseded note (got: $AA)" ;;
+esac
+
+# And that the single row genuinely names BOTH notes. A collapse that kept one
+# row and dropped a note would pass the count above while hiding half the job -
+# which is worse than the double-count it replaced, because the reader cannot
+# see what is missing.
+case "$AA" in
+*CLAIM-AA1CC003*CLAIM-AA1EE005*) ok "the collapsed row names both superseded notes" ;;
+*) no "the collapsed row lost one of its two notes (got: $AA)" ;;
+esac
+
+# --- 2g. the sweep verdict, and the version it applies at --------------------
+# The worklist and the verdict are separate questions and both halves need
+# asserting, in both directions. A mode that failed on any supersession would
+# pass every assertion about the unreconciled/ vault below and would have turned
+# the sweep into something its caller learns to ignore - which is the whole
+# reason it stayed a report for two releases. So the passing side is asserted
+# first, and it is asserted over a vault that HAS a supersession: schema-2/
+# carries a reconciled pair, so exiting 0 there means reconciled rather than
+# empty.
+printf '\nsupersession reconciliation\n'
+
+SWEEP_S2=$("$LINT" --supersession-sweep --vault "$HERE/schema-2" 2>&1)
+SWEEP_S2_STATUS=$?
+[ "$SWEEP_S2_STATUS" = "0" ] && ok "a reconciled supersession at schemaVersion 2 exits 0" ||
+	no "a reconciled supersession should exit 0 (got $SWEEP_S2_STATUS)"
+case "$SWEEP_S2" in
+*'1 section to re-read'*) ok "a reconciled vault still prints its worklist and its count" ;;
+*) no "a reconciled vault dropped its worklist or its count (got: $SWEEP_S2)" ;;
+esac
+
+# reconciled: on the same day as created passes. The rule is that the read
+# cannot predate the supersession, not that it has to happen later - a rule
+# demanding a later date would fail every reconciliation done in one sitting,
+# which is most of them.
+case "$SWEEP_S2" in
+*'nothing recording that the worklist was read'*'(none)'*) ok "a same-day reconciled: is not reported as stale" ;;
+*) no "a same-day reconciled: was reported (got: $SWEEP_S2)" ;;
+esac
+
+UR=$("$LINT" --supersession-sweep --vault "$HERE/unreconciled" 2>&1)
+UR_STATUS=$?
+[ "$UR_STATUS" = "1" ] && ok "an unreconciled supersession at schemaVersion 2 exits 1" ||
+	no "an unreconciled supersession should exit 1 (got $UR_STATUS)"
+case "$UR" in
+*CLAIM-UR1DD004*) ok "the absent reconciled: is reported, by note" ;;
+*) no "the note with no reconciled: was not reported (got: $UR)" ;;
+esac
+case "$UR" in
+*'predates the `created: 2026-07-12`'*) ok "a reconciled: earlier than created is reported" ;;
+*) no "a stale reconciled: was not reported (got: $UR)" ;;
+esac
+
+# The worklist survives the verdict. A mode that started exiting 1 and stopped
+# printing the rows would pass every status assertion above while destroying the
+# product - the rows are what the read is performed against.
+case "$UR" in
+*'business-plan.md#why-now'*'business-plan.md#risks'*) ok "a failing sweep still prints its worklist" ;;
+*) no "a failing sweep dropped its worklist (got: $UR)" ;;
+esac
+
+URJ=$("$LINT" --supersession-sweep --vault "$HERE/unreconciled" --json 2>/dev/null)
+case "$URJ" in
+'{'*'"ok": false'*'"unreconciled_count": 2'*'}'*) ok "the sweep carries its verdict in --json as well as in its exit status" ;;
+*) no "the sweep --json does not carry ok/unreconciled_count (got: $URJ)" ;;
+esac
+
+# The same notes at schemaVersion 1, which is the assertion that the upgrade
+# path is not a wall. Copied rather than kept as a second fixture: a hand-written
+# twin asserts this until the day one of the two is edited.
+AT_1="$PAIRS_FILE.at-1"
+rm -rf "$AT_1"
+cp -R "$HERE/unreconciled" "$AT_1"
+printf '{\n  "schemaVersion": 1,\n  "created": "2026-07-27"\n}\n' >"$AT_1/.vault/config.json"
+
+AT1_STATUS=$(run_status "$AT_1" --supersession-sweep)
+[ "$AT1_STATUS" = "0" ] && ok "the same notes at schemaVersion 1 do not fail the sweep" ||
+	no "schemaVersion 1 must not owe reconciled: (got $AT1_STATUS)"
+
+AT1_OUT=$("$LINT" --supersession-sweep --vault "$AT_1" 2>&1)
+case "$AT1_OUT" in
+*'schemaVersion 2 rule and this vault is at 1'*) ok "at 1 the sweep says the rule was not applied, rather than reporting none" ;;
+*) no "at 1 the sweep reported an empty verdict instead of saying it did not ask (got: $AT1_OUT)" ;;
+esac
+
+# --- 2h. the lens roster, both directions and both versions ------------------
+# Which note each --red-team failure lands on is asserted by the per-file
+# machinery above, which now reads this mode's JSON too: violations/red-team.md
+# declares both checks on its own `Violates:` line and has to fire both. Written
+# out here is what that machinery cannot see - the exit codes, the clean side,
+# and the version gate on the roster itself.
+printf '\nlens roster\n'
+
+RT_CLEAN=$("$LINT" --red-team --vault "$HERE/clean" 2>&1)
+RT_CLEAN_STATUS=$?
+[ "$RT_CLEAN_STATUS" = "0" ] && ok "--red-team exits 0 when every dispatched lens wrote rows" ||
+	no "--red-team should exit 0 on the clean vault (got $RT_CLEAN_STATUS)"
+
+# The clean side is where the two easy over-firings would show. `R1-O3` writes
+# its lens in lower case and the roster wrote it capitalised, and the fenced
+# template names a lens nothing dispatched - either read literally turns the
+# clean vault red, and a mode that fires on capitalisation is one somebody
+# switches off.
+case "$RT_CLEAN" in
+*failure*) no "--red-team fired on the clean vault - a case difference or a fenced template row was read as real" ;;
+*) ok "a lens case difference and a fenced template row are both ignored" ;;
+esac
+
+[ "$RT_VIOL_STATUS" = "1" ] && ok "--red-team exits 1 on the violating vault" ||
+	no "--red-team exits 1 on the violating vault (got $RT_VIOL_STATUS)"
+case "$RTJSON" in
+*'"failure_count": 2'*) ok "--red-team reports exactly the two planted roster failures" ;;
+*) no "--red-team failure_count is not 2 - a matching lens was reported, or a gap was not" ;;
+esac
+
+# A vault that never dispatched a panel is not a failure, at either version.
+# Failing it would fail every corpus before Phase 4 runs, which is the shape of
+# check that gets switched off rather than satisfied.
+RT_NONE=$("$LINT" --red-team --vault "$HERE/dead-citation" 2>&1)
+RT_NONE_STATUS=$?
+[ "$RT_NONE_STATUS" = "0" ] && ok "a vault with no red-team.md passes --red-team" ||
+	no "a vault with no red-team.md should pass (got $RT_NONE_STATUS)"
+case "$RT_NONE" in
+*"no red-team.md"*) ok "the absent document is named rather than reported clean" ;;
+*) no "--red-team did not say the document was absent (got: $RT_NONE)" ;;
+esac
+
+# The missing roster is the version-gated half, and both sides need asserting:
+# firing at 2 is the check, and staying silent at 1 is what keeps a corpus with
+# a panel in it from going red the day the skill updates. violations/ is at 1
+# and its roster is present, so the silent side is asserted where the roster is
+# absent - the same document, one version down.
+RT_GAP=$(run_status "$HERE/panel-gap" --red-team)
+[ "$RT_GAP" = "1" ] && ok "a red-team.md with no roster fails at schemaVersion 2" ||
+	no "a missing roster should fail at schemaVersion 2 (got $RT_GAP)"
+
+cp "$HERE/panel-gap/red-team.md" "$AT_1/red-team.md"
+RT_AT1=$(run_status "$AT_1" --red-team)
+[ "$RT_AT1" = "0" ] && ok "the same document with no roster passes at schemaVersion 1" ||
+	no "a missing roster must not fail at schemaVersion 1 (got $RT_AT1)"
+
 # --- 3. JSON is well-formed enough to slice ---------------------------------
 printf '\njson\n'
 for v in clean violations; do
@@ -513,7 +692,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -559,6 +738,25 @@ RG_JSON=$("$LINT" --release-gate --json --vault "$HERE/clean" 2>&1 >/dev/null ||
 case "$RG_JSON" in
 *"not a JSON document"*) ok "--release-gate refuses --json by name" ;;
 *) no "--release-gate did not refuse --json clearly (got: $RG_JSON)" ;;
+esac
+
+# One vault per newly-failing part, for the reason dead-citation exists: a gate
+# whose verdict came from its first part would report both of these clean, and
+# neither is visible over clean/ or violations/, where every part agrees.
+RG_UNREC=$(run_status "$HERE/unreconciled" --release-gate)
+[ "$RG_UNREC" = "1" ] && ok "--release-gate fails when only the sweep fails" ||
+	no "--release-gate should fail when only the sweep fails (got $RG_UNREC)"
+
+RG_PANEL=$(run_status "$HERE/panel-gap" --release-gate)
+[ "$RG_PANEL" = "1" ] && ok "--release-gate fails when only --red-team fails" ||
+	no "--release-gate should fail when only --red-team fails (got $RG_PANEL)"
+
+# And that each names the part that failed rather than only carrying its status,
+# since the gate prints a list of the parts that did not pass.
+RG_PANEL_ERR=$("$LINT" --release-gate --vault "$HERE/panel-gap" 2>&1 >/dev/null || true)
+case "$RG_PANEL_ERR" in
+*"did not pass"*--red-team*) ok "the gate names --red-team as the part that failed" ;;
+*) no "the gate did not name the failing part (got: $RG_PANEL_ERR)" ;;
 esac
 
 # --- 6. the supported schemaVersion set ------------------------------------

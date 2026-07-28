@@ -359,12 +359,13 @@ the user's documents and is frequently not under version control. Without an aut
 there is no way to tell a `current` note written before a source was amended from one written
 after — and that distinction is exactly what you need when deciding which notes to re-check.
 
-Two more fields are available on **any** type, used together:
+Three more fields are available on **any** type, used together:
 
 ```yaml
 supersedes:                          # optional — block list
   - CLAIM-QQ19PL30
 supersedes_reason: "The vendor republished the list; the earlier figure was a promotion."   # required with supersedes
+reconciled: "2026-07-10"             # required with supersedes at schemaVersion 2 — quoted ISO date
 ```
 
 **`supersedes` without `supersedes_reason` is rejected.** A replacement with no reason cannot
@@ -372,21 +373,44 @@ be evaluated later — the only question anyone asks about a superseded note is 
 person who knew is gone. And writing `supersedes` **without flipping the target's `status` to
 `superseded`** leaves two `current` notes asserting different values on the same subject,
 which is indistinguishable from an unresolved contradiction to both the checker and a reader.
-Supersession is always two edits.
+Supersession is always two edits, and `reconciled:` below is what closes it out.
 
-**Both edits land in the vault, and the documents the old note reached hear nothing.** That is
-the third cost of a supersession and the one no field on either note records: a superseded claim
-that was cited into three plan sections leaves those three sections asserting the old value, with
-`status: superseded` sitting in a file nobody rereads. `vault-lint.sh --supersession-sweep` is
-what says so out loud — it walks every superseded note, unions the `used_in` targets behind them,
-and prints one row per document section with the notes that reached it, their replacements and
-each `supersedes_reason`. One row per *section* rather than per note, because the work is
-re-reading the section once however many superseded notes point at it. It is a **report and not a
-verdict: it exits 0 whether or not it finds anything**, so it is safe to run on every pass — a
-supersession with a blast radius is the corpus working, and a mode that failed a healthy vault
-would train you to ignore the exit code the actual checks depend on. The row count it prints
-first is what makes the follow-up read something you can size before starting instead of a
-corpus-wide re-read nobody begins.
+**Both those edits land in the vault, and the documents the old note reached hear nothing.** That
+is the third cost of a supersession: a superseded claim that was cited into three plan sections
+leaves those three sections asserting the old value, with `status: superseded` sitting in a file
+nobody rereads. `vault-lint.sh --supersession-sweep` is what says so out loud — it walks every
+superseded note, unions the `used_in` targets behind them, and prints one row per document
+section with the notes that reached it, their replacements and each `supersedes_reason`. One row
+per *section* rather than per note, because the work is re-reading the section once however many
+superseded notes point at it — and one section named two ways is still one row, since a heading
+is addressable both by an explicit `{#anchor}` and by the slug of its text and two notes can
+reach it under different strings. The row count it prints first is what makes the follow-up read
+something you can size before starting instead of a corpus-wide re-read nobody begins, so a
+worklist that counted that section twice would be one you learn to skip.
+
+**`reconciled:` is what closes the supersession out, and what turns that worklist into something
+somebody is obliged to finish.** It is a quoted ISO date on the superseding note, and it asserts
+exactly one thing: the sections this supersession put in doubt have been read. `--supersession-sweep`
+**fails** when a note carrying `supersedes` has no `reconciled:`, and when its `reconciled:` is
+earlier than that note's own `created` — a date carried over from an earlier pass reads exactly
+like one stamped after the read, and which of the two it is happens to be the only half a check
+can see. Both values are quoted, so the comparison is a plain string comparison and there is no
+date library anywhere near it; that is the payoff the coerce-nothing rule is claimed for, and
+this is where it is collected. Same-day passes: the rule is that the read cannot predate the
+supersession, not that it has to happen later, and most reconciliations are done in one sitting.
+
+**Finding rows is still not a failure.** A vault where every supersession is reconciled prints
+its worklist, prints its count, and exits 0 — a supersession with a blast radius is the corpus
+working, and a mode that failed a healthy vault would train you to ignore the exit code the
+actual checks depend on. What is not healthy is a supersession nothing says was read, and that
+is the only thing the exit status now answers. **The field records that the read was claimed,
+not that it was done well** — a date can be stamped without opening anything. What it removes is
+skipping the read *by default*, which is what a worklist with no obligation attached had been
+shipping.
+
+**The verdict applies at `schemaVersion` 2.** A vault at 1 predates the field, cannot owe it, and
+exits 0 either way; [vault-migration.md](vault-migration.md#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2)
+carries the back-fill, which is read the sections, stamp the dates, then stamp the version.
 
 ### The source note keeps the quote that outlives the URL
 
@@ -548,13 +572,14 @@ section still agrees with the note is a read, not a grep, and `--supersession-sw
 that bounds it: it names the sections a supersession put in doubt, so the read is over that list
 rather than over every citation in the corpus.
 
-**Before a render, all three are one call: `vault-lint.sh --release-gate`.** It runs the bare
-check, then `--used-in`, then the sweep, and exits non-zero unless every part passes. The
-separate modes are still there and are what you reach for mid-engagement — a citation question
-and a supersession question are different questions — but the gate before anything ships is one
-invocation with one verdict, because three invocations made from memory is a set nobody can be
-held to. The bare run's own success line says as much: it reports that the note-level checks
-passed and that the citation targets and the supersession blast radius were **not** opened.
+**Before a render, all of them are one call: `vault-lint.sh --release-gate`.** It runs the bare
+check, `--used-in`, the sweep and `--red-team`, and exits non-zero unless every part passes. The
+separate modes are still there and are what you reach for mid-engagement — a citation question,
+a supersession question and a panel question are different questions — but the gate before
+anything ships is one invocation with one verdict, because a set of invocations made from memory
+is a set nobody can be held to. The bare run's own success line says as much: it reports that the
+note-level checks passed and that the citation targets, the supersession blast radius and the
+panel objection rows were **not** opened.
 
 ### The assumption note is what you would believe with no evidence
 
@@ -921,16 +946,34 @@ coerce-nothing rule does not apply to it — JSON has unambiguous types. **The c
 
 **The tool reads a SET of versions, not one.** `vault-lint.sh` reads both `1` and `2`. A vault at
 1 gets exactly the behaviour it has always had, and a vault at 2 additionally gets the checks
-version 2 added — which are the `milestone` type and the five rules that read it
-(`required-field` on its own fields, `dangling-edge` through `moves` and `depends_on`,
-`dependency-after-dependent`, `false-independence`, and `sequence-not-orderable`). A vault at 1
-has no `milestones/` directory by construction, so it cannot owe any of them; one that has grown
-the directory without moving its version is told so by `type-agreement` rather than having its
-notes read in silence. That set is what makes the version a real extension point rather than a number
+version 2 added, enumerated in the table below. A vault at 1
+has no `milestones/` directory by construction, so it cannot owe any of the milestone rules; one
+that has grown the directory without moving its version is told so by `type-agreement` rather
+than having its notes read in silence. That set is what makes the version a real extension point rather than a number
 nobody may move: a new check that an existing corpus could not possibly satisfy goes in behind a
 version, so upgrading the tool never turns a finished corpus red. A check written to fire
 unconditionally has the opposite property — every vault authored before it fails on the day the
 skill updates, which is how a gate stops being run.
+
+**What version 2 adds**, each behind the version for the same reason — the field it asks for did
+not exist when a version-1 corpus was written:
+
+| rule | mode | what fires |
+|---|---|---|
+| the `milestone` type | `check` | `required-field` on its own fields, and `dangling-edge` through `moves` and `depends_on` |
+| roadmap order | `check` | `dependency-after-dependent`, `false-independence`, and `sequence-not-orderable` |
+| `reconciled:` on a supersession | `--supersession-sweep` | a note carrying `supersedes` with no `reconciled:` date, or one earlier than that note's own `created` |
+| the lens roster | `--red-team` | a `red-team.md` carrying no `## Lenses dispatched` roster |
+
+**This table is the only enumeration of the set** — the paragraph above points at it rather than
+restating it, because a version that adds a rule in one release and a second in the next ends up
+with two lists, one of which is quietly short. A short list of what a version costs is worse than
+no list: it reads as complete.
+
+The last two are checks on a *record of a read* rather than on the read itself, which is the only
+shape a mechanical check over a judgment step can take. The two directions `--red-team` checks
+against an existing roster — a rostered lens with no rows, a row from an unrostered lens — are not
+gated on the version: a roster is a version-2 artifact, so a vault carrying one meant to.
 
 **A tool that finds a `schemaVersion` it does not understand refuses and exits non-zero**,
 printing the version it found and the version it supports. It does not guess, and it does not
