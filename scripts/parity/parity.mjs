@@ -137,6 +137,76 @@ function argvFor(mode, vault) {
 }
 
 // ---------------------------------------------------------------------------
+// the third census - scripts/fixtures/run-fixtures.sh's MODES
+//
+// There are three separate lists of this lint's modes: MODE_TABLE in the shell
+// (authoritative - the argument parser and --release-gate both read it),
+// modeCensus() above (derived from MODE_TABLE, so it cannot itself drift), and
+// MODES in scripts/fixtures/run-fixtures.sh, hand-maintained there because it
+// drives that suite's --help census assertion - the one thing MODE_TABLE cannot
+// absorb, since a mode's usage() paragraph is written by hand at a shared
+// anchor rather than generated from the table (run-fixtures.sh, "every mode has
+// help text"). Nothing checks that third list against the other two: a mode
+// added to MODE_TABLE with no matching edit to MODES does not fail
+// run-fixtures.sh - the --help loop just iterates one fewer mode and the
+// assertion under-tests in silence, which is exactly the "check that stops
+// firing and a check that was deleted look identical from the outside" failure
+// run-fixtures.sh itself is written to prevent, recurring one file over. This
+// is why MODE_TABLE exists as a table in the first place (bin/vault-lint.sh
+// :305-320) - census drift already bit this repo once.
+// ---------------------------------------------------------------------------
+
+const RUN_FIXTURES = join(FIXTURES, 'run-fixtures.sh');
+
+/**
+ * The mode list scripts/fixtures/run-fixtures.sh hand-maintains for its --help
+ * assertion, parsed the same way modeCensus() reads MODE_TABLE - tokens with a
+ * leading `--` stripped - so the two lists compare on equal terms.
+ */
+function runFixturesModeCensus() {
+  const source = readFileSync(join(ROOT, RUN_FIXTURES), 'utf8');
+  const line = /^MODES="([^"]*)"$/m.exec(source);
+  if (!line) throw new Error(`${RUN_FIXTURES}: no MODES= line to read its mode census from`);
+  return line[1]
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => token.replace(/^--/, ''));
+}
+
+/**
+ * Fail loudly when run-fixtures.sh's MODES has drifted from the census
+ * modeCensus() derives from MODE_TABLE - naming the file and what to do about
+ * it, the same voice every other rot guard in this file uses.
+ *
+ * This is a HARNESS error, not a parity finding: the two implementations were
+ * never compared, and a contributor's hand-maintained list going stale is a
+ * different failure than the shell and PowerShell disagreeing, so it exits 2
+ * here rather than joining `problems` (which exits 1). A reader tells the two
+ * apart by the exit code alone.
+ */
+function assertRunFixturesModesMatchCensus(census) {
+  const declared = runFixturesModeCensus();
+  const wantSet = new Set(census);
+  const gotSet = new Set(declared);
+  const missing = census.filter((mode) => !gotSet.has(mode));
+  const extra = declared.filter((mode) => !wantSet.has(mode));
+  if (!missing.length && !extra.length) return;
+
+  const lines = [
+    `parity: ${RUN_FIXTURES}: its MODES list has drifted from the mode census ${SH_LINT}'s MODE_TABLE ` +
+      `declares - the --help census assertion is under-testing in silence.`,
+  ];
+  if (missing.length) lines.push(`  in MODE_TABLE but missing from MODES: ${missing.join(', ')}`);
+  if (extra.length) lines.push(`  in MODES but not a real mode: ${extra.join(', ')}`);
+  lines.push(
+    `Edit MODES in ${RUN_FIXTURES} to match: one token per mode, in MODE_TABLE's order, each with its ` +
+      `\`--\` back on the front except \`check\` and \`graph\`.`,
+  );
+  console.error(lines.join('\n'));
+  process.exit(2);
+}
+
+// ---------------------------------------------------------------------------
 // the fixture vaults
 // ---------------------------------------------------------------------------
 
@@ -401,6 +471,7 @@ function compareMode(mode, vaults, shSide, psSide) {
 
 function main() {
   const modes = modeCensus();
+  assertRunFixturesModesMatchCensus(modes);
   const vaults = fixtureVaults();
 
   // A missing directory is an EMPTY allowlist, not an error: git does not track
