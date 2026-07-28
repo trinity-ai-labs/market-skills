@@ -728,8 +728,10 @@ deals underneath it came from one counterparty.
 
 **The trigger is the `subject` and `schemaVersion` is not — and the two subjects are triggered
 differently.** `target-verdict` is a term this release introduces, so no note in any existing corpus
-carries it at any version: under that subject the five fields are owed **unconditionally**, and a
-note missing them fails. `steady-state-ceiling` predates its 1.3.0 amendment and is `required: true`,
+carries it at any version: under that subject `binding_driver`, `driver_kind`, `evidence_n` and
+`evidence_counterparties` are owed **whatever else the note carries** — a note carrying none of them
+fails, and so does one carrying a partial set — with `conditional_on` owed on top of those four
+exactly when `driver_kind` is `policy` or `policy-within-band`, per the rule above. `steady-state-ceiling` predates its 1.3.0 amendment and is `required: true`,
 so every vault already holds one: there the trigger is **field presence** — a ceiling claim carrying
 none of the five owes none of them, and carrying any one owes the set.
 

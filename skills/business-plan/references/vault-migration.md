@@ -695,7 +695,7 @@ Clean looks like this, and exits 0:
 
 ```
 vault-lint: note-level checks passed - /Users/example/Documents/go-to-market/example-product.
-Not opened: citation targets, supersession blast radius, panel objection rows, roadmap table against the milestone set - --release-gate asks all of them.
+Not opened: citation targets, supersession blast radius, panel objection rows, roadmap table against the milestone set, verdict drivers and the evidence under them - --release-gate asks all of them.
 ```
 
 The line is deliberately narrower than "clean". This run reads note fields and opens no
@@ -782,8 +782,8 @@ vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
 **Before the first render — not here — the first and third of those are part of one call.**
-`vault-lint.sh --release-gate` runs the bare check, `--used-in`, the sweep, `--red-team` and
-`--roadmap-table`
+`vault-lint.sh --release-gate` runs the bare check, `--used-in`, the sweep, `--red-team`,
+`--roadmap-table` and `--binding-driver`
 together and exits
 non-zero unless every part passes, which is what the render gate is held to. It is deliberately
 not the migration's acceptance test: `coverage-gap` and `orphan-source` legitimately survive a
