@@ -83,7 +83,8 @@ and is never restated here.
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
-    bare check, `--used-in`, `--supersession-sweep`, `--red-team` and `--roadmap-table`, and exits
+    bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table` and
+    `--binding-driver`, and exits
     non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
@@ -107,6 +108,9 @@ and is never restated here.
     left alone: it matches each row's item cell against a milestone `title` verbatim, both ways,
     so a row added late with no note behind it and a note the table quietly dropped both surface
     before the render rather than in a reader's question nobody can answer.
+    `--binding-driver` is in the gate for that same reason one section over — the verdict section
+    is hand-edited to the last minute and its note was minted once — and invariant 16 states what
+    it holds.
     **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
     cites it, so the gate's second part would check an empty set there, and running the whole
     gate anyway teaches it as cadence-wide when it belongs to one phase.
@@ -126,7 +130,12 @@ nearest-reachable solve and the negotiation script are in
     carrying the vault's authority into a forecast about a future nobody has run. Reported
     without its driver's kind, a policy-bound "unreachable" stops a founder over a decision they
     could revisit this week, in the same words and at the same confidence as a constraint no
-    decision of theirs can move.
+    decision of theirs can move. **The second clause is checked rather than stated:
+    `vault-lint.sh --binding-driver`**, a part of `--release-gate`, fails a policy-bound verdict
+    whose `conditional_on` string is absent from the plan section its `used_in` names, and fails a
+    `Kind` cell hand-edited away from its note's `driver_kind` in either direction — the cell being
+    otherwise the cheapest way past the first check. The fields it reads are
+    [references/vault.md](references/vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
 
 17. **The vault is a git repo (Phase 0): commit at every meaningful write, regenerate the vault's
     `README.md` and `research/timeline.md` in the commit that changes a fact either one states,
@@ -153,6 +162,21 @@ nearest-reachable solve and the negotiation script are in
     consequence as physics, and a number reported as physics is one nobody argues with. The
     ceiling's half of this is in [references/plan-template.md](references/plan-template.md), the
     verdict's in [references/target.md](references/target.md).
+    **The verdict half now has an enforcement surface and the ceiling half's is partial** — say
+    which, because the two are checked to different depths and treating them as equal is how the
+    weaker one stops being written. Under `subject: target-verdict` the five labelling fields are
+    owed unconditionally, so a note missing any of them fails, and `verdict-unfiled` fails a
+    rendered `{#target-verdict}` section with no note behind it at all. Under
+    `steady-state-ceiling` the same fields are owed only once the note carries one of them: that
+    subject predates them, every existing vault holds a ceiling claim, and a rule firing over all
+    of them would fail every vault authored before this release. So an unlabelled ceiling claim
+    still passes the note-level check, and there the rule stays a discipline until the note is
+    re-filed. **`verdict-unfiled` deliberately has no `{#steady-state}` equivalent**, and the
+    asymmetry is exact rather than an omission: `steady-state-ceiling` is `required: true`, so
+    `coverage-gap` already fails a vault with no ceiling note and there is no unfiled-section hole
+    left to close; `target-verdict` is `required: false`, so nothing else asks for the note and the
+    hole is real. The fields, both triggers and the argument for the split are
+    [references/vault.md](references/vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
 
 19. **Nothing is dispatched to the red team until the plan and the vault have been reconciled.**
     Lint runs at Phase 2's per-dimension checkpoint and again in Phase 5 before rendering;
