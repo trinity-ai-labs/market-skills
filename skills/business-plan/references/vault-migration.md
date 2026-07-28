@@ -16,18 +16,20 @@ which of their rules bite differently when you are writing three hundred notes i
 ## Contents
 
 - [The extraction manifest is already written — it is the plan's citations](#the-extraction-manifest-is-already-written--it-is-the-plans-citations)
-- [Five stages, in this order, because each one makes the next cheaper](#five-stages-in-this-order-because-each-one-makes-the-next-cheaper)
+- [Six stages, in this order, because each one makes the next cheaper](#six-stages-in-this-order-because-each-one-makes-the-next-cheaper)
   - [Stage 1 — Sources, because collapsing duplicates is free only while nothing points at them](#stage-1--sources-because-collapsing-duplicates-is-free-only-while-nothing-points-at-them)
   - [Stage 2 — Facts, because the table rows are already notes](#stage-2--facts-because-the-table-rows-are-already-notes)
   - [Stage 3 — Claims, the smallest defensible set and most of the value](#stage-3--claims-the-smallest-defensible-set-and-most-of-the-value)
   - [Stage 4 — Assumptions and decisions, from the model's guess rows and the settled forks](#stage-4--assumptions-and-decisions-from-the-models-guess-rows-and-the-settled-forks)
-  - [Stage 5 — Stop](#stage-5--stop)
+  - [Stage 5 — Milestones, last, because every one of them points at a stage-4 note](#stage-5--milestones-last-because-every-one-of-them-points-at-a-stage-4-note)
+  - [Stage 6 — Stop](#stage-6--stop)
 - [Atomise the assertions and leave the reasoning](#atomise-the-assertions-and-leave-the-reasoning)
 - [Retrofit `killed_because` while the person who remembers is still here](#retrofit-killed_because-while-the-person-who-remembers-is-still-here)
-- [Six schema rules that bite differently in bulk](#six-schema-rules-that-bite-differently-in-bulk)
+- [Seven schema rules that bite differently in bulk](#seven-schema-rules-that-bite-differently-in-bulk)
 - [Budget a day per hundred notes, and finish a stage or revert it](#budget-a-day-per-hundred-notes-and-finish-a-stage-or-revert-it)
 - [An upgraded vault enters here, not at Stage 1 — reconcile the claims an amended definition left behind](#an-upgraded-vault-enters-here-not-at-stage-1--reconcile-the-claims-an-amended-definition-left-behind)
 - [Finish with vault-lint, and know which failures legitimately survive](#finish-with-vault-lint-and-know-which-failures-legitimately-survive)
+- [Stamp schemaVersion 2 last, after the vault can already pass at 2](#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2)
 
 ## The extraction manifest is already written — it is the plan's citations
 
@@ -74,6 +76,11 @@ Three things the manifest buys beyond the list itself:
   code, so the claims written in stage 3 carry `used_in` at authoring time rather than as a
   retrofit nobody schedules. Without it, a stale claim tells you it needs re-checking but not
   which paragraph is standing on it, so the re-check is deferred because nobody can size it.
+  A migrated plan document usually predates the `{#anchor}` attributes
+  [plan-template.md](plan-template.md) ships, so its slugs are what the entries name — and they
+  resolve, which is why nothing has to be back-filled. Add the attributes to the document in
+  this same pass anyway, and cite those: the migration is followed by an editing pass, and every
+  heading reworded in it silently kills the citations the migration just wrote.
 - **A budget.** `| wc -l` on the first grep is the note count, and the note count is the day
   count — see [the cost section](#budget-a-day-per-hundred-notes-and-finish-a-stage-or-revert-it).
 
@@ -82,9 +89,9 @@ Three things the manifest buys beyond the list itself:
 question a resumed migration has to answer, and a half-migrated corpus with no answer to it is
 the state this whole document exists to prevent.
 
-## Five stages, in this order, because each one makes the next cheaper
+## Six stages, in this order, because each one makes the next cheaper
 
-Scaffold the vault first — the tree, `.vault/config.json` with its `schemaVersion`, and
+Scaffold the vault first — the tree, `.vault/config.json` with `"schemaVersion": 2`, and
 `_vocab.yml` copied from [vocabulary.yml](vocabulary.yml)
 ([layout](vault.md#layout-one-directory-per-type-one-file-per-note)). The lint refuses a
 directory without a config, and it says so plainly:
@@ -316,7 +323,40 @@ That difference is honest and visible. A skill-voiced paraphrase in that field i
 field was split out to prevent — six months later the record shows a decision resting on analysis
 that actually rested on a constraint nobody wrote down.
 
-### Stage 5 — Stop
+### Stage 5 — Milestones, last, because every one of them points at a stage-4 note
+
+**Only for a corpus you are also moving to `schemaVersion: 2`.** The `milestone` type does not
+exist at 1, so a vault staying at 1 stops after stage 4 and its roadmap stays prose. The stamp is
+the last edit of all, after everything below — see
+[Stamp schemaVersion 2 last](#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2).
+
+**The input is the plan's roadmap table**, one note per row. It is last for the same reason
+sources are first: `moves` names the assumption or claim the item changes, and every one of those
+was written in stage 3 or 4. Migrate the roadmap earlier and every `moves` edge is a
+`dangling-edge` failure waiting on a note that does not exist yet — the same unreadable failure
+list the stage order exists to avoid.
+
+Three fields are authored rather than copied, and each is where the migration earns its keep:
+
+- **`sequence` is a whole number, and it is not the month.** A table whose rows read `M4`, `M6`,
+  `M9` gives 1, 2, 3. The month the founder said goes in `date_stated` verbatim, `≤6mo` and all;
+  copying `M4` into `sequence` produces a value nothing can order, which is a
+  `sequence-not-orderable` failure precisely because it would otherwise silence the two order
+  checks in a way that reads as passing.
+- **`resource` is almost never in the table** and is the most valuable thing this stage adds.
+  Label each item with what it actually consumes — founder hours, capital, a hire that has not
+  happened, someone else's clock. That is what turns Rule 4 from prose into a check, and a bulk
+  migration is where the false independence claims are: a roadmap written without the column
+  routinely has three items in one slot that one person cannot do.
+- **`moves` is a note ID, never the table's `A-n` label.** The prose keeps its labels. Build the
+  label→ID map once, the way stage 3 builds the subject map, or every item in the corpus stores a
+  row label that resolves to nothing.
+
+Expect rows that have no assumption to move. Those are maintenance and are not roadmap items
+(Rule 1) — leave them out and say so to the corpus's owner rather than inventing an assumption to
+justify a row, which is the failure that files a backlog as a plan.
+
+### Stage 6 — Stop
 
 The migration is over when the manifest is ticked off. Four things look like the obvious next
 step and are not:
@@ -402,7 +442,7 @@ grep -rh 'killed_because' "$VAULT_PATH/questions" | sort
 And never delete the note instead. A deleted kill is how the same hypothesis is re-proposed two
 months later with nothing recording that it was already tested and failed.
 
-## Six schema rules that bite differently in bulk
+## Seven schema rules that bite differently in bulk
 
 Authoring one note, these are checklist items. Authoring three hundred, each is a way to produce
 a corpus that fails lint uniformly and takes a second pass to fix.
@@ -467,6 +507,17 @@ written before a source was amended from one written after
 ([why](vault.md#status-moves-in-one-direction-and-never-silently)). A note written today,
 backdated to March, reads as having survived an amendment it never saw. The research date is not
 lost — it is `pulled` on the source note, which is where a read date belongs.
+
+**7. On a milestone, `moves` is a note ID and `sequence` is a position, never the row label and
+never the month.** Covered in stage 5, repeated here for the reason rule 3 is: both are mapping
+tables built once, so a map that stores the wrong side stores it uniformly. A roadmap table reads
+`| M4 | New-platform GA | trial volume (A-7) |`, and the natural script copies `M4` into
+`sequence` and `A-7` into `moves` — after which every item in the corpus carries a value that
+orders nothing and an edge that resolves to nothing. `M4` goes in `date_stated`, verbatim; `A-7`
+resolves through the label→ID map to the assumption note stage 4 already wrote. Only the second
+of the two is caught by the lint, as `dangling-edge`; the first is caught as
+`sequence-not-orderable`, which exists because the two order checks would otherwise skip it in
+silence.
 
 ## Budget a day per hundred notes, and finish a stage or revert it
 
@@ -607,8 +658,10 @@ One row per document section, however many superseded claims reached it, each na
 its replacement and the `supersedes_reason` — which is the whole rewrite list for the amendment
 you just reconciled, sized by the count it prints first. Deriving it by hand means one `grep` per
 superseded claim and then merging the results, which is the step that gets shortened to "the ones
-I remember". It exits 0 whether or not it finds anything, so it is a target list rather than
-another census entry to clear.
+I remember". A migrated vault is at schemaVersion 1, where the mode exits 0 whether or not it
+finds anything — so here it is a target list rather than another census entry to clear. At 2 it
+additionally fails a supersession carrying no `reconciled:` date, which means the rewrite you
+just did has a date to stamp: put it on each superseding note in the same edit.
 
 **Adopt the amended definition last, and stamp the copy.** Once every claim under the term is
 reconciled, replace that one term's `definition` in the vault's `_vocab.yml` with the shipped
@@ -641,8 +694,13 @@ vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
 Clean looks like this, and exits 0:
 
 ```
-vault-lint: clean - /Users/example/Documents/go-to-market/example-product
+vault-lint: note-level checks passed - /Users/example/Documents/go-to-market/example-product.
+Not opened: citation targets, supersession blast radius, panel objection rows - --release-gate asks all of them.
 ```
+
+The line is deliberately narrower than "clean". This run reads note fields and opens no
+document, so a corpus whose citations all point at renamed files prints it too — and a success
+line that reads as a whole-corpus verdict is the one somebody renders on.
 
 Failures are grouped by file, each naming the check and the failure it prevents, and exit 1:
 
@@ -713,7 +771,9 @@ vault-lint.sh --unverified --vault "$VAULT_PATH"
 # The sections a supersession put in doubt. A migration that imported prose saying
 # "superseded by F38" wrote those edges in stage 3, and the documents the old notes were
 # cited into still carry the old assertion. One row per section, with the reason, and a
-# count so the re-read can be sized. A target list, not a verdict - it exits 0.
+# count so the re-read can be sized. A migrated vault is at schemaVersion 1, where this
+# is a target list and exits 0; at 2 it also fails a supersession carrying no
+# `reconciled:` date, which is the last stage of the upgrade below.
 vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 
 # One chain, end to end. Pick a sentence in the plan, take the claim it cites, and confirm
@@ -721,7 +781,87 @@ vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
+**Before the first render — not here — the first and third of those are part of one call.**
+`vault-lint.sh --release-gate` runs the bare check, `--used-in`, the sweep and `--red-team`
+together and exits
+non-zero unless every part passes, which is what the render gate is held to. It is deliberately
+not the migration's acceptance test: `coverage-gap` and `orphan-source` legitimately survive a
+finished migration, so the gate exits 1 over a corpus that is done, and the census above is the
+thing that tells you it is. Reaching for the gate here would make a finished migration look
+unfinished, and a red that is expected is a red nobody reads.
+
 The census proves the corpus is well-formed. The `graph` spot-check on two or three of the
 plan's load-bearing sentences is what proves it is *true* — that the chain from an assertion a
 stranger will act on down to a verbatim passage actually connects, which is the only thing the
 migration was ever for.
+
+## Stamp schemaVersion 2 last, after the vault can already pass at 2
+
+`vault-lint.sh` reads both `schemaVersion` 1 and 2. A vault at 1 is held to exactly the rules it
+was written under, so **nothing about upgrading the skill obliges you to upgrade a vault** — an
+existing corpus keeps working untouched, which is the property the version set exists to buy.
+Move to 2 when you want the checks version 2 added; the list of what those are is in
+[vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand).
+
+**What 2 asks of an existing corpus is stage 5, plus a back-fill on anything it already
+superseded or already red-teamed.** The milestone half fires only on notes in `milestones/` — a
+directory a vault at 1 does not have — so for that half the upgrade is: write the roadmap notes,
+then stamp. A corpus whose plan has no roadmap at all owes nothing there, and one whose roadmap
+stays prose should stay at 1 rather than stamp 2 over an empty `milestones/` directory, which
+claims a check it is not subject to. The one failure that half surfaces on its own is
+`type-agreement` on a vault that grew a `milestones/` directory while still stamped 1 — that is
+the directory and the version disagreeing, and the fix is finishing the upgrade rather than
+deleting the notes.
+
+The other half **does** reach back into what is already there: version 2 also asks for a
+`reconciled:` date on every note carrying `supersedes`, and for a `## Lenses dispatched` roster in
+a `red-team.md` that has one. Both are step 2 below, and both are back-fill rather than repair —
+but a corpus with supersessions in it does not move to 2 for free, which is the one thing to know
+before starting.
+
+The number is a claim about the corpus, not a label on it: it tells the tool which rules to
+apply. So the order mirrors the vocabulary reconciliation above — **do the work, then stamp** —
+and the mechanism that makes that workable is the vault's own git history, which invariant 17
+already requires.
+
+1. **Edit `schemaVersion` to 2 in the working tree and do not commit it.** The version-2 checks
+   only fire at 2, so this is how you find out what the upgrade owes. An uncommitted number is a
+   question, not an assertion.
+2. **Run the gate and read the failures as the worklist.**
+
+   ```sh
+   vault-lint.sh --release-gate --vault "$VAULT_PATH"
+   ```
+
+   Everything it reports beyond the two that legitimately survive any finished migration
+   (`coverage-gap`, `orphan-source`) is upgrade work. The milestone rules fire only on notes you
+   wrote in stage 5. Two more reach back into a corpus that already exists, and both are back-fill
+   rather than repair:
+
+   - **`reconciled:` on every note carrying `supersedes`.** The sweep names the sections each
+     supersession put in doubt; **read them, then stamp the date you read them on the superseding
+     note.** Stamping first inverts the whole point — the field asserts the read happened, so a
+     date written to clear a red is a false assertion in the ledger, and it is exactly the
+     assertion the render gate downstream is trusting. If the corpus has more supersessions than
+     the session has room for, that is the signal to revert the `2` and come back, not to stamp
+     the rest.
+   - **A `## Lenses dispatched` roster in `red-team.md`**, if the engagement has one. Write the
+     round and lens for each round already folded into the table, reading the lens names off the
+     rows themselves; a round whose rows are all present needs no more than transcribing. A lens
+     you know was dispatched and that wrote nothing is the finding, not an obstacle — record it
+     and go get the rows.
+
+3. **Fix the corpus, never the number.** If the worklist is bigger than the session, revert the
+   `2` and leave the vault at 1 — it is correct at 1 and it keeps rendering. A vault left
+   committed at 2 mid-upgrade puts the render gate permanently red for reasons that have nothing
+   to do with the render, and the next person cannot tell an upgrade in progress from a corpus
+   that broke.
+4. **Commit the stamp together with the fixes, as the last edit.** One commit in which the vault
+   both claims 2 and passes at 2 means no commit in the history ever records a version the corpus
+   could not back up — which is the same failure mode as adopting an amended definition before
+   reconciling the claims under it, one level up.
+
+**Migrations stay forward-only.** There is no 2→1 path, for the reason
+[vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand) gives: writing one means
+holding every field the newer schema added in a shape the older one can carry, which is a second
+schema maintained forever.

@@ -23,6 +23,14 @@ read in ~20 minutes by a skeptic: density and traceability beat completeness.
 
 **Writing rules (every track):**
 - Section headings are action titles — the finding as a sentence, never "Market Overview".
+- **Every heading keeps its `{#anchor}`, and that anchor is the citation surface rather than
+  decoration.** Reword the heading text as the finding sharpens — the rule directly above — and
+  leave the anchor alone. A claim note records where it was cited as
+  `"business-plan.md#competition"`, and `vault-lint.sh --used-in` opens the document to check
+  that anchor still names a heading. An anchor edited along with its heading takes every
+  citation into that section down with it silently, and the only repair left is rewriting the
+  notes, which re-breaks on the next rewording. `rendering.md` has the contract the renderer
+  holds to.
 - **Retraction is visible, never silent.** When a claim is withdrawn or corrected, strike it
   through and give the reason inline. Silent deletion is how a retracted claim comes back two
   drafts later, having lost the record of why it died.
@@ -40,7 +48,7 @@ read in ~20 minutes by a skeptic: density and traceability beat completeness.
 ## `founder-brief.md`
 
 ```markdown
-# Founder Brief — <Product>
+# Founder Brief — <Product> {#founder-brief}
 _Grilled: <date> · Cited from the plan as [F#]_
 
 | # | Fact | Grill area | Note |
@@ -58,7 +66,7 @@ is [grill.md](grill.md#a-fact-arriving-after-the-grill-is-recorded-exactly-as-on
 ## `one-pager.md`
 
 ```markdown
-# <Product> — <one sentence: what it is, for whom, why it wins>
+# <Product> — <one sentence: what it is, for whom, why it wins> {#one-pager}
 **Problem** <2–3 sentences, the beachhead segment's words [S#]>
 **Solution** <what it does + the differentiated value, not the feature list>
 **Why now** <the shift that opens the window [S#]>
@@ -75,14 +83,14 @@ amount, term, use of funds in 3–4 line items, and the cash flow that repays it
 ## `business-plan.md` — venture track (memo shape, Sequoia-skeleton order)
 
 ```markdown
-# <Product> — Investment Memo
+# <Product> — Investment Memo {#investment-memo}
 _Date · prepared with <slug> market analysis (see sources.md)_
 
-## Thesis
+## Thesis {#thesis}
 <Pyramid-first: the bet in one paragraph — whitespace recommendation × unfair advantage.
 Then 3–5 supporting bullets, each tagged [S#]/[F#].>
 
-## Target & verdict
+## Target & verdict {#target-verdict}
 <The settled target and its date [F#], and the verdict computed against it — the driver that
 binds, and by how much — per
 [target.md](target.md#the-verdict-names-which-driver-binds-and-by-how-much). Where the target
@@ -152,32 +160,32 @@ read against a cash curve. Caption it with the companies excluded from the overl
 the fit is supported over — an exhibit whose supported range is unstated invites reading the
 curve past where the evidence ends, which is the same error the fitted decay exists to prevent.>
 
-## Problem
+## Problem {#problem}
 <beachhead segment, their words, acuteness evidence [S#]>
 
-## Solution & product
+## Solution & product {#solution}
 <how it kills the pain; confirmed value hypotheses ONLY — VH verdicts from the analysis>
 
-## Traction & metrics
+## Traction & metrics {#traction}
 <early, position 3–4, never buried. Cohorts/growth-rate over cumulative vanity. Pre-launch:
 the validation evidence so far and the tests running now.>
 
-## Why now
+## Why now {#why-now}
 <from trends research — the mechanism, not the vibe [S#]>
 
-## Market
+## Market {#market}
 <TAM/SAM/SOM imported with tags + formulas visible. SOM names the beachhead, the wedge, and
 the next 2–3 expansion segments — a SOM without a named beachhead is a red flag.>
 
-## Competition & moat
+## Competition & moat {#competition}
 <positioning map ref; per-threat one line + the wedge. Moat: which power is actually
 available (from moats research), what has to be true to earn it, and the honest "what stops
 <biggest threat> from shipping this next quarter" paragraph.>
 
-## Business model & pricing
+## Business model & pricing {#business-model}
 <price anchor [S#], packaging hypothesis, motion (see GTM gates below)>
 
-## Go-to-market
+## Go-to-market {#go-to-market}
 <motion selected via the three gates: ACV band → buyer type (single-user value capture?) →
 time-to-value (<30 min unassisted aha?). CAC/ACV sanity ≤ ~30–40%. Hybrid is the normal
 steady state. Solo founder: ONE primary channel matched to founder strength, 90-day commit,
@@ -198,32 +206,40 @@ primary motion. Cite it as corroboration for a choice the gates already made, wi
 tag intact; a motion selected BECAUSE a comparable ran it has confused evidence of action with
 proof of mechanism.>
 
-## Growth engine
+## Growth engine {#growth-engine}
 <the automated execution machine, per growth-engine.md: the three per-product skills to build
 (content w/ voice.md + contracts, visual-asset capture, docs-sync), the weekly loop sized to
 the founder's hours [F#], the no-full-automation zones, and the engine build-out as dated
 roadmap items. Entry sequencing when beachhead-first: the scored beachhead + pre-committed
 expansion pins with unlock conditions (strategy-sim.md §2).>
 
-## Milestones & roadmap
+## Milestones & roadmap {#roadmap}
 <Dated checkpoints against the solve-backwards trajectory, not milestones sequenced by feel —
 a checkpoint falls in month N because the trajectory says a named driver has to reach a named
 value by then (the failure this prevents is strategy-sim.md §5's). Alongside: validation gates
 from the plan's validation section, the growth-engine build-out items (which automation skill
 lands in which month), and the funding/path gate each milestone feeds. This is the section the
-operator red-team lens attacks.>
+operator red-team lens attacks.
 
-## Financial summary
+Every item in this section is a `milestone` note in the vault, written before the table is —
+the table renders `sequence`, `moves` and `resource` off the notes, so the two cannot drift.
+Writing the table first leaves the roadmap as prose nothing can check, which is what let an
+item name an assumption that was never written. The generated `research/timeline.md` is the
+other rendering of the same set, and it is what a later proposal is judged against: it holds
+what is shipped and what is absent at a given month, so a gap that is a dated item on this
+roadmap does not read as a gap in the product.>
+
+## Financial summary {#financial-summary}
 <the 5 numbers from financial-model.md: burn, runway, base-case revenue at horizon,
 CAC payback + LTV:CAC (always paired), the milestone this capital buys>
 
-## Team
+## Team {#team}
 <[F#], unfair advantages made concrete>
 
-## Key risks & mitigations
-<2–4 real ones, stated plainly (surviving red-team objections land HERE), each with a
-concrete mitigation or an honest open question. Naming your own risks is a credibility
-signal; defensive spin is not.
+## Key risks & mitigations {#key-risks}
+<2–4 real ones, stated plainly (surviving red-team objections land HERE, by their
+round-qualified ID, e.g. R4-O1), each with a concrete mitigation or an honest open question.
+Naming your own risks is a credibility signal; defensive spin is not.
 
 The STRUCTURAL half of research/growth-curves.md's strategy record is routed here: every
 comparable growth strategy that record filed as gated on headcount, capital, an existing
@@ -234,10 +250,10 @@ verdict, which shows the shapes without saying what they cost. Same discipline a
 above: the record is evidence of what those companies HAD, never proof it is what produced their
 curves, so state the gap and its mitigation without conceding the causal claim.>
 
-## Validation plan
+## Validation plan {#validation}
 <every Low-tagged assumption → cheapest real-world test → kill/continue threshold → date>
 
-## The ask
+## The ask {#the-ask}
 <amount, runway it buys, the specific milestone it reaches>
 ```
 
@@ -278,18 +294,18 @@ debt service the financials must cover.
 ## `financial-model.md`
 
 ```markdown
-# Financial Model — <Product>
+# Financial Model — <Product> {#financial-model}
 _Horizon by track: venture 24–36 mo · bootstrap/lifestyle 6–12 mo monthly · lender 3–5 yr
 annual with monthly year 1_
 
-## Assumptions (every input lives here — nothing buried in a formula)
+## Assumptions (every input lives here — nothing buried in a formula) {#assumptions}
 | # | Assumption | Value | Source | Confidence |
 |---|---|---|---|---|
 <price, CAC by channel, conversion, churn, ramp times, hires… one row each.
 Source = [S#] | [F#] | "guess — validate". At least one negative assumption is mandatory
 (churn > 0, hiring delay, sales-cycle friction) — a model with no friction is fiction.>
 
-## Revenue build (bottom-up ONLY)
+## Revenue build (bottom-up ONLY) {#revenue-build}
 <channel → spend → CAC → new customers/mo → conversion → price → revenue, as a visible chain.
 NEVER "X% of TAM" as a model input.
 
@@ -334,16 +350,16 @@ Where growth-curves.md reports too few points to fit a shape, say the shape chec
 run — never let it quietly collapse back into the level check while the model reads as though
 both were made.>
 
-## Scenarios — one engine, three assumption sets
+## Scenarios — one engine, three assumption sets {#scenarios}
 <Base / Downside / Upside as DELTAS on the assumptions table (downside = a real stress:
 CAC +30%, growth −20% — not "same shape, smaller"). Each scenario names its TRIGGER:
 the metric + threshold that tells the founder "we are now in this case".>
 
-## Sensitivity
+## Sensitivity {#sensitivity}
 <one table: the 2–3 highest-leverage assumptions flexed ±20–30% → effect on runway and
 revenue. This is the fastest trust-builder in the whole model.>
 
-## Steady state — model to the ceiling, not to the horizon (MANDATORY, every track)
+## Steady state — model to the ceiling, not to the horizon (MANDATORY, every track) {#steady-state}
 <Twelve monthly rows can hide a structural ceiling completely. One line of algebra exposes it.
 Write the steady-state identity for the business and solve it:
 
@@ -393,7 +409,7 @@ the consequence as physics, and a number reported as physics is one nobody argue
 cohort check above asks whether an input is uniform; this one asks whether it is chosen. Both
 run, and neither answers the other's question.>
 
-## Cost of the alternative (MANDATORY wherever price is defended)
+## Cost of the alternative (MANDATORY wherever price is defended) {#cost-of-alternative}
 <Affordability is not a pricing argument. "X% of what they already spend" says nothing about
 whether they'd rather spend zero. Price the SUBSTITUTE the buyer would actually assemble:
 tools + integrations + the fraction of a person who owns and maintains the glue.
@@ -415,7 +431,7 @@ buyer produces. Written alone, this one caps the price at the substitute's cost 
 so invisibly, because a well-sourced substitute figure reads as rigour while the output figure
 nobody computed is simply absent from the page.>
 
-## Value delivered (MANDATORY wherever price is defended)
+## Value delivered (MANDATORY wherever price is defended) {#value-delivered}
 <The substitute's cost is a floor under the buyer's alternative, not a ceiling on your price.
 Price what the buyer can PRODUCE with the product that they could not before, in the buyer's
 own currency: output added, hours returned at a real loaded wage, error or rework avoided,
@@ -449,21 +465,21 @@ three hours a week, `measured` on a pilot cohort. Channel — the accounts using
 at the top of the category band rather than the middle, because the saved hours recur; the
 model's churn row carries that as a cohort split, not as a flat improvement.>
 
-## Strategy comparison (when a capital-path or sequencing fork was open)
+## Strategy comparison (when a capital-path or sequencing fork was open) {#strategy-comparison}
 <the Path Comparison + Trigger table from strategy-sim.md §6: parallel paths off shared unit
 economics, dilution ladder per raising path, founder $ at low/base/high exits, and the
 pre-committed switch triggers. Bootstrap paths embed the reinvestment engine (default-alive
 gate, four buckets with the owner-pay floor, channel-unlock milestones, Rule-of-40
 validator).>
 
-## COGS & margin at scale
+## COGS & margin at scale {#cogs-margin}
 <imported from the analysis's unit-economics dimension when it ran (repo sources): the
 cost-vs-revenue table at usage tiers, gross margin trajectory, free-tier cliffs, break-even
 tier, and the "does the margin survive success?" verdict [S#]. The pricing row of the
 assumptions table must be consistent with this — a price that only works at today's COGS
 gets a named trigger for revisiting.>
 
-## Unit economics
+## Unit economics {#unit-economics}
 <LTV:CAC AND CAC payback, always together (a 3:1 ratio on a 3-year payback is a cash trap).
 Floors (venture & bootstrap tracks): SaaS ≥3:1 & payback ≤12 mo; prosumer/consumer ≤6 mo
 payback, LTV $40–120 at $5–15/mo. A product straddling both: pick by the grilled price point —
@@ -474,11 +490,11 @@ band it lies in, the product's position inside that band, and the delivered valu
 there. The ratio is gameable, the curve is not, and a curve stated with no position under it is
 a category floor doing a product's job.>
 
-## Runway & milestone
+## Runway & milestone {#runway}
 <burn, months of runway, and the specific milestone (not "more revenue") this period buys;
 the date the company is default-alive or needs capital — whichever comes first.>
 
-## Use of funds & repayment (lender track only)
+## Use of funds & repayment (lender track only) {#use-of-funds}
 <capital by line item, the drawdown schedule, annual debt service, and DSCR (operating cash
 flow ÷ debt service) in base AND downside. A downside DSCR under 1.0 is stated, never
 smoothed.>

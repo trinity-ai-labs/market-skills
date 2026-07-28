@@ -82,18 +82,28 @@ and is never restated here.
 15. **Lint is a gate, not a report.** The shipped `vault-lint.sh` runs at Phase 2's
     per-dimension checkpoint, while the authoring context is still live and a fix costs one
     turn, and again in Phase 5 before anything renders. A plan citing a retracted source does
-    not render. **Phase 5's run is three calls, not one** — `vault-lint.sh`, then
-    `vault-lint.sh --used-in`, then `vault-lint.sh --supersession-sweep`. `--used-in` is a
-    separate mode, so the default run never opens a citation target: a plan clears the bare gate
-    while carrying a citation to a document that was renamed or a section that was cut, and the
-    next thing that happens is a rendered PDF asserting it to the one reader with no way to
-    check. The sweep is the report half and fails nothing; it is here because Phase 4's
-    dispositions mint supersessions *after* invariant 19's sweep has already run, which makes
-    the render the only point they are read at all — the worklist is read to its end before the
-    first render, or the deliverable ships the version the panel corrected while `red-team.md`
-    records that row as fixed. **Phase 2's checkpoint stays the bare run**: no note carries
-    `used_in` until drafting cites it, so `--used-in` there checks an empty set, and running it
-    anyway teaches the mode as cadence-wide when it belongs to one gate.
+    not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
+    bare check, `--used-in`, `--supersession-sweep` and `--red-team`, and exits non-zero unless
+    every part passes. It is one call because it was several, and calls made from memory are a set
+    nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
+    success line said `clean` over a corpus with dozens of dead anchors. That line now names what
+    it checked and what it did not, and the gate carries one exit status for all of them.
+    `--used-in` stays a separate mode *inside* the gate rather than folding into `check`, because
+    it reads documents outside the note directories: the default run never opens a citation
+    target, so a plan clears the bare gate while carrying a citation to a document that was
+    renamed or a section that was cut, and the next thing that happens is a rendered PDF
+    asserting it to the one reader with no way to check. The sweep prints a worklist and **fails
+    when nothing records that it was read** — a `reconciled:` date absent from the superseding
+    note, or earlier than that note's own `created`; it is in the gate because Phase 4's
+    dispositions mint supersessions *after* invariant 19's sweep has already run, which makes the
+    render the only point they are read at all — the worklist the gate prints is read to its end
+    before the first render, or the deliverable ships the version the panel corrected while
+    `red-team.md` records that row as fixed. `--red-team` is in the gate for the mirror-image
+    reason: it fails when a lens named in `red-team.md`'s `## Lenses dispatched` roster wrote no
+    objection row, and the last thing a plan does before rendering is cite objection codes into
+    that table. **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
+    cites it, so the gate's second part would check an empty set there, and running the whole
+    gate anyway teaches it as cadence-wide when it belongs to one phase.
     **That same gate reads the dimension's own file, never the summary its author
     wrote about it** — the researcher who wrote the prose also minted the notes the plan resolves
     citations through, so accepting a dimension on its summary is what puts an unreviewed number
@@ -113,14 +123,18 @@ nearest-reachable solve and the negotiation script are in
     decision of theirs can move.
 
 17. **The vault is a git repo (Phase 0): commit at every meaningful write, regenerate the vault's
-    `README.md` in the commit that changes a fact it states, and where a remote exists — the
+    `README.md` and `research/timeline.md` in the commit that changes a fact either one states,
+    and where a remote exists — the
     Phase 5 consent gate — push every commit.** Phase boundaries are too coarse a unit of loss for
     a phase that writes dozens of files: a crash mid-phase should cost one file, not a day of
-    research. They are the same wrong unit for the generated README, which states the current
-    target and its verdict status while both move *inside* Phase 3 — so pinned to the boundary it
+    research. They are the same wrong unit for both generated files, and for the same reason. The
+    README states the current target and its verdict status while both move *inside* Phase 3; the
+    timeline states what is true at a given month while the milestone set and its order move
+    inside that same phase — so pinned to the boundary either one
     spends most of a phase asserting what the ledger beneath it has already superseded, and it
     reads as current because its last line says it is generated rather than hand-edited. The
-    fields whose change triggers a regeneration are named in the output contract below, so the
+    fields whose change triggers a regeneration are named per file in the output contract below —
+    four for the README, four for the timeline — so the
     rule is decidable at commit time without re-reading the file. A remote is created only on the
     founder's explicit answer to both destination and visibility, and past that an unpushed commit
     is worse than no remote — it reads as a backup, so the founder believes the corpus is in two
@@ -138,23 +152,42 @@ nearest-reachable solve and the negotiation script are in
     Lint runs at Phase 2's per-dimension checkpoint and again in Phase 5 before rendering;
     between drafting and the panel there is nothing, and a panel briefed on a plan the ledger has
     already moved past returns objections about a version nobody is shipping, at full panel cost.
-    Three steps, and the third is the gate — the first two bound it rather than replace it.
+    **Three named calls and then the read** — the calls bound the read rather than replace it.
     `vault-lint.sh --used-in` **fails**: a citation resolving to a file or a section that is not
     there is not a judgment call. `vault-lint.sh --supersession-sweep` **emits the worklist** —
-    every section a supersession put in doubt. Then **the read**: every `current` claim whose
+    every section a supersession put in doubt — and **fails** when a superseding note carries no
+    `reconciled:` date, or one predating its own `created`. `vault-lint.sh --red-team` **fails**
+    when a lens named in a closed round's roster wrote no objection row; on the first dispatch
+    there is no closed round and it passes, and on a re-dispatch it is the cheapest moment a
+    silent lens is still fixable. Then **the read**: every `current` claim whose
     `used_in` names a plan document is reconciled against that document, and every superseded
-    claim's `used_in` targets are re-read. It is a read and not a grep, because plan prose cites
+    claim's `used_in` targets are re-read, and the date that read happened is stamped as
+    `reconciled:` on each superseding note. It is a read and not a grep, because plan prose cites
     `[S#]` and `[F#]` codes while a claim carries no code at all, so nothing mechanical can tell
-    whether a section still says what the note says. The two lint calls are what keep the read
+    whether a section still says what the note says. The lint calls are what keep the read
     bounded and therefore done: a reconciliation stated as "check the plan against the vault" is
     a task nobody can size, and a task nobody can size is a task nobody starts. The gate sits on
     the dispatch rather than the phase boundary, because a panelist already briefed cannot be
     un-briefed.
 
+    **This stays three named calls rather than becoming `--release-gate`, and the reason is
+    worth holding.** The gate composite also runs `check`, which this gate deliberately does
+    not: Phase 2's checkpoint owns note well-formedness while the authoring context is live, and
+    a malformed note written during drafting should not block a panel dispatch on a fix that has
+    nothing to do with whether the plan and the ledger agree. The stronger reason is that
+    invariant 15 gives `--release-gate` one home, at the render, and a call with two homes makes
+    "did the gate run" a question of recall again — which is the defect the composite was built
+    to remove. **And the failing halves have not made the read optional.** `reconciled:` records
+    that the read was claimed, not that it was done: a date can be stamped without opening a
+    document. What the verdicts remove is skipping it silently.
+
 20. **A claim is not finished when the note is written; it is finished when the prose it names
     carries it.** Writing the note and writing `used_in` are one act, and the claim stays open
     until the section `used_in` names actually says what the note says — invariant 19 is where
-    that gets read. This is an invariant rather than a Phase 3 step because the obligation
+    that gets read. **Where the note is a supersession, the closing edit is the `reconciled:`
+    date on it**, which is the one form of this obligation the corpus can see: the sweep fails a
+    supersession carrying none, so the open claim is visible from outside instead of being a
+    thing the conductor is trusted to remember. This is an invariant rather than a Phase 3 step because the obligation
     outlives Phase 3: the vault keeps growing through drafting and into the red team, and a
     claim minted while the panel is running is subject to it exactly as one minted while the
     plan was being written. Written into the drafting phase, the rule would stop applying at
@@ -198,6 +231,23 @@ nearest-reachable solve and the negotiation script are in
     to be missing by. It surfaces at the walk sign-off, when the founder asks why the thing you
     both agreed three phases ago is not in the plan.
 
+23. **Steelman a founder statement before checking it — verify the claim they are making, not
+    the cheapest adjacent number.** This is invariant 3 pointed at a founder's remark instead of
+    at the model: a metric chosen after the conclusion is a conclusion wearing an instrument, and
+    checking whichever number is easiest to check instead of the number the founder actually meant
+    is the same move wearing a different subject. A founder says a competing tool costs more than
+    their seat. The competitor's list price is lower, so the claim is filed as false — but the
+    competitor's product is a control plane that bills separately for the compute underneath it,
+    so the delivered cost is roughly double the seat, and the founder was right about the thing
+    that matters. The cheap number is the one that gets checked, and checking it produces a
+    confident wrong answer. **And a correction that moves no number in the plan is a conversation,
+    not a note:** the vault is a ledger of what the plan stands on, and filing a detail error as a
+    finding spends the founder's attention on a scoreboard rather than on the plan. **The failure
+    this prevents:** a founder's claim about their own market gets refuted on a technicality
+    neither party meant, the refutation reads as rigor because a number backs it, and the plan
+    quietly loses the one piece of the founder's testimony most worth having — the delivered
+    reality a list price hides.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -210,10 +260,11 @@ carries `.vault/config.json`, and everything else lives inside it:
 ~/Documents/go-to-market/<product-slug>/  # ← this directory is the vault
   .vault/config.json        # schemaVersion — a directory without it is not a vault
   _vocab.yml                # controlled subjects, seeded from references/vocabulary.yml
-  sources/ facts/ claims/ assumptions/ questions/ decisions/   # one file per note, <ID>.md
+  sources/ facts/ claims/ assumptions/ questions/ decisions/ milestones/  # one note, <ID>.md
   research/                 # ALL prose, untouched by the vault — market-analysis dimensions,
     product-dossier.md      #   profiles/, plus these two written here in Phase 0 / Phase 1
     founder-brief.md        #   the grill's numbered [F#] facts — the plan cites these
+    timeline.md             # GENERATED from milestones/, never hand-edited — see below
   sources.md                # the [S#] index (market-analysis)
   one-pager.md              # the door-opener — always produced first, every track
   business-plan.md          # the main artifact — SHAPE DEPENDS ON TRACK (see below)
@@ -264,8 +315,9 @@ and note it in Coverage; past them, or if the product's stage/boundary moved, pl
 refresh.
 
 **Scaffold the vault before anything writes.** The vault path IS the slug directory — never a
-`vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with its
-`schemaVersion`, and copy [references/vocabulary.yml](references/vocabulary.yml) to
+`vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with
+`"schemaVersion": 2` — the current version, so every check the schema carries applies to this
+vault from its first note — and copy [references/vocabulary.yml](references/vocabulary.yml) to
 `<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
 vocabulary it was written under after the skill ships new terms. The copy carries the shipped
 file's `vocabulary_version`, which is what makes a vault scaffolded today report no drift on its
@@ -277,7 +329,11 @@ Pass the absolute vault path to every agent and tool: resolution is `--vault` or
 and nothing else, because an upward search from a repo either walks to the filesystem root or
 finds a *different* engagement's vault and reads the wrong corpus with no error at all. An
 existing vault is reused, not re-scaffolded, and a `schemaVersion` this skill does not
-understand stops the run rather than being half-read.
+understand stops the run rather than being half-read. **An existing vault at an older
+`schemaVersion` is left at it** — the lint reads every version it supports and holds each vault
+to the rules it was written under, so a reuse is not the moment to bump one. The upgrade is its
+own procedure, in
+[references/vault-migration.md](references/vault-migration.md#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2).
 
 **A reused vault's `_vocab.yml` is compared against the shipped
 [references/vocabulary.yml](references/vocabulary.yml), and an amended base definition is
@@ -316,10 +372,12 @@ no-op, but a re-scaffold that rewrites its files is not.
 drafted section. The phase-boundary commit keeps its own job on top of those — it is where
 `.gitignore` is regenerated, and it is one of the points where `README.md` is.
 
-Two files are **generated** at scaffold, and their cadences part after that, because only one of
-them tracks what the corpus asserts: **`.gitignore` is regenerated at every phase boundary and
-committed there; `README.md` is regenerated in the same commit as any write that changes a fact it
-states** (the fields are named below). Neither is hand-edited.
+Three files are **generated**, never hand-edited, and their cadences differ because they track
+different things: **`.gitignore` is regenerated at every phase boundary and committed there;
+`README.md` is regenerated in the same commit as any write that changes a fact it states; and
+`research/timeline.md` is regenerated in the same commit as any write that changes the milestone
+set or its order** (both field lists are named below). The first two exist from scaffold; the
+timeline appears with the first milestone note, in Phase 3.
 
 - **`.gitignore`** — editor and OS state only: `.DS_Store`, and an editor's per-window workspace
   file (Obsidian rewrites `.obsidian/workspace.json` on every open, so unignored it makes each
@@ -329,7 +387,7 @@ states** (the fields are named below). Neither is hand-edited.
   shared vault exists to share, and a repo whose deliverables are ignored hands a recipient the
   working notes and none of the output.
 - **`README.md`** at the vault root — what the product is; what this corpus is and which skill
-  produced it; the note-type map (the six types and what each asserts); where to start reading
+  produced it; the note-type map (the seven types and what each asserts); where to start reading
   (`one-pager.md`, then `business-plan.md`); the current target and its verdict status; which
   phase the corpus is in; and the `vault-lint.sh` invocation for checking the corpus. Its last
   line states that it is generated and regenerated rather than hand-edited. Without it a shared
@@ -352,6 +410,26 @@ states** (the fields are named below). Neither is hand-edited.
   one of the first two fields, so under the old cadence the file spent most of a phase stating a
   settled-looking target the ledger underneath it had already superseded, with nothing marking the
   disagreement. A stale README on a shared repo is worse than none, because it reads as current.
+- **`research/timeline.md`** — the artifact that holds what is true at a given month, generated
+  from `milestones/` and carrying three sections: **state at M0** (each item shipped or absent,
+  and what each absence costs), **the sequence** with what each item unlocks and the resource it
+  consumes, and **chains** — walking a proposal to the month it would land, with its prerequisites
+  counted. It is a *view* over the notes, not an eighth hand-maintained document: a file that
+  mirrors the plan's roadmap table drifts from it, and nothing in the corpus can tell.
+
+  **The failure it closes:** nothing else in this contract holds state over time, so a proposal
+  gets judged against the corpus's snapshot of today rather than against the state at the month it
+  would land. That is wrong in both directions — it kills a proposal over a gap that is a dated
+  roadmap item, and it credits a capability whose prerequisite has not shipped. Both read as
+  rigour, which is why neither gets caught.
+
+  **Four writes regenerate it, named for the same reason the README's four are:** a milestone
+  written or retired, a `sequence` change, a `depends_on` or `resource` change, and an M0 state
+  change (an item shipping, or a shipped one being pulled). Anything else — a `title` reworded, a
+  `date_stated` corrected — leaves it alone. The trigger has to be decidable from the write
+  itself, because a rule that required re-reading the generated file before every commit is one
+  that gets skipped, and a timeline that lags the ledger is worse than none: it reads as the
+  answer to *what is true in month N*, which is exactly the question nobody re-derives.
 
 Then build the dossier: run the **market-analysis skill's Phase 0 only** — a cheap
 dossier-building pass (explore agents on a repo; drafting from a doc/idea), no research fleet —
@@ -689,7 +767,10 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   paragraph is standing on it, so the re-check gets deferred because nobody can size it. The
   same field is what closes the claim: per invariant 20 it stays open until the named section
   carries it, and a claim minted after that section was drafted is subject to that exactly as
-  one minted while it was being written.
+  one minted while it was being written. **Name the heading's `{#anchor}` attribute, which
+  `plan-template.md` puts on every heading, rather than the slug of its text** — the headings
+  are action titles you will reword as the finding sharpens, and a citation written against the
+  text dies on the first rewording with nothing reporting it until the render gate runs.
 - **The thesis traces.** The plan's core bet restates the analysis's whitespace recommendation,
   sharpened by the founder's unfair advantages — traceably, not vibes-first.
 - **Cite by code, and there is no third kind.** `[S#]` resolves through `sources.md`, `[F#]`
@@ -738,6 +819,13 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   concurrently, which a naive value-ranking will serialise and lose. Load
   [references/roadmap-sequencing.md](references/roadmap-sequencing.md) and follow it whenever
   the plan has a roadmap.
+  **Write the `milestone` notes before the roadmap table, not after.** One note per item, each
+  carrying its `sequence`, the `resource` it consumes, and the `moves` edge naming the note it
+  changes ([references/vault.md](references/vault.md#the-milestone-note-carries-a-position-a-cost-and-the-assumption-it-moves)).
+  The table and `research/timeline.md` are both renderings of that set. Written the other way
+  round they are two hand-maintained lists, and the lint has nothing to read: "every item names
+  the assumption it moves" and "two items on one resource are not concurrent" are exactly the two
+  rules that were prose nobody verified until the notes existed to carry them.
 - **The plan ships a growth engine, not a marketing wishlist.** The GTM section's execution
   half is the mostly-automated weekly machine from
   [references/growth-engine.md](references/growth-engine.md) — the three per-product skills
@@ -793,9 +881,11 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
   price, from what they use today?
 
 **The target list is generated, not read.** Invariant 19's reconciliation runs before any of this
-and gates the dispatch — its two lint calls, `vault-lint.sh --used-in` and `vault-lint.sh
---supersession-sweep`, belong beside the query below rather than in a block of their own, and no
-brief is written until the read behind them is done. Two further queries then run before the panel
+and gates the dispatch — its three lint calls, `vault-lint.sh --used-in`, `vault-lint.sh
+--supersession-sweep` and `vault-lint.sh --red-team`, belong beside the query below rather than in
+a block of their own, and no brief is written until the read behind them is done. On a first
+dispatch `--red-team` has no closed round to check and passes; on a re-dispatch it is what stops
+a second panel being briefed over a first one whose objections were never written down. Two further queries then run before the panel
 is briefed: `vault-lint.sh --unverified`, and every claim that reached the plan carrying
 `confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the attack
 surface each panelist's brief carries in its lens. "Read the plan and object" produces objections
@@ -917,10 +1007,46 @@ away *compute*; they do not let it give away *correctness*, which is engineering
 commoditisation argument that doesn't name its layer overclaims in one direction, and a moat
 argument that ignores the layer it does reach overclaims in the other.
 
-Each panelist's objections land in `red-team.md`:
-`| # | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |`.
-Fold: fix what's fixable; every row disposed "moved to Risks" appears in the plan's Key risks
-section by its number — a plan that pre-states its best objections beats one that hides them.
+Each panelist's objections land in `red-team.md`, one row per objection, with an ID namespaced
+by round:
+`| R<round>-O<n> | Lens | Objection | Severity | Disposition (fixed / moved to Risks / rejected + why) |` —
+round 4's third objection is `R4-O3`. Round is the count of times Phase 4 has been dispatched for
+this engagement, starting at 1 and incrementing on each re-dispatch (a plan revision, a follow-on
+session); objection numbering restarts at `O1` inside each round, so the round prefix is what
+keeps round 2's `O1` and round 4's `O1` from colliding on whichever a reader finds first. **Once
+cited, a code is never renumbered** — invariant 21 states the same rule for `[F#]` and for the
+same reason: renumbering silently repoints every citation already written.
+
+**`red-team.md` also carries the roster of what was dispatched, under `## Lenses dispatched`, and
+a lens on it owes at least one row.** It is a two-column table — `| Round | Lens |`, one row per
+lens per round, the round written as `R1` so it reads as the same namespace the objection IDs
+carry:
+
+```
+## Lenses dispatched
+
+| Round | Lens |
+|---|---|
+| R1 | Capital skeptic |
+| R1 | Operator |
+| R1 | Target customer |
+```
+
+**The failure its absence costs:** a lens returns, its findings get folded into two documents,
+and its objection rows are never written here at all — and from outside, that is indistinguishable
+from a lens that had no objections. Silence and thoroughness read the same, so the plan cites
+objection codes into a table that never carried them and nothing says so. Nothing else in the
+corpus records which lenses were sent, which is why the roster has to be created before it can
+be enforced. `vault-lint.sh --red-team` checks it both ways: a rostered lens with no rows, and a
+row whose lens is not on the roster — the second direction because otherwise the check clears by
+deleting a line rather than by dispatching a lens. **Write a round's roster rows in the same edit
+that folds that round's objections**, not at dispatch: a roster written ahead of the rows fails
+the check for the whole time the round is in flight, and a gate that fails on the normal case is
+one people learn to skip.
+
+Fold: fix what's
+fixable; every row disposed "moved to Risks" appears in the plan's Key risks section by its
+round-qualified ID — a plan that pre-states its best objections beats one that hides them.
 **A surviving objection also lands in the vault**, as a `claim` that `supersedes` what it
 corrects or an `assumption` with a `validated_by` step. An objection disposed only in the table
 is one nothing downstream can find. That note is subject to invariant 20 like any other: it is
@@ -932,8 +1058,12 @@ one before anything renders: invariant 22's sweep runs over it before this phase
 
 ## Phase 5 — Deliverables
 
-**Lint is the release gate, and it runs before the first render.** Invariant 15 names the calls
-this gate makes and what each one is for; it is the whole set, never the default run alone. The
+**Lint is the release gate, and it runs before the first render.** One call —
+`vault-lint.sh --release-gate --vault "$VAULT_PATH"` — which invariant 15 breaks into its parts
+and says what each is for. It exits non-zero unless every part passes, so the gate is a
+verdict rather than a set of calls somebody has to remember making, and the sweep worklist it
+prints is read to its end before anything renders — every supersession Phase 4 minted stamped
+with the `reconciled:` date of that read, which is what the sweep fails on when it is missing. The
 vault comes back clean or nothing renders: a plan citing a retracted or superseded source does
 not ship, and neither does one whose citation names a document that was renamed or a section
 that was cut. The failure this stops is the worst one available — a polished PDF asserting
@@ -992,10 +1122,16 @@ three milestones, and where everything landed. Invite pushback on the specific b
   second metric picked to confirm the first tests the thesis's fit to the instrument, which reads
   as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault at the per-dimension gate, and the render gate ran
-  invariant 15's full set: the default check clean, `--used-in` clean, and the
-  `--supersession-sweep` worklist read to its end. The default run is a strict subset of the
-  checks that exist, so a plan clears it while citing a document nobody can open — and the last
-  thing standing between that citation and a rendered PDF is this gate.
+  `vault-lint.sh --release-gate` to a zero exit — every part, one verdict — with the
+  `--supersession-sweep` worklist it printed read to its end and every superseded pair carrying
+  the `reconciled:` date of that read. The bare run is a strict subset of
+  the checks that exist and its success line now says so, so a plan clears it while citing a
+  document nobody can open — and the last thing standing between that citation and a rendered
+  PDF is this gate.
+- Every lens dispatched to the panel wrote at least one row in `red-team.md`, and every row's lens
+  is named in its `## Lenses dispatched` roster. A lens whose findings were folded into two
+  documents and never written down reads exactly like a lens that had no objections, and the
+  plan then cites an objection code into a table that does not carry it.
 - The plan states the strongest claim its evidence supports, and a claim weaker than its evidence
   is an error of the same class as one stronger. Understatement is not caution: an overclaim gets
   challenged, an understatement gets believed. Every other bar on this list fires on optimism, so
@@ -1052,7 +1188,12 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - A plan whose roadmap improves the product states what that does to retention, or states that it
   does nothing to it and why. Silence is read as no effect, which is a claim nobody made — and it
   is exactly the claim a category-floor churn row asserts by construction.
-- Every roadmap item names the assumption it moves.
+- Every roadmap item names the assumption it moves, and it names it in a `milestone` note rather
+  than in the table alone — so the naming is a `moves` edge the lint resolves, not a sentence.
+- The roadmap's order survives its own two checks: no item sequences before a prerequisite it
+  declares, and no two items sharing a constrained `resource` are asserted concurrent. Both are
+  read off the notes by `vault-lint.sh`, and a plan that has a roadmap and no `milestones/`
+  directory has neither check run over it — which prints the same green as one that passed them.
 - The financial model's assumptions table is complete — no number appears in a projection that
   isn't a named assumption row.
 - A ranged target's readout is the set of corner verdicts, with the binding driver and its `kind`
@@ -1062,7 +1203,8 @@ three milestones, and where everything landed. Invite pushback on the specific b
   failing corner is usually the one the founder was aiming at.
 - The plan matches the founder's stated ambition, not a template's default ambition.
 - Nothing was dispatched to the red team until the plan and the vault were reconciled: the
-  `--used-in` pass clean, the `--supersession-sweep` worklist read to its end, and every
+  `--used-in` pass clean, the `--supersession-sweep` worklist read to its end and stamped
+  `reconciled:`, `--red-team` clean over every closed round, and every
   superseded claim's citation sites re-read. The panel is the most expensive read the plan gets,
   and a panelist already briefed cannot be un-briefed — the objections come back about a version
   nobody is shipping and are paid for in full.

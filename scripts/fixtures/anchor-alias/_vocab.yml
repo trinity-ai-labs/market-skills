@@ -1,0 +1,12 @@
+# No required subject, so `check` has nothing to report. This vault exists for
+# one assertion: one physical section reached under two spellings is ONE
+# worklist row.
+
+terms:
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver behind
+      it.
+    aliases:
+      - growth-rate
+    required: false

@@ -3,6 +3,7 @@
 # vault-lint.sh - read-only whole-corpus checks over a claim vault.
 #
 #   vault-lint.sh [check] [--vault PATH] [--json]
+#   vault-lint.sh --release-gate [--vault PATH]
 #   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
 #
 # This is shipped tooling: it runs on a user machine as part of the skill, so it
@@ -33,6 +34,17 @@
 # put in doubt, so the read is over that list rather than over every citation in
 # the corpus. A judgment step nobody can size is a judgment step nobody starts.
 #
+# WHAT A VERDICT CAN SAY ABOUT A READ
+# It cannot say the read was done well. It can say whether anything in the
+# corpus records that it was done at all, which is the difference between a
+# worklist and a gate: `reconciled:` on the superseding note and the
+# `## Lenses dispatched` roster in red-team.md are both assertions somebody has
+# to write, and both are checkable. Neither is evidence the sections were
+# actually re-read - a date can be stamped without reading anything - and that
+# is the honest limit of a mechanical check over a judgment step. What it buys
+# is that skipping the read becomes something you have to state rather than
+# something that happens by default, and the default is what was shipping.
+#
 # PARSING STRATEGY
 # The frontmatter reader is a subset parser over flat scalars, block lists, and
 # the four fields allowed a literal block scalar. It COERCES NOTHING - every
@@ -56,12 +68,20 @@ PROG="vault-lint.sh"
 # usage and refusals
 # ----------------------------------------------------------------------------
 
+# ONE BLOCK PER MODE, IN MODE_TABLE ORDER, AND A NEW MODE APPENDS ITS BLOCK
+# IMMEDIATELY BEFORE THE `graph` ONE. Interleaving is what turns a release that
+# adds three modes into three edits to the same lines here, and git merges two
+# of those textually clean - leaving one mode with a working flag and no help
+# text, which reads to its author exactly like a mode that was never added.
 usage() {
 	cat <<'EOF'
 vault-lint.sh - read-only checks over a claim vault.
 
   vault-lint.sh [check] [--vault PATH] [--json]
-      Run every check over the vault. Exits 1 if anything failed.
+      Run every note-level check over the vault. Exits 1 if anything failed.
+      A strict subset of what a release owes: it never opens a citation
+      target and never asks what a supersession put in doubt, which is what
+      --release-gate is for.
 
   vault-lint.sh --unverified [--vault PATH] [--json]
       Report the notes asserted with nothing behind them: everything with
@@ -72,7 +92,13 @@ vault-lint.sh - read-only checks over a claim vault.
       Open every note's used_in target and check that it resolves: the document
       exists under the vault root, and the #anchor names a heading in it. A
       verdict - it exits 1 on any failure. Kept out of `check` because it reads
-      documents outside the six note directories, which is a different surface.
+      documents outside the note directories, which is a different surface.
+
+      An anchor resolves two ways, and a heading offers both. A heading ending
+      in an explicit `{#anchor}` attribute answers to that attribute, which is
+      what survives a rewording; every heading also answers to the GitHub slug
+      of its text with the attribute stripped off, which is what a citation
+      written before the document carried attributes still names.
 
       It checks that the target RESOLVES, never that the section CARRIES the
       claim. Plan prose cites [S#] and [F#] codes and a claim note carries no
@@ -81,18 +107,26 @@ vault-lint.sh - read-only checks over a claim vault.
       wolf gets switched off, taking the half that worked with it.
 
   vault-lint.sh --supersession-sweep [--vault PATH] [--json]
-      Emit the re-read worklist a supersession owes. For every superseded note,
-      the document sections its used_in named - unioned across the corpus and
+      Emit the re-read worklist a supersession owes, and fail when nothing in
+      the corpus records that it was read. For every superseded note, the
+      document sections its used_in named - unioned across the corpus and
       grouped by section, so two superseded notes citing one section are one
       row naming both rather than two rows for one job. Each row carries the
       superseded note, the note that replaced it, and the supersedes_reason,
       which is the only question anyone ever asks about a superseded note.
 
-      A report, not a verdict - it exits 0 whether or not it finds anything.
-      Finding a worklist is the point of asking: supersession is visible in the
-      note and invisible everywhere the note was cited, and a mode that exited
-      non-zero on a healthy vault would train its caller to ignore the exit
-      code the actual checks depend on.
+      THE WORKLIST STAYS A REPORT; THE VERDICT IS A SEPARATE QUESTION. Finding
+      rows is the point of asking, so a healthy vault exits 0 with a worklist
+      in it - a mode that went non-zero on a supersession with a blast radius
+      would train its caller to ignore the exit code the actual checks depend
+      on. What fails is a note carrying `supersedes` with no `reconciled:`
+      date, or one earlier than that note's own `created`: the sections were
+      never read, or were read before the supersession that put them in doubt
+      existed.
+
+      The verdict applies at schemaVersion 2 only. A vault at 1 predates the
+      field, cannot owe it, and exits 0 either way - vault-migration.md carries
+      the back-fill.
 
       It reports the row count as well as the rows, because the gate that
       consumes this is a read and a read is bounded only if its size is visible
@@ -100,6 +134,38 @@ vault-lint.sh - read-only checks over a claim vault.
       as such rather than dropped - it reached no document, which is the good
       case, and a sweep that omitted it silently would look exactly like one
       that failed to read it.
+
+  vault-lint.sh --release-gate [--vault PATH]
+      Run every mode a release owes, in order - `check`, --used-in,
+      --supersession-sweep and --red-team - printing each part's output under
+      its own heading. The exit status is the worst status any part returned,
+      so the gate is clean only when every part is.
+
+      It exists because the alternative was three calls made from memory, and
+      which of them actually ran was a matter of recall. The bare run's
+      success line covers the notes alone, so a corpus with dozens of dead
+      anchors clears the only call anybody remembered to make and renders.
+
+      --json is refused here: several JSON documents printed one after
+      another are not a JSON document. Run each mode with --json separately
+      when a consumer needs to parse the result.
+
+  vault-lint.sh --red-team [--vault PATH] [--json]
+      Check red-team.md's panel record against itself: every lens named in its
+      `## Lenses dispatched` roster wrote at least one objection row, and every
+      row's lens is on the roster. A verdict - it exits 1 on either.
+
+      Nothing else in the corpus records which lenses were dispatched, so
+      without the roster a lens that returned findings, saw them folded into
+      two documents and never wrote a row is indistinguishable from a lens
+      that had no objections - silence and thoroughness read the same, and the
+      plan then cites objection codes into a file carrying none of them. The
+      reverse direction is checked because otherwise the gate clears by
+      deleting a lens from the roster, which is the cheapest way past it.
+
+      A vault with no red-team.md dispatched no panel and passes. A red-team.md
+      with no roster fails at schemaVersion 2, where the roster is part of the
+      schema, and passes at 1, which predates it.
 
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
@@ -125,6 +191,63 @@ EOF
 die() {
 	printf '%s: %s\n' "$PROG" "$1" >&2
 	exit 2
+}
+
+# ----------------------------------------------------------------------------
+# the mode table - the seam a new mode registers into
+#
+# One row per mode. Columns are separated by whitespace and the last one runs
+# to the end of the line:
+#
+#   SELECTOR  the argument that selects the mode - a flag, or `check` for the
+#             one mode that is a bare subcommand
+#   GATE      `gate` if --release-gate runs it as one of its parts, `-` if not
+#   PART      the heading --release-gate prints above that part's output
+#
+# ADDING A MODE IS ADDING A ROW. The argument parser reads the SELECTOR column
+# and --release-gate reads all three, so a new mode needs no arm of its own in
+# the `case` block below and no edit to the gate's composition - it needs a row
+# here, a block in usage(), and its own dispatch further down. A release that
+# adds three modes is what made this a table: three modes each editing the same
+# `case` block is three conflicts, and git resolves two of them textually clean
+# while one mode silently loses the arm that parses its flag.
+#
+# There is no MODE column because it would restate its neighbour on every row:
+# the MODE token is the SELECTOR with its leading `--` stripped. That is a rule
+# a new mode has to follow rather than an accident - a flag and a token that
+# disagreed would be a discrepancy this table could not show.
+#
+# `graph` is deliberately not a row. It takes an operand rather than being
+# selected by a flag, so it is parsed in the positional block below - and a
+# mode that needs a note ID has nothing --release-gate could run unattended.
+#
+# --unverified is a row but not a gate part. Its whole population is the
+# healthy case - an assumption is supposed to be unverified until its
+# validation step runs - so a gate that ran it would either ignore the output
+# or fail every vault that has an assumption in it.
+MODE_TABLE='
+check                gate  note-level checks
+--unverified         -     -
+--used-in            gate  citation targets
+--supersession-sweep gate  supersession blast radius
+--release-gate       -     -
+--red-team           gate  panel objection rows
+'
+
+# The MODE a command-line flag selects, or empty when the flag names no mode.
+# `check` is in the table so --release-gate can invoke it, and is skipped here
+# because it stays a positional subcommand: accepting it as a flag would make
+# `vault-lint.sh --vault PATH check` mean something it has never meant.
+mode_for_flag() {
+	while read -r sel _; do
+		case "$sel" in --?*) ;; *) continue ;; esac
+		if [ "$sel" = "$1" ]; then
+			printf '%s\n' "${sel#--}"
+			break
+		fi
+	done <<EOF
+$MODE_TABLE
+EOF
 }
 
 # ----------------------------------------------------------------------------
@@ -167,21 +290,6 @@ while [ $# -gt 0 ]; do
 		JSON=1
 		shift
 		;;
-	--unverified)
-		[ "$MODE" = "graph" ] && die "--unverified and graph are separate modes"
-		MODE="unverified"
-		shift
-		;;
-	--used-in)
-		[ "$MODE" = "graph" ] && die "--used-in and graph are separate modes"
-		MODE="used-in"
-		shift
-		;;
-	--supersession-sweep)
-		[ "$MODE" = "graph" ] && die "--supersession-sweep and graph are separate modes"
-		MODE="supersession-sweep"
-		shift
-		;;
 	--depth)
 		[ $# -ge 2 ] || die "--depth needs a number"
 		DEPTH="$2"
@@ -195,8 +303,14 @@ while [ $# -gt 0 ]; do
 		usage
 		exit 0
 		;;
+	# Every mode flag resolves through the mode table rather than through an
+	# arm of its own, which is what makes adding a mode a one-line append.
 	*)
-		die "unexpected argument: $1"
+		SELECTED=$(mode_for_flag "$1")
+		[ -n "$SELECTED" ] || die "unexpected argument: $1"
+		[ "$MODE" = "graph" ] && die "$1 and graph are separate modes"
+		MODE="$SELECTED"
+		shift
 		;;
 	esac
 done
@@ -226,7 +340,15 @@ CONFIG="$VAULT/.vault/config.json"
 [ -f "$CONFIG" ] ||
 	die "not a vault - no .vault/config.json under $VAULT. Refusing rather than walking an arbitrary directory of Markdown as if it were a corpus."
 
-SUPPORTED_SCHEMA=1
+# The versions this tool can read, oldest first. A SET rather than a single
+# number, because both directions of the mismatch are not the same problem. A
+# vault at 1 predates the checks version 2 added and cannot owe them, so
+# refusing it would fail every corpus that existed before they did - the tool
+# reads it and holds it to exactly the rules it was written under. A version
+# from the FUTURE stays refused, which is the whole reason the field exists: an
+# older tool half-reading a newer vault reports a clean bill of health over
+# every field it never saw.
+SUPPORTED_SCHEMA="1 2"
 FOUND_SCHEMA=$(awk '
 	match($0, /"schemaVersion"[ \t]*:[ \t]*[0-9]+/) {
 		s = substr($0, RSTART, RLENGTH)
@@ -236,22 +358,83 @@ FOUND_SCHEMA=$(awk '
 
 [ -n "$FOUND_SCHEMA" ] ||
 	die "$CONFIG carries no schemaVersion. A tool that guesses half-reads the vault and reports a clean bill of health over every field it never saw."
-[ "$FOUND_SCHEMA" = "$SUPPORTED_SCHEMA" ] ||
-	die "vault schemaVersion is $FOUND_SCHEMA and this tool supports $SUPPORTED_SCHEMA. Refusing rather than processing the parts it recognises - a green result from a half-read vault is exactly what somebody acts on."
+case " $SUPPORTED_SCHEMA " in
+*" $FOUND_SCHEMA "*) ;;
+*) die "vault schemaVersion is $FOUND_SCHEMA and this tool reads only these versions: $SUPPORTED_SCHEMA. Refusing rather than processing the parts it recognises - a green result from a half-read vault is exactly what somebody acts on." ;;
+esac
+
+# ----------------------------------------------------------------------------
+# --release-gate - every mode a release owes, in one call
+#
+# The gate before a render was three calls made from memory, so which of them
+# actually ran was a matter of recall. This runs the set and carries one
+# verdict out, which is the only form a gate can be held to.
+#
+# EACH PART IS A FRESH INVOCATION OF THIS SCRIPT rather than a function call.
+# Every mode below is a top-to-bottom pipeline that ends in `exit`, and `check`
+# and --used-in share one failure file - running two of them in one process
+# would mean threading a reset between them and letting one mode's failures
+# land in the other's verdict. A process boundary is the cheapest thing that
+# cannot get that wrong, and the cost is re-reading the corpus once per part on
+# a command that runs once per release.
+#
+# $0 is the path the kernel handed the interpreter, so it is the resolved
+# script even when the shell found it on PATH - which is how it is always
+# invoked, since Claude Code puts an enabled plugin's bin/ on PATH.
+#
+# THE EXIT STATUS IS THE WORST STATUS ANY PART RETURNED, not the last one and
+# not a flattened 1. A refusal (2) and a failed check (1) are different
+# answers - one says the tool would not read the vault, the other says it read
+# it and found something - and reporting both as 1 sends a reader hunting for a
+# failure in a check that never ran.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "release-gate" ]; then
+	[ "$JSON" -eq 0 ] ||
+		die "--release-gate prints several modes in sequence, and several JSON documents printed one after another are not a JSON document. Run each mode with --json separately."
+
+	GATE_STATUS=0
+	GATE_FAILED=""
+	printf 'vault-lint release-gate: %s\n' "$VAULT"
+
+	while read -r sel gate part; do
+		[ "$gate" = "gate" ] || continue
+		printf '\n--- %s: %s ---\n' "$sel" "$part"
+		"$0" "$sel" --vault "$VAULT"
+		PART_STATUS=$?
+		[ "$PART_STATUS" -gt "$GATE_STATUS" ] && GATE_STATUS="$PART_STATUS"
+		[ "$PART_STATUS" -eq 0 ] || GATE_FAILED="$GATE_FAILED $sel"
+	done <<EOF
+$MODE_TABLE
+EOF
+
+	if [ "$GATE_STATUS" -eq 0 ]; then
+		printf '\nvault-lint release-gate: every part passed - %s\n' "$VAULT"
+	else
+		printf '\nvault-lint release-gate: did not pass -%s\n' "$GATE_FAILED" >&2
+	fi
+	exit "$GATE_STATUS"
+fi
 
 VOCAB="$VAULT/_vocab.yml"
 HAS_VOCAB=0
 [ -f "$VOCAB" ] && HAS_VOCAB=1
 
 # Every field whose block-list items name other notes. This is DELIBERATELY
-# wider than vault.md's four edges: `covers` is a question field and
+# wider than vault.md's six edges: `covers` is a question field and
 # `assumptions_low` and `option_evidence` come from decisions.md, and none of
 # the three is called an edge anywhere - but each holds note IDs, so each has to
 # be followed for a dangling target and walked by `graph`. Declared once and
 # passed to both awk programs that traverse it: two copies would let `graph` and
 # `check` disagree about which fields exist, which is the tool shrinking its own
 # blast radius exactly the way it warns notes not to.
-EDGE_FIELDS="rests_on supersedes scopes validated_by covers assumptions_low option_evidence"
+#
+# `depends_on` and `moves` are here unconditionally rather than behind the
+# schema gate below. A vault at 1 carries neither field, so listing them costs
+# nothing there - and gating them would mean the schema-2 check that `moves`
+# names a note that exists is a rule of its own instead of the dangling-edge
+# rule every other edge already gets.
+EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence"
 
 # ----------------------------------------------------------------------------
 # scratch space
@@ -268,19 +451,25 @@ FAILURES="$TMP/failures"
 : >"$RECORDS"
 : >"$FAILURES"
 
-# One directory per type, one file per note. Anything outside these six - the
+# One directory per type, one file per note. Anything outside these seven - the
 # research prose, an editor sidecar - is not a note and is never read. These are
 # the plural directory names; the singular type names are the req[] keys in the
-# checks pass, and vault.md closes the set at six, so both lists are written out
-# by hand and have to move together.
+# checks pass, and vault.md closes the set at seven, so both lists are written
+# out by hand and have to move together.
 #
-# One find per directory rather than one find over six paths: collapsing them
+# `milestones` is read at every schemaVersion even though the type is only
+# legitimate at 2, because a vault at 1 has no such directory by construction -
+# so the only vault this reads it in is one that grew the directory without
+# moving its version, and reading it there is what makes the checks pass say so
+# (`type-agreement`) instead of skipping the notes in silence.
+#
+# One find per directory rather than one find over seven paths: collapsing them
 # means either building an unquoted path list, which breaks the first time a
-# vault lives under a directory with a space in its name, or passing all six
+# vault lives under a directory with a space in its name, or passing all seven
 # unconditionally and swallowing find's stderr, which hides a real permissions
-# error. Six spawns cost a few milliseconds and neither failure is worth it.
+# error. Seven spawns cost a few milliseconds and neither failure is worth it.
 : >"$FILES"
-for d in sources facts claims assumptions questions decisions; do
+for d in sources facts claims assumptions questions decisions milestones; do
 	[ -d "$VAULT/$d" ] && find "$VAULT/$d" -type f -name '*.md'
 done | LC_ALL=C sort >"$FILES"
 
@@ -602,7 +791,7 @@ if [ "$MODE" = "graph" ]; then
 		# with its own program text, so sharing would mean assembling the source
 		# in a shell variable and losing the top-to-bottom readability each awk
 		# program has today. Change one, change the other.
-		function isid(s) { return (s ~ /^(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION)-[A-Za-z0-9]+$/) }
+		function isid(s) { return (s ~ /^(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)-[A-Za-z0-9]+$/) }
 		function pad(n,   i, s) { s = ""; for (i = 0; i < n; i++) s = s " "; return s }
 
 		# A value stores newlines as the two characters \n, so the first line of
@@ -835,11 +1024,13 @@ fi
 # and invisible everywhere the note was cited. This walks the supersedes edges
 # already in the record stream and emits the union of those targets.
 #
-# A REPORT, NOT A VERDICT. It exits 0 whether or not it finds anything - the
-# same contract --unverified carries, for the same reason. A supersession with a
-# blast radius is the corpus working correctly, not a violation, and a mode that
-# exited non-zero on a healthy vault would train its caller to ignore the exit
-# code that the actual checks depend on.
+# THE WORKLIST IS A REPORT AND THE VERDICT IS A SEPARATE QUESTION. Finding rows
+# is not a failure: a supersession with a blast radius is the corpus working
+# correctly, and a mode that exited non-zero on a healthy vault would train its
+# caller to ignore the exit code the actual checks depend on. So a fully
+# reconciled vault still prints its worklist, still prints its count, and still
+# exits 0. What fails is a supersession nothing says was read - see the
+# `reconciled:` block in END below.
 #
 # GROUPED BY TARGET AND DEDUPED. The unit of work is re-read this section, so
 # two superseded notes citing one section are ONE row naming both. Repeating the
@@ -873,7 +1064,7 @@ fi
 # ----------------------------------------------------------------------------
 
 if [ "$MODE" = "supersession-sweep" ]; then
-	LC_ALL=C awk -v vault="$VAULT" -v asjson="$JSON" -F '\t' '
+	LC_ALL=C awk -v vault="$VAULT" -v asjson="$JSON" -v schema="$FOUND_SCHEMA" -F '\t' '
 		BEGIN {
 			DQ = sprintf("%c", 34)
 			BS = sprintf("%c", 92)
@@ -918,6 +1109,135 @@ if [ "$MODE" = "supersession-sweep" ]; then
 			printf DQ "supersedes_reason" DQ ": " DQ "%s" DQ "}", jesc(sb[2])
 		}
 
+		# ------------------------------------------------------------------
+		# Two spellings of one section have to collapse to one row
+		#
+		# A heading is addressable two ways: by an explicit {#anchor}
+		# attribute, and by the slug of its text - both registered, so a vault
+		# citing the slug keeps working when the template gains explicit
+		# anchors. That makes `business-plan.md#business-model` and
+		# `business-plan.md#business-model--pricing` the SAME physical section
+		# under one `## Business model & pricing {#business-model}` heading, and
+		# grouping on the raw anchor emits two worklist rows for one job. A
+		# worklist that overstates its own size is one that gets skipped at the
+		# moment it matters, which is the whole reason this mode dedupes.
+		#
+		# WHY THIS IS NOT A SECOND COPY OF THE SLUG RULE IN --used-in. That rule
+		# decides whether an anchor RESOLVES and has to be exact, character for
+		# character, because a wrong answer reports a working link as dead.
+		# This decides whether two anchors are the SAME SECTION, and it is
+		# deliberately loose: fold both to their alphanumeric bytes and compare.
+		# Every character the slug rule drops is dropped here too, so any two
+		# spellings that rule resolves to one heading fold together - without
+		# this program having to know which characters those are, which is what
+		# keeps it from drifting out of step with a rule it does not own.
+		#
+		# IT CANNOT UNDER-COUNT, which is the direction that would matter. A
+		# fold key claimed by two different headings is retired rather than
+		# resolved, so an ambiguous match falls back to the raw anchor and the
+		# reader gets the two rows they get today. Being wrong here costs a
+		# section nobody re-reads, so ambiguity refuses rather than guesses.
+		function fold(s,   i, c, o) {
+			o = ""
+			for (i = 1; i <= length(s); i++) {
+				c = substr(s, i, 1)
+				if (c >= "a" && c <= "z") { o = o c; continue }
+				if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
+				if (c >= "0" && c <= "9") { o = o c; continue }
+			}
+			return o
+		}
+
+		# Register one fold key against one heading, or RETIRE it when a second
+		# heading claims the same key. Retiring is the whole safety property:
+		# two headings that differ only in the punctuation the fold drops are
+		# indistinguishable here, so the key resolves to nothing and both
+		# citations keep the rows they get today. Zero is the retired marker
+		# rather than a second array because heading ordinals start at 1, so a
+		# third heading claiming a retired key leaves it retired.
+		function claim(doc, k, id,   ak) {
+			if (k == "") return
+			ak = doc SUBSEP k
+			if (ak in ALIAS) {
+				if (ALIAS[ak] != id) ALIAS[ak] = 0
+				return
+			}
+			ALIAS[ak] = id
+		}
+
+		# Every heading a document offers, as fold keys pointing at the
+		# heading ordinal. Read once per document, on first sight.
+		#
+		# The fence tracking is the third copy in this file - --used-in scans
+		# headings under the same rule and so does --red-team. All three are
+		# the same six lines: a `#` inside a fenced block is an example rather
+		# than a section anyone can jump to, and the marker and run length are
+		# tracked so a longer nested fence cannot close its parent early. Change
+		# one, change all three.
+		function sections(doc,   path, line, t, c, n, fc, fn, h, ex, id) {
+			path = vault "/" doc
+			fc = ""; fn = 0; id = 0
+			while ((getline line < path) > 0) {
+				sub(/\r$/, "", line)
+				t = line
+				sub(/^[ \t]+/, "", t)
+				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+					c = substr(t, 1, 1)
+					n = 0
+					while (substr(t, n + 1, 1) == c) n++
+					if (fc == "") { fc = c; fn = n }
+					else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+					continue
+				}
+				if (fc != "") continue
+				if (!match(t, /^#+[ \t]+/)) continue
+				h = substr(t, RLENGTH + 1)
+				sub(/[ \t]*#+[ \t]*$/, "", h)
+				sub(/[ \t]+$/, "", h)
+				id++
+
+				# An explicit {#anchor} attribute is stripped from the heading
+				# text and registered beside it, which is exactly what
+				# --used-in scan does and what a renderer owes it. Registering
+				# the anchor INSTEAD of the slug would break every existing
+				# citation the day a template gained anchors, which is why both
+				# are addresses - and why one section can be reached two ways
+				# at all.
+				#
+				# The braces are written as bracket expressions rather than
+				# escaped, for the reason scan states: a backslash-brace is an
+				# interval expression to some awks and a literal to others, and
+				# which one runs this is a property of the user machine. The
+				# two matches have to stay the same shape, so this one is
+				# copied from there rather than written again.
+				if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
+					ex = substr(h, RSTART, RLENGTH)
+					sub(/^[{]#/, "", ex)
+					sub(/[}]$/, "", ex)
+					claim(doc, fold(ex), id)
+					h = substr(h, 1, RSTART - 1)
+					sub(/[ \t]+$/, "", h)
+				}
+				claim(doc, fold(h), id)
+			}
+			close(path)
+		}
+
+		# The grouping key for one target: the heading it names when the
+		# document says which, and the anchor as written when it does not.
+		# Both forms are namespaced so a raw anchor can never collide with a
+		# heading ordinal. An anchor that resolves to nothing keeps the raw
+		# form deliberately - whether a citation resolves is --used-in verdict,
+		# and a sweep that dropped an unresolvable target would hide the
+		# section a reader most needs to look at.
+		function resolve(doc, anc,   k) {
+			if (anc == "") return "a"
+			if (!(doc in SCANNED)) { SCANNED[doc] = 1; sections(doc) }
+			k = doc SUBSEP fold(anc)
+			if ((k in ALIAS) && ALIAS[k] > 0) return "h" ALIAS[k]
+			return "a" anc
+		}
+
 		# One superseded note, as the reader of the worklist needs it: what it
 		# said, what replaced it, and why. The reason is what stops the row
 		# sending its reader back to the ledger before they can even decide
@@ -936,6 +1256,62 @@ if [ "$MODE" = "supersession-sweep" ]; then
 
 		END {
 			for (i = 1; i <= nf; i++) if (V[files[i], "id"] != "") BYID[V[files[i], "id"]] = files[i]
+
+			# THE VERDICT. `reconciled:` asserts one thing - that the sections
+			# this supersession put in doubt have been read - and it is what
+			# turns the worklist below from a report into something somebody is
+			# obliged to finish. It sits on the note carrying `supersedes`,
+			# the side where the edge and the reason already live, so all three
+			# halves of a supersession are on one note and a reader checking
+			# whether it was closed out opens one file.
+			#
+			# REQUIRED WHETHER OR NOT THE SUPERSEDED NOTE REACHED A DOCUMENT.
+			# Conditioning it on used_in would look tighter and would leave an
+			# obligation that comes into existence the day somebody cites the
+			# superseded note, with nothing to re-fire it - the vault would
+			# acquire an unread supersession by an edit to a different note.
+			#
+			# A dangling supersedes target is still checked here, unlike in the
+			# worklist below which skips it: the worklist would be naming a
+			# re-read nobody can perform, while the missing date is a real
+			# omission on a note that exists.
+			#
+			# GATED ON schemaVersion 2. A corpus written before the field
+			# existed cannot owe it, and a check that failed every vault
+			# authored to date on the day the skill updated is how a gate stops
+			# being run. vault-migration.md carries the 1 -> 2 back-fill.
+			if (schema + 0 >= 2) {
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					k = f SUBSEP "supersedes"
+					if (LN[k] == 0) continue
+					tg = ""
+					for (j = 1; j <= LN[k]; j++) tg = tg (j == 1 ? "" : ", ") LI[k, j]
+					rec = V[f, "reconciled"]
+					cre = V[f, "created"]
+					why = ""
+					if (rec == "")
+						why = "no `reconciled:` date. Nothing records that the sections this supersession put in doubt were read, so the worklist this mode prints is one nobody is obliged to finish - and the documents go on asserting what the ledger already replaced while every check stays green"
+					# Both values are quoted ISO dates the parser stored as
+					# written, and both sides are forced to strings so the
+					# comparison cannot fall into awk numeric rules on a value
+					# that happens to look like a number. This is the payoff
+					# the coerce-nothing invariant is claimed for: a plain
+					# string comparison, no date library, no parsing.
+					#
+					# A missing `created` is skipped rather than treated as
+					# earlier than everything - it is already a required-field
+					# failure from `check`, and reporting it twice under a name
+					# about reconciliation sends its reader to the wrong fix.
+					else if (cre != "" && (rec "") < (cre ""))
+						why = "`reconciled: " rec "` predates the `created: " cre "` on this same note, so the sections were read before the supersession that put them in doubt existed. A date carried over from an earlier pass reads exactly like one stamped after the read, and which of the two it is happens to be the only half of this a check can see"
+
+					if (why == "") continue
+					UNREC[++nu] = f
+					UTGT[f] = tg
+					UWHY[f] = why
+				}
+			}
 
 			# Half one: every note a supersedes edge names. Walked from the
 			# superseding side because that is where the edge and the reason both
@@ -978,6 +1354,11 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					# note writing ./business-plan.md#why-now and another writing
 					# business-plan.md#why-now would be two rows for one section -
 					# which is the double-counting this mode exists to avoid.
+					# The five lines below are byte-identical to the copy in
+					# --used-in on purpose: change one, change the other. What
+					# follows them is a step of its own - collapsing two
+					# spellings of one heading onto one key, per the block
+					# above tnote.
 					p = index(entry, "#")
 					doc = (p > 0) ? substr(entry, 1, p - 1) : entry
 					anc = (p > 0) ? substr(entry, p + 1) : ""
@@ -985,7 +1366,7 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					sub(/^\.\//, "", doc)
 					sub(/\/+$/, "", doc)
 
-					key = doc SUBSEP anc
+					key = doc SUBSEP resolve(doc, anc)
 					if (!(key in SEENT)) {
 						SEENT[key] = 1
 						TORDER[++nt] = key
@@ -1002,9 +1383,29 @@ if [ "$MODE" = "supersession-sweep" ]; then
 			}
 
 			if (asjson == "1") {
-				printf "{\n  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
+				printf "{\n"
+				# `ok` is the verdict as a field rather than only as an exit
+				# status, so a consumer parsing the document does not have to
+				# have captured the status to know which answer it is holding.
+				printf "  " DQ "ok" DQ ": %s,\n", (nu == 0 ? "true" : "false")
+				printf "  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
 				printf "  " DQ "worklist_count" DQ ": %d,\n", nt
 				printf "  " DQ "superseded_count" DQ ": %d,\n", nsup
+				printf "  " DQ "unreconciled_count" DQ ": %d,\n", nu
+				printf "  " DQ "unreconciled" DQ ": ["
+				for (i = 1; i <= nu; i++) {
+					f = UNREC[i]
+					printf "%s\n    {", (i == 1 ? "" : ",")
+					printf DQ "id" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "id"])
+					printf DQ "file" DQ ": " DQ "%s" DQ ", ", jesc(f)
+					printf DQ "type" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "type"])
+					printf DQ "title" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "title"])
+					printf DQ "supersedes" DQ ": " DQ "%s" DQ ", ", jesc(UTGT[f])
+					printf DQ "created" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "created"])
+					printf DQ "reconciled" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "reconciled"])
+					printf DQ "detail" DQ ": " DQ "%s" DQ "}", jesc(UWHY[f])
+				}
+				printf "%s],\n", (nu == 0 ? "" : "\n  ")
 				printf "  " DQ "worklist" DQ ": ["
 				for (t = 1; t <= nt; t++) {
 					key = TORDER[t]
@@ -1034,7 +1435,7 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					}
 				}
 				printf "%s]\n}\n", (m == 0 ? "" : "\n  ")
-				exit 0
+				exit (nu == 0 ? 0 : 1)
 			}
 
 			printf "vault-lint supersession-sweep: %d section%s to re-read, from %d superseded note%s\n",
@@ -1056,9 +1457,32 @@ if [ "$MODE" = "supersession-sweep" ]; then
 				f = NOUSE[i]
 				for (b = 1; b <= SN[f]; b++) tnote(f, b, "    ")
 			}
+
+			# The verdict prints last, because it is the half a reader acts on
+			# and the worklist above it can run to dozens of rows. At
+			# schemaVersion 1 the section says the rule does not apply rather
+			# than printing an empty list: an unconditional `(none)` here would
+			# report a vault as reconciled when nothing about it was asked.
+			if (schema + 0 < 2) {
+				printf "\n  reconciliation is a schemaVersion 2 rule and this vault is at %s - the worklist above is a report here, and nothing was asked about whether it was read\n", schema
+				exit 0
+			}
+			printf "\n  supersessions with nothing recording that the worklist was read\n"
+			if (nu == 0) printf "    (none)\n"
+			for (i = 1; i <= nu; i++) {
+				f = UNREC[i]
+				printf "    %s  %s\n", V[f, "id"], V[f, "type"]
+				printf "      %s\n", V[f, "title"]
+				printf "      supersedes %s\n", UTGT[f]
+				printf "      %s\n", UWHY[f]
+			}
+			if (nu > 0)
+				printf "\nvault-lint supersession-sweep: %d supersession%s with nothing recording that its sections were read, under %s\n",
+					nu, (nu == 1 ? "" : "s"), vault
+			exit (nu == 0 ? 0 : 1)
 		}
 	' "$RECORDS"
-	exit 0
+	exit $?
 fi
 
 # ----------------------------------------------------------------------------
@@ -1092,10 +1516,18 @@ PATHIDX="$TMP/paths"
 # Human output goes to stderr and JSON to stdout on purpose: a caller piping
 # --json into a parser gets only the document, and a human running it bare still
 # sees everything.
+#
+# The second argument is the line printed when nothing failed, and it is an
+# argument rather than a constant because "clean" means something different in
+# each mode. `check` looks at note fields and never opens a document, so a
+# corpus with dozens of dead anchors used to print the same `clean` as a whole
+# corpus in order - and a success line read as a whole-corpus verdict is the
+# thing somebody renders on. --used-in's clean genuinely is what it says: every
+# target it was asked to open resolved. It keeps the default.
 render_failures() {
 	LC_ALL=C sort -o "$FAILURES" "$FAILURES"
 
-	awk -v vault="$VAULT" -v today="$TODAY" -v asjson="$JSON" -v prog="$1" -F '\t' '
+	awk -v vault="$VAULT" -v today="$TODAY" -v asjson="$JSON" -v prog="$1" -v okline="${2:-clean - $VAULT}" -F '\t' '
 		BEGIN {
 			DQ = sprintf("%c", 34)
 			BS = sprintf("%c", 92)
@@ -1138,7 +1570,7 @@ render_failures() {
 				}
 				printf "%s]\n}\n", (n == 0 ? "" : "\n  ")
 			} else if (n == 0) {
-				printf "%s: clean - %s\n", prog, vault
+				printf "%s: %s\n", prog, okline
 			} else {
 				printf "%s: %d failure%s under %s\n", prog, n, (n == 1 ? "" : "s"), vault > "/dev/stderr"
 				for (i = 1; i <= n; i++) {
@@ -1269,10 +1701,45 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
+		# THAT FENCE BLOCK IS ONE OF THREE COPIES in this file. The
+		# --supersession-sweep sections() and the --red-team row reader carry
+		# the same six lines, because all three read a document at the vault
+		# root and no one of them can call a function defined in another awk
+		# program. Change one, change all three.
+		#
+		# This copy is the one that most needed saying so. It has been edited
+		# twice already - the `{#anchor}` attribute below landed here alone -
+		# and a contract the other two copies knew about while this one did not
+		# would have made this the safe-looking place to edit by itself.
+		#
 		# Setext headings (a title underlined with ===) are deliberately not read.
 		# They are document titles and a #fragment cites a section, so reading
 		# them would mean carrying a line of lookbehind for a case nothing cites.
-		function scan(doc,   path, line, t, c, n, fc, fn, h) {
+		#
+		# A trailing `{#anchor}` attribute is the citation address of the heading
+		# itself. It is stripped from the heading text before the slug rule runs
+		# and registered as an anchor in its own right. What a rendered document owes
+		# it - strip it from the visible heading, emit it as the element id, so no
+		# reader ever sees `{#foo}` on the page - is the contract in
+		# market-analysis/references/rendering.md, which both skills share.
+		#
+		# BOTH the explicit anchor and the slug of the stripped text are
+		# registered, rather than the explicit one replacing the slug. A vault
+		# authored before the template carried attributes cites the slug, and
+		# those notes must not start failing the moment their author pastes a
+		# newer template into the same document - an upgrade that fails an
+		# untouched corpus is one nobody takes. Rewording protection is unaffected
+		# by registering both: a heading whose TEXT changes loses its old slug
+		# under either design, and the explicit anchor is the half that survives,
+		# which is the whole reason to write one.
+		#
+		# The attribute is matched as ASCII - [A-Za-z0-9_-] - because that is the
+		# character set an anchor is allowed to carry, and because a byte-oriented
+		# awk reading a class over anything wider would strike the continuation
+		# byte of an unrelated letter. Nothing below it changes: the heading TEXT
+		# still goes through slug(), with UNIPUNCT removed as whole sequences and
+		# whitespace runs left uncollapsed.
+		function scan(doc,   path, line, t, c, n, fc, fn, h, a) {
 			path = root "/" doc
 			fc = ""; fn = 0
 			while ((getline line < path) > 0) {
@@ -1292,6 +1759,18 @@ if [ "$MODE" = "used-in" ]; then
 				h = substr(t, RLENGTH + 1)
 				sub(/[ \t]*#+[ \t]*$/, "", h)
 				sub(/[ \t]+$/, "", h)
+				# Braces written as bracket expressions rather than escaped. A
+				# backslash-brace is an interval expression to some awks and a
+				# literal to others, and which one runs this is a property of the
+				# user machine rather than of this file.
+				if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
+					a = substr(h, RSTART, RLENGTH)
+					sub(/^[{]#/, "", a)
+					sub(/[}]$/, "", a)
+					HAS[doc SUBSEP a] = 1
+					h = substr(h, 1, RSTART - 1)
+					sub(/[ \t]+$/, "", h)
+				}
 				HAS[doc SUBSEP slug(h)] = 1
 			}
 			close(path)
@@ -1328,13 +1807,190 @@ if [ "$MODE" = "used-in" ]; then
 					if (anchor == "") continue
 					if (!(doc in SCANNED)) { SCANNED[doc] = 1; scan(doc) }
 					if (!((doc SUBSEP anchor) in HAS))
-						report(f, "used-in-dead-anchor", id, "`used_in` names `" entry "` and no heading in " doc " slugs to `" anchor "`. A heading was renamed or cut while the note went on naming it, so the claim reads as cited into a section nobody can find - and a stale_after that fires sends its reader to a document with no such paragraph in it")
+						report(f, "used-in-dead-anchor", id, "`used_in` names `" entry "` and no heading in " doc " carries `{#" anchor "}` or slugs to `" anchor "`. A heading was renamed or cut while the note went on naming it, so the claim reads as cited into a section nobody can find - and a stale_after that fires sends its reader to a document with no such paragraph in it")
 				}
 			}
 		}
 	' "$RECORDS"
 
 	render_failures "vault-lint used-in"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --red-team - a dispatched lens owes rows
+#
+# The panel is the most expensive read a plan gets, and until now nothing in the
+# corpus recorded which lenses were sent. A lens that returned findings, saw
+# them folded into two documents and never wrote a row in red-team.md is
+# indistinguishable from a lens that had no objections: silence and thoroughness
+# read the same, and the plan then cites objection codes into a file carrying
+# none of them. This creates the record it enforces - the `## Lenses dispatched`
+# roster - and checks it against the objection table beside it.
+#
+# BOTH DIRECTIONS, and the second one is what makes the first hold. A roster
+# entry with no rows is the failure this exists for. A row whose lens is not on
+# the roster is the failure the check would otherwise create: with only the
+# forward direction, the cheapest way past a lens that returned nothing is to
+# delete it from the roster, and the record stops being a record.
+#
+# It is a mode rather than a check for the same reason --used-in is: it reads a
+# document at the vault root rather than a note in one of the six directories,
+# which is a different surface. It shares --used-in's failure renderer, so it
+# reports one row per failure with the same JSON shape.
+#
+# LC_ALL=C for the reason --used-in found the hard way: an objection is free
+# prose in a table cell, so it carries em dashes and curly quotes, and macOS awk
+# in a UTF-8 locale aborts the record on the first sequence it cannot decode -
+# which would end the scan early and pass a document it never finished reading.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "red-team" ]; then
+	RED_TEAM="$VAULT/red-team.md"
+	# A vault with no red-team.md dispatched no panel, which is every vault
+	# before Phase 4 runs. Reported by name rather than passing silently: a mode
+	# that printed `clean` over a document it never found reads as a panel that
+	# was checked. The empty failure file still goes through the renderer, so
+	# --json gets a well-formed document either way.
+	RED_TEAM_OK="every dispatched lens wrote rows - $VAULT"
+	if [ -f "$RED_TEAM" ]; then
+		LC_ALL=C awk -v out="$FAILURES" -v schema="$FOUND_SCHEMA" '
+			function report(check, id, detail) { print "red-team.md\t" check "\t" id "\t" detail >> out }
+
+			# The key the two halves are matched on: trimmed, whitespace runs
+			# collapsed, lowercased. Matching the raw cell would report `Market
+			# skeptic` and `market  skeptic` as two lenses, one of them missing
+			# every row - and a check that fires on capitalisation is one
+			# somebody switches off, which takes the half that worked with it.
+			function key(s) {
+				sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
+				gsub(/[ \t]+/, " ", s)
+				return tolower(s)
+			}
+
+			# The same trim without the folding, for the message. A failure
+			# naming the lens in the case the roster wrote it in is one the
+			# reader can find by eye in the document.
+			function disp(s) {
+				sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			{
+				line = $0
+				sub(/\r$/, "", line)
+				t = line
+				sub(/^[ \t]+/, "", t)
+
+				# Fenced blocks hold examples, not rows. A document that
+				# carries its own row template - which this one is written to -
+				# would otherwise register the template as a dispatched lens
+				# and fail for documenting its own format. Tracked by marker
+				# character and run length so a longer nested fence cannot
+				# close its parent early.
+				#
+				# One of three copies of those six lines: the --used-in scan()
+				# and the --supersession-sweep sections() carry the same ones,
+				# for the same reason - three awk programs reading a document
+				# at the vault root, and no way to share a function across
+				# them. Change one, change all three.
+				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+					c = substr(t, 1, 1)
+					n = 0
+					while (substr(t, n + 1, 1) == c) n++
+					if (fc == "") { fc = c; fn = n }
+					else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+					next
+				}
+				if (fc != "") next
+
+				if (match(t, /^#+[ \t]+/)) {
+					h = substr(t, RLENGTH + 1)
+					sub(/[ \t]*#+[ \t]*$/, "", h)
+					inroster = (key(h) == "lenses dispatched")
+					next
+				}
+
+				if (substr(t, 1, 1) != "|") next
+				row = t
+				sub(/^\|/, "", row)
+				sub(/\|[ \t]*$/, "", row)
+				nc = split(row, cell, "|")
+				if (nc < 2) next
+				c1 = disp(cell[1])
+
+				# The header row and the |---| rule are skipped by the same
+				# test that reads a round, rather than by counting lines: a
+				# table written without a header, or with an alignment row
+				# carrying colons, is still a roster and its rows still name
+				# lenses that owe rows.
+				if (inroster) {
+					if (c1 !~ /^R?[0-9]+$/) next
+					rd = c1
+					sub(/^R/, "", rd)
+					lens = key(cell[2])
+					if (lens == "") next
+					rk = rd SUBSEP lens
+					if (rk in ROSTER) next
+					ROSTER[rk] = 1
+					RORDER[++nr] = rk
+					RSHOW[rk] = disp(cell[2])
+					next
+				}
+
+				# An objection row is identified by its ID rather than by the
+				# heading it sits under, so a document that splits its rounds
+				# across sections is read the same as one with a single table.
+				# The round in the ID is the round the row counts for - it is
+				# the namespace the ID already carries, so there is no second
+				# place for the two to disagree.
+				if (c1 !~ /^R[0-9]+-O[0-9]+$/) next
+				rd = c1
+				sub(/^R/, "", rd)
+				sub(/-O[0-9]+$/, "", rd)
+				lens = key(cell[2])
+				ok = rd SUBSEP lens
+				if (ok in ROWS) next
+				ROWS[ok] = 1
+				OORDER[++no] = ok
+				OSHOW[ok] = disp(cell[2])
+				OID[ok] = c1
+			}
+
+			END {
+				# No roster at all. At schemaVersion 2 that is the failure,
+				# because the roster is where version 2 put the record. At 1 it
+				# is a document that predates the field, and failing it would
+				# fail every corpus with a panel in it on the day the skill
+				# updated - which is how a gate stops being run.
+				if (nr == 0) {
+					if (schema + 0 >= 2)
+						report("red-team-no-roster", "", "red-team.md carries no `## Lenses dispatched` roster. Nothing else in the corpus records which lenses were sent, so a lens that returned findings and wrote no row is indistinguishable from one that had no objections - and the objection codes the plan cites resolve into a table that never carried them")
+					exit
+				}
+
+				for (i = 1; i <= nr; i++) {
+					rk = RORDER[i]
+					if (rk in ROWS) continue
+					split(rk, p, SUBSEP)
+					report("red-team-lens-no-rows", "R" p[1] " " RSHOW[rk],
+						"the roster names `" RSHOW[rk] "` as dispatched in round " p[1] " and no row in red-team.md carries an objection from it. Either the lens returned findings that were folded into the documents and never written down, in which case the plan cites a code the table does not hold, or it genuinely had none - and the whole point of the roster is that those two look identical from outside")
+				}
+
+				for (i = 1; i <= no; i++) {
+					ok = OORDER[i]
+					if (ok in ROSTER) continue
+					split(ok, p, SUBSEP)
+					report("red-team-lens-unrostered", OID[ok],
+						"row `" OID[ok] "` is an objection from `" OSHOW[ok] "` in round " p[1] ", and the roster does not name that lens as dispatched in that round. A roster that omits a lens whose rows are sitting in the table is not the record it claims to be, and the check above it can then be cleared by deleting a line rather than by dispatching a lens")
+				}
+			}
+		' "$RED_TEAM"
+	else
+		RED_TEAM_OK="no red-team.md under $VAULT - no panel was dispatched, so no lens owes rows"
+	fi
+
+	render_failures "vault-lint red-team" "$RED_TEAM_OK"
 	exit $?
 fi
 
@@ -1349,7 +2005,12 @@ fi
 # message that only restates the rule gives them nothing to decide with.
 # ----------------------------------------------------------------------------
 
-awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields="$EDGE_FIELDS" -v pathidx="$PATHIDX" -F '\t' '
+# `schema` is the version found in the vault's own config, passed in so a check
+# added under a later schema can stay silent on a vault written before it. A
+# corpus at 1 owes exactly the rules it was written under; failing it on a rule
+# that did not exist when it was authored is an upgrade that breaks every
+# existing vault, which is what schemaVersion exists to make unnecessary.
+awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields="$EDGE_FIELDS" -v pathidx="$PATHIDX" -v schema="$FOUND_SCHEMA" -F '\t' '
 	BEGIN {
 		BS = sprintf("%c", 92)
 
@@ -1368,6 +2029,23 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		# worked example is a lint people switch off. They are checked for
 		# COHERENCE instead - see the brief list below.
 		req["decision"]   = "confidence_own options chosen reasoning reopen_if rests_on"
+
+		# The type names, for the type-agreement message. Read off one string
+		# rather than written into the message, so the set a milestone joins is
+		# stated in one place and the message cannot go on naming six types
+		# after a seventh is registered below.
+		types = "source, fact, claim, assumption, question, decision"
+
+		# THE ONE SCHEMA GATE IN THIS PASS, AND EVERY MILESTONE CHECK HANGS OFF
+		# IT. A vault at 1 predates the type and has no milestones/ directory,
+		# so registering the type there would turn `milestone` into a legitimate
+		# value of `type` in a corpus whose schema never had it - and the check
+		# that says so (type-agreement) is the only thing that would notice a
+		# directory grown without the version being moved.
+		if (schema + 0 >= 2) {
+			req["milestone"] = "confidence_own sequence date_confidence moves resource rests_on"
+			types = types ", milestone"
+		}
 
 		why["id"]             = "nothing can address this note, so every edge that was meant to point at it dangles"
 		why["type"]           = "the directory, the ID prefix and the type field stop agreeing, and each consumer answers differently"
@@ -1391,6 +2069,10 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		why["chosen"]         = "the record says a fork was considered and not which way it went"
 		why["reasoning"]      = "the decision cannot be re-evaluated when its basis moves"
 		why["reopen_if"]      = "a decision with no trigger is indistinguishable from one nobody may revisit, so it gets filed rather than re-checked"
+		why["sequence"]       = "nothing can order this item against another, so the two checks that read order - a prerequisite scheduled after the item needing it, and two items asserted concurrent on one resource - have no field to run on, and a roadmap with no order reads as a set of things that all happen at once"
+		why["date_confidence"] = "a month the skill derived and a month the founder stated become the same string, and the derived one gets quoted back as a commitment nobody made"
+		why["moves"]          = "the item moves no assumption anyone can name, and roadmap-sequencing.md Rule 1 files that as maintenance rather than as a roadmap item - the model then carries a dated change with no assumption row behind it, so the curve is decoration"
+		why["resource"]       = "what the item consumes is unrecorded, so two items competing for the same founder-week read as independent and the plan credits both"
 
 		# The decision-brief fields below are not in any req[] entry - no type
 		# requires them - but they share this table because the question it
@@ -1443,7 +2125,7 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 	}
 
 	# Duplicated in the graph pass above - see the note there.
-	function isid(s) { return (s ~ /^(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION)-[A-Za-z0-9]+$/) }
+	function isid(s) { return (s ~ /^(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)-[A-Za-z0-9]+$/) }
 
 	# Case and separator drift, collapsed. This is the whole of step 3, and the
 	# reason step 3 exists: it catches the most common near-miss for the cost of
@@ -1559,7 +2241,7 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 
 				# --- the type is stated three times and all three agree ----
 				if (ty != "" && !(ty in req))
-					report(f, "type-agreement", id, "type `" ty "` is not one of source, fact, claim, assumption, question, decision. Structure that does not fit a type belongs on an edge, not in a seventh type")
+					report(f, "type-agreement", id, "type `" ty "` is not one of " types ". Structure that does not fit a type belongs on an edge, not in a new type" (ty == "milestone" ? ". `milestone` is a schemaVersion 2 type and this vault is stamped " schema ", so it does not carry one - move the corpus to 2 the way vault-migration.md describes, doing the work before stamping" : ""))
 				if (ty in req && DIR[f] != ty "s")
 					report(f, "type-agreement", id, "type is `" ty "` but the note sits in " DIR[f] "/ rather than " ty "s/. The filesystem sees only the directory, so a listing of " ty "s/ silently omits this note")
 				if (id != "") {
@@ -1595,6 +2277,52 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 				}
 			}
 
+			# --- the two roadmap order rules, at schemaVersion 2 -----------
+			# roadmap-sequencing.md asserts both in prose and nothing has ever
+			# read them. That is what makes them worth a check rather than a
+			# paragraph: a roadmap is a set of claims about when the inputs
+			# to the model change, so an order nobody verified sets the month
+			# every downstream number is dated to.
+			#
+			# `moves` naming a note that does not exist is deliberately NOT
+			# here - `moves` is in EDGE_FIELDS, so it is the dangling-edge rule
+			# every other edge already gets, for one word, and a `moves` value
+			# that is not a note ID at all is the malformed-edge rule in the
+			# same loop.
+			if (schema + 0 >= 2 && ty == "milestone") {
+				sq = V[f, "sequence"]
+
+				# The orderability of `sequence` is checked before anything
+				# reads it, because both checks below silently skip a value
+				# they cannot compare - and a check that stops firing prints
+				# the same green as one that passed.
+				if (sq != "" && sq !~ /^[0-9]+$/)
+					report(f, "sequence-not-orderable", id, "`sequence` is `" sq "`, which is not a whole number. Ordering is what `sequence` is for - the date the founder said is kept verbatim in `date_stated` precisely so nothing has to parse it - and a value that will not compare takes both order checks down with it, silently, over exactly the roadmap whose order nobody wrote down")
+
+				k = f SUBSEP "depends_on"
+				for (j = 1; j <= LN[k]; j++) {
+					tgt = LI[k, j]
+					# A dangling target is already a dangling-edge failure and
+					# an unorderable one is already reported on its own note.
+					# Reporting either again here would send the reader to the
+					# wrong field.
+					if (!(tgt in BYID)) continue
+					tsq = V[BYID[tgt], "sequence"]
+					if (sq !~ /^[0-9]+$/ || tsq !~ /^[0-9]+$/) continue
+					if (tsq + 0 >= sq + 0)
+						report(f, "dependency-after-dependent", id, "`depends_on` names " tgt ", whose `sequence` is " tsq ", while the `sequence` here is " sq ". The prerequisite is scheduled at or after the item that needs it, so the roadmap projects a capability landing in a month its own precondition has not reached - and because every item is a dated change to an assumption row, the model credits that month with revenue nothing could have shipped in")
+				}
+
+				# roadmap-sequencing.md Rule 4 - the rule it says most often
+				# changes the answer and is the one people skip. Collected
+				# here and reported after the loop, because the failure is a
+				# property of a GROUP and neither member is the wrong one.
+				if (V[f, "resource"] != "" && sq != "") {
+					rk = V[f, "resource"] SUBSEP sq
+					CONC[rk, ++CN[rk]] = f
+				}
+			}
+
 			# --- edges resolve to real notes --------------------------------
 			for (e = 1; e <= nedge; e++) {
 				k = f SUBSEP edgef[e]
@@ -1609,6 +2337,24 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 						# a different fix: nothing is missing from the vault,
 						# the field never named a note in the first place.
 						report(f, "malformed-edge", id, "`rests_on` holds `" item "`, which is not a note ID. rests_on is the blast-radius edge and has to name notes, or the chain from an amended source to the documents that inherited it stops here")
+					} else if (edgef[e] == "moves") {
+						# Same structural failure as rests_on above and a
+						# different cost, so a different message. The two are
+						# written out rather than folded into one generic
+						# sentence because a reader who is told only that the
+						# value is not an ID still has to work out what it cost
+						# on the field they wrote.
+						#
+						# This is the half of `moves` the dangling-edge rule
+						# cannot reach. A value that IS a well-formed ID naming
+						# no note is dangling-edge; a value that is not an ID at
+						# all fell through this arm and passed clean. And it is
+						# the EXPECTED mis-write rather than a hypothetical one:
+						# roadmap-sequencing.md Rule 1 names the assumption an
+						# item moves by its `A-n` row label, so the form an
+						# author writes after reading the prose was the one form
+						# nothing caught.
+						report(f, "malformed-edge", id, "`moves` holds `" item "`, which is not a note ID. An `A-n` row label off the assumptions table in the plan is what usually lands here, and the ledger cannot resolve a label to a note - so the item reads as naming the assumption it moves while naming nothing this vault holds, and the one check that makes roadmap-sequencing.md Rule 1 mechanical passes over the exact form authors write. Put the note ID of that assumption here; the table in the plan keeps its `A-n` label in prose")
 					}
 				}
 			}
@@ -1704,6 +2450,28 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 				report(URLMEM[u, j], "duplicate-url", V[URLMEM[u, j], "id"], "url_canonical " u " is carried by " URLN[u] " source notes: " others ". A claim resting on two of them looks doubly sourced when it rests on one document - which is what one newsletter link carrying tracking parameters and one search result turn into")
 		}
 
+		# Two milestones sharing a `resource` AND a `sequence` are asserted
+		# concurrent on one constrained resource. roadmap-sequencing.md Rule 4
+		# says they only compete if they consume the same one - so this is that
+		# rule read off the ledger instead of trusted, and a FALSE independence
+		# claim is what it catches: the naive value ranking it licenses orders
+		# the whole roadmap, and nothing downstream ever revisits it.
+		#
+		# Reported against every member of the group for the reason duplicate-url
+		# is: neither item is the wrong one, and a reader who opens the other
+		# file has to find the failure there too. Grouped and iterated exactly
+		# the way duplicate-url is, unordered - render_failures sorts the whole
+		# failure file before anything prints it, so the order rows are emitted
+		# in cannot reach the output.
+		for (rk in CN) {
+			if (CN[rk] < 2) continue
+			split(rk, rkp, SUBSEP)
+			others = ""
+			for (j = 1; j <= CN[rk]; j++) others = others (j == 1 ? "" : ", ") V[CONC[rk, j], "id"]
+			for (j = 1; j <= CN[rk]; j++)
+				report(CONC[rk, j], "false-independence", V[CONC[rk, j], "id"], CN[rk] " milestones declare `resource: " rkp[1] "` at `sequence: " rkp[2] "`: " others ". Items competing for one constrained resource cannot be asserted concurrent, so at least one of them is not happening in that slot. Give them distinct sequences, or name the resource each actually consumes - left as is, the plan reads as though both land and every number downstream inherits a week of capacity that was counted twice")
+		}
+
 		for (i = 1; i <= nf; i++) {
 			f = files[i]
 			if (V[f, "type"] != "source") continue
@@ -1724,4 +2492,18 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 # render
 # ----------------------------------------------------------------------------
 
-render_failures "vault-lint"
+# What the bare run did NOT ask, read off the mode table rather than written
+# out a second time. A mode added to the gate would otherwise leave this line
+# silently understating what it skipped, which is the same hand-maintained
+# enumeration the table exists to remove. `check` is excluded because it is the
+# mode printing the line.
+SKIPPED=""
+while read -r sel gate part; do
+	[ "$gate" = "gate" ] || continue
+	[ "$sel" = "check" ] && continue
+	SKIPPED="${SKIPPED:+$SKIPPED, }$part"
+done <<EOF
+$MODE_TABLE
+EOF
+
+render_failures "vault-lint" "note-level checks passed - $VAULT. Not opened: $SKIPPED - --release-gate asks all of them."

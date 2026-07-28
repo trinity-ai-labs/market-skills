@@ -159,9 +159,10 @@ lives inside it:
 ~/Documents/go-to-market/<product-slug>/
 ├── .vault/config.json       # schemaVersion — a directory without it is not a vault
 ├── _vocab.yml               # controlled subject vocabulary
-├── sources/ facts/ claims/ assumptions/ questions/ decisions/ # one file per note
+├── sources/ facts/ claims/ assumptions/ questions/ decisions/ milestones/ # one file per note
 ├── research/                # all prose — market-analysis dimensions, product-dossier.md,
-│                            #   founder-brief.md — untouched by the vault machinery
+│                            #   founder-brief.md — untouched by the vault machinery.
+│                            #   timeline.md is the exception: generated from milestones/
 ├── sources.md               # the [S#] index
 ├── one-pager.md  business-plan.md  financial-model.md  red-team.md # plan documents
 ├── deliverables/            # rendered business-plan.html/.pdf, one-pager.html/.pdf
@@ -192,16 +193,20 @@ The plugin ships one executable. `business-plan` builds a claim vault at
 `~/Documents/go-to-market/<product-slug>/` — every load-bearing number traced to a dated
 source — and `vault-lint.sh` is the read-only whole-corpus check that gates it: dangling edges,
 confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
-still cited.
+still cited, and — on a vault at `schemaVersion: 2` — a roadmap whose order contradicts itself,
+either a prerequisite scheduled after the item that needs it or two items competing for one
+constrained resource while the plan asserts they run side by side.
 
 Claude Code puts an enabled plugin's `bin/` on the Bash tool's `PATH`, so the skills invoke it
 bare, from whatever directory the user happens to be working in:
 
 ```sh
 vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
+vault-lint.sh --release-gate --vault "$VAULT_PATH"
 vault-lint.sh --unverified --vault "$VAULT_PATH"
 vault-lint.sh --used-in --vault "$VAULT_PATH"
 vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
+vault-lint.sh --red-team --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
@@ -210,14 +215,51 @@ cited into, and this opens each one to check the file is there and the `#anchor`
 heading, exiting 1 when it does not. It stops at whether the citation **resolves** — whether the
 section still *carries* the claim is a read, and `--help` says why a tool cannot do it.
 
+A heading offers two addresses and either resolves. The plan templates put an explicit
+`{#anchor}` attribute on every heading — `## Competition & moat {#competition}` — and that is
+the one to cite, because those same templates require a heading to state the current finding, so
+its text gets reworded and an anchor tracking the text would take every citation into that
+section down with it. The GitHub slug of the heading text, with the attribute stripped off,
+resolves too, so a vault written before its documents carried attributes keeps passing with
+nothing back-filled.
+
 `--supersession-sweep` is what makes that read a short one. Replacing a note is recorded on the
 note, and nothing tells the documents that were built on the old one — so this walks every
 superseded note and prints the document sections its citations reached, grouped one row per
 section however many notes point at it, each row naming the note, its replacement and the reason
 it was replaced. It prints the row count first, because a list you can size before you start is
-one that gets read. It is a **report and not a verdict: it exits 0 whether or not it finds
-anything**, since a supersession with a blast radius is the corpus doing its job — a mode that
-went red on a healthy vault would teach you to ignore the exit code the real checks depend on.
+one that gets read.
+
+**Finding rows is not a failure — but nothing recording that they were read is.** A healthy
+vault still exits 0 with a worklist in it, because a supersession with a blast radius is the
+corpus doing its job and a mode that went red on that would teach you to ignore the exit code
+the real checks depend on. What fails is the superseding note carrying no `reconciled:` date, or
+one earlier than its own `created`: the sections were never read, or were read before the
+supersession that put them in doubt existed. The verdict applies to a vault at `schemaVersion`
+2 — a vault at 1 predates the field and exits 0 either way. It says the read happened, not that
+it was done well; what it removes is skipping the read by default.
+
+`--red-team` asks the same question of the panel. `red-team.md` carries a `## Lenses dispatched`
+roster, and this fails when a lens named there wrote no objection row, or when a row names a
+lens the roster does not — a lens that returned findings, saw them folded into two documents and
+never wrote a row is otherwise indistinguishable from a lens that had no objections, and the
+plan then cites objection codes into a file carrying none of them. The reverse direction is
+checked because otherwise the gate clears by deleting a line from the roster. A vault with no
+`red-team.md` dispatched no panel and passes.
+
+`--release-gate` is the call before a render, and the only one that asks every question. It runs
+the bare check, `--used-in`, `--supersession-sweep` and `--red-team`, prints each part under its
+own heading, and exits with the worst status any part returned — so the gate is clean only when
+every part is. The alternative was several calls made from memory, and which of them actually
+ran was a matter of recall.
+
+**The bare run's success line says what it checked and what it did not**, because it used to say
+`clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
+checks passed … not opened: citation targets, supersession blast radius, panel objection rows* —
+and the list of what it skipped is read off the same mode table `--release-gate` composes itself
+from, so a mode added to the gate cannot leave the line quietly overstating what it covered. A
+success line is what somebody renders on, so it has to be narrower than the verdict its reader
+wants it to be.
 
 It is POSIX `/bin/sh` with zero dependencies — no Node, no Python, no jq. A tool that reads an
 entire private business corpus should not carry a transitive dependency tree, and a runtime

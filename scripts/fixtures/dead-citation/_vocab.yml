@@ -1,0 +1,12 @@
+# No required subject, so `check` has nothing to report over a corpus of two
+# well-formed notes. That silence is the whole point of this fixture: it is the
+# one vault where the note-level checks pass and --used-in does not.
+
+terms:
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver behind
+      it.
+    aliases:
+      - growth-rate
+    required: false
