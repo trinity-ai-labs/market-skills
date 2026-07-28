@@ -642,9 +642,895 @@ function Invoke-ModeBindingDriver {
 #
 # Ports bin/vault-lint.sh:3003-3629. The largest body in the file, gated on
 # schemaVersion throughout, and the mode a bare invocation runs.
+#
+# THE MESSAGES ARE THE PRODUCT (bin/vault-lint.sh:3009-3012). Every one of them
+# names what is wrong AND what it costs, because the person reading it is
+# deciding whether to care and a message that only restates the rule gives them
+# nothing to decide with. Every failure string below is transcribed character
+# for character from the awk program; the only edit this port is allowed is
+# transliterating a non-ASCII character, and this region carries none.
+#
+# THE HELPERS BELOW ARE LOCAL TO THIS FUNCTION ON PURPOSE. present() in
+# particular is copied verbatim into the --binding-driver pass
+# (bin/vault-lint.sh:2513-2517), and the shell keeps five separate copies of one
+# fenced-block scan for the same reason (:1283-1285): a helper two modes want is
+# a helper two slices are both editing. Hoisting one into the shared region is
+# the cross-slice edit the stub seam exists to prevent, and a divergence between
+# two copies is what the parity gate is there to report.
+#
+# The awk program assigns `BS = sprintf("%c", 92)` at :3021 and never reads it.
+# It is not transcribed: carried across, a dead assignment reads as a constant
+# some check below depends on.
 # ----------------------------------------------------------------------------
 function Invoke-ModeCheck {
-	Exit-NotPorted 'check'
+	# awk's SUBSEP - the character it joins a multi-index array key with. Every
+	# two-dimensional table below is a flat Dictionary keyed the same way, so the
+	# separator is written out once: one that could occur inside a note path or a
+	# field name would silently merge two keys into one. The char and the string
+	# are the same declaration because the only key this pass ever takes APART
+	# again splits on the char - written as a literal there, a later change here
+	# would move the join and leave the split behind, and the group key would
+	# come back whole in a message that still renders.
+	$SUBSEP_CHAR = [char]28
+	$SUBSEP = [string]$SUBSEP_CHAR
+
+	# The path index. The shell hands this pass a FILE and reads it into EXISTS
+	# (bin/vault-lint.sh:3023); here the shared region has already built the same
+	# set, so it is consumed rather than re-walked - `EXISTS[pl] = 1` is all any
+	# consumer ever makes of it.
+	$EXISTS = $script:PATHIDX
+
+	# The two patterns this pass runs per note, held as Regex objects for the
+	# reason the shared region gives at its own pattern block: the static
+	# [regex]::IsMatch overloads look the pattern up in a process-wide cache of
+	# fifteen on every call, and the ID test below runs once per block-list item
+	# of every edge field of every note - so on a vault of any size that lookup,
+	# not the matching, is what the check costs.
+	$RX_CHECK_ID = [regex]'\A(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)-[A-Za-z0-9]+\z'
+	$RX_CHECK_WHOLE = [regex]'\A[0-9]+\z'
+
+	# ------------------------------------------------------------------------
+	# the awk helper functions, transcribed (bin/vault-lint.sh:3187-3215)
+	#
+	# Declared before the tables because two of them build the tables. They read
+	# the record maps below through PowerShell's dynamic scope, which is resolved
+	# at call time - every map exists by the time the first call is made.
+	# ------------------------------------------------------------------------
+
+	# awk's `split(s, a, " ")` - runs of blanks, with leading and trailing ones
+	# discarded. Every field list in this pass is written as one space-separated
+	# string for the reason the shell gives: a list is one thing to keep in sync
+	# with the schema document, and an array of quoted members is eight.
+	function Split-CheckWords {
+		param([string]$Text)
+		$out = New-Object 'System.Collections.Generic.List[string]'
+		foreach ($w in [regex]::Split($Text, '[ \t\n]+')) {
+			if ($w.Length -ne 0) { [void]$out.Add($w) }
+		}
+		return , $out.ToArray()
+	}
+
+	# `V[f, k]` in awk is the empty string when the key was never set. Indexing a
+	# Dictionary that way throws, which would turn an absent field into a stack
+	# trace rather than into the failure the absence is supposed to produce.
+	function Get-CheckValue {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUBSEP + $K
+		if ($V.ContainsKey($kk)) { return $V[$kk] }
+		return ''
+	}
+
+	# `LN[f SUBSEP k]` - how many block-list items the note carries under a key.
+	function Get-CheckListCount {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUBSEP + $K
+		if ($LI.ContainsKey($kk)) { return $LI[$kk].Count }
+		return 0
+	}
+
+	# The items themselves, an empty list when the key carries none. The leading
+	# comma stops PowerShell unwrapping a one-item list into a bare string, which
+	# would make the caller's foreach walk that string's characters.
+	function Get-CheckList {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUBSEP + $K
+		if ($LI.ContainsKey($kk)) { return , $LI[$kk] }
+		return , (New-Object 'System.Collections.Generic.List[string]')
+	}
+
+	# present(f, k) at bin/vault-lint.sh:3215, copied verbatim into the
+	# --binding-driver pass at :2513-2517. A field counts as present when it
+	# holds a scalar OR at least one block-list item - the two record types a
+	# note field can arrive as, and a check that read only one of them would pass
+	# every note that wrote its value as a list.
+	# It reads the two maps directly rather than through the two accessors above,
+	# because it is the most-called helper in the pass - every required field of
+	# every note, then the whole brief list twice and the whole verdict list
+	# twice - and routing it through them would build the composite key a second
+	# time and probe each dictionary twice for one answer.
+	function Test-CheckPresent {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUBSEP + $K
+		if ($V.ContainsKey($kk) -and $V[$kk].Length -ne 0) { return $true }
+		if ($LI.ContainsKey($kk) -and $LI[$kk].Count -gt 0) { return $true }
+		return $false
+	}
+
+	# isid(), which the graph pass carries its own copy of for the reason the
+	# stub seam above states. \A and \z rather than ^ and $: in .NET `$` also
+	# matches before a trailing newline, so a value ending in one would read as a
+	# well-formed ID here and not in awk.
+	function Test-CheckIsId {
+		param([string]$Text)
+		return $RX_CHECK_ID.IsMatch($Text)
+	}
+
+	# nrm() - case and separator drift, collapsed. This is the whole of step 3 of
+	# subject resolution below, and the reason step 3 exists: it catches the most
+	# common near-miss for the cost of one pass per term, where an edit-distance
+	# routine would be a nested loop per candidate pair over the whole
+	# vocabulary. The lowercase is ASCII-only, which is what awk's tolower does
+	# in the C locale, and every character outside [a-z0-9] is dropped either
+	# way.
+	function Get-CheckNorm {
+		param([string]$Text)
+		$sb = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$c = $Text[$i]
+			if ($c -ge [char]65 -and $c -le [char]90) { $c = [char]([int]$c + 32) }
+			if (($c -ge [char]97 -and $c -le [char]122) -or ($c -ge [char]48 -and $c -le [char]57)) { [void]$sb.Append($c) }
+		}
+		return $sb.ToString()
+	}
+
+	# cpl() - the length of the common prefix of two strings.
+	function Get-CheckCommonPrefixLength {
+		param([string]$A, [string]$B)
+		$n = $A.Length
+		if ($B.Length -lt $n) { $n = $B.Length }
+		for ($i = 0; $i -lt $n; $i++) {
+			if ($A[$i] -cne $B[$i]) { return $i }
+		}
+		return $n
+	}
+
+	# target_of() - a block-list item may carry a ` :: ` label after the note ID
+	# it names, and it is the ID in front of the label that has to resolve. The
+	# 4 is the length of that separator, so the substring starts on the first
+	# character past it.
+	function Get-CheckEdgeTarget {
+		param([string]$Item)
+		$at = $Item.IndexOf(' :: ', [System.StringComparison]::Ordinal)
+		if ($at -ge 0) { return $Item.Substring($at + 4) }
+		return $Item
+	}
+
+	# report() at bin/vault-lint.sh:3213. The shell appends to a file that
+	# render_failures then sorts; here the rows go straight onto the shared
+	# $FAILURES list, which Render-Failures sorts with the same ordinal comparer.
+	# So the order rows are emitted in cannot reach the output, which is what
+	# lets the two grouped checks below iterate their groups unordered.
+	function Add-CheckFailure {
+		param([string]$File, [string]$Check, [string]$Id, [string]$Detail)
+		[void]$script:FAILURES.Add($File + "`t" + $Check + "`t" + $Id + "`t" + $Detail)
+	}
+
+	# ------------------------------------------------------------------------
+	# the tables, ported from the awk BEGIN block (bin/vault-lint.sh:3020-3184)
+	# ------------------------------------------------------------------------
+
+	$common = 'id type title status confidence created'
+
+	$req = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$req['source'] = 'url url_canonical pulled quote'
+	$req['fact'] = 'confidence_own rests_on'
+	$req['claim'] = 'confidence_own subject stale_after rests_on'
+	$req['assumption'] = 'value sensitivity validated_by'
+	$req['question'] = 'gaps'
+	# The decision-brief fields in references/decisions.md are deliberately NOT
+	# required here: the decision note in vault.md is a valid decision note
+	# without them, and a lint that fails the schema document own worked example
+	# is a lint people switch off. They are checked for COHERENCE instead - see
+	# the brief list below.
+	$req['decision'] = 'confidence_own options chosen reasoning reopen_if rests_on'
+
+	# The type names, for the type-agreement message. Read off one string rather
+	# than written into the message, so the set a milestone joins is stated in
+	# one place and the message cannot go on naming six types after a seventh is
+	# registered below.
+	$types = 'source, fact, claim, assumption, question, decision'
+
+	# THE ONE SCHEMA GATE IN THIS PASS, AND EVERY MILESTONE CHECK HANGS OFF IT.
+	# A vault at 1 predates the type and has no milestones/ directory, so
+	# registering the type there would turn `milestone` into a legitimate value
+	# of `type` in a corpus whose schema never had it - and the check that says
+	# so (type-agreement) is the only thing that would notice a directory grown
+	# without the version being moved.
+	$SCHEMA_N = [int]$script:FOUND_SCHEMA
+	if ($SCHEMA_N -ge 2) {
+		$req['milestone'] = 'confidence_own sequence date_confidence moves resource rests_on'
+		$types = $types + ', milestone'
+	}
+
+	# The required list per type, split once now that the schema gate has settled
+	# what the types are. Splitting inside the note loop instead would re-derive
+	# one of at most eight constant answers per note, which is the same reason
+	# the brief, verdict, driver-kind and edge lists below are split out here.
+	# A type with no entry gets the common fields alone, which is what awk's
+	# `common (ty in req ? " " req[ty] : "")` says.
+	$commonf = Split-CheckWords $common
+	$reqf = New-Object 'System.Collections.Generic.Dictionary[string,string[]]'
+	foreach ($rt in $req.Keys) { $reqf[$rt] = Split-CheckWords ($common + ' ' + $req[$rt]) }
+
+	$why = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$why['id'] = 'nothing can address this note, so every edge that was meant to point at it dangles'
+	$why['type'] = 'the directory, the ID prefix and the type field stop agreeing, and each consumer answers differently'
+	$why['title'] = 'a rendered document has nothing to show - the ID is a link target, not a label'
+	$why['status'] = 'a retracted assertion is indistinguishable from a live one'
+	$why['confidence'] = 'a hedge anywhere in the chain below this note has nowhere to surface'
+	$why['created'] = 'there is no way to tell a note written before a source was amended from one written after, which is the distinction a re-check runs on'
+	$why['url'] = 'the material cannot be found again'
+	$why['url_canonical'] = 'duplicate detection cannot see this source, so two researchers citing the same page read as two independent citations'
+	$why['pulled'] = 'there is no record of when the material was actually read, so nobody can tell whether it predates an amendment'
+	$why['quote'] = 'URLs rot and pages are silently edited - without the passage the note reads as sourced with nothing behind it'
+	$why['confidence_own'] = 'the derived confidence has no input, so min(confidence_own, rests_on) cannot be checked and the stored value is unverifiable'
+	$why['rests_on'] = 'the note asserts something with no provenance, and it is precisely the note that gets cited without hesitation'
+	$why['subject'] = 'the claim can never collide with one that contradicts it, so a disagreement stays invisible to every query'
+	$why['stale_after'] = 'the claim has no declared shelf life, so nothing will ever flag it for re-checking'
+	$why['value'] = 'there is nothing specific enough to validate, so a validation step reports success whatever it finds'
+	$why['sensitivity'] = 'every unverified assumption looks equally urgent, so they all get deferred equally'
+	$why['validated_by'] = 'a permanent unverified belief that nothing is scheduled to revisit'
+	$why['gaps'] = 'the question is a topic rather than something researchable, and nothing says when it closes'
+	$why['options'] = 'the rejected set is unrecorded, and reading the rejected set is the entire reason to keep the note'
+	$why['chosen'] = 'the record says a fork was considered and not which way it went'
+	$why['reasoning'] = 'the decision cannot be re-evaluated when its basis moves'
+	$why['reopen_if'] = 'a decision with no trigger is indistinguishable from one nobody may revisit, so it gets filed rather than re-checked'
+	$why['sequence'] = 'nothing can order this item against another, so the two checks that read order - a prerequisite scheduled after the item needing it, and two items asserted concurrent on one resource - have no field to run on, and a roadmap with no order reads as a set of things that all happen at once'
+	$why['date_confidence'] = 'a month the skill derived and a month the founder stated become the same string, and the derived one gets quoted back as a commitment nobody made'
+	$why['moves'] = 'the item moves no assumption anyone can name, and roadmap-sequencing.md Rule 1 files that as maintenance rather than as a roadmap item - the model then carries a dated change with no assumption row behind it, so the curve is decoration'
+	$why['resource'] = 'what the item consumes is unrecorded, so two items competing for the same founder-week read as independent and the plan credits both'
+
+	# The decision-brief fields below are not in any req[] entry - no type
+	# requires them - but they share this table because the question it answers
+	# is the same one: what does the absence of this field cost. Reached from the
+	# decision-brief check rather than from required-field.
+	$why['criteria'] = 'there is nothing to compare the choice against, so the values-congruence check - the one signal that catches a wrong recommendation - can never be run'
+	$why['criteria_ranked_by'] = 'a skill-ranked list reads later as the ranking the founder gave, and the recommendation then agrees with those criteria by construction'
+	$why['option_evidence'] = 'the evidence sits on the decision as a whole, so a column that was well sourced and a column with nothing behind it are indistinguishable'
+	$why['do_nothing'] = 'the mandatory status-quo column stops being mechanically checkable, and a grid that quietly dropped it presented the decision as already made'
+	$why['founder_reasoning'] = 'the record reads six months later as a choice made on analysis, and the constraint that actually drove it - I do not want to owe anyone money - is gone, unrecoverable, and was the reason the decision was right'
+	$why['likelihood'] = 'the probability survives only in a hedged verb that fuses it with confidence, so a thin lean and a well-evidenced coin flip become the same sentence'
+	$why['likelihood_range'] = 'the band term drifts between readers far enough to justify different choices, and neither reader learns they disagreed'
+	$why['evidence_grade'] = 'the register of the recommendation is set by how the author felt about the call rather than by the evidence'
+
+	# The verdict fields, reached from the verdict check rather than from
+	# required-field: no type requires them, and the question the table answers
+	# is the same one - what the absence of this field costs.
+	$why['binding_driver'] = 'the two counts beside it are over nothing in particular, because distinct sources under the verdict is most of the corpus while distinct sources under the driver that binds is a number worth printing - and the binding driver moves, so this is also the record of which driver the stored counts were taken under'
+	$why['driver_kind'] = 'nothing downstream can tell a constraint the founder chose from one the category sets, so a policy-bound verdict renders at the same confidence letter as a structural one and the founder is talked out of something they could revisit this week'
+	$why['conditional_on'] = 'the policy variable the verdict is conditional on exists only inside a sentence, so a rendered section that dropped it reads exactly like one that kept it - and only one of the two is true'
+	$why['evidence_n'] = 'the corpus knows how thin the tail is and the rendered figure does not say so, because confidence is a letter about the weakest link and says nothing about how many links there are'
+	$why['evidence_counterparties'] = 'three deals from one counterparty is the terms of one relationship reported as the terms of a market, and this is the half that cannot be recovered from anything else the corpus records - two write-ups of one party genuinely are two documents with two canonical URLs'
+
+	# What a brief-backed decision note owes, from the field table in
+	# references/decisions.md. Keep this list and the trigger split below in sync
+	# with that table required column: a field added there, or moved between
+	# required and conditional, has to be added or moved here.
+	#
+	# Presence cannot be required of every decision note, because only a GUIDED
+	# fork produces a brief - a direct-posture founder who simply decided writes
+	# a decision note carrying none of these, which is exactly vault.md worked
+	# example. What CAN be required is coherence: carry one and you owe the rest.
+	#
+	# `notrigger` marks the members that never themselves demand the rest. Only
+	# the option-grid fields trigger, because each is meaningless alone: ranked
+	# criteria with no evidence per option, or a likelihood with no evidence
+	# grade, is half a brief. `founder_reasoning` is the opposite - a verbatim
+	# record of what the founder said is worth having on any decision note, so a
+	# note migrated out of older prose can legitimately preserve it and carry
+	# nothing else. Triggering on it would fail that note, and the cheapest way
+	# to green would be deleting the verbatim words, which is the exact loss the
+	# field was split out of `reasoning` to prevent.
+	#
+	# Absent from the list entirely, on the same reasoning: `assumptions_low`,
+	# which decisions.md marks required only when any exist and which names
+	# load-bearing beliefs worth recording on any decision, and the review fields
+	# (reaffirmed, reviewed, what_happened, was_the_reasoning_right,
+	# review_note), which record what happened to a decision afterwards -
+	# something a decision with no brief behind it goes through the same.
+	$brieff = Split-CheckWords 'criteria criteria_ranked_by option_evidence do_nothing founder_reasoning likelihood likelihood_range evidence_grade'
+	$notrigger = New-Object 'System.Collections.Generic.HashSet[string]'
+	[void]$notrigger.Add('founder_reasoning')
+
+	# What a target verdict owes, from the verdict block in vault.md. The first
+	# four are owed outright; `conditional_on` sits last in the list and is owed
+	# on top of them exactly when `driver_kind` is one of the two policy values,
+	# which `condonly` marks - a structural verdict has no choice to name, and a
+	# rule demanding a condition from every verdict would be met by inventing
+	# one. Marking the exception the way the decision brief marks `notrigger`
+	# next door keeps one list and one walk. Keep this list and both triggers
+	# below in sync with that block, and with the copy in the --binding-driver
+	# pass, which counts the same five: a field added there has to be added in
+	# both places.
+	$verdictf = Split-CheckWords 'binding_driver driver_kind evidence_n evidence_counterparties conditional_on'
+	$condonly = New-Object 'System.Collections.Generic.HashSet[string]'
+	[void]$condonly.Add('conditional_on')
+
+	# THE FIVE FIELDS HANG OFF THE SUBJECT RATHER THAN THE TYPE, because one
+	# verdict is filed under both types inside a single engagement - an
+	# `assumption` before the research that settles it and a `claim` after. A
+	# rule keyed to `type: claim` would exempt every verdict written before the
+	# research came back, which is every verdict at the point where a wrong one
+	# is cheapest to fix.
+	#
+	# THE TWO SUBJECTS TRIGGER DIFFERENTLY AND THAT IS THE DESIGN.
+	# `target-verdict` is a term this release introduces, so no note in any
+	# existing corpus carries it: the four fields are owed there whatever the
+	# note carries, including nothing. `steady-state-ceiling` is required and
+	# predates its amendment, so every existing vault already holds one: there
+	# the trigger is field PRESENCE, which is the exemption a version would
+	# otherwise have to buy. Extending the leniency to the verdict half would
+	# spend that exemption over an empty population and make omitting
+	# `binding_driver` the cheapest way past every rule that reads it - and a
+	# dodge available by omission is not an exemption, which is why --red-team
+	# checks its roster both ways.
+	$vsubject = New-Object 'System.Collections.Generic.HashSet[string]'
+	[void]$vsubject.Add('target-verdict')
+	[void]$vsubject.Add('steady-state-ceiling')
+
+	# The closed driver_kind word list, duplicated in the --binding-driver pass,
+	# which owns the four rules that read a document. Each awk program is a
+	# separate process and cannot call the other. Change one, change both.
+	$knownkind = New-Object 'System.Collections.Generic.HashSet[string]'
+	foreach ($kw in (Split-CheckWords 'structural policy policy-within-band')) { [void]$knownkind.Add($kw) }
+	$condkind = New-Object 'System.Collections.Generic.HashSet[string]'
+	[void]$condkind.Add('policy')
+	[void]$condkind.Add('policy-within-band')
+
+	# EDGE_FIELDS comes from the shared region and is deliberately wider than
+	# vault.md's six edges. Consumed, never redeclared: two copies would let
+	# `graph` and `check` disagree about which fields exist.
+	$edgef = Split-CheckWords $script:EDGE_FIELDS
+
+	$rank = New-Object 'System.Collections.Generic.Dictionary[string,int]'
+	$rank['L'] = 1
+	$rank['M'] = 2
+	$rank['H'] = 3
+	# awk's name[1..3]. Index 0 is unused and holds '' so the ranks index this
+	# array with the same numbers they carry in `rank`.
+	$rankname = @('', 'L', 'M', 'H')
+
+	# ------------------------------------------------------------------------
+	# the record stream, read the way awk's pattern-action rules read it
+	# (bin/vault-lint.sh:3217-3226)
+	# ------------------------------------------------------------------------
+
+	$terms = New-Object 'System.Collections.Generic.List[string]'
+	$isterm = New-Object 'System.Collections.Generic.HashSet[string]'
+	$required = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$aliases = New-Object 'System.Collections.Generic.List[string]'
+	$aliasof = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$DIR = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$BASE = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$V = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$LI = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	$pe = New-Object 'System.Collections.Generic.List[string[]]'
+	$broken = New-Object 'System.Collections.Generic.HashSet[string]'
+
+	foreach ($rec in $script:RECORDS) {
+		# Split on every tab and read the first four fields, which is what awk's
+		# -F '\t' leaves in $1..$4. A field carrying a tab is truncated
+		# identically on both sides rather than shifting the columns.
+		$p = $rec.Split([char]9)
+		$tag = Get-RowField $p 0
+		if ($tag -ceq 'T') {
+			$t = Get-RowField $p 1
+			[void]$terms.Add($t)
+			[void]$isterm.Add($t)
+			$required[$t] = Get-RowField $p 2
+		} elseif ($tag -ceq 'A') {
+			$a = Get-RowField $p 1
+			[void]$aliases.Add($a)
+			$aliasof[$a] = Get-RowField $p 2
+		} elseif ($tag -ceq 'N') {
+			$f = Get-RowField $p 1
+			[void]$files.Add($f)
+			$DIR[$f] = Get-RowField $p 2
+			$BASE[$f] = Get-RowField $p 3
+		} elseif ($tag -ceq 'S') {
+			$V[(Get-RowField $p 1) + $SUBSEP + (Get-RowField $p 2)] = Get-RowField $p 3
+		} elseif ($tag -ceq 'L') {
+			$k = (Get-RowField $p 1) + $SUBSEP + (Get-RowField $p 2)
+			if (-not $LI.ContainsKey($k)) { $LI[$k] = New-Object 'System.Collections.Generic.List[string]' }
+			[void]$LI[$k].Add((Get-RowField $p 3))
+		} elseif ($tag -ceq 'E') {
+			# A file that never parsed as a note has no fields to be missing.
+			# Marking it suppresses the derived required-field and type-agreement
+			# failures below, so the one message that matters - this is not a
+			# note - is not buried under six consequences of it. A reviewer who
+			# reads ten derived failures stops reading.
+			$erel = Get-RowField $p 1
+			$echeck = Get-RowField $p 2
+			[void]$pe.Add([string[]]@($erel, $echeck, (Get-RowField $p 3)))
+			if ($echeck -ceq 'frontmatter') { [void]$broken.Add($erel) }
+		}
+	}
+
+	# ------------------------------------------------------------------------
+	# the END block (bin/vault-lint.sh:3228-3608)
+	# ------------------------------------------------------------------------
+
+	$BYID = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	foreach ($f in $files) {
+		$id = Get-CheckValue $f 'id'
+		if ($id.Length -eq 0) { continue }
+		if ($BYID.ContainsKey($id)) {
+			Add-CheckFailure $f 'duplicate-id' $id ('ID ' + $id + ' is also carried by ' + $BYID[$id] + '. An ID is an address - two notes at one address means every edge pointing there resolves to whichever file a reader happened to open, and no query can tell them apart')
+		} else {
+			$BYID[$id] = $f
+		}
+	}
+
+	# Parse errors, now with an ID attached where the note had one.
+	foreach ($e in $pe) {
+		Add-CheckFailure $e[0] $e[1] (Get-CheckValue $e[0] 'id') $e[2]
+	}
+
+	if ($script:HAS_VOCAB -ne 1) {
+		Add-CheckFailure '_vocab.yml' 'missing-vocabulary' '' 'the vault has no _vocab.yml, so no subject can be checked against anything. Free-text subjects are the same as no subjects: two researchers write wtp and willingness-to-pay for the same thing, and the collision that would have surfaced their disagreement never happens'
+	}
+
+	# Normalised candidates, precomputed once. Terms take precedence over aliases
+	# so a subject that normalises onto both is reported against the canonical
+	# key.
+	$canon = New-Object 'System.Collections.Generic.List[string]'
+	$cnorm = New-Object 'System.Collections.Generic.List[string]'
+	$normto = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	foreach ($t in $terms) {
+		$nt = Get-CheckNorm $t
+		[void]$canon.Add($t)
+		[void]$cnorm.Add($nt)
+		if (-not $normto.ContainsKey($nt)) { $normto[$nt] = $t }
+	}
+	foreach ($a in $aliases) {
+		$na = Get-CheckNorm $a
+		[void]$canon.Add($aliasof[$a])
+		[void]$cnorm.Add($na)
+		if (-not $normto.ContainsKey($na)) { $normto[$na] = $aliasof[$a] }
+	}
+
+	# The two grouped checks collect here and report after the file loop, because
+	# each failure is a property of a GROUP and neither member is the wrong one.
+	# The Dictionaries are walked unordered, exactly as awk walks them: each
+	# member list is filled in note order, so the names INSIDE a message are
+	# fixed, and Render-Failures ordinal-sorts every row before anything prints,
+	# so which group is visited first cannot reach the output.
+	$URLMEM = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	$CONC = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	$restedon = New-Object 'System.Collections.Generic.HashSet[string]'
+	$seen = New-Object 'System.Collections.Generic.HashSet[string]'
+
+	foreach ($f in $files) {
+		$id = Get-CheckValue $f 'id'
+		$ty = Get-CheckValue $f 'type'
+		# Read once and shared by the verdict trigger and subject resolution
+		# below. Two reads of one field is two places a later change - a trim, a
+		# case fold - can reach only one of, and the two checks would then
+		# disagree about what this note's subject is.
+		$s = Get-CheckValue $f 'subject'
+
+		if (-not $broken.Contains($f)) {
+			# --- required fields per type -----------------------------
+			$rfields = $commonf
+			if ($reqf.ContainsKey($ty)) { $rfields = $reqf[$ty] }
+			foreach ($rf in $rfields) {
+				if (Test-CheckPresent $f $rf) { continue }
+				$onty = ''
+				if ($ty.Length -ne 0) { $onty = ' on a ' + $ty + ' note' }
+				$cost = 'the schema requires it'
+				if ($why.ContainsKey($rf)) { $cost = $why[$rf] }
+				Add-CheckFailure $f 'required-field' $id ('missing required field `' + $rf + '`' + $onty + ' - ' + $cost + '. A half-filled note makes later queries return false negatives that read as clean')
+			}
+
+			# --- a decision brief is all of its fields or none of them -
+			# An option-grid field is what says a brief stands behind this
+			# record; from there the rest are owed, including
+			# founder_reasoning, which a brief owes without ever being what
+			# demands one. The note carrying a grid and a recommendation and
+			# no founder_reasoning is the one this exists for - it reads as
+			# complete to every consumer, and nothing else in the corpus can
+			# tell that it is not.
+			#
+			# One report per missing field, same as required-field above:
+			# eight costs concatenated into a single message is a paragraph
+			# nobody reads to the end.
+			if ($ty -ceq 'decision') {
+				$carried = ''
+				$ncarried = 0
+				$ntrig = 0
+				foreach ($bf in $brieff) {
+					if (-not (Test-CheckPresent $f $bf)) { continue }
+					if ($ncarried -ne 0) { $carried = $carried + ', ' }
+					$carried = $carried + '`' + $bf + '`'
+					$ncarried++
+					if (-not $notrigger.Contains($bf)) { $ntrig++ }
+				}
+				if ($ntrig -gt 0) {
+					$bplural = ''
+					if ($ncarried -gt 1) { $bplural = 's' }
+					foreach ($bf in $brieff) {
+						if (Test-CheckPresent $f $bf) { continue }
+						Add-CheckFailure $f 'decision-brief-incomplete' $id ('carries the decision-brief field' + $bplural + ' ' + $carried + ' but not `' + $bf + '`. A decision note carrying none of the option-grid fields is a founder who simply decided, and is correct as written - only a guided fork produces a brief. One carrying some of them is a brief-backed decision that lost a field, and it reads as complete to every consumer while the missing part answers nothing. Without ' + $bf + ', ' + $why[$bf])
+					}
+				}
+			}
+
+			# --- a verdict owes its fields as a set, and its kind is ---
+			# --- one of three words -----------------------------------
+			# The same shape as the decision brief above, one type over and
+			# keyed on the subject rather than on the type: a note carrying
+			# some of them reads complete to every consumer, while the
+			# missing field is precisely the one that would have qualified
+			# the number. A verdict naming its driver and labelling it
+			# `policy` with no counts is a fully qualified finding to every
+			# reader and to every tool, and what it is not saying is that the
+			# two deals underneath it came from one counterparty.
+			#
+			# One report per missing field, same as required-field and the
+			# decision brief: four costs concatenated into a single message
+			# is a paragraph nobody reads to the end.
+			#
+			# The four rules that need business-plan.md are --binding-driver,
+			# not here. These two read nothing but the note, which is what
+			# keeps them in the pass that runs on every bare invocation.
+			if (($ty -ceq 'claim' -or $ty -ceq 'assumption') -and $vsubject.Contains($s)) {
+				$vsj = $s
+				$vcar = ''
+				$nvcar = 0
+				foreach ($bf in $verdictf) {
+					if (-not (Test-CheckPresent $f $bf)) { continue }
+					if ($nvcar -ne 0) { $vcar = $vcar + ', ' }
+					$vcar = $vcar + '`' + $bf + '`'
+					$nvcar++
+				}
+				$dk = Get-CheckValue $f 'driver_kind'
+
+				if ($vsj -ceq 'target-verdict') {
+					$vwhy = 'A target verdict owes them whatever else it carries: the subject is a term this release introduces, so no note written before the fields existed can be exempted by omitting one - and omission would otherwise be the cheapest way past every rule that reads them.'
+				} else {
+					$vwhy = 'A ceiling claim carrying none of the five owes none of them, which is what exempts every claim written before the fields existed; carrying one makes the rest owed, because a note carrying some of them reads complete to every consumer while the missing part is the one that would have qualified the number.'
+				}
+
+				if ($vsj -ceq 'target-verdict' -or $nvcar -gt 0) {
+					$vplural = ''
+					if ($nvcar -gt 1) { $vplural = 's' }
+					foreach ($bf in $verdictf) {
+						# `conditional_on` is owed only where the kind makes
+						# it owed. Demanding it of a structural verdict would
+						# be met by inventing a condition, which is worse
+						# than the omission because an invented one renders.
+						if ($condonly.Contains($bf) -and -not $condkind.Contains($dk)) { continue }
+						if (Test-CheckPresent $f $bf) { continue }
+						if ($nvcar -gt 0) {
+							$vhead = 'carries the verdict field' + $vplural + ' ' + $vcar + ' but not `' + $bf + '`'
+						} else {
+							$vhead = 'carries `subject: target-verdict` and none of the fields a verdict owes outright, `' + $bf + '` among them'
+						}
+						Add-CheckFailure $f 'verdict-fields-incomplete' $id ($vhead + '. ' + $vwhy + ' Without `' + $bf + '`, ' + $why[$bf])
+					}
+				}
+
+				# A fourth word is a classification no downstream rule knows
+				# how to read, so it takes the structural path by default and
+				# buys exactly the exemption invariant 18 exists to refuse -
+				# with a typo indistinguishable from a deliberate call.
+				if ($dk.Length -ne 0 -and -not $knownkind.Contains($dk)) {
+					Add-CheckFailure $f 'driver-kind-unknown' $id ('`driver_kind` is `' + $dk + '` and the enumeration is closed at `structural`, `policy` and `policy-within-band`. Everything downstream branches on policy or not - a policy-bound verdict owes a stated condition and a structural one does not - so an unrecognised value takes the structural path by default, which is the exemption invariant 18 exists to refuse. A typo is then indistinguishable from a deliberate classification, and the plan reports a decision the founder made as a category floor')
+				}
+			}
+
+			# --- the type is stated three times and all three agree ----
+			if ($ty.Length -ne 0 -and -not $req.ContainsKey($ty)) {
+				$mtail = ''
+				if ($ty -ceq 'milestone') {
+					$mtail = '. `milestone` is a schemaVersion 2 type and this vault is stamped ' + $script:FOUND_SCHEMA + ', so it does not carry one - move the corpus to 2 the way vault-migration.md describes, doing the work before stamping'
+				}
+				Add-CheckFailure $f 'type-agreement' $id ('type `' + $ty + '` is not one of ' + $types + '. Structure that does not fit a type belongs on an edge, not in a new type' + $mtail)
+			}
+			if ($req.ContainsKey($ty) -and $DIR[$f] -cne ($ty + 's')) {
+				Add-CheckFailure $f 'type-agreement' $id ('type is `' + $ty + '` but the note sits in ' + $DIR[$f] + '/ rather than ' + $ty + 's/. The filesystem sees only the directory, so a listing of ' + $ty + 's/ silently omits this note')
+			}
+			if ($id.Length -ne 0) {
+				$pfx = $id
+				$dash = $id.IndexOf([char]45)
+				if ($dash -ge 0) { $pfx = $id.Substring(0, $dash) }
+				if ($ty.Length -ne 0 -and $pfx -cne $ty.ToUpperInvariant()) {
+					Add-CheckFailure $f 'type-agreement' $id ('ID prefix `' + $pfx + '` does not match type `' + $ty + '`. A grep over IDs sees only the prefix, so those two consumers already answer differently')
+				}
+				# Reported separately from type-agreement: vault.md keeps
+				# these in two different sections, and a file renamed by
+				# accident has nothing wrong with its type field. Fusing them
+				# sends the reader to look at `type`.
+				if ($BASE[$f] -cne ($id + '.md')) {
+					Add-CheckFailure $f 'filename-mismatch' $id ('the filename is ' + $BASE[$f] + ' but the ID is ' + $id + '. The filename is meant to be exactly the ID plus .md, so that find-the-file-for-this-ID and grep-for-this-ID are the same operation - here they give two answers and one of them is wrong')
+				}
+			}
+		}
+
+		# --- supersession is always two edits ---------------------------
+		# vault.md states this as one invariant with two halves, and the
+		# second half is the one that fails silently: a replacement with a
+		# reason, over a target still marked current, leaves two live notes
+		# asserting different values on the same subject - which reads to both
+		# a checker and a human as an unresolved contradiction rather than a
+		# completed supersession.
+		if ((Get-CheckListCount $f 'supersedes') -gt 0) {
+			if ((Get-CheckValue $f 'supersedes_reason').Length -eq 0) {
+				Add-CheckFailure $f 'supersedes-reason' $id 'supersedes a note with no `supersedes_reason`. The only question anyone ever asks about a superseded note is why, and by the time it is asked the person who knew has gone'
+			}
+			foreach ($tgt in (Get-CheckList $f 'supersedes')) {
+				if (-not $BYID.ContainsKey($tgt)) { continue }
+				$tstatus = Get-CheckValue $BYID[$tgt] 'status'
+				if ($tstatus -cne 'superseded') {
+					Add-CheckFailure $f 'supersedes-status' $id ('supersedes ' + $tgt + ', but that note is still `status: ' + $tstatus + '` rather than `superseded`. Supersession is two edits and only one was made, so both notes now read as live and the pair is indistinguishable from an unresolved contradiction')
+				}
+			}
+		}
+
+		# --- the two roadmap order rules, at schemaVersion 2 -----------
+		# roadmap-sequencing.md asserts both in prose and nothing has ever read
+		# them. That is what makes them worth a check rather than a paragraph:
+		# a roadmap is a set of claims about when the inputs to the model
+		# change, so an order nobody verified sets the month every downstream
+		# number is dated to.
+		#
+		# `moves` naming a note that does not exist is deliberately NOT here -
+		# `moves` is in EDGE_FIELDS, so it is the dangling-edge rule every
+		# other edge already gets, for one word, and a `moves` value that is
+		# not a note ID at all is the malformed-edge rule in the same loop.
+		if ($SCHEMA_N -ge 2 -and $ty -ceq 'milestone') {
+			$sq = Get-CheckValue $f 'sequence'
+			$sqok = $RX_CHECK_WHOLE.IsMatch($sq)
+
+			# The orderability of `sequence` is checked before anything reads
+			# it, because both checks below silently skip a value they cannot
+			# compare - and a check that stops firing prints the same green as
+			# one that passed.
+			if ($sq.Length -ne 0 -and -not $sqok) {
+				Add-CheckFailure $f 'sequence-not-orderable' $id ('`sequence` is `' + $sq + '`, which is not a whole number. Ordering is what `sequence` is for - the date the founder said is kept verbatim in `date_stated` precisely so nothing has to parse it - and a value that will not compare takes both order checks down with it, silently, over exactly the roadmap whose order nobody wrote down')
+			}
+
+			foreach ($tgt in (Get-CheckList $f 'depends_on')) {
+				# A dangling target is already a dangling-edge failure and an
+				# unorderable one is already reported on its own note.
+				# Reporting either again here would send the reader to the
+				# wrong field.
+				if (-not $BYID.ContainsKey($tgt)) { continue }
+				$tsq = Get-CheckValue $BYID[$tgt] 'sequence'
+				if (-not $sqok -or -not $RX_CHECK_WHOLE.IsMatch($tsq)) { continue }
+				# [double] rather than [int], because that is the width awk's
+				# `tsq + 0` compares at: a sequence past Int32 would overflow
+				# here and compare fine there, which is a check answering
+				# differently on the two implementations rather than failing.
+				if ([double]$tsq -ge [double]$sq) {
+					Add-CheckFailure $f 'dependency-after-dependent' $id ('`depends_on` names ' + $tgt + ', whose `sequence` is ' + $tsq + ', while the `sequence` here is ' + $sq + '. The prerequisite is scheduled at or after the item that needs it, so the roadmap projects a capability landing in a month its own precondition has not reached - and because every item is a dated change to an assumption row, the model credits that month with revenue nothing could have shipped in')
+				}
+			}
+
+			# roadmap-sequencing.md Rule 4 - the rule it says most often
+			# changes the answer and is the one people skip. Collected here and
+			# reported after the loop, because the failure is a property of a
+			# GROUP and neither member is the wrong one.
+			$resource = Get-CheckValue $f 'resource'
+			if ($resource.Length -ne 0 -and $sq.Length -ne 0) {
+				$rk = $resource + $SUBSEP + $sq
+				if (-not $CONC.ContainsKey($rk)) { $CONC[$rk] = New-Object 'System.Collections.Generic.List[string]' }
+				[void]$CONC[$rk].Add($f)
+			}
+		}
+
+		# --- edges resolve to real notes --------------------------------
+		foreach ($ef in $edgef) {
+			foreach ($item in (Get-CheckList $f $ef)) {
+				$tgt = Get-CheckEdgeTarget $item
+				if (Test-CheckIsId $tgt) {
+					if (-not $BYID.ContainsKey($tgt)) {
+						Add-CheckFailure $f 'dangling-edge' $id ('`' + $ef + '` points at ' + $tgt + ', which no note in this vault carries. A dangling edge silently shrinks every blast radius that runs through it - the query returns a clean, short answer rather than an error')
+					}
+				} elseif ($ef -ceq 'rests_on') {
+					# A different failure from a dangling edge, and it wants a
+					# different fix: nothing is missing from the vault, the
+					# field never named a note in the first place.
+					Add-CheckFailure $f 'malformed-edge' $id ('`rests_on` holds `' + $item + '`, which is not a note ID. rests_on is the blast-radius edge and has to name notes, or the chain from an amended source to the documents that inherited it stops here')
+				} elseif ($ef -ceq 'moves') {
+					# Same structural failure as rests_on above and a different
+					# cost, so a different message. The two are written out
+					# rather than folded into one generic sentence because a
+					# reader who is told only that the value is not an ID still
+					# has to work out what it cost on the field they wrote.
+					#
+					# This is the half of `moves` the dangling-edge rule cannot
+					# reach. A value that IS a well-formed ID naming no note is
+					# dangling-edge; a value that is not an ID at all fell
+					# through this arm and passed clean. And it is the EXPECTED
+					# mis-write rather than a hypothetical one:
+					# roadmap-sequencing.md Rule 1 names the assumption an item
+					# moves by its `A-n` row label, so the form an author writes
+					# after reading the prose was the one form nothing caught.
+					Add-CheckFailure $f 'malformed-edge' $id ('`moves` holds `' + $item + '`, which is not a note ID. An `A-n` row label off the assumptions table in the plan is what usually lands here, and the ledger cannot resolve a label to a note - so the item reads as naming the assumption it moves while naming nothing this vault holds, and the one check that makes roadmap-sequencing.md Rule 1 mechanical passes over the exact form authors write. Put the note ID of that assumption here; the table in the plan keeps its `A-n` label in prose')
+				}
+			}
+		}
+
+		# --- confidence propagates -------------------------------------
+		$conf = Get-CheckValue $f 'confidence'
+		if ((Get-CheckListCount $f 'rests_on') -gt 0 -and $rank.ContainsKey($conf)) {
+			$own = Get-CheckValue $f 'confidence_own'
+			if (-not $rank.ContainsKey($own)) { $own = $conf }
+			$derived = $rank[$own]
+			$weakest = 'its own confidence_own of ' + $own
+			foreach ($tgt in (Get-CheckList $f 'rests_on')) {
+				if (-not $BYID.ContainsKey($tgt)) { continue }
+				$dc = Get-CheckValue $BYID[$tgt] 'confidence'
+				if (-not $rank.ContainsKey($dc)) { continue }
+				if ($rank[$dc] -lt $derived) {
+					$derived = $rank[$dc]
+					$weakest = $tgt + ', which is ' + $dc
+				}
+			}
+			if ($rank[$conf] -gt $derived) {
+				Add-CheckFailure $f 'confidence-propagation' $id ('stored confidence is ' + $conf + ' but min(confidence_own, every rests_on target) is ' + $rankname[$derived] + ', set by ' + $weakest + '. Without min, a hedged source becomes a fairly confident fact becomes a flat claim - every step locally reasonable, and by the third hop the hedge a stranger needed is gone')
+			}
+		}
+
+		# --- subject resolution: five steps, first match wins -----------
+		if ($ty -ceq 'claim' -and $s.Length -ne 0 -and $terms.Count -gt 0) {
+			if ($isterm.Contains($s)) {
+				[void]$seen.Add($s)
+			} elseif ($aliasof.ContainsKey($s)) {
+				Add-CheckFailure $f 'near-miss-subject' $id ('subject `' + $s + '` is an alias of `' + $aliasof[$s] + '`, not a vocabulary key. Store the canonical key: `' + $s + '` and `' + $aliasof[$s] + '` never collide, so two claims that disagree stay in agreement as far as any query can tell')
+			} else {
+				$ns = Get-CheckNorm $s
+				if ($normto.ContainsKey($ns)) {
+					Add-CheckFailure $f 'near-miss-subject' $id ('subject `' + $s + '` differs from the key `' + $normto[$ns] + '` only in case or separators. Drift like this never collides, so the contradiction the subject exists to surface stays hidden')
+				} else {
+					$best = ''
+					$bestlen = 0
+					for ($c = 0; $c -lt $canon.Count; $c++) {
+						$cn = $cnorm[$c]
+						if ($cn.Length -eq 0 -or $ns.Length -eq 0) { continue }
+						if ($ns.Contains($cn) -or $cn.Contains($ns)) {
+							if ($cn.Length -gt $bestlen) {
+								$bestlen = $cn.Length
+								$best = $canon[$c]
+							}
+						} else {
+							$pl = Get-CheckCommonPrefixLength $ns $cn
+							if ($pl -ge 5 -and $pl -gt $bestlen) {
+								$bestlen = $pl
+								$best = $canon[$c]
+							}
+						}
+					}
+					if ($best.Length -ne 0) {
+						Add-CheckFailure $f 'near-miss-subject' $id ('subject `' + $s + '` is not a vocabulary key, but it overlaps `' + $best + '`. If it means the same thing, use the key - a near-miss never collides and so never surfaces a contradiction. If it is genuinely a new subject, add it to _vocab.yml with a definition saying what it excludes')
+					} else {
+						Add-CheckFailure $f 'unknown-subject' $id ('subject `' + $s + '` matches no vocabulary key and no alias. A term nobody declared cannot collide with anything, and an unresolved contradiction and a corpus with no contradictions look identical')
+					}
+				}
+			}
+		}
+
+		# --- a claim past its declared shelf life ----------------------
+		$stale = Get-CheckValue $f 'stale_after'
+		$status = Get-CheckValue $f 'status'
+		if ($ty -ceq 'claim' -and $stale.Length -ne 0 -and
+			[string]::CompareOrdinal($stale, $script:TODAY) -lt 0 -and
+			$status -cne 'superseded' -and $status -cne 'retracted') {
+			$usedin = ''
+			if ((Get-CheckListCount $f 'used_in') -gt 0) { $usedin = ' - used_in names the documents carrying it' }
+			Add-CheckFailure $f 'stale-claim' $id ('stale_after is ' + $stale + ' and today is ' + $script:TODAY + ', with status still `' + $status + '`. The claim is past the shelf life its own author declared, so everything resting on it is standing on a value nobody has re-checked' + $usedin)
+		}
+
+		# --- duplicate sources, collected ------------------------------
+		$ucanon = Get-CheckValue $f 'url_canonical'
+		if ($ty -ceq 'source' -and $ucanon.Length -ne 0) {
+			if (-not $URLMEM.ContainsKey($ucanon)) { $URLMEM[$ucanon] = New-Object 'System.Collections.Generic.List[string]' }
+			[void]$URLMEM[$ucanon].Add($f)
+		}
+
+		# --- vault-relative source paths that resolve to nothing --------
+		# A source with no public URL carries a vault-relative path. That is
+		# indistinguishable from a path pointing outside the vault, and a
+		# missing file is not a malformed field - so without this check the
+		# note passes every other test while its evidence is absent. Anything
+		# carrying a scheme or a `host:`/`prefix:` marker is deliberately not
+		# vault-relative and is skipped.
+		$url = Get-CheckValue $f 'url'
+		if ($ty -ceq 'source' -and $url.Length -ne 0 -and -not $url.Contains(':')) {
+			# The trailing slash comes off before the lookup because the path
+			# index holds a directory under its bare name - `research` and not
+			# `research/` - so a value written with one would miss an entry that
+			# is there and be reported as evidence that does not exist.
+			$lp = $url -creplace '/+\z', ''
+			if ($lp.Length -ne 0 -and -not $EXISTS.Contains($lp)) {
+				Add-CheckFailure $f 'unresolved-local-source' $id ('url `' + $url + '` has no scheme, so it reads as vault-relative - and nothing exists at that path inside the vault. Either the file belongs in the vault, or the path points outside it and needs a marker (`slug:research/file.md`) so it is not read as vault-relative. A missing file is not a malformed field, so every other check passes while the evidence is absent')
+			}
+		}
+
+		foreach ($tgt in (Get-CheckList $f 'rests_on')) { [void]$restedon.Add($tgt) }
+	}
+
+	# Reported against every member of the group, not just the first one seen.
+	# Both notes are equally implicated, and a reader who greps the output for
+	# one filename has to find it there - attaching the whole group to whichever
+	# file sorted first hides the duplicate from exactly the person looking at
+	# the other one.
+	foreach ($u in $URLMEM.Keys) {
+		$members = $URLMEM[$u]
+		if ($members.Count -lt 2) { continue }
+		$others = $members -join ', '
+		foreach ($m in $members) {
+			Add-CheckFailure $m 'duplicate-url' (Get-CheckValue $m 'id') ('url_canonical ' + $u + ' is carried by ' + $members.Count + ' source notes: ' + $others + '. A claim resting on two of them looks doubly sourced when it rests on one document - which is what one newsletter link carrying tracking parameters and one search result turn into')
+		}
+	}
+
+	# Two milestones sharing a `resource` AND a `sequence` are asserted
+	# concurrent on one constrained resource. roadmap-sequencing.md Rule 4 says
+	# they only compete if they consume the same one - so this is that rule read
+	# off the ledger instead of trusted, and a FALSE independence claim is what
+	# it catches: the naive value ranking it licenses orders the whole roadmap,
+	# and nothing downstream ever revisits it.
+	#
+	# Reported against every member of the group for the reason duplicate-url is:
+	# neither item is the wrong one, and a reader who opens the other file has to
+	# find the failure there too. Grouped and iterated exactly the way
+	# duplicate-url is - Render-Failures sorts the whole failure list before
+	# anything prints it, so the order rows are emitted in cannot reach the
+	# output.
+	foreach ($rk in $CONC.Keys) {
+		$members = $CONC[$rk]
+		if ($members.Count -lt 2) { continue }
+		$rkp = $rk.Split($SUBSEP_CHAR)
+		$ids = New-Object 'System.Collections.Generic.List[string]'
+		foreach ($m in $members) { [void]$ids.Add((Get-CheckValue $m 'id')) }
+		$others = $ids -join ', '
+		for ($mi = 0; $mi -lt $members.Count; $mi++) {
+			Add-CheckFailure $members[$mi] 'false-independence' $ids[$mi] ([string]$members.Count + ' milestones declare `resource: ' + $rkp[0] + '` at `sequence: ' + $rkp[1] + '`: ' + $others + '. Items competing for one constrained resource cannot be asserted concurrent, so at least one of them is not happening in that slot. Give them distinct sequences, or name the resource each actually consumes - left as is, the plan reads as though both land and every number downstream inherits a week of capacity that was counted twice')
+		}
+	}
+
+	foreach ($f in $files) {
+		if ((Get-CheckValue $f 'type') -cne 'source') { continue }
+		$id = Get-CheckValue $f 'id'
+		if ($id.Length -eq 0 -or $restedon.Contains($id)) { continue }
+		Add-CheckFailure $f 'orphan-source' $id 'nothing in the vault rests on this source. Either the research was read and never used, or something that should have cited it cited nothing - both are worth one look, and neither is visible from inside the note'
+	}
+
+	foreach ($t in $terms) {
+		if ($required[$t] -cne 'true' -or $seen.Contains($t)) { continue }
+		Add-CheckFailure '_vocab.yml' 'coverage-gap' '' ('no claim carries the required subject `' + $t + '`. The note schema cannot catch a thin spine, because you cannot type a fact nobody wrote - a required subject with no claim under it is an omission every document downstream inherits in silence')
+	}
+
+	# ------------------------------------------------------------------------
+	# render (bin/vault-lint.sh:3611-3629)
+	# ------------------------------------------------------------------------
+
+	# What the bare run did NOT ask, read off the mode table rather than written
+	# out a second time. A mode added to the gate would otherwise leave this line
+	# silently understating what it skipped, which is the same hand-maintained
+	# enumeration the table exists to remove. `check` is excluded because it is
+	# the mode printing the line.
+	$SKIPPED = ''
+	foreach ($row in (Get-ModeRows)) {
+		if ($row.Gate -cne 'gate') { continue }
+		if ($row.Selector -ceq 'check') { continue }
+		if ($SKIPPED.Length -ne 0) { $SKIPPED = $SKIPPED + ', ' }
+		$SKIPPED = $SKIPPED + $row.Part
+	}
+
+	exit (Render-Failures 'vault-lint' ('note-level checks passed - ' + $script:VAULT + '. Not opened: ' + $SKIPPED + ' - --release-gate asks all of them.'))
 }
 
 # ============================================================================
