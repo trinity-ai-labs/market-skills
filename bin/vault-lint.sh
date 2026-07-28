@@ -1826,7 +1826,9 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 			#
 			# `moves` naming a note that does not exist is deliberately NOT
 			# here - `moves` is in EDGE_FIELDS, so it is the dangling-edge rule
-			# every other edge already gets, for one word.
+			# every other edge already gets, for one word, and a `moves` value
+			# that is not a note ID at all is the malformed-edge rule in the
+			# same loop.
 			if (schema + 0 >= 2 && ty == "milestone") {
 				sq = V[f, "sequence"]
 
@@ -1875,6 +1877,24 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 						# a different fix: nothing is missing from the vault,
 						# the field never named a note in the first place.
 						report(f, "malformed-edge", id, "`rests_on` holds `" item "`, which is not a note ID. rests_on is the blast-radius edge and has to name notes, or the chain from an amended source to the documents that inherited it stops here")
+					} else if (edgef[e] == "moves") {
+						# Same structural failure as rests_on above and a
+						# different cost, so a different message. The two are
+						# written out rather than folded into one generic
+						# sentence because a reader who is told only that the
+						# value is not an ID still has to work out what it cost
+						# on the field they wrote.
+						#
+						# This is the half of `moves` the dangling-edge rule
+						# cannot reach. A value that IS a well-formed ID naming
+						# no note is dangling-edge; a value that is not an ID at
+						# all fell through this arm and passed clean. And it is
+						# the EXPECTED mis-write rather than a hypothetical one:
+						# roadmap-sequencing.md Rule 1 names the assumption an
+						# item moves by its `A-n` row label, so the form an
+						# author writes after reading the prose was the one form
+						# nothing caught.
+						report(f, "malformed-edge", id, "`moves` holds `" item "`, which is not a note ID. An `A-n` row label off the assumptions table in the plan is what usually lands here, and the ledger cannot resolve a label to a note - so the item reads as naming the assumption it moves while naming nothing this vault holds, and the one check that makes roadmap-sequencing.md Rule 1 mechanical passes over the exact form authors write. Put the note ID of that assumption here; the table in the plan keeps its `A-n` label in prose")
 					}
 				}
 			}
