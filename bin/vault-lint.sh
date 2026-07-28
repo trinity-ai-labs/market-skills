@@ -229,15 +229,18 @@ vault-lint.sh - read-only checks over a claim vault.
 
       verdict-thin-evidence: the closure under the note reaches fewer than
       three distinct source notes, or they all share one counterparty, and
-      the note's own evidence_n / evidence_counterparties are not what the
-      closure holds. A single counterparty is reportable at any n - three
-      deals from one counterparty is the terms of one relationship reported
-      as the terms of a market, and a source count of three reads as the
-      opposite. Counterparty comes from `counterparty`, then `publisher`,
-      then the host of url_canonical. The stored pair is the only thing that
-      counts as surfacing it: reading the prose for the two numbers would
-      make an unrelated pair of digits silence the rule, and `check` already
-      owes both fields on every note this mode reads.
+      the tail is not surfaced. Surfacing it is a CONJUNCTION - the note
+      carries evidence_n and evidence_counterparties matching the closure,
+      AND the section it renders into carries the one line those two
+      generate, `Evidence: 2 sources, 1 counterparty`, matched verbatim.
+      Honest counts in the ledger with nothing rendered is the failure this
+      exists for: that section reads identically to one whose verdict rests
+      on twenty deals across twelve parties, and confidence cannot separate
+      them. The line is owed only where the tail is thin, so a
+      well-evidenced verdict owes nothing and this never becomes a line on
+      every plan. A single counterparty is reportable at any n.
+      Counterparty comes from `counterparty`, then `publisher`, then the
+      host of url_canonical.
 
       verdict-unfiled: a non-empty section at the {#target-verdict} anchor
       with no verdict note behind it. This is --roadmap-table inverted - that
@@ -2744,6 +2747,24 @@ if [ "$MODE" = "binding-driver" ]; then
 				for (j = 1; j <= LN[k]; j++) closure(target_of(LI[k, j]))
 			}
 
+			# The ONE rendered form of the two counts, generated off the note so
+			# the section can be matched against it verbatim - the same property
+			# that makes conditional_on and the roadmap table item cell checks
+			# rather than similarity tests. plan-template.md states it as the
+			# contract a writer owes: both numerals come straight from the
+			# fields, and each noun pluralises on its own numeral.
+			#
+			# WHY A GENERATED STRING RATHER THAN A SCAN FOR THE TWO NUMBERS. An
+			# earlier draft looked for each count as a whole-word token, which an
+			# unrelated pair of digits in the same paragraph silences - a check
+			# that passes for the wrong reason, which is worse here than one that
+			# fails for the wrong reason, because nothing ever surfaces it. There
+			# is exactly one string to render and one to look for, so a mismatch
+			# means the line was written by hand or was never written.
+			function evline(n, c) {
+				return "Evidence: " n " source" (n == "1" ? "" : "s") ", " c " counterpart" (c == "1" ? "y" : "ies")
+			}
+
 			# Whether a corner row states a kind at all. plan-template.md writes
 			# one of the three words for every corner where a driver binds, and
 			# an em dash both for a corner where nothing binds and for one whose
@@ -2888,33 +2909,57 @@ if [ "$MODE" = "binding-driver" ]; then
 					# three reads as the opposite - which is the half no other
 					# field in the corpus can recover.
 					#
-					# WHAT COUNTS AS SURFACING IT IS THE STORED PAIR AND NOTHING
-					# IN THE PROSE. vault.md allows a rendered section to say so
-					# instead, and an earlier draft here scanned the section for
-					# the two numbers as whole-word tokens. That branch is
-					# unreachable in a corpus this tool passes - `check` owes
-					# `evidence_n` and `evidence_counterparties` on every note
-					# this mode reads - so the only note it could ever excuse is
-					# one whose stored counts are WRONG, which is the case least
-					# worth excusing. It was also the one place in this mode
-					# that read prose for meaning: two unrelated numbers in a
-					# paragraph silenced the rule. Deleting it makes the rule
-					# strictly stricter and removes the inference.
+					# SURFACING IT IS A CONJUNCTION: the note carries the counts
+					# AND the section renders them. vault.md once read as a
+					# disjunction - the note OR the section - and that can never
+					# be both-false, because `check` owes both fields on every
+					# note this mode reads, so it reduced to a rule about the
+					# ledger alone. The failure being closed is not that the
+					# ledger is wrong. It is that the corpus knew the tail was
+					# two deals from one party and the number a founder acts on
+					# never said so where anybody read it: rendered without the
+					# line, that verdict is typographically identical to one
+					# resting on twenty deals across twelve parties, and
+					# `confidence` cannot separate them - it is a letter about
+					# the weakest link and says nothing about how many links
+					# there are.
 					#
-					# It fires on absent counts as well as on wrong ones, and
-					# that is deliberately not the `conditional_on` treatment
-					# above. There, with no string stored, the question this
-					# mode asks has no answer. Here the closure answers it
-					# either way, and the number is the product: `check` says a
-					# field is owed, and this says what the evidence actually
-					# holds.
+					# THE LINE IS OWED ONLY WHERE THE TAIL IS ACTUALLY THIN, so
+					# a well-evidenced verdict owes nothing and this never
+					# becomes a line on every plan that everyone learns to skip.
+					# That is what keeps it on the one case that cannot be stated
+					# honestly without it.
+					#
+					# The two halves report under one code and in order, because
+					# a wrong pair cannot render a right line: correct the field
+					# first, then the section. The stored-pair half fires on
+					# absent counts as well as wrong ones, which is deliberately
+					# not the `conditional_on` treatment above - there, with no
+					# string stored, the question this mode asks has no answer,
+					# while here the closure answers it either way and the number
+					# is the product. The rendered half is gated on the note
+					# reaching a section at all, exactly as the condition check
+					# is: a verdict written before the plan has a section for it
+					# has nothing rendered to be missing the line.
 					split("", SEEN); split("", SRC); split("", CP)
 					nsrc = 0; ncp = 0
 					closure(id)
 
-					if ((nsrc < 3 || ncp < 2) &&
-					    (V[f, "evidence_n"] != (nsrc "") || V[f, "evidence_counterparties"] != (ncp "")))
-						report(f, "verdict-thin-evidence", id, "the closure under this note reaches " nsrc " distinct source note" (nsrc == 1 ? "" : "s") " and " ncp " distinct counterpart" (ncp == 1 ? "y" : "ies") ", and the note does not say so" (present(f, "evidence_n") ? " - it states `evidence_n: \"" V[f, "evidence_n"] "\"` and `evidence_counterparties: \"" V[f, "evidence_counterparties"] "\"`, which is not what the closure holds" : "") ". A verdict resting on two deals renders identically to one resting on twenty, because `confidence` is a letter about the weakest link and says nothing about how many links there are - and three deals from one counterparty is the terms of one relationship reported as the terms of a market. State the counts, or widen the evidence under the driver")
+					if (nsrc < 3 || ncp < 2) {
+						en = V[f, "evidence_n"]
+						ec = V[f, "evidence_counterparties"]
+						tail = nsrc " distinct source note" (nsrc == 1 ? "" : "s") " and " ncp " distinct counterpart" (ncp == 1 ? "y" : "ies")
+						if (en != (nsrc "") || ec != (ncp ""))
+							report(f, "verdict-thin-evidence", id, "the closure under this note reaches " tail ", and the note does not say so" (present(f, "evidence_n") ? " - it states `evidence_n: \"" en "\"` and `evidence_counterparties: \"" ec "\"`, which is not what the closure holds" : "") ". A verdict resting on two deals renders identically to one resting on twenty, because `confidence` is a letter about the weakest link and says nothing about how many links there are - and three deals from one counterparty is the terms of one relationship reported as the terms of a market. State the counts, or widen the evidence under the driver")
+						else if (ncand > 0) {
+							ev = evline(en, ec)
+							found = 0
+							for (c = 1; c <= ncand; c++)
+								if (index(BODY[CK[c]], ev) > 0) { found = 1; break }
+							if (!found)
+								report(f, "verdict-thin-evidence", id, "the closure under this note reaches " tail " and the note states both counts, and the section it renders into does not carry `" ev "`. Counts that are right in the ledger are not what this rule is for: the section can render *the target lands about a third of the way* with nothing saying the finding rests on " tail ", which is typographically identical to a verdict resting on twenty deals across twelve parties - and `confidence` cannot separate the two, because it is a letter about the weakest link and says nothing about how many links there are. The line is generated off `evidence_n` and `evidence_counterparties` and matched verbatim, so render it exactly as printed here; plan-template.md carries the form, and the em dash a well-evidenced corner uses instead")
+						}
+					}
 				}
 
 				# --- a verdict that reached the plan and never the ledger ---
