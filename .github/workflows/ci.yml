@@ -18,9 +18,19 @@ jobs:
   # and cloning to answer in one. `if: always()` on every step after the first
   # keeps the one property a job split gives for free: a red PR reports every
   # failure it has, not just the first.
+  #
+  # The matrix adds macos-latest because bin/vault-lint.sh ships to users on
+  # both platforms and Linux CI can't catch a macOS-only shell divergence (BSD
+  # vs GNU awk/grep/sed, no bash-only leaks in a POSIX-sh script) before a
+  # user's machine does. version-bump below stays single-OS: it diffs git
+  # history and the manifest, and a second OS proves nothing there.
   checks:
     name: gate, shipped tooling, public-repo hygiene
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,15 +46,21 @@ jobs:
         # regressions are invisible from outside — a check that stops firing and a
         # check that was deleted look identical — so this suite is the only thing
         # standing between a silent parser change and a vault that lints clean
-        # while broken.
+        # while broken. Running this on macos-latest too is the whole point of
+        # the matrix above: it's the regression baseline the cross-platform port
+        # in a later PR is measured against.
         run: sh scripts/fixtures/run-fixtures.sh
 
       - name: Every shell script holds to the shell its shebang declares
-        if: always()
+        if: always() && matrix.os == 'ubuntu-latest'
         # bin/ runs on a user's machine, so a bashism there is a runtime failure
         # discovered at the moment of use. shellcheck reads the dialect from the
         # shebang, so this stays correct if a script ever legitimately needs bash
         # — the shebang is the contract, and this checks whatever it declares.
+        # ubuntu-latest ships shellcheck preinstalled; macos-latest does not, and
+        # installing it there would just re-run the same static dialect check a
+        # second time — shellcheck reads source text, not platform behaviour, so
+        # one OS is exhaustive and a matrix run buys nothing here.
         run: shellcheck -S warning bin/*.sh scripts/fixtures/*.sh
 
       - name: Skills invoke vault-lint.sh bare, never by path

@@ -1,0 +1,6 @@
+# Without this file, Git for Windows' default core.autocrlf=true rewrites
+# bin/vault-lint.sh's line endings to CRLF on clone/checkout. The shebang
+# becomes `#!/bin/sh\r`, and the script dies with "bad interpreter" before
+# any Windows-specific behaviour is even reachable.
+*.sh text eol=lf
+*.ps1 text eol=lf
