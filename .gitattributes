@@ -4,3 +4,21 @@
 # any Windows-specific behaviour is even reachable.
 *.sh text eol=lf
 *.ps1 text eol=lf
+
+# AND NOTHING ELSE - not *.md, not *.yml. The temptation is real: on a Windows
+# checkout every fixture note and every _vocab.yml arrives CRLF, and the first
+# windows-latest run turned that into seven red assertions and four red gate
+# failures. Pinning them to LF would have cleared all eleven without fixing one.
+#
+# It would also have removed the only place this repo ever sees CRLF input. A
+# user's vault is written on their machine and is covered by no .gitattributes
+# of ours: on Windows its notes and its _vocab.yml are CRLF by default, which is
+# precisely the input those eleven failures were reporting on. Pinned fixtures
+# would have gone green while the shipped tool stayed broken for the platform
+# the port exists for - a silent pass over the exact case, which is what this
+# whole tool is against.
+#
+# So the fixtures stay CRLF on Windows on purpose, and the parsers were made to
+# tolerate a carriage return instead. The two lines above are a different thing
+# and stay: a CRLF shebang is not input a parser can be tolerant of, it is a
+# file the kernel refuses to start.
