@@ -198,6 +198,23 @@ nearest-reachable solve and the negotiation script are in
     to be missing by. It surfaces at the walk sign-off, when the founder asks why the thing you
     both agreed three phases ago is not in the plan.
 
+23. **Steelman a founder statement before checking it — verify the claim they are making, not
+    the cheapest adjacent number.** This is invariant 3 pointed at a founder's remark instead of
+    at the model: a metric chosen after the conclusion is a conclusion wearing an instrument, and
+    checking whichever number is easiest to check instead of the number the founder actually meant
+    is the same move wearing a different subject. A founder says a competing tool costs more than
+    their seat. The competitor's list price is lower, so the claim is filed as false — but the
+    competitor's product is a control plane that bills separately for the compute underneath it,
+    so the delivered cost is roughly double the seat, and the founder was right about the thing
+    that matters. The cheap number is the one that gets checked, and checking it produces a
+    confident wrong answer. **And a correction that moves no number in the plan is a conversation,
+    not a note:** the vault is a ledger of what the plan stands on, and filing a detail error as a
+    finding spends the founder's attention on a scoreboard rather than on the plan. **The failure
+    this prevents:** a founder's claim about their own market gets refuted on a technicality
+    neither party meant, the refutation reads as rigor because a number backs it, and the plan
+    quietly loses the one piece of the founder's testimony most worth having — the delivered
+    reality a list price hides.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
