@@ -642,6 +642,33 @@ case "$MG" in
 *) no "graph did not derive the inbound depends_on edge (got: $MG)" ;;
 esac
 
+# Both halves of defect 7 on `moves`, and the line between them. 2b already
+# asserts that each fixture fires the check it declares; what it cannot see is
+# that the two arms stay SEPARATE and keep their own messages. A `moves` value
+# that is a well-formed ID naming no note is dangling-edge - something is missing
+# from the vault. A value that is not an ID at all is malformed-edge - nothing is
+# missing, the field never named a note. Collapsing either into the other sends
+# the author to the wrong fix.
+MOVE_MALF=$(printf '%s\n' "$VJSON" | grep 'MILESTONE-ROWL0008.md' | grep 'malformed-edge')
+case "$MOVE_MALF" in
+*'A-n'*'note ID'*) ok "the moves malformed-edge message names the row label and the note ID that replaces it" ;;
+*) no "the moves malformed-edge message does not name the A-n row label (got: $MOVE_MALF)" ;;
+esac
+case "$MOVE_MALF" in
+*'blast-radius edge'*) no "the moves malformed-edge message reuses the rests_on sentence - the two fields cost different things" ;;
+*) ok "the moves malformed-edge message is written for moves, not shared with rests_on" ;;
+esac
+RESTS_MALF=$(printf '%s\n' "$VJSON" | grep 'FACT-MALF0005.md' | grep 'malformed-edge')
+case "$RESTS_MALF" in
+*'rests_on is the blast-radius edge'*) ok "rests_on keeps its own malformed-edge message" ;;
+*) no "the rests_on malformed-edge message changed (got: $RESTS_MALF)" ;;
+esac
+case "$(printf '%s\n' "$VJSON" | grep 'MILESTONE-MOVE0004.md')" in
+*malformed-edge*) no "a well-formed moves target that names no note reported malformed-edge instead of dangling-edge" ;;
+*dangling-edge*) ok "a well-formed moves target that names no note is still dangling-edge, not malformed-edge" ;;
+*) no "MILESTONE-MOVE0004 reported neither dangling-edge nor malformed-edge" ;;
+esac
+
 # The gate on every version-2 rule, asserted from the version-1 side. Its two
 # notes share a `resource` and a `sequence`, so at 2 they are false-independence
 # and at 1 they are simply not a type this vault may carry. Asserting only that
