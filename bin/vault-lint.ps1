@@ -506,3 +506,141 @@ function Get-ModeForFlag {
 	return ''
 }
 
+# ============================================================================
+# THE STUB SEAM - A CONTRACT, NOT A PLACEHOLDER
+#
+# Nine modes, nine functions, in the order the three dispatch points below
+# invoke them:
+#
+#   1. Invoke-ModeReleaseGate        release-gate         bin/vault-lint.sh  467-518
+#   2. Invoke-ModeGraph              graph                                   889-1018
+#   3. Invoke-ModeUnverified         unverified                             1019-1128
+#   4. Invoke-ModeSupersessionSweep  supersession-sweep                     1129-1605
+#   5. Invoke-ModeUsedIn             used-in                                1709-1942
+#   6. Invoke-ModeRedTeam            red-team                               1943-2120
+#   7. Invoke-ModeRoadmapTable       roadmap-table                          2121-2410
+#   8. Invoke-ModeBindingDriver      binding-driver                         2411-3002
+#   9. Invoke-ModeCheck              check                                  3003-3629
+#
+# THIS LAYOUT IS A CONTRACT SIX SEPARATE BRANCHES BUILD AGAINST. Each of them
+# replaces exactly one function body below and touches nothing else in this
+# file. That is the only thing keeping six parallel ports of one file textually
+# disjoint: git merges by line, and six branches each appending a mode body
+# wherever it happened to land would merge clean into a file whose shared
+# helpers disagree - which is worse than a conflict, because nothing reports it.
+#
+# So: DO NOT reorder these functions, DO NOT rename them, DO NOT merge two of
+# them, and DO NOT hoist a helper out of one body into the shared region for
+# another body to reuse. A helper two modes want is a helper two slices are both
+# editing, which is the cross-slice edit this seam exists to prevent - the shell
+# keeps five separate copies of one six-line fenced-block scan for exactly that
+# reason (bin/vault-lint.sh:1283-1285), and this file inherits the rule.
+#
+# Every stub answers exit status 3 through Exit-NotPorted. Porting a mode is
+# replacing that one call with the mode's real body; the moment it answers
+# anything else, scripts/parity/parity.mjs starts diffing it against the shell,
+# so its scripts/parity/unported/<mode> marker file goes in the same commit.
+#
+# The three dispatch POINTS are further down, at the positions the shell
+# dispatches from, and they are one line each. They are not a slice's to edit
+# either: a mode that moved between dispatch points would read the corpus at a
+# different stage than the shell reads it at.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# 1. --release-gate - every mode a release owes, in one call
+#
+# Ports bin/vault-lint.sh:467-518. Re-invokes this script once per part on
+# purpose - a process boundary is the cheapest thing that cannot leak one mode's
+# failures into another's verdict - and the exit status is the WORST status any
+# part returned, not the last one and not a flattened 1.
+# ----------------------------------------------------------------------------
+function Invoke-ModeReleaseGate {
+	Exit-NotPorted '--release-gate'
+}
+
+# ----------------------------------------------------------------------------
+# 2. graph - the neighbourhood of one note, as text
+#
+# Ports bin/vault-lint.sh:889-1018. Takes a note ID operand and refuses --json;
+# both are already handled in the argument parser below.
+# ----------------------------------------------------------------------------
+function Invoke-ModeGraph {
+	Exit-NotPorted 'graph'
+}
+
+# ----------------------------------------------------------------------------
+# 3. --unverified - the notes asserted with nothing behind them
+#
+# Ports bin/vault-lint.sh:1019-1128. Carries its OWN JSON escaper, one of three
+# deliberate copies (bin/vault-lint.sh:1660) - transcribe that copy rather than
+# routing through Render-Failures, and change all three together or none.
+# ----------------------------------------------------------------------------
+function Invoke-ModeUnverified {
+	Exit-NotPorted '--unverified'
+}
+
+# ----------------------------------------------------------------------------
+# 4. --supersession-sweep - the re-read worklist a supersession owes
+#
+# Ports bin/vault-lint.sh:1129-1605. Carries the third copy of the escaper, and
+# exits above the shared render block for the reason stated there.
+# ----------------------------------------------------------------------------
+function Invoke-ModeSupersessionSweep {
+	Exit-NotPorted '--supersession-sweep'
+}
+
+# ----------------------------------------------------------------------------
+# 5. --used-in - every used_in target resolves
+#
+# Ports bin/vault-lint.sh:1709-1942. Renders through Render-Failures with a
+# deliberately non-default ok line (bin/vault-lint.sh:1646).
+# ----------------------------------------------------------------------------
+function Invoke-ModeUsedIn {
+	Exit-NotPorted '--used-in'
+}
+
+# ----------------------------------------------------------------------------
+# 6. --red-team - the panel record against itself
+#
+# Ports bin/vault-lint.sh:1943-2120. Shares --used-in's failure renderer
+# (bin/vault-lint.sh:1962), which is why the two are ported together.
+# ----------------------------------------------------------------------------
+function Invoke-ModeRedTeam {
+	Exit-NotPorted '--red-team'
+}
+
+# ----------------------------------------------------------------------------
+# 7. --roadmap-table - the roadmap table against the milestone set
+#
+# Ports bin/vault-lint.sh:2121-2410. Reads only the FIRST table under the
+# roadmap heading, and stays silent at schemaVersion 1.
+# ----------------------------------------------------------------------------
+function Invoke-ModeRoadmapTable {
+	Exit-NotPorted '--roadmap-table'
+}
+
+# ----------------------------------------------------------------------------
+# 8. --binding-driver - verdict drivers and the evidence under them
+#
+# Ports bin/vault-lint.sh:2411-3002. Every rule has a deliberate silent
+# counterpart asserted beside it, and none of them is gated on schemaVersion -
+# porting a check without its silent side turns a clean vault red.
+# ----------------------------------------------------------------------------
+function Invoke-ModeBindingDriver {
+	Exit-NotPorted '--binding-driver'
+}
+
+# ----------------------------------------------------------------------------
+# 9. check - pass 3, the note-level checks
+#
+# Ports bin/vault-lint.sh:3003-3629. The largest body in the file, gated on
+# schemaVersion throughout, and the mode a bare invocation runs.
+# ----------------------------------------------------------------------------
+function Invoke-ModeCheck {
+	Exit-NotPorted 'check'
+}
+
+# ============================================================================
+# END OF THE STUB SEAM
+# ============================================================================
