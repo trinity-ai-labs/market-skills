@@ -1234,7 +1234,9 @@ three milestones, and where everything landed. Invite pushback on the specific b
   named per corner, and the founder's stated range labelled apart from the evidenced range.
   Collapsed to one verdict or one interval, the finding is destroyed exactly where it matters — a
   rectangle where three corners clear and one fails reads at its centre as a clean yes, and the
-  failing corner is usually the one the founder was aiming at.
+  failing corner is usually the one the founder was aiming at. **Every corner that names a kind has
+  a filed verdict note behind it carrying that kind** — the table renders off the notes, so a
+  corner rendered with no note is a verdict the ledger never saw and `--binding-driver` fails it.
 - The plan matches the founder's stated ambition, not a template's default ambition.
 - Nothing was dispatched to the red team until the plan and the vault were reconciled: the
   `--used-in` pass clean, the `--supersession-sweep` worklist read to its end and stamped
@@ -1265,7 +1267,7 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Hockey-stick from penetration hand-waving | Bottom-up build; scenarios move assumptions |
 | Flat acquisition line read as conservative | Zero growth is an assumption: name its driver, and place the implied rate against the band |
 | Product claim gone stale in the pessimistic direction | Re-verify against source at the current commit; a drift is a supersession |
-| Policy variable reported as a ceiling | Label every input structural or policy; a chosen input caps the configuration, not the business |
+| Policy variable reported as a ceiling | Label every input structural or policy and record the label on the note; a chosen input caps the configuration, not the business |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |
 | Grilling the founder on what research answers | Grill intent/resources/appetite; research the market |
