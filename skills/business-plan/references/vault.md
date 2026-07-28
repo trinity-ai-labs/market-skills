@@ -429,7 +429,7 @@ rests_on:                          # required — block list
   - FACT-GF45SD01
   - FACT-QP81ZZ07
 used_in:                           # required once the claim is cited in a rendered document
-  - "business-plan.md#why-now"
+  - "business-plan.md#why-now"     # the heading's own {#anchor}, not the slug of its text
   - "one-pager.md"
 scopes:                            # optional — block list
   - CLAIM-BB77KK12
@@ -483,11 +483,21 @@ Write it when the claim is first cited; omit the key until then.
 **`vault-lint.sh --used-in` is what keeps those entries honest.** It opens every target and
 exits 1 when the document is missing (`used-in-missing-file`) or the `#anchor` names no heading
 in it (`used-in-dead-anchor`) — the two ways a citation rots without anything else noticing, a
-renamed document and a renamed section. The anchor is matched against the heading's GitHub slug,
-so the entry is written as the reader's own link: `"business-plan.md#why-now"` for `## Why now`,
-resolved against the vault root and not against the note's own directory. An entry with no `#`
-is checked for the file alone, which is the shape to use when a claim reaches a document whose
-sections it does not name. **The mode stops at whether the target resolves and never asks whether
+renamed document and a renamed section. The entry is written as the reader's own link,
+`"business-plan.md#competition"`, resolved against the vault root and not against the note's own
+directory. An entry with no `#` is checked for the file alone, which is the shape to use when a
+claim reaches a document whose sections it does not name.
+
+**Write the heading's explicit `{#anchor}`, because that is the half of the heading that does not
+move.** A heading offers two addresses and the mode accepts either: the `{#anchor}` attribute at
+the end of the heading line, and the GitHub slug of the heading text with that attribute stripped
+off. Prefer the attribute. The plan's headings are action titles that assert the current finding,
+so they are reworded every time the finding sharpens — and a citation written against the slug
+dies on each of those edits, silently, leaving a rewrite of the notes as the only repair, which
+re-breaks on the next one. The slug is still accepted so that a vault written before its plan
+documents carried attributes keeps passing; nothing has to be back-filled. The templates that
+ship the attributes are `plan-template.md`, and the contract itself — including why the slug of
+a heading like `## Competition & moat` is not the anchor a human writes — is `rendering.md`. **The mode stops at whether the target resolves and never asks whether
 the section carries the claim** — the prose cites `[S#]` and `[F#]` codes rather than note IDs,
 so matching IDs against prose would report every correctly cited claim as broken. Whether the
 section still agrees with the note is a read, not a grep, and `--supersession-sweep` is the mode
