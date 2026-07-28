@@ -28,9 +28,11 @@
 #      both, deduped by section.
 #   5. Both JSON outputs are well-formed enough to slice by field.
 #   6. The two refusal paths refuse, and exit 2.
-#   7. --release-gate runs all three parts and carries the worst verdict any of
+#   7. --release-gate runs every part and carries the worst verdict any of
 #      them returned, including when only one part fails.
 #   8. A schemaVersion 2 vault is read, and a version from the future is not.
+#   9. The sweep carries a verdict at schemaVersion 2 - it fails an absent or
+#      stale `reconciled:` - and the same notes at 1 do not fail.
 
 set -u
 
@@ -60,8 +62,15 @@ PASS=0
 FAIL=0
 
 PAIRS_FILE=$(mktemp "${TMPDIR:-/tmp}/run-fixtures.XXXXXX") || exit 2
-trap 'rm -f "$PAIRS_FILE" "$PAIRS_FILE".*' EXIT
-trap 'rm -f "$PAIRS_FILE" "$PAIRS_FILE".*; exit 2' HUP INT TERM
+
+# A writable copy of one fixture, so the same notes can be read at a second
+# schemaVersion. Hand-writing a twin corpus at 1 would assert the same thing
+# until the day one of the two is edited, and then it would assert that two
+# different vaults behave differently - which is not the claim.
+AT_1=$(mktemp -d "${TMPDIR:-/tmp}/run-fixtures-at-1.XXXXXX") || exit 2
+
+trap 'rm -f "$PAIRS_FILE" "$PAIRS_FILE".*; rm -rf "$AT_1"' EXIT
+trap 'rm -f "$PAIRS_FILE" "$PAIRS_FILE".*; rm -rf "$AT_1"; exit 2' HUP INT TERM
 
 ok() {
 	PASS=$((PASS + 1))
@@ -99,7 +108,7 @@ case "$CLEAN_OUT" in
 *) no "the success line does not name what it checked (got: $CLEAN_OUT)" ;;
 esac
 case "$CLEAN_OUT" in
-*--release-gate*) ok "the success line names the mode that asks all three" ;;
+*--release-gate*) ok "the success line names the mode that asks all of them" ;;
 *) no "the success line does not point at --release-gate (got: $CLEAN_OUT)" ;;
 esac
 
@@ -400,6 +409,112 @@ case "$SN" in
 *) no "an empty worklist is not a sliceable object (got: $SN)" ;;
 esac
 
+# --- 2f. two spellings of one section are one row ----------------------------
+# The dedup assertion above cannot catch this one. A heading is addressable by
+# an explicit {#anchor} attribute AND by the slug of its text - both, so a vault
+# citing the slug keeps working once a template declares anchors - so two
+# used_in entries can name the same physical section under different strings.
+# Grouping on the raw anchor emits two rows for one job, and "every target
+# appears exactly once" stays green throughout, because under the bug the two
+# rows carry genuinely different target strings. What has teeth is the count.
+#
+# Exercised with --supersession-sweep alone. Resolving an explicit anchor is
+# --used-in's own contract and lands with it; the sweep never opens a document
+# to decide whether a citation resolves, so its worklist is well-defined here
+# either way.
+printf '\nanchor aliases\n'
+
+AA=$("$LINT" --supersession-sweep --vault "$HERE/anchor-alias" --json 2>/dev/null)
+case "$AA" in
+*'"worklist_count": 1'*) ok "one section reached by two spellings is one row" ;;
+*) no "two spellings of one section made two rows (got: $AA)" ;;
+esac
+case "$AA" in
+*'"superseded_count": 2'*) ok "both superseded notes are still counted" ;;
+*) no "collapsing the rows lost a superseded note (got: $AA)" ;;
+esac
+
+# And that the single row genuinely names BOTH notes. A collapse that kept one
+# row and dropped a note would pass the count above while hiding half the job -
+# which is worse than the double-count it replaced, because the reader cannot
+# see what is missing.
+case "$AA" in
+*CLAIM-AA1CC003*CLAIM-AA1EE005*) ok "the collapsed row names both superseded notes" ;;
+*) no "the collapsed row lost one of its two notes (got: $AA)" ;;
+esac
+
+# --- 2g. the sweep verdict, and the version it applies at --------------------
+# The worklist and the verdict are separate questions and both halves need
+# asserting, in both directions. A mode that failed on any supersession would
+# pass every assertion about the unreconciled/ vault below and would have turned
+# the sweep into something its caller learns to ignore - which is the whole
+# reason it stayed a report for two releases. So the passing side is asserted
+# first, and it is asserted over a vault that HAS a supersession: schema-2/
+# carries a reconciled pair, so exiting 0 there means reconciled rather than
+# empty.
+printf '\nsupersession reconciliation\n'
+
+SWEEP_S2=$("$LINT" --supersession-sweep --vault "$HERE/schema-2" 2>&1)
+SWEEP_S2_STATUS=$?
+[ "$SWEEP_S2_STATUS" = "0" ] && ok "a reconciled supersession at schemaVersion 2 exits 0" ||
+	no "a reconciled supersession should exit 0 (got $SWEEP_S2_STATUS)"
+case "$SWEEP_S2" in
+*'1 section to re-read'*) ok "a reconciled vault still prints its worklist and its count" ;;
+*) no "a reconciled vault dropped its worklist or its count (got: $SWEEP_S2)" ;;
+esac
+
+# reconciled: on the same day as created passes. The rule is that the read
+# cannot predate the supersession, not that it has to happen later - a rule
+# demanding a later date would fail every reconciliation done in one sitting,
+# which is most of them.
+case "$SWEEP_S2" in
+*'nothing recording that the worklist was read'*'(none)'*) ok "a same-day reconciled: is not reported as stale" ;;
+*) no "a same-day reconciled: was reported (got: $SWEEP_S2)" ;;
+esac
+
+UR=$("$LINT" --supersession-sweep --vault "$HERE/unreconciled" 2>&1)
+UR_STATUS=$?
+[ "$UR_STATUS" = "1" ] && ok "an unreconciled supersession at schemaVersion 2 exits 1" ||
+	no "an unreconciled supersession should exit 1 (got $UR_STATUS)"
+case "$UR" in
+*CLAIM-UR1DD004*) ok "the absent reconciled: is reported, by note" ;;
+*) no "the note with no reconciled: was not reported (got: $UR)" ;;
+esac
+case "$UR" in
+*'predates the `created: 2026-07-12`'*) ok "a reconciled: earlier than created is reported" ;;
+*) no "a stale reconciled: was not reported (got: $UR)" ;;
+esac
+
+# The worklist survives the verdict. A mode that started exiting 1 and stopped
+# printing the rows would pass every status assertion above while destroying the
+# product - the rows are what the read is performed against.
+case "$UR" in
+*'business-plan.md#why-now'*'business-plan.md#risks'*) ok "a failing sweep still prints its worklist" ;;
+*) no "a failing sweep dropped its worklist (got: $UR)" ;;
+esac
+
+URJ=$("$LINT" --supersession-sweep --vault "$HERE/unreconciled" --json 2>/dev/null)
+case "$URJ" in
+'{'*'"ok": false'*'"unreconciled_count": 2'*'}'*) ok "the sweep carries its verdict in --json as well as in its exit status" ;;
+*) no "the sweep --json does not carry ok/unreconciled_count (got: $URJ)" ;;
+esac
+
+# The same notes at schemaVersion 1, which is the assertion that the upgrade
+# path is not a wall. Copied rather than kept as a second fixture: a hand-written
+# twin asserts this until the day one of the two is edited.
+cp -R "$HERE/unreconciled/." "$AT_1/"
+printf '{\n  "schemaVersion": 1,\n  "created": "2026-07-27"\n}\n' >"$AT_1/.vault/config.json"
+
+AT1_STATUS=$(run_status "$AT_1" --supersession-sweep)
+[ "$AT1_STATUS" = "0" ] && ok "the same notes at schemaVersion 1 do not fail the sweep" ||
+	no "schemaVersion 1 must not owe reconciled: (got $AT1_STATUS)"
+
+AT1_OUT=$("$LINT" --supersession-sweep --vault "$AT_1" 2>&1)
+case "$AT1_OUT" in
+*'schemaVersion 2 rule and this vault is at 1'*) ok "at 1 the sweep says the rule was not applied, rather than reporting none" ;;
+*) no "at 1 the sweep reported an empty verdict instead of saying it did not ask (got: $AT1_OUT)" ;;
+esac
+
 # --- 3. JSON is well-formed enough to slice ---------------------------------
 printf '\njson\n'
 for v in clean violations; do
@@ -513,6 +628,13 @@ case "$RG_JSON" in
 *"not a JSON document"*) ok "--release-gate refuses --json by name" ;;
 *) no "--release-gate did not refuse --json clearly (got: $RG_JSON)" ;;
 esac
+
+# A vault for the newly-failing part, for the reason dead-citation exists: a
+# gate whose verdict came from its first part would report it clean, and it is
+# not visible over clean/ or violations/, where every part agrees.
+RG_UNREC=$(run_status "$HERE/unreconciled" --release-gate)
+[ "$RG_UNREC" = "1" ] && ok "--release-gate fails when only the sweep fails" ||
+	no "--release-gate should fail when only the sweep fails (got $RG_UNREC)"
 
 # --- 6. the supported schemaVersion set ------------------------------------
 # Asserting only that 99 is refused would pass a tool that had narrowed the set

@@ -34,6 +34,17 @@
 # put in doubt, so the read is over that list rather than over every citation in
 # the corpus. A judgment step nobody can size is a judgment step nobody starts.
 #
+# WHAT A VERDICT CAN SAY ABOUT A READ
+# It cannot say the read was done well. It can say whether anything in the
+# corpus records that it was done at all, which is the difference between a
+# worklist and a gate: `reconciled:` on the superseding note and the
+# `## Lenses dispatched` roster in red-team.md are both assertions somebody has
+# to write, and both are checkable. Neither is evidence the sections were
+# actually re-read - a date can be stamped without reading anything - and that
+# is the honest limit of a mechanical check over a judgment step. What it buys
+# is that skipping the read becomes something you have to state rather than
+# something that happens by default, and the default is what was shipping.
+#
 # PARSING STRATEGY
 # The frontmatter reader is a subset parser over flat scalars, block lists, and
 # the four fields allowed a literal block scalar. It COERCES NOTHING - every
@@ -90,18 +101,26 @@ vault-lint.sh - read-only checks over a claim vault.
       wolf gets switched off, taking the half that worked with it.
 
   vault-lint.sh --supersession-sweep [--vault PATH] [--json]
-      Emit the re-read worklist a supersession owes. For every superseded note,
-      the document sections its used_in named - unioned across the corpus and
+      Emit the re-read worklist a supersession owes, and fail when nothing in
+      the corpus records that it was read. For every superseded note, the
+      document sections its used_in named - unioned across the corpus and
       grouped by section, so two superseded notes citing one section are one
       row naming both rather than two rows for one job. Each row carries the
       superseded note, the note that replaced it, and the supersedes_reason,
       which is the only question anyone ever asks about a superseded note.
 
-      A report, not a verdict - it exits 0 whether or not it finds anything.
-      Finding a worklist is the point of asking: supersession is visible in the
-      note and invisible everywhere the note was cited, and a mode that exited
-      non-zero on a healthy vault would train its caller to ignore the exit
-      code the actual checks depend on.
+      THE WORKLIST STAYS A REPORT; THE VERDICT IS A SEPARATE QUESTION. Finding
+      rows is the point of asking, so a healthy vault exits 0 with a worklist
+      in it - a mode that went non-zero on a supersession with a blast radius
+      would train its caller to ignore the exit code the actual checks depend
+      on. What fails is a note carrying `supersedes` with no `reconciled:`
+      date, or one earlier than that note's own `created`: the sections were
+      never read, or were read before the supersession that put them in doubt
+      existed.
+
+      The verdict applies at schemaVersion 2 only. A vault at 1 predates the
+      field, cannot owe it, and exits 0 either way - vault-migration.md carries
+      the back-fill.
 
       It reports the row count as well as the rows, because the gate that
       consumes this is a read and a read is bounded only if its size is visible
@@ -969,11 +988,13 @@ fi
 # and invisible everywhere the note was cited. This walks the supersedes edges
 # already in the record stream and emits the union of those targets.
 #
-# A REPORT, NOT A VERDICT. It exits 0 whether or not it finds anything - the
-# same contract --unverified carries, for the same reason. A supersession with a
-# blast radius is the corpus working correctly, not a violation, and a mode that
-# exited non-zero on a healthy vault would train its caller to ignore the exit
-# code that the actual checks depend on.
+# THE WORKLIST IS A REPORT AND THE VERDICT IS A SEPARATE QUESTION. Finding rows
+# is not a failure: a supersession with a blast radius is the corpus working
+# correctly, and a mode that exited non-zero on a healthy vault would train its
+# caller to ignore the exit code the actual checks depend on. So a fully
+# reconciled vault still prints its worklist, still prints its count, and still
+# exits 0. What fails is a supersession nothing says was read - see the
+# `reconciled:` block in END below.
 #
 # GROUPED BY TARGET AND DEDUPED. The unit of work is re-read this section, so
 # two superseded notes citing one section are ONE row naming both. Repeating the
@@ -1007,7 +1028,7 @@ fi
 # ----------------------------------------------------------------------------
 
 if [ "$MODE" = "supersession-sweep" ]; then
-	LC_ALL=C awk -v vault="$VAULT" -v asjson="$JSON" -F '\t' '
+	LC_ALL=C awk -v vault="$VAULT" -v asjson="$JSON" -v schema="$FOUND_SCHEMA" -F '\t' '
 		BEGIN {
 			DQ = sprintf("%c", 34)
 			BS = sprintf("%c", 92)
@@ -1052,6 +1073,127 @@ if [ "$MODE" = "supersession-sweep" ]; then
 			printf DQ "supersedes_reason" DQ ": " DQ "%s" DQ "}", jesc(sb[2])
 		}
 
+		# ------------------------------------------------------------------
+		# Two spellings of one section have to collapse to one row
+		#
+		# A heading is addressable two ways: by an explicit {#anchor}
+		# attribute, and by the slug of its text - both registered, so a vault
+		# citing the slug keeps working when the template gains explicit
+		# anchors. That makes `business-plan.md#business-model` and
+		# `business-plan.md#business-model--pricing` the SAME physical section
+		# under one `## Business model & pricing {#business-model}` heading, and
+		# grouping on the raw anchor emits two worklist rows for one job. A
+		# worklist that overstates its own size is one that gets skipped at the
+		# moment it matters, which is the whole reason this mode dedupes.
+		#
+		# WHY THIS IS NOT A SECOND COPY OF THE SLUG RULE IN --used-in. That rule
+		# decides whether an anchor RESOLVES and has to be exact, character for
+		# character, because a wrong answer reports a working link as dead.
+		# This decides whether two anchors are the SAME SECTION, and it is
+		# deliberately loose: fold both to their alphanumeric bytes and compare.
+		# Every character the slug rule drops is dropped here too, so any two
+		# spellings that rule resolves to one heading fold together - without
+		# this program having to know which characters those are, which is what
+		# keeps it from drifting out of step with a rule it does not own.
+		#
+		# IT CANNOT UNDER-COUNT, which is the direction that would matter. A
+		# fold key claimed by two different headings is retired rather than
+		# resolved, so an ambiguous match falls back to the raw anchor and the
+		# reader gets the two rows they get today. Being wrong here costs a
+		# section nobody re-reads, so ambiguity refuses rather than guesses.
+		function fold(s,   i, c, o) {
+			o = ""
+			for (i = 1; i <= length(s); i++) {
+				c = substr(s, i, 1)
+				if (c >= "a" && c <= "z") { o = o c; continue }
+				if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
+				if (c >= "0" && c <= "9") { o = o c; continue }
+			}
+			return o
+		}
+
+		# Register one fold key against one heading, or RETIRE it when a second
+		# heading claims the same key. Retiring is the whole safety property:
+		# two headings that differ only in the punctuation the fold drops are
+		# indistinguishable here, so the key resolves to nothing and both
+		# citations keep the rows they get today. Zero is the retired marker
+		# rather than a second array because heading ordinals start at 1, so a
+		# third heading claiming a retired key leaves it retired.
+		function claim(doc, k, id,   ak) {
+			if (k == "") return
+			ak = doc SUBSEP k
+			if (ak in ALIAS) {
+				if (ALIAS[ak] != id) ALIAS[ak] = 0
+				return
+			}
+			ALIAS[ak] = id
+		}
+
+		# Every heading a document offers, as fold keys pointing at the
+		# heading ordinal. Read once per document, on first sight.
+		#
+		# The fence tracking is the third copy in this file - --used-in scans
+		# headings under the same rule and so does --red-team. All three are
+		# the same six lines: a `#` inside a fenced block is an example rather
+		# than a section anyone can jump to, and the marker and run length are
+		# tracked so a longer nested fence cannot close its parent early. Change
+		# one, change all three.
+		function sections(doc,   path, line, t, c, n, fc, fn, h, ex, id) {
+			path = vault "/" doc
+			fc = ""; fn = 0; id = 0
+			while ((getline line < path) > 0) {
+				sub(/\r$/, "", line)
+				t = line
+				sub(/^[ \t]+/, "", t)
+				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+					c = substr(t, 1, 1)
+					n = 0
+					while (substr(t, n + 1, 1) == c) n++
+					if (fc == "") { fc = c; fn = n }
+					else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+					continue
+				}
+				if (fc != "") continue
+				if (!match(t, /^#+[ \t]+/)) continue
+				h = substr(t, RLENGTH + 1)
+				sub(/[ \t]*#+[ \t]*$/, "", h)
+				sub(/[ \t]+$/, "", h)
+				id++
+
+				# An explicit {#anchor} attribute is stripped from the heading
+				# text and registered beside it, which is exactly what a
+				# renderer does with it. Registering the anchor INSTEAD of the
+				# slug would break every existing citation the day a template
+				# gained anchors, which is the whole reason both are addresses.
+				ex = ""
+				if (match(h, /\{#[A-Za-z0-9_-]+\}[ \t]*$/)) {
+					ex = substr(h, RSTART, RLENGTH)
+					h = substr(h, 1, RSTART - 1)
+					sub(/[ \t]+$/, "", h)
+					sub(/[ \t]+$/, "", ex)
+					ex = substr(ex, 3, length(ex) - 3)
+					claim(doc, fold(ex), id)
+				}
+				claim(doc, fold(h), id)
+			}
+			close(path)
+		}
+
+		# The grouping key for one target: the heading it names when the
+		# document says which, and the anchor as written when it does not.
+		# Both forms are namespaced so a raw anchor can never collide with a
+		# heading ordinal. An anchor that resolves to nothing keeps the raw
+		# form deliberately - whether a citation resolves is --used-in verdict,
+		# and a sweep that dropped an unresolvable target would hide the
+		# section a reader most needs to look at.
+		function resolve(doc, anc,   k) {
+			if (anc == "") return "a"
+			if (!(doc in SCANNED)) { SCANNED[doc] = 1; sections(doc) }
+			k = doc SUBSEP fold(anc)
+			if ((k in ALIAS) && ALIAS[k] > 0) return "h" ALIAS[k]
+			return "a" anc
+		}
+
 		# One superseded note, as the reader of the worklist needs it: what it
 		# said, what replaced it, and why. The reason is what stops the row
 		# sending its reader back to the ledger before they can even decide
@@ -1070,6 +1212,62 @@ if [ "$MODE" = "supersession-sweep" ]; then
 
 		END {
 			for (i = 1; i <= nf; i++) if (V[files[i], "id"] != "") BYID[V[files[i], "id"]] = files[i]
+
+			# THE VERDICT. `reconciled:` asserts one thing - that the sections
+			# this supersession put in doubt have been read - and it is what
+			# turns the worklist below from a report into something somebody is
+			# obliged to finish. It sits on the note carrying `supersedes`,
+			# the side where the edge and the reason already live, so all three
+			# halves of a supersession are on one note and a reader checking
+			# whether it was closed out opens one file.
+			#
+			# REQUIRED WHETHER OR NOT THE SUPERSEDED NOTE REACHED A DOCUMENT.
+			# Conditioning it on used_in would look tighter and would leave an
+			# obligation that comes into existence the day somebody cites the
+			# superseded note, with nothing to re-fire it - the vault would
+			# acquire an unread supersession by an edit to a different note.
+			#
+			# A dangling supersedes target is still checked here, unlike in the
+			# worklist below which skips it: the worklist would be naming a
+			# re-read nobody can perform, while the missing date is a real
+			# omission on a note that exists.
+			#
+			# GATED ON schemaVersion 2. A corpus written before the field
+			# existed cannot owe it, and a check that failed every vault
+			# authored to date on the day the skill updated is how a gate stops
+			# being run. vault-migration.md carries the 1 -> 2 back-fill.
+			if (schema + 0 >= 2) {
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					k = f SUBSEP "supersedes"
+					if (LN[k] == 0) continue
+					tg = ""
+					for (j = 1; j <= LN[k]; j++) tg = tg (j == 1 ? "" : ", ") LI[k, j]
+					rec = V[f, "reconciled"]
+					cre = V[f, "created"]
+					why = ""
+					if (rec == "")
+						why = "no `reconciled:` date. Nothing records that the sections this supersession put in doubt were read, so the worklist this mode prints is one nobody is obliged to finish - and the documents go on asserting what the ledger already replaced while every check stays green"
+					# Both values are quoted ISO dates the parser stored as
+					# written, and both sides are forced to strings so the
+					# comparison cannot fall into awk numeric rules on a value
+					# that happens to look like a number. This is the payoff
+					# the coerce-nothing invariant is claimed for: a plain
+					# string comparison, no date library, no parsing.
+					#
+					# A missing `created` is skipped rather than treated as
+					# earlier than everything - it is already a required-field
+					# failure from `check`, and reporting it twice under a name
+					# about reconciliation sends its reader to the wrong fix.
+					else if (cre != "" && (rec "") < (cre ""))
+						why = "`reconciled: " rec "` predates the `created: " cre "` on this same note, so the sections were read before the supersession that put them in doubt existed. A date carried over from an earlier pass reads exactly like one stamped after the read, and which of the two it is happens to be the only half of this a check can see"
+
+					if (why == "") continue
+					UNREC[++nu] = f
+					UTGT[f] = tg
+					UWHY[f] = why
+				}
+			}
 
 			# Half one: every note a supersedes edge names. Walked from the
 			# superseding side because that is where the edge and the reason both
@@ -1112,6 +1310,11 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					# note writing ./business-plan.md#why-now and another writing
 					# business-plan.md#why-now would be two rows for one section -
 					# which is the double-counting this mode exists to avoid.
+					# The five lines below are byte-identical to the copy in
+					# --used-in on purpose: change one, change the other. What
+					# follows them is a step of its own - collapsing two
+					# spellings of one heading onto one key, per the block
+					# above tnote.
 					p = index(entry, "#")
 					doc = (p > 0) ? substr(entry, 1, p - 1) : entry
 					anc = (p > 0) ? substr(entry, p + 1) : ""
@@ -1119,7 +1322,7 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					sub(/^\.\//, "", doc)
 					sub(/\/+$/, "", doc)
 
-					key = doc SUBSEP anc
+					key = doc SUBSEP resolve(doc, anc)
 					if (!(key in SEENT)) {
 						SEENT[key] = 1
 						TORDER[++nt] = key
@@ -1136,9 +1339,29 @@ if [ "$MODE" = "supersession-sweep" ]; then
 			}
 
 			if (asjson == "1") {
-				printf "{\n  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
+				printf "{\n"
+				# `ok` is the verdict as a field rather than only as an exit
+				# status, so a consumer parsing the document does not have to
+				# have captured the status to know which answer it is holding.
+				printf "  " DQ "ok" DQ ": %s,\n", (nu == 0 ? "true" : "false")
+				printf "  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
 				printf "  " DQ "worklist_count" DQ ": %d,\n", nt
 				printf "  " DQ "superseded_count" DQ ": %d,\n", nsup
+				printf "  " DQ "unreconciled_count" DQ ": %d,\n", nu
+				printf "  " DQ "unreconciled" DQ ": ["
+				for (i = 1; i <= nu; i++) {
+					f = UNREC[i]
+					printf "%s\n    {", (i == 1 ? "" : ",")
+					printf DQ "id" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "id"])
+					printf DQ "file" DQ ": " DQ "%s" DQ ", ", jesc(f)
+					printf DQ "type" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "type"])
+					printf DQ "title" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "title"])
+					printf DQ "supersedes" DQ ": " DQ "%s" DQ ", ", jesc(UTGT[f])
+					printf DQ "created" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "created"])
+					printf DQ "reconciled" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "reconciled"])
+					printf DQ "detail" DQ ": " DQ "%s" DQ "}", jesc(UWHY[f])
+				}
+				printf "%s],\n", (nu == 0 ? "" : "\n  ")
 				printf "  " DQ "worklist" DQ ": ["
 				for (t = 1; t <= nt; t++) {
 					key = TORDER[t]
@@ -1168,7 +1391,7 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					}
 				}
 				printf "%s]\n}\n", (m == 0 ? "" : "\n  ")
-				exit 0
+				exit (nu == 0 ? 0 : 1)
 			}
 
 			printf "vault-lint supersession-sweep: %d section%s to re-read, from %d superseded note%s\n",
@@ -1190,9 +1413,32 @@ if [ "$MODE" = "supersession-sweep" ]; then
 				f = NOUSE[i]
 				for (b = 1; b <= SN[f]; b++) tnote(f, b, "    ")
 			}
+
+			# The verdict prints last, because it is the half a reader acts on
+			# and the worklist above it can run to dozens of rows. At
+			# schemaVersion 1 the section says the rule does not apply rather
+			# than printing an empty list: an unconditional `(none)` here would
+			# report a vault as reconciled when nothing about it was asked.
+			if (schema + 0 < 2) {
+				printf "\n  reconciliation is a schemaVersion 2 rule and this vault is at %s - the worklist above is a report here, and nothing was asked about whether it was read\n", schema
+				exit 0
+			}
+			printf "\n  supersessions with nothing recording that the worklist was read\n"
+			if (nu == 0) printf "    (none)\n"
+			for (i = 1; i <= nu; i++) {
+				f = UNREC[i]
+				printf "    %s  %s\n", V[f, "id"], V[f, "type"]
+				printf "      %s\n", V[f, "title"]
+				printf "      supersedes %s\n", UTGT[f]
+				printf "      %s\n", UWHY[f]
+			}
+			if (nu > 0)
+				printf "\nvault-lint supersession-sweep: %d supersession%s with nothing recording that its sections were read, under %s\n",
+					nu, (nu == 1 ? "" : "s"), vault
+			exit (nu == 0 ? 0 : 1)
 		}
 	' "$RECORDS"
-	exit 0
+	exit $?
 fi
 
 # ----------------------------------------------------------------------------
