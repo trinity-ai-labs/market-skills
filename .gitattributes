@@ -22,3 +22,21 @@
 # tolerate a carriage return instead. The two lines above are a different thing
 # and stay: a CRLF shebang is not input a parser can be tolerant of, it is a
 # file the kernel refuses to start.
+
+# ONE fixture is pinned the other way, and this is not the blanket rule above
+# read backwards. The rule above is about EXTENSIONS - *.md and *.yml stay
+# unpinned so the corpus keeps arriving CRLF on Windows and LF elsewhere, which
+# is what makes a windows-latest run test a different input class from a
+# ubuntu run. This line pins one PATH, and it pins it to CRLF rather than LF:
+# scripts/fixtures/crlf-vocab is the vault whose whole reason to exist is that
+# its bytes carry a carriage return on EVERY platform.
+#
+# It is here because a POSIX-only checkout would otherwise get LF, and then the
+# assertions in run-fixtures.sh that read it would still pass while testing
+# nothing - the fixture would be an ordinary vault with an unusual name. That is
+# worse than not having it: a check that stops firing reports the same green as
+# a check that fires and finds nothing, which is the exact failure the vault
+# schema, this lint and this fixture are all against. eol=crlf stores the blob
+# as LF and materialises CRLF at checkout, so the bytes are guaranteed by an
+# attribute rather than by whoever last committed the file.
+scripts/fixtures/crlf-vocab/** text eol=crlf

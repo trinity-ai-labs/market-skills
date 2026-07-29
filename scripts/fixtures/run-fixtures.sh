@@ -54,6 +54,11 @@
 #      a ceiling section owing no note, an empty section owing none either, a
 #      well-evidenced verdict owing no evidence line, and a legacy ceiling claim
 #      carrying none of the fields - and none of them is gated on schemaVersion.
+#  14. A vault whose every byte is CRLF still fires the three checks that need a
+#      vocabulary term to compare against, and leaks no carriage return into
+#      what it prints. This is the input class the other eighteen fixtures never
+#      carried, which is why a vocabulary pass that dropped every term on a CRLF
+#      file went unnoticed by all of them.
 
 set -u
 
@@ -1346,6 +1351,93 @@ case "$(cat "$HERE/clean/business-plan.md")" in
 *'Evidence:'*) no "the clean plan carries an Evidence line - the healthy case must owe none" ;;
 *) ok "a well-evidenced verdict owes no evidence line" ;;
 esac
+
+# --- 11. a CRLF vault, which is the input class the corpus never carried ------
+# Eighteen fixtures and not one carriage return between them, so a vocabulary
+# pass that dropped every term on a CRLF file passed all eighteen - and the
+# shell's did, reporting `ok: true` over a vault carrying an unknown subject, an
+# alias-as-subject and an uncarried required term. crlf-vocab/_vocab.yml states
+# the mechanism; what is asserted here is that the three checks needing a
+# vocabulary term still fire, and that no carriage return reaches the output.
+printf '\nCRLF vault\n'
+
+# FIRST, and before any behaviour: the bytes, because every assertion below
+# passes over an LF copy of this vault while testing nothing. Asserted on EVERY
+# line of every file rather than on one CR somewhere, since a partial conversion
+# is the shape a hand-edit leaves. .gitattributes says why the pin is there.
+#
+# COUNTED IN BYTES, WITH NO awk ANYWHERE NEAR IT. Git for Windows' awk reads in
+# text mode and hands every pattern a line with no CR - which is the whole
+# reason the shell parsed a CRLF vocabulary on Windows while failing on macOS
+# and Linux. An `awk !/\r$/` guard here would therefore find no carriage return
+# on the one platform where the corpus is CRLF by default, and report this
+# fixture as unpinned on the runner it matters most on. tr and wc count bytes,
+# the way the workflow's own autocrlf check reads the shebang with head rather
+# than through a parser. Every line CRLF means the CR count equals the LF count,
+# and both being zero is an empty file rather than a pinned one.
+CRLF_LF_ONLY=""
+find "$HERE/crlf-vocab" -type f | LC_ALL=C sort >"$PAIRS_FILE.crlf"
+while read -r cf; do
+	[ -n "${cf:-}" ] || continue
+	cr=$(tr -cd '\r' <"$cf" | wc -c | tr -d '[:space:]')
+	lf=$(wc -l <"$cf" | tr -d '[:space:]')
+	[ "$cr" -gt 0 ] && [ "$cr" = "$lf" ] ||
+		CRLF_LF_ONLY="$CRLF_LF_ONLY ${cf#"$HERE"/}($cr/$lf)"
+done <"$PAIRS_FILE.crlf"
+[ -z "$CRLF_LF_ONLY" ] && ok "every file in crlf-vocab/ is CRLF on this checkout" ||
+	no "crlf-vocab/ arrived with LF lines, so it tests nothing:$CRLF_LF_ONLY"
+
+# Captured once and sliced for both halves, the same way the violating vault's
+# modes are above: the lint is deterministic for a given vault, so a separate
+# run_status call over this one costs a second full parse and buys nothing.
+CRLFJSON=$("$LINT" --vault "$HERE/crlf-vocab" --json 2>/dev/null)
+CRLF_STATUS=$?
+[ "$CRLF_STATUS" = "1" ] && ok "a CRLF vault with subject failures exits 1" ||
+	no "a CRLF vault with subject failures should exit 1 (got $CRLF_STATUS)"
+
+# Exactly three, which is both halves at once: the three vocabulary-dependent
+# checks fired, AND the carriage return leaked into no field value on the way -
+# a CR surviving into a required field or a list item shows up here as extra
+# required-field and malformed-edge reports rather than as a wrong-looking one.
+case "$CRLFJSON" in
+*'"failure_count": 3'*) ok "a CRLF vault reports exactly its three subject failures" ;;
+*) no "a CRLF vault did not report exactly three failures (got: $CRLFJSON)" ;;
+esac
+
+# One assertion per check, each naming the file AND the term it resolved
+# against, because the terms are what the bug destroys. coverage-gap needs the
+# term and its `required` value; near-miss needs the alias record and the key it
+# maps to; unknown-subject needs a term list to have failed to match against.
+case "$CRLFJSON" in
+*'_vocab.yml'*coverage-gap*'required subject `defensibility`'*)
+	ok "coverage-gap fires over CRLF - the term and its required flag parsed" ;;
+*) no "coverage-gap did not fire over a CRLF vocabulary (got: $CRLFJSON)" ;;
+esac
+case "$CRLFJSON" in
+*CLAIM-CR1DD004*near-miss-subject*'`pricing` is an alias of `price-anchor`'*)
+	ok "near-miss-subject fires over CRLF - the alias record parsed" ;;
+*) no "near-miss-subject did not fire over a CRLF vocabulary (got: $CRLFJSON)" ;;
+esac
+case "$CRLFJSON" in
+*CLAIM-CR1EE005*unknown-subject*'subject `despatch-cycle` matches no vocabulary key'*)
+	ok "unknown-subject fires over CRLF - there was a term list to miss" ;;
+*) no "unknown-subject did not fire over a CRLF vocabulary (got: $CRLFJSON)" ;;
+esac
+
+# And the note side, on the same vault: a carriage return that survived parsing
+# reappears in what the reader is shown. graph prints a block scalar body and a
+# title read straight off the frontmatter, so a stray CR lands in stdout - where
+# it overwrites the start of the line on a terminal and makes the output read as
+# truncated rather than as wrong.
+CRLF_GRAPH=$("$LINT" graph SOURCE-CR1AA001 --vault "$HERE/crlf-vocab" --depth 1 2>/dev/null)
+case "$CRLF_GRAPH" in
+*'quote: Published list prices in the category clustered'*)
+	ok "a CRLF block scalar returns its body" ;;
+*) no "a CRLF block scalar body is missing from graph output (got: $CRLF_GRAPH)" ;;
+esac
+CRLF_CR_COUNT=$(printf '%s' "$CRLF_GRAPH" | tr -cd '\r' | wc -c | tr -d ' ')
+[ "$CRLF_CR_COUNT" = "0" ] && ok "no carriage return reaches the output of a CRLF vault" ||
+	no "$CRLF_CR_COUNT carriage return(s) leaked into the output of a CRLF vault"
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

@@ -1,0 +1,43 @@
+# EVERY FILE IN THIS VAULT IS CRLF, AND THAT IS THE WHOLE POINT OF THE FIXTURE.
+# The other vaults here are LF, so for eighteen fixtures the corpus never once
+# contained a carriage return - and a vocabulary pass that dropped every term on
+# a CRLF file passed all of them. A term key read as `price-anchor:\r` fails a
+# pattern that requires nothing after the colon, so nothing is emitted and the
+# vault is checked against an EMPTY vocabulary. That is not an error, it is a
+# silence: unknown-subject, near-miss-subject and coverage-gap each need a term
+# to compare against, so the corpus reports clean while carrying unknown
+# subjects and a thin spine.
+#
+# The three claims below and the uncarried required term make that silence
+# visible: if either implementation stops tolerating a carriage return, those
+# checks stop firing and the assertions in run-fixtures.sh go red instead of the
+# suite going quietly green over a vault it is no longer reading.
+#
+# A vault written or edited on Windows is CRLF by default and is covered by no
+# .gitattributes of ours, so this is the ordinary shape of a shared vault, not a
+# corner case.
+
+terms:
+
+  price-anchor:
+    definition: The price point the plan recommends, per unit and cadence. Carried by a
+      claim below, so it has no coverage gap to report.
+    aliases:
+      - price
+      - pricing
+    required: true
+
+  defensibility:
+    definition: Which durable advantage is actually available, stated as a benefit plus a
+      barrier. Required and deliberately left with no claim under it, so coverage-gap has
+      something to find - which it can only do if this file parsed at all.
+    aliases:
+      - moat
+    required: true
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver behind
+      it. Not required, so it reports nothing either way.
+    aliases:
+      - growth-rate
+    required: false
