@@ -118,7 +118,7 @@ jobs:
 
       - name: The shipped lint's own suite, against the port under Windows PowerShell 5.1
         if: always() && matrix.os == 'windows-latest'
-        # The same 250 assertions "The shipped lint's own suite" above holds the
+        # The same 286 assertions "The shipped lint's own suite" above holds the
         # shell to — this is the first PR where every one of them can also run
         # against the PowerShell port, and the wrapper above is what makes this
         # run go through 5.1 rather than whatever pwsh happens to be on PATH.

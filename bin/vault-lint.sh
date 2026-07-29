@@ -266,6 +266,77 @@ vault-lint.sh - read-only checks over a claim vault.
       presence, and a ceiling claim carrying none of the five owes none of
       them. A vault with no verdict note passes.
 
+  vault-lint.sh --monitoring [--vault PATH] [--json]
+      Check the monitoring plan in competitor-analysis.md: every axis names an
+      instrument, a cadence, and the decision it would change. A verdict - it
+      exits 1 on any of them.
+
+      A snapshot cannot see a direction. Every profile in that document carries
+      its research date, and every claim note carries `stale_after`, and both
+      of those ask the same question - is this still true. Neither asks which
+      way it is moving, and that is the only thing separating a closing window
+      from an open one: a competitor profiled the day before it was used missed
+      a strategic reversal by that vendor six weeks earlier, which was the
+      single fact that most changed what the competitor meant. The plan read
+      correct and was answering a question nobody asked.
+
+      An axis with no instrument is a thing somebody intends to notice, which
+      is not a mechanism. An axis with no cadence is a re-check with no date,
+      which is the same as no re-check. An axis with no decision behind it is
+      a signal nobody acts on, and collecting it costs the same as collecting
+      one that matters - so the decision column is what keeps the plan from
+      growing a watchlist instead of a trigger.
+
+      A cell is empty when it carries no letter or digit, so an em dash or a
+      run of hyphens is read as empty rather than as an answer. There is no
+      placeholder word list: a check that has to be taught every spelling of
+      `TBD` is one that misses the next one.
+
+      A vault with no competitor-analysis.md profiled no competitors and
+      passes. Gated on schemaVersion 2 - the axes are what version 2 asks the
+      section for, and a vault at 1 is held to the rules it was written under.
+
+  vault-lint.sh --deliverable [--vault PATH] [--json]
+      Read every rendered deliverables/*.html and fail on the vault's own
+      archaeology reaching a reader who was never in the room: a strikethrough
+      span, a note ID, or a red-team objection code. A verdict - it exits 1 on
+      any of the three.
+
+      Retraction stays visible in the vault, and that rule is correct - a
+      silently deleted claim comes back two drafts later with its cause of
+      death erased. The rendered artifact is the other side of it. A note ID
+      and an objection code are VAULT ADDRESSES: they resolve for anyone with
+      the corpus and resolve to nothing for the audience the document is for,
+      and a struck-through line with its reason beside it is a document
+      arguing with its own previous draft. Left unchecked, a finished plan and
+      its model carry well over a hundred pieces of that narrative between
+      them - into the two documents an investor reads.
+
+      IT READS THE RENDERED HTML AND NEVER THE MARKDOWN. The markdown is the
+      working document and keeps every strikethrough it owes; the HTML is what
+      the outside reader holds. It is also the only one a check can hold to
+      this, because the render itself is a judgement - a correction reaches
+      the artifact RESTATED FORWARD, as what is true now, and stripping the
+      `~~` mechanically leaves `That multiple was actually...` with no
+      antecedent. No script can judge an antecedent, so that half stays a
+      read-back item in the render loop and this mode covers the half that is
+      mechanical.
+
+      A note ID is matched as its type prefix plus EIGHT generated characters,
+      the length vault.md's generation rule produces. Validating a note's own
+      ID deliberately accepts any length; DETECTING one that leaked into prose
+      is the opposite job, and the loose form fires on `FACT-CHECKED` and
+      `SOURCE-CONTROL` - a check that cries wolf over ordinary prose gets
+      switched off, and switching it off takes the half that worked with it.
+      For the same reason `WITHDRAWN` and `RETRACTED` are NOT matched: a plan
+      can legitimately discuss a withdrawn product or a retracted filing, and
+      those words are the restate-forward step's job rather than a grep's.
+
+      A vault with no deliverables/*.html has rendered nothing and passes. It
+      is in --release-gate so the call before a render is still one call, but
+      the run that gates what actually ships is the one inside the render loop,
+      after the HTML exists - see the render loop in rendering.md.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -333,6 +404,8 @@ check                gate  note-level checks
 --red-team           gate  panel objection rows
 --roadmap-table      gate  roadmap table against the milestone set
 --binding-driver     gate  verdict drivers and the evidence under them
+--monitoring         gate  monitoring axes and the decision each would change
+--deliverable        gate  what the rendered deliverable carries out of the vault
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -1293,13 +1366,13 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		# Every heading a document offers, as fold keys pointing at the
 		# heading ordinal. Read once per document, on first sight.
 		#
-		# The fence tracking is one of five copies in this file - --used-in
+		# The fence tracking is one of six copies in this file - --used-in
 		# scans headings under the same rule, and so do --red-team,
-		# --roadmap-table and --binding-driver. All five are the same six
-		# lines: a `#` inside a fenced block is an example rather than a section
-		# anyone can jump to, and the marker and run length are tracked so a
-		# longer nested fence cannot close its parent early. Change one, change
-		# all five.
+		# --roadmap-table, --binding-driver and --monitoring. All six are the
+		# same six lines: a `#` inside a fenced block is an example rather than a
+		# section anyone can jump to, and the marker and run length are tracked
+		# so a longer nested fence cannot close its parent early. Change one,
+		# change all six.
 		#
 		# The fold() below has two more copies, in --roadmap-table and
 		# --binding-driver, which resolve their own section headings by the same
@@ -1622,9 +1695,10 @@ fi
 # Every mode that emits failure rows and carries a verdict out in its exit status
 # builds on what follows, so the date, the path index and the renderer are built
 # once here rather than once per mode. That is `check`, --used-in, --red-team,
-# --roadmap-table and --binding-driver today, and a mode joins the list by being
-# dispatched below this point rather than by registering anywhere - which is why
-# this comment names them and the code does not. graph, --unverified and
+# --roadmap-table, --binding-driver, --monitoring and --deliverable today, and a
+# mode joins the list by being dispatched below this point rather than by
+# registering anywhere - which is why this comment names them and the code does
+# not. graph, --unverified and
 # --supersession-sweep have already exited above: none of the three produces a
 # failure row, and the path index costs a find over the whole vault.
 # ----------------------------------------------------------------------------
@@ -1835,12 +1909,12 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
-		# THAT FENCE BLOCK IS ONE OF FIVE COPIES in this file. The
+		# THAT FENCE BLOCK IS ONE OF SIX COPIES in this file. The
 		# --supersession-sweep sections(), the --red-team row reader, the
-		# --roadmap-table readplan() and the --binding-driver readdoc() carry the
-		# same six lines, because all five read a document at the vault root and
-		# no one of them can call a function defined in another awk program.
-		# Change one, change all five.
+		# --roadmap-table readplan(), the --binding-driver readdoc() and
+		# --monitoring carry the same six lines, because all six read a document
+		# at the vault root and no one of them can call a function defined in
+		# another awk program. Change one, change all six.
 		#
 		# This copy is the one that most needed saying so. It has been edited
 		# twice already - the `{#anchor}` attribute below landed here alone -
@@ -2025,12 +2099,12 @@ if [ "$MODE" = "red-team" ]; then
 				# character and run length so a longer nested fence cannot
 				# close its parent early.
 				#
-				# One of five copies of those six lines: the --used-in scan(),
+				# One of six copies of those six lines: the --used-in scan(),
 				# the --supersession-sweep sections(), the --roadmap-table
-				# readplan() and the --binding-driver readdoc() carry the same
-				# ones, for the same reason - five awk programs reading a
-				# document at the vault root, and no way to share a function
-				# across them. Change one, change all five.
+				# readplan(), the --binding-driver readdoc() and --monitoring
+				# carry the same ones, for the same reason - six awk programs
+				# reading a document at the vault root, and no way to share a
+				# function across them. Change one, change all six.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
@@ -2250,11 +2324,12 @@ if [ "$MODE" = "roadmap-table" ]; then
 			#
 			# The fence tracking is the FOURTH copy in this file - --used-in
 			# scan(), --supersession-sweep sections() and --red-team carry the
-			# same six lines and --binding-driver readdoc() carries the fifth,
-			# because each reads a document at the vault root and no one of them
+			# same six lines, and --binding-driver readdoc() and --monitoring
+			# carry the fifth and the sixth, because each reads a document at the
+			# vault root and no one of them
 			# can call a function defined in another awk program. A `#` or a `|`
 			# inside a fenced block is an example rather than anything a reader
-			# can act on. Change one, change all five.
+			# can act on. Change one, change all six.
 			# The read STOPS the moment the answer can no longer change - at the
 			# heading that closes the section, or at the line that ends the first
 			# table in it. SEENRM makes the section unre-enterable and only the
@@ -2615,7 +2690,7 @@ if [ "$MODE" = "binding-driver" ]; then
 			# fenced block is an example rather than an assertion the document
 			# makes, which is also why fenced lines never reach BODY: a fenced
 			# template carrying a condition would otherwise satisfy the check
-			# for a section that renders nothing. Change one, change all five.
+			# for a section that renders nothing. Change one, change all six.
 			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, alldash, hdr, dcol, kcol, intable, wanttable, kk, dv, kv) {
 				if (doc in SCANNED) return
 				SCANNED[doc] = 1
@@ -3010,6 +3085,361 @@ if [ "$MODE" = "binding-driver" ]; then
 		' "$RECORDS")
 
 	render_failures "vault-lint binding-driver" "$BD_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --monitoring - an axis owes an instrument, a cadence and a decision
+#
+# competitor-analysis.md's Monitoring plan section asked which pricing pages,
+# changelogs and job boards to re-check and on what cadence. That is FRESHNESS,
+# and freshness is the same question the per-profile research date and a claim
+# note's `stale_after` already ask: is this still true. None of the three asks
+# which way it is moving, and a direction is the only thing that separates a
+# closing window from an open one. A competitor profiled the day before the
+# profile was used missed a strategic reversal by that vendor six weeks earlier
+# - the single fact that most changed what the competitor meant - because a
+# snapshot cannot see a direction and nothing in the method asked for one.
+#
+# So the section becomes a contract rather than a paragraph: named axes, an
+# instrument per axis, a cadence, and the decision each would change. The last
+# column is the one that keeps this from becoming a watchlist - a signal nobody
+# acts on costs the same to collect as one that matters.
+#
+# It is a mode rather than a check for the reason --used-in, --red-team and
+# --roadmap-table are: it reads a document at the vault root rather than a note
+# in one of the seven directories, which is a different surface. The engagement
+# folder IS the vault, so a sibling report is the established thing to read here
+# and not new architecture.
+#
+# LC_ALL=C for the reason --used-in found the hard way: an axis and a decision
+# are free prose in a table cell, so they carry em dashes and curly quotes, and
+# macOS awk in a UTF-8 locale aborts the record on the first sequence it cannot
+# decode - which would end the scan early and pass a document it never finished
+# reading.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "monitoring" ]; then
+	COMPETITORS="$VAULT/competitor-analysis.md"
+	# A vault with no competitor-analysis.md profiled no competitors, which is
+	# every vault before the competitor dimension runs. Reported by name rather
+	# than passing silently: a mode that printed `clean` over a document it never
+	# found reads as a monitoring plan that was checked. The empty failure file
+	# still goes through the renderer, so --json gets a well-formed document
+	# either way.
+	MONITORING_OK="every monitoring axis names an instrument, a cadence and the decision it would change - $VAULT"
+	if [ ! -f "$COMPETITORS" ]; then
+		MONITORING_OK="no competitor-analysis.md under $VAULT - no competitor set was profiled, so no axis owes an instrument"
+	elif [ "$FOUND_SCHEMA" -lt 2 ]; then
+		# The axes are what version 2 asks the section for. A vault at 1 is held
+		# to exactly the rules it was written under, the same exemption
+		# --roadmap-table and --red-team's roster take, and named rather than
+		# silent so a clean line is never mistaken for a section that was read.
+		MONITORING_OK="competitor-analysis.md at schemaVersion $FOUND_SCHEMA - the monitoring axes are a schemaVersion 2 rule and a vault at 1 is held to the rules it was written under"
+	else
+		LC_ALL=C awk -v out="$FAILURES" '
+			function report(check, id, detail) { print "competitor-analysis.md\t" check "\t" id "\t" detail >> out }
+
+			# The key a heading and a header cell are matched on: trimmed,
+			# whitespace runs collapsed, lowercased. Matching the raw text would
+			# read `## Monitoring Plan` and `## Monitoring  plan` as two
+			# different sections, neither of them the one this mode wants - and a
+			# check that fires on capitalisation is one somebody switches off,
+			# which takes the half that worked with it.
+			function key(s) {
+				sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
+				gsub(/[ \t]+/, " ", s)
+				return tolower(s)
+			}
+
+			# The same trim without the folding, for the message. A failure
+			# naming the axis in the case the document wrote it in is one the
+			# reader can find by eye.
+			function disp(s) {
+				sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# A cell answers the column when it carries a letter or a digit.
+			# Anything else - an em dash, a run of hyphens, a lone ellipsis - is
+			# the shape of a cell somebody filled in to make the row look
+			# complete, and reading it as an answer is what makes this rule
+			# clearable without doing the work. Deliberately NOT a placeholder
+			# word list: a check that has to be taught every spelling of `TBD` is
+			# one that misses the next one, and every spelling of it has no
+			# letter-or-digit test to fail anyway.
+			function answered(s) { return (s ~ /[A-Za-z0-9]/) }
+
+			{
+				line = $0
+				sub(/\r$/, "", line)
+				t = line
+				sub(/^[ \t]+/, "", t)
+
+				# Fenced blocks hold examples, not rows. One of six copies of
+				# those six lines: the --used-in scan(), the
+				# --supersession-sweep sections(), the --red-team roster reader,
+				# the --roadmap-table readplan() and the --binding-driver
+				# readdoc() carry the same ones, for the same reason - six awk
+				# programs reading a document at the vault root, and no way to
+				# share a function across them. Change one, change all six.
+				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+					c = substr(t, 1, 1)
+					n = 0
+					while (substr(t, n + 1, 1) == c) n++
+					if (fc == "") { fc = c; fn = n }
+					else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+					next
+				}
+				if (fc != "") next
+
+				# A heading ends the section as reliably as it starts it, so the
+				# rows read are the ones under this heading and no others - a
+				# `| ... |` row in Threat ranking is not an axis.
+				if (match(t, /^#+[ \t]+/)) {
+					h = substr(t, RLENGTH + 1)
+					sub(/[ \t]*#+[ \t]*$/, "", h)
+					insection = (key(h) == "monitoring plan")
+					if (insection) seen = 1
+					next
+				}
+				if (!insection) next
+
+				if (substr(t, 1, 1) != "|") next
+				row = t
+				sub(/^\|/, "", row)
+				sub(/\|[ \t]*$/, "", row)
+				nc = split(row, cell, "|")
+				if (nc < 2) next
+
+				# The |---| rule is skipped by testing every cell rather than by
+				# counting lines, so a table written with a colon-carrying
+				# alignment row is read the same as one without.
+				allrule = 1
+				for (i = 1; i <= nc; i++)
+					if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { allrule = 0; break }
+				if (allrule) next
+
+				# The FIRST row of the section is the header, and the columns are
+				# located by the names it carries rather than by position - the
+				# rule --roadmap-table applies to its `Item` cell, and for the
+				# same reason: reading a fixed position reports every row of a
+				# correct table as incomplete the moment somebody adds a column.
+				# Each defaults to its template position, so a table with no
+				# recognisable header is still read rather than silently skipped.
+				if (!nhdr) {
+					nhdr = 1
+					icol = 2; ccol = 3; dcol = 4
+					for (i = 1; i <= nc; i++) {
+						hk = key(cell[i])
+						if (hk == "instrument") icol = i
+						else if (hk == "cadence") ccol = i
+						else if (index(hk, "decision") == 1) dcol = i
+					}
+					next
+				}
+
+				ax = disp(cell[1])
+				if (!answered(ax)) next
+				axk = key(ax)
+				if (axk in SEENAX) next
+				SEENAX[axk] = 1
+				AORDER[++na] = axk
+				ASHOW[axk] = ax
+				AINST[axk] = (icol <= nc ? disp(cell[icol]) : "")
+				ACAD[axk] = (ccol <= nc ? disp(cell[ccol]) : "")
+				ADEC[axk] = (dcol <= nc ? disp(cell[dcol]) : "")
+			}
+
+			END {
+				# One check for the absent section and the empty one, because
+				# they take the same fix - write the axes - and the detail says
+				# which of the two it found. Splitting them would be two names
+				# for one edit.
+				if (na == 0) {
+					if (seen)
+						report("monitoring-plan-no-axes", "", "competitor-analysis.md carries a `## Monitoring plan` section with no axis in it. The section it replaces asked which pages to re-check and how often, which is freshness - and freshness is the question the per-profile research date and every claim note`s `stale_after` already ask. Neither of them asks which way a competitor is moving, and a direction is the only thing that separates a closing window from an open one: a profile researched the day before it was used missed a strategic reversal six weeks earlier, because a snapshot cannot see one. Name the axes, an instrument per axis, a cadence, and the decision each would change")
+					else
+						report("monitoring-plan-no-axes", "", "competitor-analysis.md carries no `## Monitoring plan` section at all, so nothing in the corpus says which way any competitor is moving. Every profile in this document is a snapshot dated on the day it was taken, and a snapshot cannot see a direction - a competitor profiled the day before it was used missed a strategic reversal six weeks earlier, which was the single fact that most changed what that competitor meant. Add the section: named axes, an instrument per axis, a cadence, and the decision each would change")
+					exit
+				}
+
+				for (i = 1; i <= na; i++) {
+					axk = AORDER[i]
+					# A colon-list rather than a conjunction, because the same
+					# sentence has to read correctly at one missing column and at
+					# three, and a joiner that changes with the count is one more
+					# thing the two implementations can disagree about.
+					miss = ""
+					if (!answered(AINST[axk])) miss = miss ", instrument"
+					if (!answered(ACAD[axk])) miss = miss ", cadence"
+					if (!answered(ADEC[axk])) miss = miss ", the decision it would change"
+					if (miss == "") continue
+					sub(/^, /, "", miss)
+					report("monitoring-axis-incomplete", ASHOW[axk],
+						"the `" ASHOW[axk] "` axis leaves empty: " miss ". An axis with no instrument is a thing somebody intends to notice, which is not a mechanism; one with no cadence is a re-check with no date, which is the same as no re-check; and one with no decision behind it is a signal nobody acts on, which costs the same to collect as one that matters. A cell carrying no letter or digit - an em dash, a run of hyphens - reads as empty here rather than as an answer, because that is the cheapest way past this rule")
+				}
+			}
+		' "$COMPETITORS"
+	fi
+
+	render_failures "vault-lint monitoring" "$MONITORING_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --deliverable - the artifact stops inheriting the ledger's archaeology
+#
+# Retraction is visible in the vault, and that rule is right: a silently deleted
+# claim comes back two drafts later with its cause of death erased. This is its
+# counterpart one document over. The rendered deliverable is read by somebody who
+# was never in the room, and a note ID or an objection code is a VAULT ADDRESS -
+# it resolves for anyone holding the corpus and resolves to nothing for the
+# audience the document is for. A struck-through line with its reason beside it
+# is a document arguing with its own previous draft. Left unchecked, a finished
+# plan and its model carry well over a hundred pieces of that narrative between
+# them - into the two documents an investor actually reads.
+#
+# IT READS THE RENDERED HTML AND NEVER THE MARKDOWN, and that is the design
+# rather than a convenience. The markdown is the working document and keeps every
+# strikethrough it owes. The HTML is what the outside reader holds, and it is the
+# only one a check can hold to this at all, because the fix is a judgement: a
+# correction reaches the artifact RESTATED FORWARD, as what is true now, and
+# stripping the `~~` mechanically leaves `That multiple was actually...` with no
+# antecedent. No script can judge an antecedent, so that half is a read-back item
+# in the render loop and this mode covers the half that is mechanical.
+#
+# There is no fenced-block scan here for the reason the other six modes have one:
+# a deliverable is prose for an outside reader and does not document its own
+# format. The one document in this corpus that does - red-team.md, which carries
+# its own row template - is not a deliverable and is not read by this mode.
+#
+# LC_ALL=C for --used-in's reason: the prose in a deliverable carries em dashes
+# and curly quotes, and macOS awk in a UTF-8 locale aborts the record on the
+# first sequence it cannot decode, which would end the scan early and pass a
+# document it never finished reading.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "deliverable" ]; then
+	RENDERED="$TMP/rendered"
+	: >"$RENDERED"
+	[ -d "$VAULT/deliverables" ] &&
+		find "$VAULT/deliverables" -type f -name '*.html' | LC_ALL=C sort >"$RENDERED"
+
+	DELIVERABLE_OK="every rendered deliverable carries what is true now and no vault address - $VAULT"
+	if [ ! -s "$RENDERED" ]; then
+		# Named rather than silent, for --red-team's reason: a mode that printed
+		# `clean` over a directory it never found reads as a deliverable that was
+		# checked, and the gate runs BEFORE the first render as well as inside
+		# the render loop - so the empty case is the ordinary one on the first
+		# call and has to say which of the two it is.
+		DELIVERABLE_OK="no deliverables/*.html under $VAULT - nothing has been rendered yet, so no artifact carries anything out"
+	else
+		# One awk per deliverable rather than the whole list as operands. The
+		# operand form would let word splitting break the first vault that lives
+		# under a directory with a space in its name - every other path in this
+		# script is quoted for that reason - and it buys nothing: the relative
+		# path is passed in rather than sliced off FILENAME, and NR is per-file
+		# because the process is.
+		while IFS= read -r doc; do
+			[ -n "$doc" ] || continue
+			# `rel` is the path a reader opens, relative to the vault root, so
+			# every message names deliverables/business-plan.html rather than an
+			# absolute path - which differs per machine, and differs between the
+			# two implementations on the same machine.
+			LC_ALL=C awk -v out="$FAILURES" -v rel="${doc#"$VAULT/"}" '
+				BEGIN {
+					# Eight character classes rather than one with a brace
+					# interval: a `{8}` is an interval expression to some awks and
+					# a literal to others, and which one runs this script is a
+					# property of the user machine - the same caution the anchor
+					# patterns take with `\{`.
+					#
+					# EIGHT is the length vault.md`s generation rule produces, and
+					# requiring it is the whole reason this does not cry wolf.
+					# Validating a note`s own ID accepts any length on purpose;
+					# DETECTING one that leaked into prose is the opposite job, and
+					# the loose form fires on `FACT-CHECKED` and `CLAIM-HANDLING`.
+					AN = "[A-Za-z0-9]"
+					TYPES = "(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)"
+					IDRE = TYPES "-" AN AN AN AN AN AN AN AN
+					# The objection ID shape --red-team reads in red-team.md.
+					OBJRE = "R[0-9]+-O[0-9]+"
+					# `<del>`, `<s>` and `<strike>` as OPENING tags, matched on a
+					# lowercased copy of the line so a renderer that emits upper
+					# case is read the same. The delimiter class is what keeps
+					# `<script` and `<span` out: `<s` alone matches both.
+					TAGRE = "<(del|s|strike)([ \t>/]|$)"
+				}
+
+				function report(check, id, detail) { print rel "\t" check "\t" id "\t" detail >> out }
+
+				# One row per address per line, so two copies of one address on one
+				# line are one row and the same address on two pages is two rows.
+				# The unit is the place a reader has to go and restate, which is a
+				# line. Row ORDER out of here is whatever awk hands back;
+				# render_failures sorts the failure file, which is what makes the
+				# JSON deterministic and byte-comparable against the PowerShell
+				# side.
+				function once(check, id, ln,   k) {
+					k = check SUBSEP id SUBSEP ln
+					if (k in SEEN) return 0
+					SEEN[k] = 1
+					return 1
+				}
+
+				# Every match of `re` in `s`, with the alphanumeric-boundary test
+				# the pattern itself cannot carry: awk has no \b, and writing the
+				# boundary into the ERE consumes it, so a second address
+				# immediately after the first would be skipped. A rejected match is
+				# stepped over rather than ending the scan -
+				# `XCLAIM-AS23SD44 CLAIM-BB77KK12` carries one real address and it
+				# is the second one.
+				function scan(s, re, check, ln, what,   rest, tok, before, after, at, end) {
+					rest = s
+					at = 0
+					while (match(rest, re)) {
+						tok = substr(rest, RSTART, RLENGTH)
+						before = (at + RSTART == 1) ? "" : substr(s, at + RSTART - 1, 1)
+						after = substr(rest, RSTART + RLENGTH, 1)
+						# The token goes in the DETAIL as well as the id column,
+						# because human output prints the check and the detail and
+						# nothing else - a message naming no address sends the
+						# reader to a page to find it by eye.
+						if (before !~ /[A-Za-z0-9]/ && after !~ /[A-Za-z0-9]/ && once(check, tok, ln))
+							report(check, tok, "line " ln " carries `" tok "`, " what)
+						end = RSTART + RLENGTH - 1
+						at = at + end
+						rest = substr(rest, end + 1)
+					}
+				}
+
+				{
+					line = $0
+					sub(/\r$/, "", line)
+
+					# Lowercased for the tag test only. The two addresses below are
+					# matched on the original line because a note ID and an
+					# objection code are upper case by construction, which is most
+					# of what keeps this off ordinary prose.
+					if (match(tolower(line), TAGRE) && once("deliverable-strikethrough", "tag", NR))
+						report("deliverable-strikethrough", "line " NR,
+							"line " NR " renders a strikethrough element. Invariant 14 is why the markdown carries one - a retraction that is silently deleted comes back two drafts later with its cause of death erased - and this is that rule inverted in the artifact: the reader of this file was never in the room, so a struck-through line with its reason beside it is a document arguing with its own previous draft. The correction reaches here RESTATED FORWARD, as what is true now. Deleting the `~~` is not the fix - it leaves the sentence after it with no antecedent, which is why this is a step in the render loop rather than a filter")
+
+					if (match(line, /~~[^~]+~~/) && once("deliverable-strikethrough", "tildes", NR))
+						report("deliverable-strikethrough", "line " NR,
+							"line " NR " carries a literal `~~...~~` span, so a markdown strikethrough reached the render and came out as text - this reader sees the tildes. Either way it is the ledger`s correction narrative in the artifact: restate the claim forward as what is true now, and leave the retraction visible in the vault, where invariant 14 wants it")
+
+					scan(line, IDRE, "deliverable-note-id", NR,
+						"which is a note ID. An ID is an ADDRESS into the vault: it resolves for anyone holding the corpus and resolves to nothing for the audience this document is for, who has no ledger to look it up in. vault.md says as much outright - a rendered document shows the title, and nobody ever sees a note ID in a sentence. Name the claim, or drop the citation; the traceability lives in the vault, which is the half that does not ship")
+					scan(line, OBJRE, "deliverable-objection-code", NR,
+						"which is a red-team objection code. That code addresses a row in red-team.md, which this reader does not have, so it reads as a reference to an argument they were not in. If the objection changed the plan, the plan states what it now claims; if it did not, it does not belong here at all")
+				}
+			' "$doc"
+		done <"$RENDERED"
+	fi
+
+	render_failures "vault-lint deliverable" "$DELIVERABLE_OK"
 	exit $?
 fi
 

@@ -1,0 +1,13 @@
+# No required subject and no claim, so `check` reports nothing over the two
+# well-formed notes below. The corpus is here only to make this a vault at all:
+# what is being asserted is the document at the vault root, and the gate failing
+# on that part alone is invisible in any vault that also fails another part.
+
+terms:
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver behind
+      it.
+    aliases:
+      - growth-rate
+    required: false
