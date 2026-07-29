@@ -557,7 +557,7 @@ function main() {
   if (toCompare.length && !shInterpreter) {
     // A harness that reports success when it compared nothing is worse than no
     // harness. This is the realistic Windows-runner-without-Git-Bash case: the
-    // 250-assertion fixture suite still proves the .ps1 answers correctly, but
+    // fixture suite still proves the .ps1 answers correctly, but
     // nothing here proves the two AGREE, and that has to be said rather than
     // swallowed.
     problems.push(
