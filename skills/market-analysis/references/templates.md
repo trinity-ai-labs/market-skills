@@ -38,6 +38,16 @@ class: differentiated | table-stakes · status: settled | research-testable | fo
 SDK import). Plus the scaling shape in one line: which cost grows with users, which with
 usage, which is flat. Feeds the unit-economics dimension.>
 
+## Instrumentation inventory (repo sources — from the instrumentation archaeology pass)
+<one row per store or event type, never per call site: instrument · what it records and at
+what grain (per account / per action / per day) · the quantity it could settle, named, and
+which claim rests on a guess about it today · read? — the figure and the date pulled, or
+`unread` with what is blocking it · what reading it costs (one query / an export the founder
+runs / a migration, because the field is not there yet). Every `unread` row is ALSO an Open
+questions entry naming the quantity it would settle — that hop is what gets access asked for
+in the grill instead of the quantity being estimated for the rest of the run. A row that
+names a store and stops settles nothing while reading as diligence.>
+
 ## Category boundary
 **In:** <the category this competes in>
 **Out:** <adjacent categories explicitly excluded, and why>
