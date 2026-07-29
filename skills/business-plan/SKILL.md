@@ -412,7 +412,7 @@ reads the axes and their decisions rather than re-checking the pages those axes 
 
 **Scaffold the vault before anything writes.** The vault path IS the slug directory — never a
 `vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with
-`"schemaVersion": 2` — the current version, so every check the schema carries applies to this
+`"schemaVersion": 3` — the current version, so every check the schema carries applies to this
 vault from its first note — and copy [references/vocabulary.yml](references/vocabulary.yml) to
 `<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
 vocabulary it was written under after the skill ships new terms. The copy carries the shipped
