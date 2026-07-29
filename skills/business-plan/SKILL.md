@@ -510,6 +510,42 @@ a copy in the vault. That rule is stated in the paragraph that creates the expos
 vault is a git repo from this phase and is offered a remote in Phase 5: omit it and the sweep's
 own success is what puts a client's confidential document into a corpus built to be shared.
 
+**The product's own records are the third inventory, and the one this method kept walking past.**
+The two sweeps above cover what the founder **wrote**; this one covers what the product
+**measures** — its users, its own operation, and the job it claims to do. It is the artifact
+sweep's argument one step closer to the subject, with one property none of the founder's own
+artifacts has: it is a dated series about the very people the plan is about. The dossier pass
+above built the inventory; **this phase is where the readable entries get read**, because that
+pass can only see shapes — the query itself needs the founder, and the founder is here. An
+inventory of unopened stores is the original defect wearing the shape of a fix.
+
+**Each figure read becomes a note, on the same terms the artifact sweep uses.** The instrument is
+a [source with no public URL](references/vault.md#the-source-note-keeps-the-quote-that-outlives-the-url)
+whose provenance names the store and the query, and each figure read off it is a `fact` resting on
+that source. Notes rather than prose, for the reason every rule in this release exists: the
+dossier's inventory is prose a later phase may never re-open, while a dated note is on disk at the
+moment a dimension files the binding driver at `L` for *"no instrument exists"* — which puts the
+contradiction in the corpus instead of in somebody's memory of Phase 0, and is the only reason the
+conductor's read at Phase 2's checkpoint can catch it at all. Invariant 3 then governs what the
+figure means before it is cited as evidence for a mechanism.
+
+**An entry closes with a figure and its date, or with its blocker named — never with the store
+named and nothing else.** A blocker is a real one: the instrument is not built, the access is the
+founder's to grant, the export is theirs to run. *Nobody ran the query* is not a blocker, and on
+the run this comes from it was the only thing standing between the corpus and every instrument it
+needed. Invented, and the shape rather than the products is the point: a completion log for the
+product's core action settles how often the job actually gets done per active account — the
+denominator the plan's retention assumptions are otherwise guessing — and a per-account progress
+table settles what fraction of accounts reach the step the whole thesis turns on, **as a
+percentage**, which ends an argument between founder and analyst that no quantity of category
+research could.
+
+**What enters the vault is the figure, never the rows** — the count, the fraction, the date and
+the query that produced it, and never a row, never a free-text answer verbatim, never an export
+copied into `research/`. Same rule as the client document above, and worse here in one way: this
+data is the subject's own users', which makes copying it into the corpus the easier thing to talk
+yourself into.
+
 **The dossier is the plan's product-truth spine — thinness here propagates everywhere.** A
 dossier that is *true but small* is more dangerous than one that is wrong, because nothing in
 it trips a check and every downstream document inherits its omissions. Two habits prevent it:
@@ -721,6 +757,19 @@ skips the question the error existed to ask.
   were guessed silently.
 - `Value hypothesis verdicts` covers every VH in the dossier (confirmed / weakened / refuted /
   untested) — Phase 3's Solution section may only build on confirmed ones.
+- `research/product-dossier.md` carries its `## Instrumentation inventory`, and **every row is
+  reconciled by name against what the fleet came back with, both directions.** *Forward:* a
+  `question` note's `gaps` entry or an `L`-tagged driver naming a quantity some row says an
+  instrument could settle means that instrument was never opened — the binding driver gets filed
+  at `L` for *"no instrument exists"* while a dated `fact` note carrying the figure sits in the
+  same vault, and nothing compares the two. *Reverse:* a row marked read, with its `fact` note
+  minted, and the dimension owning that quantity resolved through a comparable anyway — the
+  measurement is on disk and the plan is about to run on somebody else's proxy for it. Both
+  directions carry weight for `--red-team`'s reason: with only the forward one, the cheapest way
+  past an instrument nobody wanted to query is to delete its row from the inventory. This phase
+  is the last one whose context is still live when the fix costs a single query, and the first
+  line's "all contract files exist" cannot do the work — it is satisfied by the dossier existing,
+  and a dossier existing says nothing about whether anything in it was opened.
 - Lint is clean, and every dimension left a `question` note. A dimension with no gaps is a
   dimension that did not look.
 
