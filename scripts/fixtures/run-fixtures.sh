@@ -121,6 +121,18 @@ run_status() {
 	printf '%s\n' "$?"
 }
 
+# strip_cr - drop every carriage return from a stream. .gitattributes leaves
+# *.md unpinned on purpose (see the comment there), so a fixture note checks
+# out CRLF on a POSIX box with core.autocrlf=true exactly as it does on
+# Windows - and a line read straight out of one, whether captured from awk or
+# piped through it for a rewrite, carries a trailing \r that a literal-string
+# comparison against an LF value never has. Four more slices land assertion
+# blocks in this file this release; route any new line-vs-literal comparison
+# through this helper instead of adding a fourth local `tr -d '\r'`.
+strip_cr() {
+	tr -d '\r'
+}
+
 printf 'run-fixtures: %s\n\n' "$LINT"
 
 # --- 1. the clean vault passes ----------------------------------------------
@@ -251,7 +263,11 @@ PAIRS=$(printf '%s\n%s\n%s\n%s\n%s\n' "$VJSON" "$UJSON" "$RTJSON" "$RMJSON" "$BD
 (cd "$HERE/violations" && find . -name '*.md' | LC_ALL=C sort) >"$PAIRS_FILE.notes"
 while read -r note; do
 	rel=${note#./}
-	decl=$(awk '/^Violates: / { sub(/^Violates: /, ""); print; exit }' "$HERE/violations/$rel")
+	# strip_cr: awk's sub() only touches the matched "Violates: " prefix, so a
+	# CRLF note hands back "unknown-subject\r" - and tr ',' '\n' | tr -d ' '
+	# below does not remove a carriage return, so the per-file grep -q
+	# "^$rel $want\$" a few lines down never matches.
+	decl=$(awk '/^Violates: / { sub(/^Violates: /, ""); print; exit }' "$HERE/violations/$rel" | strip_cr)
 	[ -n "$decl" ] || continue
 	printf '%s\n' "$decl" | tr ',' '\n' | tr -d ' ' | grep -v '^$' >"$PAIRS_FILE.decl"
 	while read -r want; do
@@ -273,7 +289,10 @@ printf '%s\n' "$PAIRS" >"$PAIRS_FILE"
 while read -r rel chk; do
 	[ -n "${rel:-}" ] || continue
 	case "$rel" in _vocab.yml) continue ;; esac
-	decl=$(awk '/^Violates: / { sub(/^Violates: /, ""); print; exit }' "$HERE/violations/$rel" 2>/dev/null)
+	# strip_cr: same CRLF-note reason as the forward check above - without it
+	# "$chk" never matches the trailing-\r "$decl" and every fired check reads
+	# as fired-without-declaring.
+	decl=$(awk '/^Violates: / { sub(/^Violates: /, ""); print; exit }' "$HERE/violations/$rel" 2>/dev/null | strip_cr)
 	case " $(printf '%s' "$decl" | tr ',' ' ') " in
 	*" $chk "*) ;;
 	*) no "$rel fired $chk without declaring it" ;;
@@ -378,8 +397,12 @@ printf '\nexplicit anchors\n'
 REWORD="$PAIRS_FILE.reword"
 rm -rf "$REWORD"
 cp -R "$HERE/clean" "$REWORD"
-awk '{ if ($0 == "## Competition & moat {#competition}") print "## Why the moat holds {#competition}"; else print }' \
-	"$HERE/clean/business-plan.md" >"$REWORD/business-plan.md"
+# strip_cr feeds awk rather than filtering its output: on a CRLF checkout $0
+# carries a trailing \r that the string-equality test never has, so the
+# rewrite has to see clean input BEFORE the comparison runs, not after.
+strip_cr <"$HERE/clean/business-plan.md" |
+	awk '{ if ($0 == "## Competition & moat {#competition}") print "## Why the moat holds {#competition}"; else print }' \
+		>"$REWORD/business-plan.md"
 
 if grep -q '^## Why the moat holds {#competition}$' "$REWORD/business-plan.md"; then
 	ok "the reworded copy carries the new heading text"
@@ -1158,11 +1181,15 @@ esac
 EMPTY_UF="$PAIRS_FILE.empty-verdict"
 rm -rf "$EMPTY_UF"
 cp -R "$HERE/verdict-unfiled" "$EMPTY_UF"
-awk 'BEGIN { drop = 0 }
-	/^## Target & verdict \{#target-verdict\}$/ { print; drop = 1; next }
-	/^## / { drop = 0 }
-	drop { next }
-	{ print }' "$HERE/verdict-unfiled/business-plan.md" >"$EMPTY_UF/business-plan.md"
+# strip_cr, same reason as the reword rewrite above: the anchored pattern
+# below needs $0 with no trailing \r or it never matches on a CRLF checkout,
+# so the whole file drops through unchanged and "Reach binds" survives.
+strip_cr <"$HERE/verdict-unfiled/business-plan.md" |
+	awk 'BEGIN { drop = 0 }
+		/^## Target & verdict \{#target-verdict\}$/ { print; drop = 1; next }
+		/^## / { drop = 0 }
+		drop { next }
+		{ print }' >"$EMPTY_UF/business-plan.md"
 
 if grep -q '^## Target & verdict {#target-verdict}$' "$EMPTY_UF/business-plan.md" &&
 	! grep -q 'Reach binds' "$EMPTY_UF/business-plan.md"; then
