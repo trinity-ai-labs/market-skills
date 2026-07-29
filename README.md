@@ -5,9 +5,10 @@ Two agent skills that take a product to market, packaged as one plugin. Both are
 - **`market-analysis`** — heavy, evidence-first market research for a product (a code repo, a
   spec/doc, or an idea): value-hypothesis extraction, multi-agent competitor discovery and
   profiling, bottom-up market sizing, customers/JTBD, pricing & willingness-to-pay, timing,
-  channels, moats — plus infra-cost archaeology on repo sources (derive COGS from the actual
-  stack, project cost vs revenue at scale) — with adversarial verification of every
-  load-bearing number.
+  channels, moats — plus two archaeology passes over repo sources: infra-cost (derive COGS from
+  the actual stack, project cost vs revenue at scale) and instrumentation (what the product
+  already records, and which number in the analysis it could settle) — with adversarial
+  verification of every load-bearing number.
 - **`business-plan`** — the conductor that grills the founder, runs `market-analysis` as its
   research engine, and produces the plan artifact the founder's track actually needs
   (investor memo / bootstrap operating plan / lender classic) plus a one-pager, a bottom-up
@@ -156,6 +157,15 @@ The run also inventories and measures your own artifacts — repos you've writte
 documents you produced for clients, products in the category you've used — rather than only
 asking about them. Where those documents are confidential, the corpus records what they
 establish with a provenance note, never the file itself.
+
+It inventories what your **product** already records on the same reasoning, and before any
+research is commissioned: the tables, event logs, forms and admin reports it carries, what each
+one measures, and which number in the plan it could settle. A form field asking arriving users
+what they came to do is first-party evidence about demand that no competitor can obtain and no
+survey improves on, and its usual state is unread with the row count unknown — so whatever is
+readable gets read in that phase rather than estimated for the rest of the run. What enters the
+corpus is the figure, the date and the query behind it: never the rows, never a free-text answer
+verbatim, and never a copy of your users' data.
 
 ---
 
