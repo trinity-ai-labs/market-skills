@@ -1,0 +1,42 @@
+# Without this file, Git for Windows' default core.autocrlf=true rewrites
+# bin/vault-lint.sh's line endings to CRLF on clone/checkout. The shebang
+# becomes `#!/bin/sh\r`, and the script dies with "bad interpreter" before
+# any Windows-specific behaviour is even reachable.
+*.sh text eol=lf
+*.ps1 text eol=lf
+
+# AND NOTHING ELSE - not *.md, not *.yml. The temptation is real: on a Windows
+# checkout every fixture note and every _vocab.yml arrives CRLF, and the first
+# windows-latest run turned that into seven red assertions and four red gate
+# failures. Pinning them to LF would have cleared all eleven without fixing one.
+#
+# It would also have removed the only place this repo ever sees CRLF input. A
+# user's vault is written on their machine and is covered by no .gitattributes
+# of ours: on Windows its notes and its _vocab.yml are CRLF by default, which is
+# precisely the input those eleven failures were reporting on. Pinned fixtures
+# would have gone green while the shipped tool stayed broken for the platform
+# the port exists for - a silent pass over the exact case, which is what this
+# whole tool is against.
+#
+# So the fixtures stay CRLF on Windows on purpose, and the parsers were made to
+# tolerate a carriage return instead. The two lines above are a different thing
+# and stay: a CRLF shebang is not input a parser can be tolerant of, it is a
+# file the kernel refuses to start.
+
+# ONE fixture is pinned the other way, and this is not the blanket rule above
+# read backwards. The rule above is about EXTENSIONS - *.md and *.yml stay
+# unpinned so the corpus keeps arriving CRLF on Windows and LF elsewhere, which
+# is what makes a windows-latest run test a different input class from a
+# ubuntu run. This line pins one PATH, and it pins it to CRLF rather than LF:
+# scripts/fixtures/crlf-vocab is the vault whose whole reason to exist is that
+# its bytes carry a carriage return on EVERY platform.
+#
+# It is here because a POSIX-only checkout would otherwise get LF, and then the
+# assertions in run-fixtures.sh that read it would still pass while testing
+# nothing - the fixture would be an ordinary vault with an unusual name. That is
+# worse than not having it: a check that stops firing reports the same green as
+# a check that fires and finds nothing, which is the exact failure the vault
+# schema, this lint and this fixture are all against. eol=crlf stores the blob
+# as LF and materialises CRLF at checkout, so the bytes are guaranteed by an
+# attribute rather than by whoever last committed the file.
+scripts/fixtures/crlf-vocab/** text eol=crlf

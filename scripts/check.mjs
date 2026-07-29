@@ -54,6 +54,26 @@ const JSON_OUT = process.argv.includes('--json');
 const failures = [];
 const fail = (file, rule, detail) => failures.push({ file: relative(ROOT, file), rule, detail });
 
+/**
+ * Every read this gate makes, with CRLF folded to LF at the boundary.
+ *
+ * Git for Windows installs default to core.autocrlf=true, so a Windows checkout
+ * hands Node markdown whose every line ends `\r\n`. Nothing below is written for
+ * that: JavaScript's `.` and `$` both stop at `\r`, so `/^(key):\s*(.*)$/`
+ * against `name: market-analysis\r` simply does not match, and the frontmatter
+ * reader returns an object with no keys in it. The gate then reports that both
+ * shipped skills are missing `name` and `description` — four failures whose text
+ * points at the files rather than at the line endings, on a checkout where the
+ * fields are plainly there. Observed exactly that way the first time this repo's
+ * CI ran on windows-latest: green on ubuntu and macos, four failures on Windows,
+ * and a contributor on Windows unable to run the gate at all.
+ *
+ * Folded HERE rather than in each reader, because there are nine of them and the
+ * next one added would be written against LF like all the others. A carriage
+ * return is a checkout artifact, not content: no rule below is about one.
+ */
+const readText = async (path) => (await readFile(path, 'utf8')).replace(/\r\n/g, '\n');
+
 /** Walk a directory recursively, yielding absolute file paths. */
 async function* walk(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -198,7 +218,7 @@ async function checkBriefsInterpolatePlaybooks() {
     fail(ORCHESTRATION, 'wiring', 'no orchestration.md — check 6 ran on nothing');
     return;
   }
-  const text = await readFile(ORCHESTRATION, 'utf8');
+  const text = await readText(ORCHESTRATION);
   const seen = new Set();
   let calls = 0;
 
@@ -251,9 +271,9 @@ async function checkDimensionsAreRegistered() {
     }
   }
   const stems = (text, re) => new Set([...text.matchAll(re)].map((m) => m[1]));
-  const dimsText = await readFile(DIMENSIONS, 'utf8');
-  const skillText = await readFile(MA_SKILL, 'utf8');
-  const orchText = await readFile(ORCHESTRATION, 'utf8');
+  const dimsText = await readText(DIMENSIONS);
+  const skillText = await readText(MA_SKILL);
+  const orchText = await readText(ORCHESTRATION);
 
   // `## Growth curves & reference class (`research/growth-curves.md`) — runs after…`
   const playbooks = stems(dimsText, /^#{2}\s+[^\n]*?\(`research\/([a-z0-9-]+)\.md`\)/gm);
@@ -302,7 +322,7 @@ async function checkCitedHeadingsExist() {
   const citations = [];
   for await (const file of walk(SKILLS_DIR)) {
     if (!file.endsWith('.md')) continue;
-    const text = await readFile(file, 'utf8');
+    const text = await readText(file);
     for (const line of text.split('\n')) {
       const m = line.match(/^#{2,}\s+(.*?)\s*$/);
       if (m) headings.add(m[1]);
@@ -342,7 +362,7 @@ async function checkCitedHeadingsExist() {
 async function checkAnchorsResolve() {
   const slugsFor = new Map();
   const slugsOf = async (file) => {
-    if (!slugsFor.has(file)) slugsFor.set(file, headingSlugs(await readFile(file, 'utf8')));
+    if (!slugsFor.has(file)) slugsFor.set(file, headingSlugs(await readText(file)));
     return slugsFor.get(file);
   };
 
@@ -350,7 +370,7 @@ async function checkAnchorsResolve() {
   let templateAnchors = 0;
   for await (const file of walk(SKILLS_DIR)) {
     if (!file.endsWith('.md')) continue;
-    const text = await readFile(file, 'utf8');
+    const text = await readText(file);
     for (const target of localLinks(text)) {
       const hash = target.indexOf('#');
       if (hash === -1) continue;
@@ -432,7 +452,7 @@ async function main() {
       fail(skillMd, 'structure', `skills/${name}/ has no SKILL.md`);
       continue;
     }
-    const fm = readFrontmatter(await readFile(skillMd, 'utf8'));
+    const fm = readFrontmatter(await readText(skillMd));
     if (!fm) {
       fail(skillMd, 'frontmatter', 'no YAML frontmatter block');
       continue;
@@ -446,7 +466,7 @@ async function main() {
 
   for await (const file of walk(SKILLS_DIR)) {
     if (!file.endsWith('.md')) continue;
-    const text = await readFile(file, 'utf8');
+    const text = await readText(file);
     for (const target of relativeLinks(text)) {
       const abs = resolve(dirname(file), target);
       if (!existsSync(abs)) {

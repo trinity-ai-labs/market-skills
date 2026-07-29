@@ -601,6 +601,19 @@ done | LC_ALL=C sort >"$FILES"
 
 if [ "$HAS_VOCAB" -eq 1 ] && [ "$MODE" = "check" ]; then
 	awk '
+		# ONE trailing CR off every line, the same treatment the note parser
+		# gives every line it reads. Without it a CRLF _vocab.yml parses as an
+		# EMPTY vocabulary: `timing-window:\r` fails the term-key pattern below
+		# (which requires nothing after the colon), so no T or A record is ever
+		# emitted. An empty vocabulary is not an error in this tool, it is a
+		# silence - unknown-subject, near-miss-subject and coverage-gap each
+		# need a term to compare against, so the vault lints clean while
+		# carrying unknown subjects and a thin spine, which is the exact failure
+		# this lint exists to break. A _vocab.yml written or edited on Windows
+		# is CRLF by default, so a vault shared across platforms hits this as
+		# the ordinary case rather than the corner.
+		{ sub(/\r$/, "", $0) }
+
 		/^[ \t]*#/ { next }
 		/^[ \t]*$/ { next }
 

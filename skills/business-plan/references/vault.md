@@ -1195,10 +1195,20 @@ grep -rnE '^[a-z_]+: \[' "$VAULT_PATH"
 
 Whole-corpus aggregation — required-field checks, confidence-propagation violations, dangling
 `rests_on` targets, near-miss vocabulary terms, and the `used_in` targets `--used-in` opens —
-belongs to `vault-lint.sh`, not to the agent. It ships from this repository's `bin/` directory,
-which Claude Code puts on the Bash tool's `PATH`, so it is invoked bare from wherever you are.
-Code is reliable at counting; an agent is reliable at authoring one good note. Splitting them
-that way is what keeps both honest.
+belongs to the lint, not to the agent. Code is reliable at counting; an agent is reliable at
+authoring one good note. Splitting them that way is what keeps both honest.
+
+## A session invokes whichever script its shell tool can run
+
+The lint ships from this repository's `bin/` directory as two implementations held to
+identical output by a JSON parity gate: `vault-lint.sh` for a session with the Bash tool,
+`vault-lint.ps1` for a session that has only the PowerShell tool — native Windows with no
+Git for Windows installed, where there is no `sh` to run the first one with, so it is not a
+script that fails there but a command that does not exist. Claude Code puts `bin/` on
+whichever shell tool the session actually has, so pick the extension that tool runs — never
+`.sh` from habit — and invoke it bare either way, never by path. Every mention of
+`vault-lint.sh` elsewhere in this skill names a mode, not a platform, and carries over to
+`vault-lint.ps1` unchanged; this is the one place the choice itself gets made.
 
 ## A worked chain from source to decision
 

@@ -2,6 +2,52 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.13.0
+
+- **A Claude Code session on native Windows with no Git for Windows has the PowerShell tool and
+  no shell that can run `vault-lint.sh` — `bin/` now ships `vault-lint.ps1` beside it, held
+  byte-identical to the shell script by the parity gate below.** Before this release the lint was
+  one POSIX `/bin/sh` script, and on that session it was not a script that failed, it was a command
+  that did not exist — the error read as a broken or missing plugin, sending the reader off
+  diagnosing the wrong thing instead of the actual cause, which was the wrong shell for the
+  machine. A session now picks the extension matching the shell tool it actually has and invokes
+  it bare either way.
+- **A checkout with Git for Windows' default `core.autocrlf=true` rewrote the shebang to
+  `#!/bin/sh\r` and killed `vault-lint.sh` before any Windows-specific behaviour was reachable at
+  all — `.gitattributes` now pins both scripts to LF endings.** Porting the lint to PowerShell into
+  a checkout that still could not run the *original* script correctly would have shipped a second
+  bug on top of the first; pinning both scripts to LF is what stops `core.autocrlf=true` from
+  rewriting the shebang in the first place, so the checkout that broke the shell script can no
+  longer occur.
+- **macOS was never actually exercised by CI — the fixture suite ran only on `ubuntu-latest`, so a
+  bashism or a GNU-only flag could ship and only ever surface on a contributor's own Mac.** CI now
+  runs the full 241-assertion fixture suite on `macos-latest` too, which is the regression baseline
+  the whole cross-platform port is measured against.
+- **Two implementations of one 3,600-line linter is a drift hazard no reviewer can hold in their
+  head by re-reading both files, so nothing here ships on review alone —
+  `scripts/parity/parity.mjs` is the mechanical gate that makes maintaining both tractable.** It
+  runs every mode across 19 fixture vaults — 7 modes' `--json` output compared byte-for-byte,
+  `graph` and `--release-gate` (which refuse `--json`) on normalized stdout and exit code — and
+  fails on any disagreement: key order, an escaped character, row order, a path separator. That is
+  exactly the class of defect invisible to a reader of either file alone, and it would otherwise
+  ship silently to whichever half of the install base hit the untested side first.
+- **`vault-lint.sh` read a `_vocab.yml` whose lines end CRLF as an EMPTY vocabulary, which is a
+  silence rather than an error — `unknown-subject`, `near-miss-subject` and `coverage-gap` each
+  need a term to compare against, so a vault carrying unknown subjects and a thin spine linted
+  clean.** A `_vocab.yml` written or edited on Windows is CRLF by default, so a corpus shared
+  across platforms hit this as the ordinary case rather than the corner. The shell was affected on
+  macOS and Linux only: Git for Windows' awk strips the carriage return for free, which is why
+  adding a Windows runner is what finally exposed a bug that had always been a POSIX one.
+- **The corpus never contained a single CRLF byte, which is why neither implementation was caught
+  until a Windows runner existed — a CRLF fixture vault now joins the suite, pinned to CRLF
+  through checkout by path rather than by extension.** It asserts the behaviour and not just the
+  bytes: the vocabulary checks must still fire on it, so a regression that reintroduces
+  carriage-return intolerance turns it red rather than passing quietly.
+- Docs, `AGENTS.md` and the skills' invocation prose now name both implementations and point at
+  the selection rule above, rather than asserting the lint is POSIX shell reached over the Bash
+  tool's `PATH` — true of the only implementation there used to be, and false the moment a second
+  one shipped.
+
 ## 1.12.0
 
 - **A rule that is correct, present and read is still not enforced, which is why invariant 16's

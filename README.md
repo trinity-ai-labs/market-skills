@@ -52,8 +52,10 @@ ln -s "$PWD/market-skills/skills/business-plan"   ~/.claude/skills/business-plan
 
 Link the two skill directories, not the repo: Claude Code loads `~/.claude/skills/<name>/SKILL.md`,
 so cloning the whole repo into that directory buries both `SKILL.md`s a level too deep and
-registers nothing. The other thing a clone does not give you is `vault-lint.sh` on the agent's
-`PATH` — that happens only for an installed plugin, so invoke it by path while developing.
+registers nothing. The other thing a clone does not give you is `vault-lint` on the agent's
+`PATH` — that happens only for an installed plugin, so invoke it by path while developing:
+`bin/vault-lint.sh` or `bin/vault-lint.ps1`, whichever matches your session's shell tool (see
+[`vault-lint`](#vault-lint) below).
 
 ---
 
@@ -195,19 +197,25 @@ This is a summary, not the authority — see
 
 ---
 
-## `vault-lint.sh`
+## `vault-lint`
 
-The plugin ships one executable. `business-plan` builds a claim vault at
-`~/Documents/go-to-market/<product-slug>/` — every load-bearing number traced to a dated
-source — and `vault-lint.sh` is the read-only whole-corpus check that gates it: dangling edges,
+The plugin ships two executables, `vault-lint.sh` and `vault-lint.ps1` — the same lint in
+POSIX shell and in PowerShell 5.1, held byte-identical by a JSON parity gate. `business-plan`
+builds a claim vault at `~/Documents/go-to-market/<product-slug>/` — every load-bearing
+number traced to a dated source — and `vault-lint` is the read-only whole-corpus check that
+gates it: dangling edges,
 confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
 still cited, and — on a vault at `schemaVersion: 2` — a roadmap whose order contradicts itself,
 either a prerequisite scheduled after the item that needs it or two items competing for one
 constrained resource while the plan asserts they run side by side. It also reads the roadmap
 table in the plan against the milestone notes it was rendered from, in both directions.
 
-Claude Code puts an enabled plugin's `bin/` on the Bash tool's `PATH`, so the skills invoke it
-bare, from whatever directory the user happens to be working in:
+Claude Code puts an enabled plugin's `bin/` on whichever shell tool the session has — a
+session with the Bash tool gets `vault-lint.sh` on that tool's `PATH`; a session with only
+the PowerShell tool (native Windows with no Git for Windows installed, so no `sh` to run
+the first one with) gets `vault-lint.ps1` instead, same flags, same output. Either way the
+skills invoke it bare, from whatever directory the user happens to be working in — the
+examples below show the `.sh` form; substitute `.ps1` under a PowerShell-only session:
 
 ```sh
 vault-lint.sh --vault ~/Documents/go-to-market/<product-slug>
@@ -323,9 +331,12 @@ from, so a mode added to the gate cannot leave the line quietly overstating what
 success line is what somebody renders on, so it has to be narrower than the verdict its reader
 wants it to be.
 
-It is POSIX `/bin/sh` with zero dependencies — no Node, no Python, no jq. A tool that reads an
+Both implementations are zero-dependency — `vault-lint.sh` is POSIX `/bin/sh`, `vault-lint.ps1`
+is Windows PowerShell 5.1, and neither reaches for Node, Python or jq. A tool that reads an
 entire private business corpus should not carry a transitive dependency tree, and a runtime
-prerequisite discovered at the moment of use is a broken product.
+prerequisite discovered at the moment of use is a broken product — which is also why each
+implementation is the shell that ships in-box on its platform rather than one a user must
+go install.
 
 ---
 
@@ -336,10 +347,12 @@ prerequisite discovered at the moment of use is a broken product.
 ├── .claude-plugin/plugin.json
 ├── .github/workflows/ci.yml   # each step's comment names the failure it prevents
 ├── bin/
-│   └── vault-lint.sh          # SHIPPED — on the agent's PATH, POSIX sh only
+│   ├── vault-lint.sh          # SHIPPED — on the agent's PATH, POSIX sh
+│   └── vault-lint.ps1         # SHIPPED — on the agent's PATH, PowerShell 5.1
 ├── scripts/                   # contributor-only, never loaded
 │   ├── check.mjs              # the repo gate
-│   └── fixtures/              # vault-lint's own suite: run-fixtures.sh + its corpora
+│   ├── fixtures/              # vault-lint's own suite: run-fixtures.sh + its corpora
+│   └── parity/                # parity.mjs — diffs the two bin/ scripts' output
 └── skills/
     ├── market-analysis/
     │   ├── SKILL.md           # the conductor: phases, run modes, quality bars
