@@ -1288,6 +1288,15 @@ three milestones, and where everything landed. Invite pushback on the specific b
 ## Quality bars — non-negotiable
 
 - Every market fact traces to `sources.md` or the founder brief; confidence tags survive import.
+- `competitor-analysis.md`'s `## Monitoring plan` watches axes rather than pages: every axis names
+  the direction being watched, the instrument read to answer it, a cadence, and the decision that
+  flips if the answer changes — and `vault-lint.sh --monitoring` fails a row leaving any of the
+  three empty. Every profile carries the date it was researched and every claim its `stale_after`,
+  so the corpus asks *is this still true* twice over and nothing in it asks *which way is this
+  moving* — and a direction is the only thing separating a closing window from an open one. A
+  profile researched the day before it was used missed a strategic reversal by that vendor six
+  weeks earlier: the single fact that most changed what the competitor meant, and a re-check of
+  pricing pages could not have seen it, because a snapshot cannot see a direction.
 - Wherever the plan or the red team reasons from a count to a cause, the metric states what else
   produces that number, and a metric introduced after the conclusion it supports is named as one.
   Unexcluded, the alternative explanation ships as the evidenced part of the argument — and a
@@ -1320,6 +1329,14 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
   the claim — a claim whose named section does not say what the note says is still open,
   whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
+- Every cited section's content hash is recorded in the claim's `reconciled_sections` as it was
+  read, and `vault-lint.sh --claim-drift` re-opens the claim when the section no longer matches.
+  The bar above is satisfied once, at drafting; this is the only thing that keeps it satisfied
+  afterwards. A later re-solve rewrites the block and leaves the heading alone, so `--used-in`
+  still resolves and the gate stays green over a section that has stopped saying what the note
+  says — found by hand days later, or not at all, by which point the one reader with no way to
+  check it has acted on it. A `schemaVersion` 3 rule, so a vault at 1 or 2 is told the rule was
+  not applied rather than that its documents agree.
 - The steady-state ceiling is computed and stated, not implied by a 12-month curve, with every
   input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
   the ceiling of that configuration, with one changed policy value beside it.
@@ -1407,6 +1424,14 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Where the target is an exit, the red team met the acquirer's question: a *named* buyer, the hole
   it patches, and the bidder count. An unnamed acquirer is not a driver value, and a lens that
   accepts "someone would want this" grants the driver the verdict was most sensitive to.
+- Every rendered deliverable reaches its reader carrying no vault address, and
+  `vault-lint.sh --deliverable` reads `deliverables/*.html` and fails on a strikethrough span, a
+  note ID or an objection code. Invariant 14 keeps retraction visible in the plan, which is right
+  for the working document and wrong for this one: a note ID and an objection code are addresses
+  into a corpus that reader does not hold, and a struck-through line with its reason beside it is
+  a document arguing with its own previous draft. The route out is Phase 5's restate-forward step
+  and never a strip filter — deleting a `~~…~~` span leaves the sentence after it correcting an
+  antecedent the reader can no longer see.
 - Rendered deliverables verified page-by-page.
 
 ## Common failure modes
