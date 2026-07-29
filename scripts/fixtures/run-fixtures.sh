@@ -56,9 +56,22 @@
 #      carrying none of the fields - and none of them is gated on schemaVersion.
 #  14. A vault whose every byte is CRLF still fires the three checks that need a
 #      vocabulary term to compare against, and leaks no carriage return into
-#      what it prints. This is the input class the other eighteen fixtures never
-#      carried, which is why a vocabulary pass that dropped every term on a CRLF
-#      file went unnoticed by all of them.
+#      what it prints. This is the input class no other fixture carried, which is
+#      why a vocabulary pass that dropped every term on a CRLF file went
+#      unnoticed by all of them.
+#  15. --monitoring holds competitor-analysis.md's monitoring plan to named axes
+#      with an instrument, a cadence and the decision each would change: it fails
+#      an absent section, a section carrying prose and no axis table, and a row
+#      that leaves a column empty - including an em-dash cell, which is the half a
+#      list of placeholder words would get wrong. Each has its silent side beside
+#      it: a complete axis, a table outside the section, a vault that profiled no
+#      competitors, and the same document at schemaVersion 1.
+#  16. --deliverable reads the RENDERED deliverables/*.html and fails on a
+#      strikethrough span, a note ID and a red-team objection code - the vault
+#      addresses that resolve to nothing for the reader the document is for. The
+#      silent side is a clean file in the same directory carrying every near miss
+#      a looser rule fires on: FACT-CHECKED, an address with an alphanumeric
+#      character on either boundary, a lowercase anchor slug, and <span>/<script>.
 
 set -u
 
@@ -91,7 +104,7 @@ driver-kind-unknown verdict-fields-incomplete"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable graph"
 
 PASS=0
 FAIL=0
@@ -689,6 +702,178 @@ RT_AT1=$(run_status "$AT_1" --red-team)
 [ "$RT_AT1" = "0" ] && ok "the same document with no roster passes at schemaVersion 1" ||
 	no "a missing roster must not fail at schemaVersion 1 (got $RT_AT1)"
 
+# --- 2i. the monitoring axes, and the version they apply at -------------------
+# The mode reads competitor-analysis.md, so none of the note-level machinery
+# above sees it - every assertion about it is written out here. Three shapes,
+# each with the silent side beside it: an absent section, a section with no axis
+# in it, and a table whose rows are incomplete but not all of them.
+printf '\nmonitoring axes\n'
+
+MON_GAP=$("$LINT" --monitoring --vault "$HERE/monitoring-gap" 2>&1)
+MON_GAP_STATUS=$?
+[ "$MON_GAP_STATUS" = "1" ] && ok "a competitor-analysis.md with no monitoring section fails --monitoring" ||
+	no "an absent monitoring section should exit 1 (got $MON_GAP_STATUS)"
+case "$MON_GAP" in
+*'no `## Monitoring plan` section at all'*) ok "the absent section is named as absent rather than as empty" ;;
+*) no "--monitoring did not distinguish an absent section from an empty one (got: $MON_GAP)" ;;
+esac
+# The Threat ranking table in that same document is pipe rows with free prose in
+# the first cell. Read as axes it would report two more failures, so the count is
+# the assertion that the section boundary holds.
+MON_GAP_J=$("$LINT" --monitoring --vault "$HERE/monitoring-gap" --json 2>/dev/null)
+case "$MON_GAP_J" in
+*'"failure_count": 1'*) ok "a table outside the monitoring section is not read as an axis" ;;
+*) no "--monitoring read a table outside its own section (got: $MON_GAP_J)" ;;
+esac
+
+# The same document one version down. Firing at 2 is the check; staying silent at
+# 1 is what keeps every corpus with a competitor analysis in it from going red the
+# day the skill updates.
+MON_AT_1="$PAIRS_FILE.mon-1"
+rm -rf "$MON_AT_1"
+cp -R "$HERE/monitoring-gap" "$MON_AT_1"
+printf '{\n  "schemaVersion": 1,\n  "created": "2026-07-27"\n}\n' >"$MON_AT_1/.vault/config.json"
+# Captured once and sliced for both halves: the lint is deterministic for a given
+# vault, so a separate run_status call over this one costs a second full parse and
+# buys nothing - the same reason the CRLF block further down gives.
+MON_AT1_OUT=$("$LINT" --monitoring --vault "$MON_AT_1" 2>&1)
+MON_AT1_STATUS=$?
+[ "$MON_AT1_STATUS" = "0" ] && ok "the same document at schemaVersion 1 does not owe axes" ||
+	no "schemaVersion 1 must not owe monitoring axes (got $MON_AT1_STATUS)"
+case "$MON_AT1_OUT" in
+*'schemaVersion 2 rule and a vault at 1'*) ok "at 1 the mode says it did not ask, rather than reporting clean" ;;
+*) no "at 1 --monitoring reported an empty verdict instead of saying it did not ask (got: $MON_AT1_OUT)" ;;
+esac
+
+# A section that gained the heading and no table is the shape an existing corpus
+# is in: the wording it replaces asked which pages to re-check and how often.
+# Appended to a copy rather than kept as a fourth fixture, for the reason the
+# schemaVersion twin above is a copy.
+MON_PROSE="$PAIRS_FILE.mon-prose"
+rm -rf "$MON_PROSE"
+cp -R "$HERE/monitoring-gap" "$MON_PROSE"
+{
+	printf '\n## Monitoring plan\n\n'
+	printf 'Re-check the two pricing pages and the changelog monthly. Every profile\n'
+	printf 'above carries its research date as signal freshness.\n'
+} >>"$MON_PROSE/competitor-analysis.md"
+MON_PROSE_OUT=$("$LINT" --monitoring --vault "$MON_PROSE" 2>&1)
+MON_PROSE_STATUS=$?
+[ "$MON_PROSE_STATUS" = "1" ] && ok "a monitoring section with prose and no axis table fails" ||
+	no "a prose-only monitoring section should exit 1 (got $MON_PROSE_STATUS)"
+case "$MON_PROSE_OUT" in
+*'section with no axis in it'*) ok "the empty section is named as empty rather than as absent" ;;
+*) no "--monitoring reported a present-but-empty section as absent (got: $MON_PROSE_OUT)" ;;
+esac
+
+MON_THIN=$("$LINT" --monitoring --vault "$HERE/monitoring-thin" 2>&1)
+MON_THIN_STATUS=$?
+[ "$MON_THIN_STATUS" = "1" ] && ok "an axis missing a column fails --monitoring" ||
+	no "an incomplete axis should exit 1 (got $MON_THIN_STATUS)"
+case "$MON_THIN" in
+*'axis leaves empty: instrument'*) ok "an axis with no instrument is reported, and the column is named" ;;
+*) no "the axis with no instrument was not reported (got: $MON_THIN)" ;;
+esac
+# The em-dash cell. This is the half a placeholder word list would get wrong, and
+# the whole reason the test is letter-or-digit.
+case "$MON_THIN" in
+*'axis leaves empty: the decision it would change'*) ok "an em dash in the decision column reads as empty, not as an answer" ;;
+*) no "an em-dash decision cell was accepted as an answer (got: $MON_THIN)" ;;
+esac
+# The silent side, and the count is what asserts it: the complete axis and the
+# Threat ranking table above it are both in this document, and neither may fire.
+MON_THIN_J=$("$LINT" --monitoring --vault "$HERE/monitoring-thin" --json 2>/dev/null)
+case "$MON_THIN_J" in
+*'"failure_count": 2'*) ok "a complete axis stays silent, and so does the table above the section" ;;
+*) no "--monitoring failure_count is not 2 - a complete axis fired, or an incomplete one did not (got: $MON_THIN_J)" ;;
+esac
+
+# A vault that profiled no competitors owes nothing, at either version. Failing
+# it would fail every corpus before the competitor dimension runs.
+MON_NONE=$("$LINT" --monitoring --vault "$HERE/dead-citation" 2>&1)
+MON_NONE_STATUS=$?
+[ "$MON_NONE_STATUS" = "0" ] && ok "a vault with no competitor-analysis.md passes --monitoring" ||
+	no "a vault with no competitor-analysis.md should pass (got $MON_NONE_STATUS)"
+case "$MON_NONE" in
+*"no competitor-analysis.md"*) ok "the absent document is named rather than reported clean" ;;
+*) no "--monitoring did not say the document was absent (got: $MON_NONE)" ;;
+esac
+
+# --- 2j. what the rendered deliverable carries out of the vault ---------------
+# The mode reads deliverables/*.html, which is the artifact an outside reader
+# holds and the only one a fixture can assert - the render itself is a model
+# action. Both directions on one vault: business-plan.html leaks and
+# one-pager.html is clean, in the same directory.
+printf '\ndeliverable\n'
+
+# Captured once and sliced every way below. --json changes how the verdict is
+# rendered and never what it is, so the exit code comes off this same run.
+DELJ=$("$LINT" --deliverable --vault "$HERE/deliverable-leak" --json 2>/dev/null)
+DEL_STATUS=$?
+[ "$DEL_STATUS" = "1" ] && ok "a deliverable carrying vault archaeology fails --deliverable" ||
+	no "a leaking deliverable should exit 1 (got $DEL_STATUS)"
+
+for want in deliverable-strikethrough deliverable-note-id deliverable-objection-code; do
+	case "$DELJ" in
+	*"\"check\": \"$want\""*) ok "--deliverable fires $want" ;;
+	*) no "--deliverable never fired $want" ;;
+	esac
+done
+
+# A rendered <del> element and a literal ~~...~~ span are the same failure by two
+# routes - the markdown strikethrough rendered, or it did not - and an uppercase
+# tag is the same as a lowercase one.
+case "$DELJ" in
+*'"id": "line 15"'*) ok "a rendered <del> element is reported, by line" ;;
+*) no "the <del> element on line 15 was not reported (got: $DELJ)" ;;
+esac
+case "$DELJ" in
+*'"id": "line 18"'*) ok "an uppercase <S> tag is read the same as a lowercase one" ;;
+*) no "the uppercase tag on line 18 was not reported (got: $DELJ)" ;;
+esac
+case "$DELJ" in
+*'"id": "line 21"'*) ok "a literal ~~...~~ span that reached the render is reported" ;;
+*) no "the literal tilde span on line 21 was not reported (got: $DELJ)" ;;
+esac
+
+# Two addresses on one line are two rows, because the unit is the place a reader
+# has to go and restate.
+case "$DELJ" in
+*'"id": "SOURCE-K92MZ1QA"'*) ok "the first of two addresses on one line is reported" ;;
+*) no "SOURCE-K92MZ1QA was not reported" ;;
+esac
+case "$DELJ" in
+*'"id": "MILESTONE-PJ40XR63"'*) ok "the second of two addresses on one line is reported too" ;;
+*) no "MILESTONE-PJ40XR63 was not reported" ;;
+esac
+
+# THE SILENT SIDE, and it is most of what makes this mode usable. one-pager.html
+# carries FACT-CHECKED (seven characters, so not the eight a generated ID has),
+# an address with an alphanumeric character on either boundary, a lowercase
+# anchor slug, and <span>/<strong>/<script> - every one of which a looser rule
+# fires on. The count is the assertion; a named file would pass while another
+# over-fired.
+case "$DELJ" in
+*'"failure_count": 7'*) ok "the clean deliverable in the same directory fires nothing" ;;
+*) no "--deliverable failure_count is not 7 - the clean file fired, or a leak did not (got: $DELJ)" ;;
+esac
+case "$DELJ" in
+*one-pager*) no "--deliverable reported against the clean one-pager.html" ;;
+*) ok "no failure lands on one-pager.html, so the report is per file" ;;
+esac
+
+# A vault before Phase 5 has rendered nothing, and the gate runs before the first
+# render as well as inside the render loop - so the empty case is the ordinary one
+# on the first call and has to say which of the two it is.
+DEL_NONE=$("$LINT" --deliverable --vault "$HERE/clean" 2>&1)
+DEL_NONE_STATUS=$?
+[ "$DEL_NONE_STATUS" = "0" ] && ok "a vault with no deliverables/ passes --deliverable" ||
+	no "a vault with nothing rendered should pass (got $DEL_NONE_STATUS)"
+case "$DEL_NONE" in
+*"no deliverables/*.html"*) ok "nothing-rendered-yet is named rather than reported clean" ;;
+*) no "--deliverable did not say nothing had been rendered (got: $DEL_NONE)" ;;
+esac
+
 # --- 3. JSON is well-formed enough to slice ---------------------------------
 printf '\njson\n'
 for v in clean violations; do
@@ -755,7 +940,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
