@@ -86,8 +86,9 @@ and is never restated here.
     [vault.md](references/vault.md#a-session-invokes-whichever-script-its-shell-tool-can-run)
     for which one a given session picks.) A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
-    bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table` and
-    `--binding-driver`, and exits
+    bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
+    `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and
+    `--claim-drift`, and exits
     non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
@@ -114,6 +115,31 @@ and is never restated here.
     `--binding-driver` is in the gate for that same reason one section over — the verdict section
     is hand-edited to the last minute and its note was minted once — and invariant 16 states what
     it holds.
+    `--monitoring` is in the gate because a snapshot cannot see a direction: every profile carries
+    the date it was researched and every claim a `stale_after`, and both answer *is this still
+    true* rather than *which way is this moving* — which is the only thing separating a closing
+    window from an open one. It fails an axis with no instrument, no cadence, or no decision it
+    would change. `--deliverable` is in the gate because what an outside reader receives is held
+    to the same terms the ledger is: it reads the rendered `deliverables/*.html` and fails on a
+    strikethrough span, a note ID or an objection code — vault addresses that resolve for anyone
+    holding the corpus and resolve to nothing for the audience the document is for. **Invariant 14
+    does not change**: retraction stays visible in the plan, and the deliverable reaches its reader
+    through Phase 5's restate-forward step rather than through a strip filter.
+    `--assumption-rows` is in the gate because it is the only inverse the assumptions table has:
+    the rule that every number in a projection is a named row is checked by reading the model, and
+    whether a named assumption is MISSING from the table can only be checked against the notes. It
+    fails a declared model input with no row and no stated exclusion, a row matching no assumption
+    `title`, and a revenue line the roadmap ships that the model does not carry and the identity
+    does not declare. **What that last one cost, undetected, is the largest miss on record here:**
+    a revenue line existed as correctly authored notes, never became rows, was filed as revenue
+    outside the model, and three separate verdict re-solves each corrected a different term and
+    inherited the same denominator — so the answer never moved.
+    `--claim-drift` is in the gate because it is the only check that can see invariant 20 being
+    undone after it was satisfied: it re-opens a claim whose cited section has been rewritten
+    since the note recorded reading it. `--used-in` cannot — the heading is untouched, so the
+    citation still resolves — and the render is the last moment before the section reaches a
+    reader with no way to check it. Both are `schemaVersion` 3 rules, so a vault at 1 or 2 is told
+    the rule was not applied rather than that its documents agree.
     **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
     cites it, so the gate's second part would check an empty set there, and running the whole
     gate anyway teaches it as cadence-wide when it belongs to one phase.
@@ -139,6 +165,19 @@ nearest-reachable solve and the negotiation script are in
     `Kind` cell hand-edited away from its note's `driver_kind` in either direction — the cell being
     otherwise the cheapest way past the first check. The fields it reads are
     [references/vault.md](references/vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
+    **A third clause sits on the identity's own terms: the ARR term declares its composition.** A
+    model may legitimately exclude a revenue line — a metered layer must not be allowed to flatter
+    subscription churn — but an exclusion the identity does not state is a denominator nobody can
+    see, and `vault-lint.sh --assumption-rows` fails a line the roadmap ships a change to that the
+    model has no row for and no verdict note names in `arr_excludes`. **The failure:** the excluded
+    layer was a roadmap item carrying an order of magnitude more revenue per account than the line
+    that stayed in, the plan said so in its own one-pager, and three verdict re-solves each
+    corrected a different term — a rate, a convention, a sample size — while inheriting the same
+    denominator, so the answer never moved. Nothing was wrong with any solve; a term of the
+    identity had no check pointed at it. The method is strong at preventing false statements and
+    weak at noticing missing ones, and this is the term that costs most.
+    [references/target.md](references/target.md#the-arr-term-declares-its-composition-or-the-exclusion-is-invisible)
+    carries it.
 
 17. **The vault is a git repo (Phase 0): commit at every meaningful write, regenerate the vault's
     `README.md` and `research/timeline.md` in the commit that changes a fact either one states,
@@ -219,12 +258,25 @@ nearest-reachable solve and the negotiation script are in
     document. What the verdicts remove is skipping it silently.
 
 20. **A claim is not finished when the note is written; it is finished when the prose it names
-    carries it.** Writing the note and writing `used_in` are one act, and the claim stays open
-    until the section `used_in` names actually says what the note says — invariant 19 is where
-    that gets read. **Where the note is a supersession, the closing edit is the `reconciled:`
-    date on it**, which is the one form of this obligation the corpus can see: the sweep fails a
-    supersession carrying none, so the open claim is visible from outside instead of being a
-    thing the conductor is trusted to remember. This is an invariant rather than a Phase 3 step because the obligation
+    carries it — and it does not stay finished on its own.** Writing the note and writing
+    `used_in` are one act, and the claim stays open until the section `used_in` names actually
+    says what the note says — invariant 19 is where that gets read. **Where the note is a
+    supersession, the closing edit is the `reconciled:` date on it**, which is the one form of
+    this obligation the corpus can see: the sweep fails a supersession carrying none, so the open
+    claim is visible from outside instead of being a thing the conductor is trusted to remember.
+    **And the read expires when the section is rewritten**, which is the half that was invisible:
+    the claim records the content hash of each section it was read against, in
+    `reconciled_sections` beside that same date, and `vault-lint.sh --claim-drift` **re-opens** the
+    claim when a hash no longer matches. The failure it closes happened *after* this invariant had
+    been satisfied once — a claim was written into a plan section, a later re-solve rewrote that
+    block, the heading was untouched so `used_in` still resolved, the gate stayed green, and the
+    drift was found by hand days later. A hash cannot say the section still agrees with the note;
+    that is invariant 19's read. What it says is that the text somebody read is the text standing
+    there now, so a rewrite is visible from outside instead of being something the conductor has
+    to notice. Gated on `schemaVersion` 3, because every claim in every finished corpus is already
+    cited into a plan and a rule demanding a recorded hash from each of them would fail every
+    existing vault the day the plugin updates;
+    [references/vault-migration.md](references/vault-migration.md) carries the back-fill. This is an invariant rather than a Phase 3 step because the obligation
     outlives Phase 3: the vault keeps growing through drafting and into the red team, and a
     claim minted while the panel is running is subject to it exactly as one minted while the
     plan was being written. Written into the drafting phase, the rule would stop applying at
@@ -1318,8 +1370,20 @@ three milestones, and where everything landed. Invite pushback on the specific b
   declares, and no two items sharing a constrained `resource` are asserted concurrent. Both are
   read off the notes by `vault-lint.sh`, and a plan that has a roadmap and no `milestones/`
   directory has neither check run over it — which prints the same green as one that passed them.
-- The financial model's assumptions table is complete — no number appears in a projection that
-  isn't a named assumption row.
+- The financial model's assumptions table is complete in **both** directions — no number appears
+  in a projection that isn't a named assumption row, **and** no assumption note that declares
+  itself a model input is missing from the table. `vault-lint.sh --assumption-rows` reads the two
+  against each other; the second half is the one that was prose and never fired, and what it cost
+  was a whole revenue line that existed as correctly authored notes, never became rows, and was
+  therefore filed as *revenue outside this model* — which reads as a modelling decision and was a
+  consequence of the omission. Every verdict downstream inherited a denominator missing it.
+- A revenue line the roadmap ships a change to is reachable from the model that solves the
+  target, or the exclusion is stated at the identity. Excluding one is legitimate — a metered
+  layer must not be allowed to flatter subscription churn — so the note carries
+  `excluded_from_model` with the reason and the verdict note names it in `arr_excludes`. Undeclared,
+  the ARR term every corner is solved against is a subset figure and nothing says which subset, so
+  three re-solves can each correct a different term, inherit the same denominator, and never move
+  the answer.
 - A ranged target's readout is the set of corner verdicts, with the binding driver and its `kind`
   named per corner, and the founder's stated range labelled apart from the evidenced range.
   Collapsed to one verdict or one interval, the finding is destroyed exactly where it matters — a

@@ -80,6 +80,19 @@ pressure in a way a lint cannot be skipped. A gate that depends on someone choos
 reading, every time, is weaker than one a script enforces — that is the entire tradeoff this
 option accepts in exchange for not building the `[C#]` machinery yet.
 
+**Amended 2026-07-29: the read is still skippable, but it can no longer silently EXPIRE.** The
+cost stated above is unchanged in kind and narrower in extent than it was. A claim now records the
+content hash of each section it was reconciled against, in `reconciled_sections` beside the
+`reconciled:` date, and `vault-lint.sh --claim-drift` re-opens the claim when a hash no longer
+matches. That does not make the agreement half mechanical — a hash cannot say a section still
+*says* what a note claims, which is the whole reason B was picked over A — and a hash can be
+pasted without opening the document, exactly as a date can be stamped without reading anything. So
+the judgment step is still a judgment step. What it removes is the case this option had no answer
+for at all: a read that was genuinely done, against prose that was rewritten afterwards, leaving
+`used_in` resolving and every check green over a section that had stopped carrying the claim. That
+was found by hand on a real engagement, days late. The reopen trigger below is untouched — it is
+about worklist SIZE, which this does not change.
+
 That is why the agreement check does not live as a line inside the Phase 3→4 gate's own step —
 it lands as a numbered invariant in the head block instead. Compaction re-attaches only the head
 of a long-running skill file, so a rule stated only inside a phase's body is out of context by

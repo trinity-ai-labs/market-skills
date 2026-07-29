@@ -218,7 +218,10 @@ confidence that stopped propagating, near-miss subject terms, duplicate sources,
 still cited, and — on a vault at `schemaVersion: 2` — a roadmap whose order contradicts itself,
 either a prerequisite scheduled after the item that needs it or two items competing for one
 constrained resource while the plan asserts they run side by side. It also reads the roadmap
-table in the plan against the milestone notes it was rendered from, in both directions.
+table in the plan against the milestone notes it was rendered from, in both directions — and, on a
+vault at `schemaVersion: 3`, the financial model's assumptions table against the notes that declare
+themselves inputs to it, plus every cited plan section against the content hash the claim recorded
+when it was last read.
 
 Claude Code puts an enabled plugin's `bin/` on whichever shell tool the session has — a
 session with the Bash tool gets `vault-lint.sh` on that tool's `PATH`; a session with only
@@ -238,6 +241,8 @@ vault-lint.sh --roadmap-table --vault "$VAULT_PATH"
 vault-lint.sh --binding-driver --vault "$VAULT_PATH"
 vault-lint.sh --monitoring --vault "$VAULT_PATH"
 vault-lint.sh --deliverable --vault "$VAULT_PATH"
+vault-lint.sh --assumption-rows --vault "$VAULT_PATH"
+vault-lint.sh --claim-drift --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
@@ -361,9 +366,53 @@ step in the render loop's page-by-page read-back and this is the half that is me
 ID is matched as its type prefix plus the eight characters a generated ID carries, which is what
 keeps it off `FACT-CHECKED` in ordinary prose. A vault that has rendered nothing passes.
 
+`--assumption-rows` does the same job for the financial model that `--roadmap-table` does for the
+roadmap, and it exists because the rule it inverts had no other half. The plan template requires
+that no number in a projection is anything but a named assumption row — correct, and load-bearing
+against fake precision — and nothing asked whether a named assumption was *missing* from the table.
+On a real engagement two assumptions governing a whole revenue line existed as properly authored
+notes, never became rows, and the rule meant to enforce rigour made that revenue line unable to
+enter the projection at all; it was then filed as "revenue outside this model", which reads as a
+modelling decision and was a consequence of the omission. Every verdict downstream inherited a
+denominator missing a line the roadmap ships.
+
+So an `assumption` note that declares itself a model input — `model_input: revenue` or `cost` — owes
+either a row in the assumptions table, matched on its `title` **verbatim**, or an
+`excluded_from_model` reason saying why the model does not carry it. Either clears the rule; neither
+is the failure. It reads the reverse direction too, because otherwise the cheapest way past the
+first check is a row nothing in the ledger stands behind. **And there is one rule that is about the
+target rather than the table:** where the roadmap ships a dated change to a line the model excludes,
+the verdict note has to name that line in `arr_excludes` — the exit identity is ARR × multiple and
+none of the multiple's inputs is ARR, so an undeclared exclusion is a denominator nobody can see.
+Excluding a revenue line is legitimate; a metered layer must not be allowed to flatter subscription
+churn. Excluding it silently is what fails.
+
+`--claim-drift` answers the one question `--used-in` says outright it cannot: whether a section still
+carries what it carried yesterday. `--used-in` checks that a citation resolves, and a heading that
+nobody renamed keeps resolving through any rewrite of the prose beneath it — so a claim written into
+a plan section, a later re-solve that rewrote the block, and a green gate are all consistent with
+each other, and the drift gets found by hand days later or not at all.
+
+The claim therefore records the content hash of each section it was read against, in
+`reconciled_sections` beside the `reconciled:` date, and a changed hash **re-opens** the claim rather
+than passing. The failure message carries the current hash, so re-reconciling is re-reading the
+section and pasting one token — the tool has no write mode, and pasting the token is the assertion
+that the read happened, exactly as stamping a date is. The hash ignores what a renderer ignores
+(trailing whitespace, blank-line runs) so a trimmed file does not re-open the whole corpus, and it
+is deliberately not a cryptographic digest: it is detecting an edit, and it has to be identical in
+POSIX `sh` and PowerShell with no dependencies on either side. What it cannot tell you is whether the
+section still *agrees* with the note — that is a read, not a grep. What it removes is the read
+silently expiring.
+
+Both are `schemaVersion: 3` rules, and a vault at 1 or 2 is told the rule was not applied rather
+than that its documents agree. That is the whole reason the version field exists: every claim in a
+finished corpus is already cited into a plan, so a hash rule that fired unconditionally would turn
+every existing vault red the day the plugin updated.
+
 `--release-gate` is the call before a render, and the only one that asks every question. It runs
 the bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
-`--binding-driver`, `--monitoring` and `--deliverable`, prints each part under its own heading, and exits with the worst status any part returned — so the gate
+`--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and `--claim-drift`,
+prints each part under its own heading, and exits with the worst status any part returned — so the gate
 is clean only when every part is. The alternative was several calls made from memory, and which
 of them actually ran was a matter of recall.
 
@@ -371,7 +420,8 @@ of them actually ran was a matter of recall.
 `clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
 checks passed … not opened: citation targets, supersession blast radius, panel objection rows,
 roadmap table against the milestone set, verdict drivers and the evidence under them, monitoring
-axes and the decision each would change, what the rendered deliverable carries out of the vault* —
+axes and the decision each would change, what the rendered deliverable carries out of the vault,
+assumption rows against the model table, cited sections against their recorded hash* —
 and the list of what it skipped is read off the same mode table `--release-gate` composes itself
 from, so a mode added to the gate cannot leave the line quietly overstating what it covered. A
 success line is what somebody renders on, so it has to be narrower than the verdict its reader

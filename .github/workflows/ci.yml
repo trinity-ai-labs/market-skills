@@ -118,8 +118,12 @@ jobs:
 
       - name: The shipped lint's own suite, against the port under Windows PowerShell 5.1
         if: always() && matrix.os == 'windows-latest'
-        # The same 286 assertions "The shipped lint's own suite" above holds the
-        # shell to — this is the first PR where every one of them can also run
+        # The same assertions "The shipped lint's own suite" above holds the
+        # shell to, whatever the count is that release — stated as "the same"
+        # rather than as a number, because a number here goes stale on every
+        # release that adds a check and reads exactly like one that is current;
+        # two slices of this release each moved it, which is the evidence.
+        # This is the first PR where every one of them can also run
         # against the PowerShell port, and the wrapper above is what makes this
         # run go through 5.1 rather than whatever pwsh happens to be on PATH.
         run: VAULT_LINT="$VAULT_LINT_WINPS51" sh scripts/fixtures/run-fixtures.sh

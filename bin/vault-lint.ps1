@@ -490,6 +490,105 @@ vault-lint.sh - read-only checks over a claim vault.
       the run that gates what actually ships is the one inside the render loop,
       after the HTML exists - see the render loop in rendering.md.
 
+  vault-lint.sh --assumption-rows [--vault PATH] [--json]
+      Check the assumptions table in financial-model.md against the assumption
+      notes that declare themselves inputs to the model, both directions. A
+      verdict - it exits 1 on any of its four failures.
+
+      This is --roadmap-table one artifact over, and it exists because the
+      rule it inverts had no counterpart. plan-template.md requires that no
+      number in a projection is anything but a named assumption row, which is
+      load-bearing against fake precision - and nothing asked whether a named
+      assumption was MISSING from the table. Observed: two assumptions
+      governing a whole revenue line existed as notes, correctly authored with
+      subjects and confidence, and were never added as rows. The rule meant to
+      enforce rigour then made that revenue line structurally unable to enter
+      the projection, the model filed it as revenue outside its scope, and
+      every downstream verdict inherited a denominator missing a line the
+      roadmap ships. The notes lint clean, the table lints clean, and until
+      this mode nothing compared them.
+
+      The key is the assumption `title`, matched VERBATIM, the same rule
+      --roadmap-table holds a milestone title to and for the same reason: the
+      table renders `value`, its source and its confidence off the note, so a
+      correct table matches character for character by construction and a
+      mismatch means the row was written by hand.
+
+      assumption-not-in-model: a note carrying `model_input` whose title is no
+      row in the table and which carries no `excluded_from_model` reason. The
+      trigger is the FIELD, not the version - `model_input` is a term this
+      release introduces, so no existing note carries it and no exemption has
+      to be bought for one.
+
+      model-row-no-assumption: a row matching no `assumption` note title. The
+      reverse direction, and it is what stops the rule above being cleared by
+      writing a row nothing in the ledger stands behind.
+
+      excluded-line-on-roadmap: an assumption the roadmap ships a change to -
+      a `milestone` whose `moves` names it - that carries
+      `excluded_from_model` and that no verdict note's `arr_excludes` declares.
+      A model may LEGITIMATELY exclude a revenue line, because a metered layer
+      must not be allowed to flatter subscription churn; what it may not do is
+      exclude it silently. The identity the verdict solves is ARR at the target
+      date times the multiple, so an excluded line is a term missing from the
+      denominator every corner is solved against - and on the engagement this
+      came from the excluded layer was a roadmap item with roughly ten times
+      the revenue per account, three separate re-solves each corrected a
+      different term, and the answer never moved. Declaring it at the identity
+      is what makes the exclusion arguable.
+
+      model-table-missing: notes declare themselves model inputs and the table
+      renders none of them. The inputs are in the ledger and nowhere a reader
+      can see them.
+
+      Gated on schemaVersion 3, which is where the fields it reads were added.
+      A vault at 1 or 2 carries none of them, cannot owe this, and is told the
+      rule was not applied rather than that the table agrees.
+
+  vault-lint.sh --claim-drift [--vault PATH] [--json]
+      Check every cited section against the content hash the note recorded
+      when it was last reconciled. A verdict - it exits 1 on any of its three
+      failures.
+
+      This is the half --used-in deliberately leaves out, obtained without
+      reading prose for meaning. --used-in asserts a citation RESOLVES and
+      --binding-driver asserts one verbatim string is present; neither can say
+      whether a section still carries what it carried yesterday. Observed: a
+      claim was written into a plan section, satisfying invariant 20. A later
+      re-solve rewrote that block. The heading was untouched, so `used_in`
+      still resolved and the gate stayed green while the section no longer
+      said what the note says. It was found by hand, days later - the exact
+      failure invariant 20 exists to prevent, occurring after the invariant
+      had been satisfied once.
+
+      A hash cannot tell you the section still AGREES with the note. It tells
+      you whether the text somebody read is the text standing there now, which
+      is the difference between a claim that was reconciled and one that was
+      reconciled and then quietly rewritten. `reconciled:` records the date
+      that read happened; `reconciled_sections` records what was read, one
+      entry per citation, so a changed section RE-OPENS the claim instead of
+      passing on a date nothing has re-examined since.
+
+      section-hash-drifted: the recorded hash and the section disagree. The
+      message carries the current hash, so re-reconciling is re-reading the
+      section and pasting one token - the mode is read-only and the paste is
+      the assertion that the read happened.
+
+      section-hash-missing: a resolving citation with no entry recording it.
+      Without this the whole rule is cleared by omission, which is not an
+      exemption.
+
+      section-hash-unused: an entry naming a target the note's `used_in` does
+      not name. Bookkeeping for a section this claim no longer cites reads as
+      coverage, and reads that way from both sides.
+
+      It reads only `claim` and `assumption` notes whose `status` is current,
+      and only entries whose #anchor resolves. A dead anchor is --used-in's
+      verdict, and reporting it twice under a name about reconciliation sends
+      its reader to the wrong fix. Gated on schemaVersion 3, which is where
+      `reconciled_sections` was added - vault-migration.md carries the
+      back-fill.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -563,6 +662,8 @@ check                gate  note-level checks
 --binding-driver     gate  verdict drivers and the evidence under them
 --monitoring         gate  monitoring axes and the decision each would change
 --deliverable        gate  what the rendered deliverable carries out of the vault
+--assumption-rows    gate  assumption rows against the model table
+--claim-drift        gate  cited sections against their recorded hash
 '@
 
 # The table's rows as records - the shape `while read -r sel gate part` gives
@@ -614,7 +715,9 @@ function Get-ModeForFlag {
 #   8. Invoke-ModeBindingDriver      binding-driver                         2411-3002
 #   9. Invoke-ModeMonitoring         monitoring                             3122-3322
 #  10. Invoke-ModeDeliverable        deliverable                            3323-3445
-#  11. Invoke-ModeCheck              check                                  3446-4072
+#  11. Invoke-ModeAssumptionRows     assumption-rows
+#  12. Invoke-ModeClaimDrift         claim-drift
+#  13. Invoke-ModeCheck              check
 #
 # THIS LAYOUT IS A CONTRACT SIX SEPARATE BRANCHES BUILD AGAINST. Each of them
 # replaces exactly one function body below and touches nothing else in this
@@ -3149,7 +3252,671 @@ function Invoke-ModeDeliverable {
 }
 
 # ----------------------------------------------------------------------------
-# 11. check - pass 3, the note-level checks
+# 11. --assumption-rows - the model's inputs against the notes that declare them
+#
+# Ports the --assumption-rows body of bin/vault-lint.sh. It is --roadmap-table
+# one artifact over, deliberately, so this body is that one's twin with two
+# changes: the section heading folds to `assumptions` rather than `roadmap`, and
+# the item column defaults to TWO rather than one, because the template ships
+# `| # | Assumption | ... |` and column one is the `A-n` row label the plan cites
+# in prose. Every failure string is transcribed character for character from the
+# awk program.
+#
+# THE HELPERS BELOW ARE LOCAL TO THIS BODY, the same rule Invoke-ModeRoadmapTable
+# states: a helper two modes want is a helper two slices are both editing, and
+# hoisting one into the shared region is the cross-slice edit the stub seam
+# exists to prevent.
+# ----------------------------------------------------------------------------
+function Invoke-ModeAssumptionRows {
+	$SUB = [string][char]28
+
+	# Byte equality, never PowerShell's `-ceq`. `-ceq` compares under the
+	# invariant CULTURE, which reports "ab" and "a<U+200B>b" equal and a combining
+	# sequence equal to its precomposed form - and every verbatim match in this
+	# mode runs over founder prose, which is exactly where those turn up. awk
+	# compares bytes, so this compares ordinals. A local copy rather than a call
+	# into --binding-driver's Test-ModelEqual, per the stub seam: a helper two modes
+	# want is a helper two slices are both editing.
+	function Test-ModelEqual {
+		param([string]$A, [string]$B)
+		return [string]::Equals($A, $B, [System.StringComparison]::Ordinal)
+	}
+
+	# The fold every section-resolving mode in this file carries. Compared as
+	# code points rather than with `-ge`/`-le` on [char]: PowerShell routes a
+	# char comparison through the same culture-aware path `-ceq` uses, and awk's
+	# `c >= "a" && c <= "z"` is a byte range.
+	function ConvertTo-ModelFold {
+		param([string]$Text)
+		$sb = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$cc = [int]$Text[$i]
+			if ($cc -ge 97 -and $cc -le 122) { [void]$sb.Append([char]$cc); continue }
+			if ($cc -ge 65 -and $cc -le 90) { [void]$sb.Append([char]($cc + 32)); continue }
+			if ($cc -ge 48 -and $cc -le 57) { [void]$sb.Append([char]$cc); continue }
+		}
+		return $sb.ToString()
+	}
+
+	# awk's target_of(): a block-list item may carry a `:: label` after the ID it
+	# names, and every edge walk in the shell strips it.
+	function Get-ModelTargetOf {
+		param([string]$Item)
+		$p = $Item.IndexOf(' :: ', [System.StringComparison]::Ordinal)
+		if ($p -ge 0) { return $Item.Substring($p + 4) }
+		return $Item
+	}
+
+	# The assumption cells of the FIRST table under the assumptions heading.
+	# Transcribed from Read-PlanRoadmapTable with the two changes named above and
+	# no others, so a diff of the two reads as one parser.
+	#
+	# Every comparison against document text is ordinal - Test-ModelEqual - for the
+	# reason stated at that helper: `-ceq` on a string and `-eq` on a [char] both
+	# take PowerShell's culture path, which folds a combining sequence onto its
+	# precomposed form and ignores a zero-width space, and a document read by this
+	# mode is founder prose carrying both, while the shell compares bytes in awk.
+	function Read-ModelAssumptionsTable {
+		param([string]$Path)
+
+		$fc = ''
+		$fn = 0
+		$seenHeading = $false
+		$level = 0
+		$inAssumptions = $false
+		$inTable = $false
+		$col = 2
+		$hdr = ''
+		$inBody = $false
+		$pending = New-Object 'System.Collections.Generic.List[string]'
+		$items = New-Object 'System.Collections.Generic.List[string]'
+
+		foreach ($rawLine in (Read-TextLines $Path)) {
+			$line = Remove-TrailingCr $rawLine
+			$t = $line.TrimStart($SPACE_TAB)
+
+			if ($t.Length -ge 3 -and ((Test-ModelEqual ($t.Substring(0, 3)) '```') -or (Test-ModelEqual ($t.Substring(0, 3)) '~~~'))) {
+				$c = [int]$t[0]
+				$n = 0
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ((Test-ModelEqual $fc ([string][char]$c)) -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				continue
+			}
+			if ($fc.Length -ne 0) { continue }
+
+			$headingMatch = [regex]::Match($t, '\A(#+)[ \t]+')
+			if ($headingMatch.Success) {
+				$nh = $headingMatch.Groups[1].Length
+				$h = $t.Substring($headingMatch.Length)
+				$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
+				$h = $h.Trim($SPACE_TAB)
+				$explicitAnchor = ''
+				$anchorMatch = [regex]::Match($h, '[{]#[A-Za-z0-9_-]+[}]\z')
+				if ($anchorMatch.Success) {
+					$explicitAnchor = $anchorMatch.Value -creplace '\A[{]#', ''
+					$explicitAnchor = $explicitAnchor -creplace '[}]\z', ''
+					$h = $h.Substring(0, $anchorMatch.Index).Trim($SPACE_TAB)
+				}
+				if ($inAssumptions -and $nh -le $level) { break }
+				if (-not $seenHeading -and ((Test-ModelEqual (ConvertTo-ModelFold $explicitAnchor) 'assumptions') -or (Test-ModelEqual (ConvertTo-ModelFold $h) 'assumptions'))) {
+					$inAssumptions = $true; $seenHeading = $true; $level = $nh
+				}
+				continue
+			}
+
+			if (-not $inAssumptions) { continue }
+			if ($t.Length -eq 0 -or [int]$t[0] -ne 124) {
+				if ($inTable) { break }
+				continue
+			}
+			$inTable = $true
+
+			$row = $t -creplace '\A\|', ''
+			$row = $row -creplace '\|[ \t]*\z', ''
+			$cells = $row -split '\|'
+			if ($cells.Count -lt 1) { continue }
+			$allDash = $true
+			foreach ($cell in $cells) {
+				if (-not [regex]::IsMatch($cell, '\A[ \t]*:?-+:?[ \t]*\z')) { $allDash = $false; break }
+			}
+			if ($allDash) {
+				if ($hdr.Length -ne 0) {
+					$hdrCells = $hdr -split '\|'
+					for ($i = 0; $i -lt $hdrCells.Count; $i++) {
+						if (Test-ModelEqual (ConvertTo-ModelFold $hdrCells[$i]) 'assumption') { $col = $i + 1; break }
+					}
+				}
+				$inBody = $true
+				continue
+			}
+
+			if ($inBody) { [void]$pending.Add($row) } else { $hdr = $row }
+		}
+
+		foreach ($p in $pending) {
+			$cells = $p -split '\|'
+			$item = ''
+			if ($col -le $cells.Count) { $item = $cells[$col - 1].Trim($SPACE_TAB) }
+			if ($item.Length -ne 0) { [void]$items.Add($item) }
+		}
+
+		return [pscustomobject]@{ Rows = $items; SeenHeading = $seenHeading }
+	}
+
+	function Add-ModelFailure {
+		param([string]$File, [string]$Check, [string]$Id, [string]$Detail)
+		[void]$FAILURES.Add($File + "`t" + $Check + "`t" + $Id + "`t" + $Detail)
+	}
+
+	# V[file, key] from awk - '' for a key the note never set. ContainsKey rather
+	# than TryGetValue with an out-param: a Dictionary[string,string] miss sets the
+	# out to default(string), which is $null and not '', and every `.Length` on the
+	# result downstream then throws instead of reading as absent.
+	function Get-ModelNoteValue {
+		param([string]$File, [string]$Key)
+		$k = $File + "`t" + $Key
+		if ($noteValues.ContainsKey($k)) { return $noteValues[$k] }
+		return ''
+	}
+
+	# GATED ON schemaVersion 3, branched here the way every other version gate in
+	# this file is rather than by the caller deciding whether to run the mode at
+	# all. A vault at 1 or 2 carries none of the three fields this reads, and
+	# saying the rule was not applied rather than printing agreement is the
+	# distinction --roadmap-table makes at 1.
+	if ([int]$FOUND_SCHEMA -lt 3) {
+		$okLine = 'the model table is a schemaVersion 3 rule and this vault is at ' + $FOUND_SCHEMA + ' - `model_input`, `excluded_from_model` and `arr_excludes` were added at 3, so a vault before it carries none of them and there is nothing to read a table against - ' + $VAULT
+		exit (Render-Failures 'vault-lint assumption-rows' $okLine)
+	}
+
+	# noteValues[file <TAB> key] from the S records, the block lists from the L
+	# records, and notes in N-record (sorted-file) order.
+	$noteValues = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$noteFiles = New-Object 'System.Collections.Generic.List[string]'
+	$li = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	foreach ($rec in $RECORDS) {
+		$f = $rec.Split([char]9)
+		if ($f[0] -ceq 'N') { [void]$noteFiles.Add($f[1]); continue }
+		if ($f[0] -ceq 'S') { $noteValues[$f[1] + "`t" + $f[2]] = $f[3]; continue }
+		if ($f[0] -ceq 'L') {
+			$k = $f[1] + $SUB + $f[2]
+			$items = $null
+			if (-not $li.TryGetValue($k, [ref]$items)) {
+				$items = New-Object 'System.Collections.Generic.List[string]'
+				$li[$k] = $items
+			}
+			[void]$items.Add($f[3])
+			continue
+		}
+	}
+
+	# Three sets over the notes, in one walk. TITLE is every assumption title a
+	# row may match - not only the declared inputs - because a row whose note
+	# exists and agrees is not a failure whatever else that note declares.
+	$titles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$inputs = New-Object 'System.Collections.Generic.List[psobject]'
+	$declared = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$moved = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	foreach ($f in $noteFiles) {
+		$ty = Get-ModelNoteValue $f 'type'
+		$title = Get-ModelNoteValue $f 'title'
+		if (Test-ModelEqual $ty 'assumption') {
+			if ($title.Length -ne 0) { [void]$titles.Add($title) }
+			# Read once and carried on the record: the guard and the field are the
+			# same lookup, and asking twice is the loop-invariant recompute this
+			# walk exists to do once.
+			$declaredKind = Get-ModelNoteValue $f 'model_input'
+			if ($declaredKind.Length -ne 0) {
+				[void]$inputs.Add([pscustomobject]@{
+					File     = $f
+					Title    = $title
+					Id       = (Get-ModelNoteValue $f 'id')
+					Kind     = $declaredKind
+					Excluded = (Get-ModelNoteValue $f 'excluded_from_model')
+				})
+			}
+		}
+
+		# What the identity declares it leaves out, collected only from a verdict
+		# note. `arr_excludes` anywhere else is not a statement about the ARR
+		# term, and accepting it there would let the declaration sit on a note no
+		# reader of the verdict ever opens.
+		$subject = Get-ModelNoteValue $f 'subject'
+		if ((Test-ModelEqual $subject 'target-verdict') -or (Test-ModelEqual $subject 'steady-state-ceiling')) {
+			$k = $f + $SUB + 'arr_excludes'
+			if ($li.ContainsKey($k)) {
+				foreach ($item in $li[$k]) { $declared[(Get-ModelTargetOf $item)] = (Get-ModelNoteValue $f 'id') }
+			}
+		}
+
+		# What the roadmap ships a change to. `moves` names the note an item
+		# moves, which roadmap-sequencing.md already requires - this is the
+		# reverse direction of that edge and reads nothing new to get it.
+		if (Test-ModelEqual $ty 'milestone') {
+			$k = $f + $SUB + 'moves'
+			if ($li.ContainsKey($k)) {
+				foreach ($item in $li[$k]) { $moved[(Get-ModelTargetOf $item)] = (Get-ModelNoteValue $f 'id') }
+			}
+		}
+	}
+	$nmi = $inputs.Count
+
+	$modelRows = New-Object 'System.Collections.Generic.List[string]'
+	$seenAssumptionsHeading = $false
+	if ($HAS_FINMODEL -eq 1) {
+		$read = Read-ModelAssumptionsTable $FINMODEL
+		$modelRows = $read.Rows
+		$seenAssumptionsHeading = $read.SeenHeading
+	}
+	$nrow = $modelRows.Count
+
+	# The inputs are in the ledger and nowhere a reader can see them. Reported
+	# ONCE against the document rather than once per note: the fix is one thing -
+	# render the table - and a reader handed one row per input stops reading.
+	if ($nmi -gt 0 -and $nrow -eq 0) {
+		$plural = 's'
+		if ($nmi -eq 1) { $plural = '' }
+		if ($HAS_FINMODEL -ne 1) {
+			Add-ModelFailure 'financial-model.md' 'model-table-missing' '' ('the vault carries ' + $nmi + ' assumption note' + $plural + ' declaring `model_input` and there is no financial-model.md at the vault root. Every one of them is an input the projection is supposed to be built from, so a model that never renders them is a projection whose numbers are buried in formulas - which is the failure the assumptions table exists to prevent, from the other side')
+		} elseif (-not $seenAssumptionsHeading) {
+			Add-ModelFailure 'financial-model.md' 'model-table-missing' '' ('the vault carries ' + $nmi + ' assumption note' + $plural + ' declaring `model_input` and no heading in financial-model.md answers to `assumptions`. The inputs exist in the ledger and the model has no section that lists them, so a reader cannot tell which numbers the projection stands on. The plan template heading is `## Assumptions (every input lives here - nothing buried in a formula) {#assumptions}`')
+		} else {
+			Add-ModelFailure 'financial-model.md' 'model-table-missing' '' ('the assumptions section of financial-model.md lists no rows and the vault carries ' + $nmi + ' assumption note' + $plural + ' declaring `model_input`. A table with a heading and no rows reads as a model whose inputs are stated somewhere, and they are stated in the ledger only - so the projection has no visible input list at all')
+		}
+		$okLine = [string]$nmi + ' declared model input' + $plural + ' and no assumptions table the model renders - ' + $VAULT
+		exit (Render-Failures 'vault-lint assumption-rows' $okLine)
+	}
+
+	# BOTH DIRECTIONS, because each is a different failure - and the reverse one
+	# is what stops the forward rule being cleared by writing a row nothing in
+	# the ledger stands behind.
+	$hitTitles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	foreach ($row in $modelRows) {
+		if ($titles.Contains($row)) { [void]$hitTitles.Add($row); continue }
+		Add-ModelFailure 'financial-model.md' 'model-row-no-assumption' '' ('row `' + $row + '` in the assumptions section matches no `assumption` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing')
+	}
+
+	# Either escape clears it, and that is the design. A row means the input
+	# entered the projection; a stated exclusion means somebody decided it should
+	# not and said why. What fails is neither.
+	foreach ($mi in $inputs) {
+		if ($hitTitles.Contains($mi.Title)) { continue }
+		if ($mi.Excluded.Length -ne 0) { continue }
+		Add-ModelFailure $mi.File 'assumption-not-in-model' $mi.Id ('`model_input` is `' + $mi.Kind + '` and `title` is `' + $mi.Title + '`, and no row in the assumptions section of financial-model.md carries it. The note declares itself an input to the projection and the projection has no row for it, so the value cannot enter the model at all - and the line it governs then reads as revenue the model deliberately left out rather than as an input somebody forgot to add. Every verdict downstream inherits a denominator missing it. Render the row with the title verbatim, or state `excluded_from_model` with the reason the model does not carry it')
+	}
+
+	# THE ARR TERM DECLARES ITS COMPOSITION. An exclusion is legitimate; an
+	# undeclared one is the defect. The trigger is the conjunction - excluded AND
+	# on the roadmap - because an excluded input nothing ships a change to is a
+	# line outside the horizon of the plan itself, and failing that would be a
+	# rule about scope rather than about the identity.
+	foreach ($mi in $inputs) {
+		if ($mi.Excluded.Length -eq 0) { continue }
+		if (-not $moved.ContainsKey($mi.Id)) { continue }
+		if ($declared.ContainsKey($mi.Id)) { continue }
+		Add-ModelFailure $mi.File 'excluded-line-on-roadmap' $mi.Id ('`excluded_from_model` is `' + $mi.Excluded + '` and ' + $moved[$mi.Id] + ' on the roadmap moves this note, and no verdict note names it in `arr_excludes`. The roadmap ships a change to a line the model does not carry, so the ARR term every corner of the target is solved against is a subset figure and nothing says which subset. A model may exclude a revenue line - a metered layer must not be allowed to flatter subscription churn - but the exclusion is a term of the identity and belongs where the identity is stated: name this note in `arr_excludes` on the verdict note, or give the model a row for it')
+	}
+
+	if ($nmi -eq 0 -and $nrow -eq 0) {
+		$okLine = 'no declared model inputs and no assumption rows under ' + $VAULT + ' - there is no model on either side, which is every vault before the plan has one'
+	} else {
+		$rowPlural = 's'
+		if ($nrow -eq 1) { $rowPlural = '' }
+		$miPlural = 's'
+		if ($nmi -eq 1) { $miPlural = '' }
+		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' against ' + [string]$nmi + ' declared model input' + $miPlural + ', matched verbatim - ' + $VAULT
+	}
+
+	exit (Render-Failures 'vault-lint assumption-rows' $okLine)
+}
+
+# ----------------------------------------------------------------------------
+# 12. --claim-drift - a cited section against the hash the note recorded
+#
+# Ports the --claim-drift body of bin/vault-lint.sh. The section boundary rule,
+# the normaliser and the polynomial are transcribed from the awk program, and all
+# three have to agree BYTE FOR BYTE with it or every hash in the corpus differs
+# between the two implementations and the parity gate reports a diff on every
+# fixture at once.
+#
+# THE HASH IS OVER UTF-8 BYTES because the shell hashes bytes: awk under LC_ALL=C
+# reads the file as bytes, so the string this file decoded has to be encoded back
+# before it is fed a byte at a time. A section carrying a sequence that is not
+# valid UTF-8 is the one case the two cannot agree on - the decode substitutes
+# U+FFFD and the re-encode cannot recover the original bytes - which is the same
+# limit every comparison against document text in this file already carries.
+#
+# THE HELPERS BELOW ARE LOCAL TO THIS BODY, per the stub seam.
+# ----------------------------------------------------------------------------
+function Invoke-ModeClaimDrift {
+	$SUB = [string][char]28
+
+	# Byte equality, never `-ceq`, for the reason Test-ModelEqual states one mode
+	# over: `-ceq` takes the culture path, which folds a combining sequence onto
+	# its precomposed form and ignores a zero-width space, and every string this
+	# mode compares came out of founder prose. A local copy, per the stub seam.
+	function Test-DriftEqual {
+		param([string]$A, [string]$B)
+		return [string]::Equals($A, $B, [System.StringComparison]::Ordinal)
+	}
+
+	# The fold every section-resolving mode in this file carries. Code points
+	# rather than [char] comparison, for the reason ConvertTo-ModelFold states.
+	function ConvertTo-DriftFold {
+		param([string]$Text)
+		$sb = New-Object System.Text.StringBuilder
+		for ($i = 0; $i -lt $Text.Length; $i++) {
+			$cc = [int]$Text[$i]
+			if ($cc -ge 97 -and $cc -le 122) { [void]$sb.Append([char]$cc); continue }
+			if ($cc -ge 65 -and $cc -le 90) { [void]$sb.Append([char]($cc + 32)); continue }
+			if ($cc -ge 48 -and $cc -le 57) { [void]$sb.Append([char]$cc); continue }
+		}
+		return $sb.ToString()
+	}
+
+	# awk's trim().
+	function Get-DriftTrim {
+		param([string]$Text)
+		return $Text.Trim($SPACE_TAB)
+	}
+
+	# The polynomial. 131 is an odd multiplier above the byte range, 2147483647 is
+	# 2^31-1, and the length is mixed in last so two sections differing only in
+	# trailing content the normaliser dropped still separate. [int64] throughout:
+	# `h * 131` reaches 2^38, which overflows the [int] PowerShell would otherwise
+	# pick and would then differ from awk's exact double arithmetic - silently, and
+	# on every section long enough to matter.
+	function Get-DriftHash {
+		param([string]$Text)
+		[int64]$h = 0
+		$bytes = $script:UTF8_NO_BOM.GetBytes($Text)
+		foreach ($b in $bytes) { $h = ($h * 131 + [int64]$b) % 2147483647 }
+		$h = ($h * 131 + [int64]$bytes.Length) % 2147483647
+		return ('{0:x8}' -f $h)
+	}
+
+	# Register one fold key against one heading ordinal, or RETIRE it when a
+	# second heading claims the same key. Another copy of the
+	# --supersession-sweep claim(): two headings differing only in the punctuation
+	# the fold drops are indistinguishable here, so an ambiguous key resolves to
+	# nothing rather than to a guess.
+	function Add-DriftClaimKey {
+		param([string]$Doc, [string]$Key, [int]$Ord)
+		if ($Key.Length -eq 0) { return }
+		$ak = $Doc + $SUB + $Key
+		if ($alias.ContainsKey($ak)) {
+			if ($alias[$ak] -ne $Ord) { $alias[$ak] = 0 }
+			return
+		}
+		$alias[$ak] = $Ord
+	}
+
+	# One document at the vault root, read once, into two things: every heading as
+	# fold keys pointing at its ordinal, and the NORMALISED body of every section
+	# beside it.
+	#
+	# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, and the heading line itself
+	# is outside the body it opens - a reworded heading is a dead anchor and
+	# --used-in verdict, so hashing it in would report one failure as two.
+	#
+	# Fenced lines are CONTENT and only heading detection is suspended inside
+	# them. NORMALISATION IS THREE RULES: trailing whitespace off every line, and
+	# leading, trailing and repeated blank lines collapsed. All three are invisible
+	# in a rendered document, so a hash sensitive to them would re-open every claim
+	# in the corpus the first time an editor trimmed a file.
+	function Read-DriftSections {
+		param([string]$Doc)
+		if ($scanned.Contains($Doc)) { return }
+		[void]$scanned.Add($Doc)
+		# `while ((getline line < path) > 0)` over a path that cannot be opened
+		# returns -1 and runs the body no times.
+		try { $lines = Read-TextLines ($script:VAULT + '/' + $Doc) } catch { return }
+
+		$fc = ''
+		$fn = 0
+		$ord = 0
+		$cur = 0
+
+		foreach ($rawLine in $lines) {
+			$line = Remove-TrailingCr $rawLine
+			$t = $line.TrimStart($SPACE_TAB)
+
+			if ($t.Length -ge 3 -and ((Test-DriftEqual ($t.Substring(0, 3)) '```') -or (Test-DriftEqual ($t.Substring(0, 3)) '~~~'))) {
+				$c = [int]$t[0]
+				$n = 0
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ((Test-DriftEqual $fc ([string][char]$c)) -and $n -ge $fn) { $fc = ''; $fn = 0 }
+			} elseif ($fc.Length -eq 0) {
+				$headingMatch = [regex]::Match($t, '\A#+[ \t]+')
+				if ($headingMatch.Success) {
+					$h = $t.Substring($headingMatch.Length)
+					$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
+					$h = Get-DriftTrim $h
+					$explicitAnchor = ''
+					$anchorMatch = [regex]::Match($h, '[{]#[A-Za-z0-9_-]+[}]\z')
+					if ($anchorMatch.Success) {
+						$explicitAnchor = $anchorMatch.Value -creplace '\A[{]#', ''
+						$explicitAnchor = $explicitAnchor -creplace '[}]\z', ''
+						$h = Get-DriftTrim $h.Substring(0, $anchorMatch.Index)
+					}
+					$ord++
+					# BOTH addresses registered, the same as --used-in scan(): a
+					# vault written before the template carried attributes cites
+					# the slug, and an implementation where the attribute replaced
+					# it would stop resolving those entries the day somebody
+					# pasted a newer template in.
+					$exFold = ConvertTo-DriftFold $explicitAnchor
+					if ($exFold.Length -ne 0) { Add-DriftClaimKey $Doc $exFold $ord }
+					Add-DriftClaimKey $Doc (ConvertTo-DriftFold $h) $ord
+					# THE HEADING LINE IS OUTSIDE THE BODY IT OPENS, so the read
+					# moves on rather than accumulating it. A fence delimiter
+					# below does NOT continue - it toggles the fence and is still
+					# content.
+					$cur = $ord
+					continue
+				}
+			}
+			if ($cur -eq 0) { continue }
+
+			$line = $line -creplace '[ \t]+\z', ''
+			$k = $Doc + $SUB + $cur
+			$have = ''
+			if ($raw.ContainsKey($k)) { $have = $raw[$k] }
+			if ($line.Length -eq 0) {
+				if ($have.Length -eq 0) { $pendnl[$k] = 0 } else { $pendnl[$k] = 1 }
+				continue
+			}
+			$pend = 0
+			if ($pendnl.ContainsKey($k)) { $pend = $pendnl[$k] }
+			if ($pend -ne 0) { $have = $have + "`n"; $pendnl[$k] = 0 }
+			if ($have.Length -eq 0) { $raw[$k] = $line } else { $raw[$k] = $have + "`n" + $line }
+		}
+	}
+
+	# The document and #anchor of one entry, normalised the way --used-in,
+	# --supersession-sweep and --binding-driver all normalise it - the leading ./
+	# and any trailing / stripped - so all four modes group on the same target.
+	function Get-DriftDoc {
+		param([string]$Entry)
+		$p = $Entry.IndexOf([char]35)
+		$d = $Entry
+		if ($p -ge 0) { $d = $Entry.Substring(0, $p) }
+		$d = Get-DriftTrim $d
+		$d = $d -creplace '\A\./', ''
+		$d = $d -creplace '/+\z', ''
+		return $d
+	}
+
+	function Get-DriftAnchor {
+		param([string]$Entry)
+		$p = $Entry.IndexOf([char]35)
+		if ($p -ge 0) { return $Entry.Substring($p + 1) }
+		return ''
+	}
+
+	function Add-DriftFailure {
+		param([string]$File, [string]$Check, [string]$Id, [string]$Detail)
+		[void]$FAILURES.Add($File + "`t" + $Check + "`t" + $Id + "`t" + $Detail)
+	}
+
+	# V[file, key], with awk's answer for a subscript that was never set.
+	# ContainsKey rather than TryGetValue, for the reason Get-ModelNoteValue
+	# states: a dictionary miss sets an out-param to $null rather than to ''.
+	function Get-DriftNoteValue {
+		param([string]$File, [string]$Key)
+		$k = $File + "`t" + $Key
+		if ($noteValues.ContainsKey($k)) { return $noteValues[$k] }
+		return ''
+	}
+
+	# GATED ON schemaVersion 3. Every claim in every finished corpus is already
+	# cited into a plan, so a rule demanding a recorded hash from each of them
+	# would turn every existing vault red on the day the plugin updates - which is
+	# how a gate stops being run.
+	if ([int]$FOUND_SCHEMA -lt 3) {
+		$okLine = 'cited-section drift is a schemaVersion 3 rule and this vault is at ' + $FOUND_SCHEMA + ' - `reconciled_sections` was added at 3, so no note here records what it read and there is nothing to compare a section against - ' + $VAULT
+		exit (Render-Failures 'vault-lint claim-drift' $okLine)
+	}
+
+	$noteValues = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$noteFiles = New-Object 'System.Collections.Generic.List[string]'
+	$li = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	foreach ($rec in $RECORDS) {
+		$f = $rec.Split([char]9)
+		if ($f[0] -ceq 'N') { [void]$noteFiles.Add($f[1]); continue }
+		if ($f[0] -ceq 'S') { $noteValues[$f[1] + "`t" + $f[2]] = $f[3]; continue }
+		if ($f[0] -ceq 'L') {
+			$k = $f[1] + $SUB + $f[2]
+			$items = $null
+			if (-not $li.TryGetValue($k, [ref]$items)) {
+				$items = New-Object 'System.Collections.Generic.List[string]'
+				$li[$k] = $items
+			}
+			[void]$items.Add($f[3])
+			continue
+		}
+	}
+
+	$alias = New-Object 'System.Collections.Generic.Dictionary[string,int]'
+	$raw = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$hashed = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$pendnl = New-Object 'System.Collections.Generic.Dictionary[string,int]'
+	$scanned = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	# Keys carry the note file, so nothing has to be cleared between notes - the
+	# shell does the same, because `delete array` without a subscript is an
+	# extension some awks have and POSIX does not.
+	$seen = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$rec = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$used = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$done = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$nchecked = 0
+
+	foreach ($f in $noteFiles) {
+		# Only `claim` and `assumption`, and only where the note is current.
+		# Invariant 20 is about a claim the prose has to carry; a `fact` reaches
+		# the plan as an `[F#]` code that resolves forward whatever the paragraph
+		# says, and a retracted or superseded note is the strikethrough rule and
+		# the supersession sweep respectively.
+		$ty = Get-DriftNoteValue $f 'type'
+		if (-not ((Test-DriftEqual $ty 'claim') -or (Test-DriftEqual $ty 'assumption'))) { continue }
+		$st = Get-DriftNoteValue $f 'status'
+		if ($st.Length -ne 0 -and -not (Test-DriftEqual $st 'current')) { continue }
+
+		$id = Get-DriftNoteValue $f 'id'
+		$uk = $f + $SUB + 'used_in'
+		$rk = $f + $SUB + 'reconciled_sections'
+		$recorded = New-Object 'System.Collections.Generic.List[string]'
+		if ($li.ContainsKey($rk)) { $recorded = $li[$rk] }
+		$cited = New-Object 'System.Collections.Generic.List[string]'
+		if ($li.ContainsKey($uk)) { $cited = $li[$uk] }
+
+		# What the note records, split once: the target it names and the hash it
+		# recorded for it.
+		foreach ($item in $recorded) {
+			$sp = $item.IndexOf([char]32)
+			$tg = $item
+			$hash = ''
+			if ($sp -ge 0) {
+				$tg = $item.Substring(0, $sp)
+				$hash = Get-DriftTrim $item.Substring($sp + 1)
+			}
+			$tk = $f + $SUB + (Get-DriftDoc $tg) + $SUB + (Get-DriftAnchor $tg)
+			[void]$seen.Add($tk)
+			$rec[$tk] = $hash
+		}
+
+		foreach ($entry in $cited) {
+			$doc = Get-DriftDoc $entry
+			$anc = Get-DriftAnchor $entry
+			# A citation with no anchor names a whole document and there is no
+			# section to hash. A missing document or a dead anchor is --used-in
+			# verdict; reporting either here would be the same failure under a
+			# name about reconciliation.
+			if ($doc.Length -eq 0 -or $anc.Length -eq 0 -or -not $PATHIDX.Contains($doc)) { continue }
+			Read-DriftSections $doc
+			$ak = $doc + $SUB + (ConvertTo-DriftFold $anc)
+			if (-not $alias.ContainsKey($ak)) { continue }
+			$ord = $alias[$ak]
+			if ($ord -le 0) { continue }
+
+			$tk = $f + $SUB + $doc + $SUB + $anc
+			[void]$used.Add($tk)
+			# MEMOISED PER SECTION, NOT PER CITING NOTE. Several claims
+			# legitimately cite one section, and the hash is a byte-at-a-time walk
+			# over its whole body - recomputing it per citation makes the cost
+			# O(citations) where the answer only has O(sections) worth of distinct
+			# values in it. Keyed the same way $raw is, beside it.
+			$bk = $doc + $SUB + $ord
+			$now = ''
+			if ($hashed.ContainsKey($bk)) {
+				$now = $hashed[$bk]
+			} else {
+				$body = ''
+				if ($raw.ContainsKey($bk)) { $body = $raw[$bk] }
+				$now = Get-DriftHash $body
+				$hashed[$bk] = $now
+			}
+			$nchecked++
+			if (-not $seen.Contains($tk)) {
+				Add-DriftFailure $f 'section-hash-missing' $id ('`used_in` names `' + $entry + '` and `reconciled_sections` records nothing for it. Nothing in the corpus says what that section said when this claim was reconciled against it, so a later rewrite of the block leaves the citation resolving and the claim standing on prose nobody has re-read - which is invariant 20 satisfied once and then quietly undone. Re-read the section and record it: `' + $entry + ' ' + $now + '`')
+			} elseif ($rec[$tk].Length -eq 0) {
+				Add-DriftFailure $f 'section-hash-missing' $id ('`reconciled_sections` names `' + $entry + '` with no hash after it, so the entry records that somebody looked and not what they saw - and a later rewrite of that block is then indistinguishable from no change at all. Record the hash: `' + $entry + ' ' + $now + '`')
+			} elseif (-not (Test-DriftEqual $rec[$tk] $now)) {
+				Add-DriftFailure $f 'section-hash-drifted' $id ('`reconciled_sections` recorded `' + $rec[$tk] + '` for `' + $entry + '` and that section now hashes to `' + $now + '`. The heading is untouched, so `used_in` still resolves and every other check passes while the prose the claim stands on has been rewritten since anybody read it against this note. This is the failure invariant 20 exists to prevent, occurring after the invariant was satisfied once. Re-read the section: if the claim still holds, record `' + $entry + ' ' + $now + '` and move `reconciled:` to today; if it does not, the claim is what has to change')
+			}
+		}
+
+		# BOTH DIRECTIONS, for the reason --red-team checks its roster both ways:
+		# an entry for a section this claim no longer cites is a hash nothing
+		# compares, and it reads as coverage to anybody counting entries against
+		# citations.
+		foreach ($item in $recorded) {
+			$sp = $item.IndexOf([char]32)
+			$tg = $item
+			if ($sp -ge 0) { $tg = $item.Substring(0, $sp) }
+			$tk = $f + $SUB + (Get-DriftDoc $tg) + $SUB + (Get-DriftAnchor $tg)
+			if ($used.Contains($tk)) { continue }
+			if ($done.Contains($tk)) { continue }
+			[void]$done.Add($tk)
+			Add-DriftFailure $f 'section-hash-unused' $id ('`reconciled_sections` names `' + $tg + '` and `used_in` does not. The note records having read a section it no longer says it is cited into, so the entry is a hash nothing will ever compare - and to anybody checking that every citation has one, it reads as covered. Either restore the `used_in` entry or drop this one')
+		}
+	}
+
+	if ($nchecked -eq 0) {
+		$okLine = 'no current claim or assumption names a resolving document section under ' + $VAULT + ' - there is nothing whose content a rewrite could drop, which is every vault before drafting cites one'
+	} else {
+		$plural = 's'
+		if ($nchecked -eq 1) { $plural = '' }
+		$okLine = [string]$nchecked + ' cited section' + $plural + ' hashed against the value the note recorded - ' + $VAULT
+	}
+
+	exit (Render-Failures 'vault-lint claim-drift' $okLine)
+}
+
+# ----------------------------------------------------------------------------
+# 13. check - pass 3, the note-level checks
 #
 # Ports bin/vault-lint.sh:3003-3629. The largest body in the file, gated on
 # schemaVersion throughout, and the mode a bare invocation runs.
@@ -3498,8 +4265,17 @@ function Invoke-ModeCheck {
 	[void]$condkind.Add('policy')
 	[void]$condkind.Add('policy-within-band')
 
+	# The closed `model_input` word list, on the same terms as driver_kind above:
+	# two words, unquoted, and a third is not a value. Closing it is what makes
+	# --assumption-rows a check rather than a hint - the field is what says a note
+	# is an input the projection has to carry a row for, so an unrecognised value
+	# is a note that declares nothing while reading as declared, and the row it
+	# owes is then never asked for.
+	$knownminput = New-Object 'System.Collections.Generic.HashSet[string]'
+	foreach ($kw in (Split-CheckWords 'revenue cost')) { [void]$knownminput.Add($kw) }
+
 	# EDGE_FIELDS comes from the shared region and is deliberately wider than
-	# vault.md's six edges. Consumed, never redeclared: two copies would let
+	# vault.md's seven edges. Consumed, never redeclared: two copies would let
 	# `graph` and `check` disagree about which fields exist.
 	$edgef = Split-CheckWords $script:EDGE_FIELDS
 
@@ -3739,6 +4515,18 @@ function Invoke-ModeCheck {
 				if ($dk.Length -ne 0 -and -not $knownkind.Contains($dk)) {
 					Add-CheckFailure $f 'driver-kind-unknown' $id ('`driver_kind` is `' + $dk + '` and the enumeration is closed at `structural`, `policy` and `policy-within-band`. Everything downstream branches on policy or not - a policy-bound verdict owes a stated condition and a structural one does not - so an unrecognised value takes the structural path by default, which is the exemption invariant 18 exists to refuse. A typo is then indistinguishable from a deliberate classification, and the plan reports a decision the founder made as a category floor')
 				}
+			}
+
+			# --- the model-input word list is closed --------------------
+			# The trigger is field presence and not the version, for the reason
+			# `target-verdict` needs no version: `model_input` is a term this
+			# release introduces, so no note in any existing corpus carries it and
+			# there is no population an exemption would protect. The rule that
+			# reads a document - --assumption-rows - is gated on schemaVersion 3
+			# because it asks the TABLE for something too.
+			$mi = Get-CheckValue $f 'model_input'
+			if ($mi.Length -ne 0 -and -not $knownminput.Contains($mi)) {
+				Add-CheckFailure $f 'model-input-unknown' $id ('`model_input` is `' + $mi + '` and the enumeration is closed at `revenue` and `cost`. The field is what declares this note an input the projection has to carry a row for, and --assumption-rows reads exactly that - so an unrecognised value is a note that declares nothing while reading as declared, and the row it owes is never asked for. That is the same failure the field exists to fix, reintroduced by a typo: the input stays in the ledger, never enters the model, and every verdict downstream inherits a denominator missing it')
 			}
 
 			# --- the type is stated three times and all three agree ----
@@ -4159,7 +4947,7 @@ if (-not (Test-Path -LiteralPath $CONFIG -PathType Leaf)) {
 # from the FUTURE stays refused, which is the whole reason the field exists: an
 # older tool half-reading a newer vault reports a clean bill of health over
 # every field it never saw.
-$SUPPORTED_SCHEMA = '1 2'
+$SUPPORTED_SCHEMA = '1 2 3'
 $FOUND_SCHEMA = ''
 foreach ($line in (Read-TextLines $CONFIG)) {
 	$m = [regex]::Match($line, '"schemaVersion"[ \t]*:[ \t]*[0-9]+')
@@ -4219,9 +5007,15 @@ if (Test-Path -LiteralPath $VOCAB -PathType Leaf) { $HAS_VOCAB = 1 }
 $PLAN = $VAULT + '/business-plan.md'
 $HAS_PLAN = 0
 if (Test-Path -LiteralPath $PLAN -PathType Leaf) { $HAS_PLAN = 1 }
+# The financial model beside it, on the same terms and for the same reason:
+# --assumption-rows reads its assumptions table, so the predicate is computed
+# once here rather than prefixed onto a copy of the three lines above.
+$FINMODEL = $VAULT + '/financial-model.md'
+$HAS_FINMODEL = 0
+if (Test-Path -LiteralPath $FINMODEL -PathType Leaf) { $HAS_FINMODEL = 1 }
 
 # Every field whose block-list items name other notes. DELIBERATELY wider than
-# vault.md's six edges: `covers` is a question field and `assumptions_low` and
+# vault.md's seven edges: `covers` is a question field and `assumptions_low` and
 # `option_evidence` come from decisions.md, and none of the three is called an
 # edge anywhere - but each holds note IDs, so each has to be followed for a
 # dangling target and walked by `graph`. Declared once and consumed by both
@@ -4234,7 +5028,12 @@ if (Test-Path -LiteralPath $PLAN -PathType Leaf) { $HAS_PLAN = 1 }
 # there - and gating them would mean the schema-2 check that `moves` names a
 # note that exists is a rule of its own instead of the dangling-edge rule every
 # other edge already gets.
-$EDGE_FIELDS = 'rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence'
+#
+# `arr_excludes` is here for the same reason `moves` is: its items are note IDs,
+# so a mistyped one has to be a dangling edge rather than a silent exclusion. An
+# ARR term that declares it leaves out a note the vault does not hold is the one
+# form of that declaration nobody can check by reading it.
+$EDGE_FIELDS = 'rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes'
 
 # ----------------------------------------------------------------------------
 # the record stream
@@ -4877,4 +5676,6 @@ if ($MODE -ceq 'roadmap-table') { Invoke-ModeRoadmapTable }
 if ($MODE -ceq 'binding-driver') { Invoke-ModeBindingDriver }
 if ($MODE -ceq 'monitoring') { Invoke-ModeMonitoring }
 if ($MODE -ceq 'deliverable') { Invoke-ModeDeliverable }
+if ($MODE -ceq 'assumption-rows') { Invoke-ModeAssumptionRows }
+if ($MODE -ceq 'claim-drift') { Invoke-ModeClaimDrift }
 Invoke-ModeCheck

@@ -107,12 +107,12 @@ The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` and
 `bin/vault-lint.ps1` rather than to the repo: it asserts that every check the lint claims
 to make still fires, against corpora built to trigger each one, and `VAULT_LINT` points it
 at whichever implementation you're testing — `VAULT_LINT=bin/vault-lint.ps1 sh
-scripts/fixtures/run-fixtures.sh` runs the same 286 assertions against the PowerShell side.
+scripts/fixtures/run-fixtures.sh` runs the same 332 assertions against the PowerShell side.
 A check that stops firing and a check that was deleted look identical from the outside,
 which is why the assertion has to be written down rather than eyeballed.
 
 The parity gate is the third half: `node scripts/parity/parity.mjs` runs both scripts
-across 11 modes × 23 fixture vaults and fails on any byte-level disagreement between their
+across 13 modes × 27 fixture vaults and fails on any byte-level disagreement between their
 output — key order, an escaped character, row order, a path separator. The fixtures suite
 proves each script still does what it claims; the parity gate proves the two scripts still
 agree with each other — a check that stops firing in only *one* implementation is invisible
@@ -235,7 +235,10 @@ verdict's driver and the evidence under it survive contact with the plan section
 renders them, `--monitoring` for whether the monitoring plan names axes with an instrument, a
 cadence and the decision each would change, `--deliverable` for whether the rendered
 `deliverables/*.html` carries a vault address out to a reader who has no vault,
-`--release-gate` for all eight of those run as one call, and
+`--assumption-rows` for whether the model's assumptions table and the notes that
+declare themselves inputs to it are the same set, `--claim-drift` for whether a cited section
+still carries what it carried when the claim recorded reading it, `--release-gate` for all
+ten of those run as one call, and
 `graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it, in both
 scripts** — an enumeration that has gone stale reads exactly like one that is complete.
@@ -256,8 +259,8 @@ the arm that parses its flag; `node scripts/parity/parity.mjs` is what catches a
 to one script's table and not its twin's.
 
 `--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
-`--supersession-sweep`, `--red-team`, `--roadmap-table`, `--binding-driver`, `--monitoring` and
-`--deliverable` as separate
+`--supersession-sweep`, `--red-team`, `--roadmap-table`, `--binding-driver`, `--monitoring`,
+`--deliverable`, `--assumption-rows` and `--claim-drift` as separate
 invocations of the script and exits with the
 **worst** status any part returned, so a refusal (2) is never reported as a failed check (1). It
 exists because the render gate was several calls made from memory — which of them ran was a
@@ -269,13 +272,16 @@ carries a `MODES` census asserting that every mode has a block in `usage()` — 
 table cannot absorb, since a help paragraph is hand-written at a shared anchor and a mode that
 loses its block still works.
 
-**`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2`) and refuses anything else.** A vault at
-1 is held to exactly the rules it was written under; version 2 is where a check that an existing
-corpus could not owe goes, and the found version is passed into the checks awk and the
-`--supersession-sweep` awk as `schema` so a new check can gate on it. Three rules are behind it
-today: the sweep's `reconciled:` verdict, `--red-team`'s demand for a roster in a
+**`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2 3`) and refuses anything else.** A vault at
+1 is held to exactly the rules it was written under; 2 and 3 are where a check that an existing
+corpus could not owe goes, and the found version is passed into every awk program that needs it as
+`schema` so a new check can gate on it. Three rules sit behind 2:
+the sweep's `reconciled:` verdict, `--red-team`'s demand for a roster in a
 `red-team.md` that has none, and `--roadmap-table`, which a vault at 1 cannot owe because it has
-no `milestones/` directory to render. Refusing a version from the future stays the point of the field: an
+no `milestones/` directory to render. Two whole MODES sit behind 3 — `--assumption-rows` and
+`--claim-drift` — because both read fields no corpus written before them carries, and
+`--claim-drift`'s would otherwise be owed by every claim in every finished corpus at once, which
+is the one shape of upgrade that reddens a whole population on the day the plugin updates. Refusing a version from the future stays the point of the field: an
 older tool half-reading a newer vault reports a clean bill of health over every field it never
 saw. Adding a check that fires unconditionally on every existing corpus is the thing this
 mechanism exists to make unnecessary.
@@ -375,6 +381,48 @@ every plan.
 **`verdict-unfiled` fires on the presence of a non-empty section at the `{#target-verdict}` anchor
 and never on a reading of the prose inside it, and there is no `{#steady-state}` equivalent**,
 because a ceiling section in an existing plan legitimately has no field-carrying note behind it.
+
+`--assumption-rows` is the fifth document — `financial-model.md` — and it is `--roadmap-table` one
+artifact over, deliberately: the same heading fold, the same row parser, the same only-the-first-table
+rule, the same VERBATIM title key. **It exists because the rule it inverts was correct and had no
+counterpart.** `plan-template.md` requires that no number appears in a projection that is not a named
+assumption row, and nothing asked whether a named assumption was MISSING from the table — so two
+assumptions governing a whole revenue line existed as correctly authored notes, never became rows, and
+the rule intended to enforce rigour made that line structurally unable to enter the projection. It was
+then filed as *revenue outside this model*, which reads as a modelling decision and was a consequence
+of the omission, and every downstream verdict inherited a denominator missing a line the roadmap ships.
+**One reading rule differs from `--roadmap-table` and it is the one that matters: the item column
+defaults to TWO**, because the template ships `| # | Assumption | … |` and column one is the `A-n`
+label a milestone's `moves` and the plan's prose both cite — defaulting to it would report every row of
+a correct table as an input that escaped the ledger, which is exactly the crying wolf `--roadmap-table`
+was scoped out for once already. **Its fourth check is the identity's, not the table's**:
+`excluded-line-on-roadmap` fails an assumption carrying `excluded_from_model` that a `milestone`'s
+`moves` names and that no verdict note lists in `arr_excludes`. Excluding a revenue line is legitimate
+— a metered layer must not be allowed to flatter subscription churn — so what fails is the *silence*,
+not the exclusion, and the escape is stating it where the identity is stated rather than inside the
+model. Gated on `schemaVersion` 3, where all three fields it reads were added.
+
+`--claim-drift` is the half `--used-in` says at length it will never do, obtained without reading prose
+for meaning. `--used-in` asserts a citation RESOLVES; `--binding-driver` asserts one generated string is
+present; **neither can say whether a section still carries what it carried yesterday**, and that is a
+different question from both because the comparison is against text somebody already read. A claim
+records the content hash of each cited section in `reconciled_sections` — `reconciled:` itemised rather
+than a second field beside it — and a changed hash **re-opens** the claim. What it caught: a claim
+written into a plan section satisfying invariant 20, a later re-solve that rewrote the block, a heading
+left untouched so the citation still resolved, a green gate, and the drift found by hand days later.
+Three properties belong in any change to it. **The hash is over BYTES with three normalisations and no
+others** — trailing whitespace per line, and leading, trailing and repeated blank lines — because all
+three are invisible in a rendered document and a hash sensitive to them re-opens every claim in the
+corpus the first time an editor trims a file; a rewrapped paragraph IS an edit and does re-open. **The
+polynomial is 31-bit and arithmetic-only** (`h = (h·131 + byte) mod 2^31−1`, length mixed in last),
+because it has to be byte-identical in POSIX awk — which has no bitwise operators — and in Windows
+PowerShell 5.1 with zero dependencies on either side, and it is detecting an edit rather than resisting
+an adversary. **The failure message carries the CURRENT hash**, which is what makes a read-only tool
+usable here: there is no write mode, so re-reconciling is re-reading the section and pasting one token,
+and pasting it is the assertion that the read happened exactly as stamping a date is. It reads only
+`current` `claim` and `assumption` notes and only entries whose `#anchor` resolves — a dead anchor is
+`--used-in`'s verdict, and reporting it twice under a name about reconciliation sends its reader to the
+wrong fix. Gated on `schemaVersion` 3.
 
 **The two subjects trigger differently, and the asymmetry is the design rather than an
 inconsistency.** `target-verdict` is a term 1.12.0 introduces, so no existing corpus carries it and
