@@ -786,6 +786,17 @@ skips the question the error existed to ask.
   their competitor, its two dated traction points and its stage. Without it a run passes every
   other check on this list and Phase 3's implied-growth test then points at a section that was
   never produced — a check that silently does nothing is worse than one that was never written.
+- `competitor-analysis.md` carries its `## Monitoring plan`, and **every axis names an instrument,
+  a cadence and the decision it would change.** Those three columns are what the render gate's
+  `--monitoring` fails an axis for leaving empty, and this checkpoint is the last one at which
+  filling one in costs a sentence: the researcher who knows which direction a profile was pointed
+  is here now and gone by Phase 5, and an axis invented at the render is a watchlist entry rather
+  than a trigger. Every profile in that document is a snapshot dated on the day it was taken, and
+  a snapshot cannot see a direction — one researched the day before it was used missed a strategic
+  reversal by that vendor six weeks earlier, the single fact that most changed what the competitor
+  meant. The first line's "all contract files exist" cannot do this work: it is satisfied by the
+  document existing, and a document existing says nothing about whether anything in it watches a
+  direction rather than a page.
 - `research/growth-curves.md` exists, and `market-analysis.md` carries its `## Comparable growth
   curves` section: the series indexed to months since origin, each company's origin event named,
   and the companies held out of the indexed overlay listed rather than dropped. The band says how
