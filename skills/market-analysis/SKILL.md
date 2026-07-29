@@ -145,15 +145,15 @@ Four fields make an entry rather than a filename:
   because the field is not there yet
 
 An entry that names a store and stops is the same silence as no entry: it reads as diligence and
-settles nothing. The inventory lands in the dossier's `## Stage & surface` — what arriving users
-were asked, and how often the core action completes, are stack facts that matter far more than
-the framework — a figure already read is evidence on whichever of the `## Value hypotheses` it
-bears on, and **every entry still `unread` lands in `## Open questions` naming the quantity it
-would settle**. That last one is what routes it into the grill: access to the store is the
-founder's to grant, which makes an unread instrument founder-only by construction — the one class
-of question Phase 1 asks — and asking for access is a different turn from asking them to recall
-what the store says. It is also what stops a Phase 2 dimension from reporting a quantity as
-unavailable over an instrument the dossier already names. **The failure this prevents:** an
+settles nothing. The inventory lands in the dossier's own `## Instrumentation inventory` section,
+beside the infra-cost pass's — one section per archaeology pass, because an enumeration that
+names one of two siblings drops the other. A figure already read is additionally evidence on
+whichever of the `## Value hypotheses` it bears on, and **every entry still `unread` lands in
+`## Open questions` naming the quantity it would settle**. That last hop is the firing mechanism,
+and both ends of it are steps rather than inferences: Phase 1 asks for access to each `unread` row
+by name, and the dispatching plan's own verification checklist reconciles every row against what
+the fleet came back with. An inventory whose consumers were left implicit is the shape this whole
+release is repairing. **The failure this prevents:** an
 analysis spends its entire budget on competitor documentation, survey statistics and category
 M&A, files the conversion assumption the whole thesis turns on at low confidence because no
 instrument exists, and ships — while the subject's own database held a free-text field asking
@@ -200,6 +200,18 @@ Ask only what changes the analysis:
   (history, pivots, why now, who this is for). Read every pointer before dispatching the
   dimension it touches; named competitors join `mustProfile`. One open ask, cheap to make,
   and it catches whole directions the dossier alone would miss.
+- **Access to the instruments Phase 0 could not open** — every `unread` row of the dossier's
+  `## Instrumentation inventory` is also an `## Open questions` entry naming the quantity it would
+  settle. Ask for each by name, and ask for **access** rather than for what it says: the founder's
+  recollection of their own store is commentary and tags `L` like everything else they say, while
+  one query returns a figure anyone can re-check against the same rows. Founder-only by
+  construction — the credentials are theirs — so it is the one class this phase asks about and
+  never a turn research could have replaced. **Ask it early**, ahead of the conviction questions:
+  an export has lead time, and a figure that lands after the fleet has dispatched changes nothing
+  it already wrote. **The failure this prevents:** the inventory names the instrument, the grill
+  never asks for the key, and the run reports the quantity as unevidenced with the evidence one
+  query away — which is the whole defect the inventory was added to close, surviving into the one
+  phase that could have finished the job.
 - **Feature conviction** — which features they find the most valuable, ranked. This is
   founder-only, never inferable from the source, and always
   asked: where their ranking diverges from where the repo's effort or the docs' pitch went is
