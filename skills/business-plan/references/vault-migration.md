@@ -30,6 +30,7 @@ which of their rules bite differently when you are writing three hundred notes i
 - [An upgraded vault enters here, not at Stage 1 — reconcile the claims an amended definition left behind](#an-upgraded-vault-enters-here-not-at-stage-1--reconcile-the-claims-an-amended-definition-left-behind)
 - [Finish with vault-lint, and know which failures legitimately survive](#finish-with-vault-lint-and-know-which-failures-legitimately-survive)
 - [Stamp schemaVersion 2 last, after the vault can already pass at 2](#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2)
+- [Then 3, and what 3 asks for is a hash per cited section](#then-3-and-what-3-asks-for-is-a-hash-per-cited-section)
 
 ## The extraction manifest is already written — it is the plan's citations
 
@@ -783,7 +784,7 @@ vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 
 **Before the first render — not here — the first and third of those are part of one call.**
 `vault-lint.sh --release-gate` runs the bare check, `--used-in`, the sweep, `--red-team`,
-`--roadmap-table` and `--binding-driver`
+`--roadmap-table`, `--binding-driver`, `--assumption-rows` and `--claim-drift`
 together and exits
 non-zero unless every part passes, which is what the render gate is held to. It is deliberately
 not the migration's acceptance test: `coverage-gap` and `orphan-source` legitimately survive a
@@ -798,11 +799,13 @@ migration was ever for.
 
 ## Stamp schemaVersion 2 last, after the vault can already pass at 2
 
-`vault-lint.sh` reads both `schemaVersion` 1 and 2. A vault at 1 is held to exactly the rules it
+`vault-lint.sh` reads `schemaVersion` 1, 2 and 3. A vault at 1 is held to exactly the rules it
 was written under, so **nothing about upgrading the skill obliges you to upgrade a vault** — an
 existing corpus keeps working untouched, which is the property the version set exists to buy.
 Move to 2 when you want the checks version 2 added; the list of what those are is in
-[vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand).
+[vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand). Move to 3 after that and
+never in the same pass — [the section below](#then-3-and-what-3-asks-for-is-a-hash-per-cited-section)
+says what 3 asks for and why its worklist is one row per citation rather than one per supersession.
 
 **What 2 asks of an existing corpus is stage 5, plus a back-fill on anything it already
 superseded or already red-teamed.** The milestone half fires only on notes in `milestones/` — a
@@ -868,7 +871,58 @@ already requires.
    could not back up — which is the same failure mode as adopting an amended definition before
    reconciling the claims under it, one level up.
 
-**Migrations stay forward-only.** There is no 2→1 path, for the reason
+## Then 3, and what 3 asks for is a hash per cited section
+
+`schemaVersion` 3 is where two rules with no version behind them would have failed every corpus that
+exists. Both are optional in the sense that matters: **a vault at 2 keeps working untouched**, and
+moving to 3 is a decision to buy what 3 checks. The rules are in
+[vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand)'s version-3 table.
+
+**The two halves cost very different amounts, so read them apart before starting.**
+
+**`--assumption-rows` costs almost nothing on an existing corpus**, because its forward trigger is a
+field no note carries yet. Nothing owes a row until an `assumption` note declares `model_input`, so
+the upgrade here is opt-in per note: go through the assumptions table in `financial-model.md`, and
+for each row mint or find the `assumption` note behind it and copy the row's `Assumption` cell into
+`title` **unchanged**. The match is verbatim, so a note whose title is a tidied-up version of its row
+fails twice over — once as a row with no note behind it, once as a declared input the table never
+lists. This is stage 4 read from the other end, and a back-fill is the one moment the two lists sit
+side by side and can be made to agree for free.
+
+**`--claim-drift` is the expensive half, and the cost is a real read rather than a transcription.**
+Every `current` `claim` and `assumption` whose `used_in` names a resolving `#anchor` owes a
+`reconciled_sections` entry, so on a migrated corpus that is one entry per citation stage 3 wrote.
+Do it the only way the field means anything:
+
+```sh
+# The worklist, and it names the hash to paste for every entry it is missing.
+vault-lint.sh --claim-drift --vault "$VAULT_PATH"
+```
+
+1. **Open the section the failure names and read it against the note.** This is the whole point. The
+   hash records that the read happened, exactly as `reconciled:` does — a hash pasted without opening
+   the document is a false assertion in the ledger, and it is precisely the assertion the render gate
+   downstream trusts.
+2. **If the claim still holds, paste the entry the message printed** and set `reconciled:` to the
+   date you read it. If it does not hold, the claim is what changes — supersede it, and the sweep
+   picks up the blast radius from there.
+3. **If the corpus has more citations than the session has room for, revert the `3` and come back.**
+   A vault left committed at 3 mid-upgrade puts the render gate permanently red for reasons that have
+   nothing to do with the render, and the next person cannot tell an upgrade in progress from a corpus
+   that broke. That is the same rule the 2 upgrade states and it bites harder here, because the
+   worklist is one row per citation rather than one per supersession.
+
+**Commit the stamp together with the entries, as the last edit**, for the reason the 2 upgrade gives:
+one commit in which the vault both claims 3 and passes at 3 means no commit in the history records a
+version the corpus could not back up.
+
+**What moving to 3 buys is that a reconciliation cannot silently expire.** At 2, a claim reconciled
+against a section stays green after somebody rewrites that section — the heading is untouched, so
+`--used-in` still resolves, and the drift is found by hand or not at all. At 3 the rewrite re-opens
+the claim. That is invariant 20 holding past the first time it was satisfied, which is the only place
+it was ever failing.
+
+**Migrations stay forward-only.** There is no 2→1 path and no 3→2 path, for the reason
 [vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand) gives: writing one means
 holding every field the newer schema added in a shape the older one can carry, which is a second
 schema maintained forever.

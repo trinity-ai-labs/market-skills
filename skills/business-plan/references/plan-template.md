@@ -351,7 +351,15 @@ annual with monthly year 1_
 |---|---|---|---|---|
 <price, CAC by channel, conversion, churn, ramp times, hires… one row each.
 Source = [S#] | [F#] | "guess — validate". At least one negative assumption is mandatory
-(churn > 0, hiring delay, sales-cycle friction) — a model with no friction is fiction.>
+(churn > 0, hiring delay, sales-cycle friction) — a model with no friction is fiction.
+
+The `Assumption` cell IS the note's `title`, copied verbatim, and every row is an
+`assumption` note written before the table. That is what lets
+`vault-lint.sh --assumption-rows` read the two against each other character for character,
+the same rule a roadmap row is held to against a milestone `title` — a table rendered off the
+notes matches by construction, so a mismatch means the row was written by hand. The `#` column
+stays the `A-n` label the prose and a milestone's `moves` field cite; nothing mechanical reads
+it.>
 
 ## Revenue build (bottom-up ONLY) {#revenue-build}
 <channel → spend → CAC → new customers/mo → conversion → price → revenue, as a visible chain.
