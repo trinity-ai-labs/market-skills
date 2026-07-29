@@ -26,11 +26,23 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
 - **Two implementations of one 3,600-line linter is a drift hazard no reviewer can hold in their
   head by re-reading both files, so nothing here ships on review alone —
   `scripts/parity/parity.mjs` is the mechanical gate that makes maintaining both tractable.** It
-  runs every mode across 18 fixture vaults — 7 modes' `--json` output compared byte-for-byte,
+  runs every mode across 19 fixture vaults — 7 modes' `--json` output compared byte-for-byte,
   `graph` and `--release-gate` (which refuse `--json`) on normalized stdout and exit code — and
   fails on any disagreement: key order, an escaped character, row order, a path separator. That is
   exactly the class of defect invisible to a reader of either file alone, and it would otherwise
   ship silently to whichever half of the install base hit the untested side first.
+- **`vault-lint.sh` read a `_vocab.yml` whose lines end CRLF as an EMPTY vocabulary, which is a
+  silence rather than an error — `unknown-subject`, `near-miss-subject` and `coverage-gap` each
+  need a term to compare against, so a vault carrying unknown subjects and a thin spine linted
+  clean.** A `_vocab.yml` written or edited on Windows is CRLF by default, so a corpus shared
+  across platforms hit this as the ordinary case rather than the corner. The shell was affected on
+  macOS and Linux only: Git for Windows' awk strips the carriage return for free, which is why
+  adding a Windows runner is what finally exposed a bug that had always been a POSIX one.
+- **The corpus never contained a single CRLF byte, which is why neither implementation was caught
+  until a Windows runner existed — a CRLF fixture vault now joins the suite, pinned to CRLF
+  through checkout by path rather than by extension.** It asserts the behaviour and not just the
+  bytes: the vocabulary checks must still fire on it, so a regression that reintroduces
+  carriage-return intolerance turns it red rather than passing quietly.
 - Docs, `AGENTS.md` and the skills' invocation prose now name both implementations and point at
   the selection rule above, rather than asserting the lint is POSIX shell reached over the Bash
   tool's `PATH` — true of the only implementation there used to be, and false the moment a second
