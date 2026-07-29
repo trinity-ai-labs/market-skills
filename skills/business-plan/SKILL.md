@@ -757,6 +757,19 @@ skips the question the error existed to ask.
   were guessed silently.
 - `Value hypothesis verdicts` covers every VH in the dossier (confirmed / weakened / refuted /
   untested) — Phase 3's Solution section may only build on confirmed ones.
+- `research/product-dossier.md` carries its `## Instrumentation inventory`, and **every row is
+  reconciled by name against what the fleet came back with, both directions.** *Forward:* a
+  `question` note's `gaps` entry or an `L`-tagged driver naming a quantity some row says an
+  instrument could settle means that instrument was never opened — the binding driver gets filed
+  at `L` for *"no instrument exists"* while a dated `fact` note carrying the figure sits in the
+  same vault, and nothing compares the two. *Reverse:* a row marked read, with its `fact` note
+  minted, and the dimension owning that quantity resolved through a comparable anyway — the
+  measurement is on disk and the plan is about to run on somebody else's proxy for it. Both
+  directions carry weight for `--red-team`'s reason: with only the forward one, the cheapest way
+  past an instrument nobody wanted to query is to delete its row from the inventory. This phase
+  is the last one whose context is still live when the fix costs a single query, and the first
+  line's "all contract files exist" cannot do the work — it is satisfied by the dossier existing,
+  and a dossier existing says nothing about whether anything in it was opened.
 - Lint is clean, and every dimension left a `question` note. A dimension with no gaps is a
   dimension that did not look.
 
