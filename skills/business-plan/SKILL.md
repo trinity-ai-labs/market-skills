@@ -398,10 +398,17 @@ name wins; for an idea with no name, do NOT write any file — settling the name
 grill turn). Look inside `~/Documents/go-to-market/<slug>/` (and `ls` the parent for an existing
 folder naming the same product). A market analysis already there is prior work: **reuse** if
 the dossier still matches reality and `_Analyzed:` is under ~90 days old in a fast-moving
-category (AI tooling, consumer apps) or ~12 months otherwise; between those, run the
-competitor-analysis Monitoring plan re-check (pricing pages, changelogs) as a partial refresh
-and note it in Coverage; past them, or if the product's stage/boundary moved, plan a full
-refresh.
+category (AI tooling, consumer apps) or ~12 months otherwise; between those, work
+`competitor-analysis.md`'s `## Monitoring plan` axis by axis as a partial refresh — each axis's
+instrument read, and the decision that axis says would flip stated as flipped or not — and note
+it in Coverage; past them, or if the product's stage/boundary moved, plan a full refresh.
+
+**A partial refresh re-reads the axes, never the pages.** A pass over pricing pages and
+changelogs answers *is this still true*, which is the question the `_Analyzed:` date beside it has
+already answered and which every claim note's `stale_after` asks again — so it returns *still
+accurate* over a vendor whose direction reversed a month ago, and a direction is the only thing
+separating a closing window from an open one. Only an axis carries one, which is why this branch
+reads the axes and their decisions rather than re-checking the pages those axes are read from.
 
 **Scaffold the vault before anything writes.** The vault path IS the slug directory — never a
 `vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with
