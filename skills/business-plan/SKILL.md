@@ -1106,6 +1106,40 @@ not ship, and neither does one whose citation names a document that was renamed 
 that was cut. The failure this stops is the worst one available — a polished PDF asserting
 flatly what the corpus already withdrew, handed to the one reader with no way to check it.
 
+**Restate forward before you render — the artifact states what is true now, and the ledger keeps
+the archaeology.** Invariant 14 is right and does not change: a retracted note keeps its status
+and its reason, and a withdrawn line in the *markdown* stays struck through with the reason,
+because silent deletion lets a dead claim return two drafts later with its cause of death erased.
+The deliverable is the other side of that rule. Its reader was never in the room, and a note ID or
+a red-team objection code is a **vault address** — it resolves for anyone holding the corpus and
+resolves to nothing for the audience the document is for. A reader who gets both sees a document
+arguing with its own previous draft. Left unchecked, a finished plan and its model carry well over
+a hundred pieces of that narrative between them — into the two documents an investor reads.
+
+So this is a step with an output, not a cleanup pass. For every correction the markdown carries —
+a strikethrough, a superseded figure, an objection that changed the answer — **write the sentence
+the corrected claim now supports** and let the artifact carry that. Then drop the address:
+`[S#]` and `[F#]` citation codes are the reader's trace and stay; note IDs and `R<n>-O<n>` codes
+do not.
+
+**It is a restatement, never a strip filter, and that distinction is the whole design.** Removing
+`~~…~~` mechanically leaves *"That multiple was actually…"* with no antecedent — the sentence
+still renders, still reads like prose, and now asserts nothing. No script can judge an antecedent,
+so the dangling-antecedent half is a named item in `rendering.md`'s render → Read the PDF back →
+check every page loop, and the mechanical half is a check:
+
+- **`vault-lint.sh --deliverable --vault "$VAULT_PATH"`** reads the *rendered*
+  `deliverables/*.html` and fails on a strikethrough span, a note ID or an objection code. It
+  gates the **rendered HTML rather than the markdown** on purpose: the markdown is the working
+  document and keeps everything invariant 14 owes it, the HTML is what the outside reader holds,
+  and the HTML is the only one a check can hold to this at all — the restatement itself is a
+  judgement.
+- It is one of `--release-gate`'s parts, so the call before the first render is still one call.
+  But at that point nothing has been rendered yet and the mode says so, which means **the run that
+  gates what ships is the one inside the render loop**, after the HTML exists and before the PDF
+  is called done. A deliverable that failed it goes back through the restatement above, not
+  through a find-and-replace.
+
 Render `business-plan.md` (+ the financial model) into ONE polished, self-contained
 `deliverables/business-plan.html` and a print-quality `deliverables/business-plan.pdf`, and
 `one-pager.md` into its own single-page pair (no cover page — rendering.md's single-page
