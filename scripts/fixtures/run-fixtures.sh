@@ -1365,12 +1365,24 @@ printf '\nCRLF vault\n'
 # passes over an LF copy of this vault while testing nothing. Asserted on EVERY
 # line of every file rather than on one CR somewhere, since a partial conversion
 # is the shape a hand-edit leaves. .gitattributes says why the pin is there.
+#
+# COUNTED IN BYTES, WITH NO awk ANYWHERE NEAR IT. Git for Windows' awk reads in
+# text mode and hands every pattern a line with no CR - which is the whole
+# reason the shell parsed a CRLF vocabulary on Windows while failing on macOS
+# and Linux. An `awk !/\r$/` guard here would therefore find no carriage return
+# on the one platform where the corpus is CRLF by default, and report this
+# fixture as unpinned on the runner it matters most on. tr and wc count bytes,
+# the way the workflow's own autocrlf check reads the shebang with head rather
+# than through a parser. Every line CRLF means the CR count equals the LF count,
+# and both being zero is an empty file rather than a pinned one.
 CRLF_LF_ONLY=""
 find "$HERE/crlf-vocab" -type f | LC_ALL=C sort >"$PAIRS_FILE.crlf"
 while read -r cf; do
 	[ -n "${cf:-}" ] || continue
-	awk 'BEGIN { bad = 0 } !/\r$/ { bad = 1 } END { exit bad }' "$cf" ||
-		CRLF_LF_ONLY="$CRLF_LF_ONLY ${cf#"$HERE"/}"
+	cr=$(tr -cd '\r' <"$cf" | wc -c | tr -d '[:space:]')
+	lf=$(wc -l <"$cf" | tr -d '[:space:]')
+	[ "$cr" -gt 0 ] && [ "$cr" = "$lf" ] ||
+		CRLF_LF_ONLY="$CRLF_LF_ONLY ${cf#"$HERE"/}($cr/$lf)"
 done <"$PAIRS_FILE.crlf"
 [ -z "$CRLF_LF_ONLY" ] && ok "every file in crlf-vocab/ is CRLF on this checkout" ||
 	no "crlf-vocab/ arrived with LF lines, so it tests nothing:$CRLF_LF_ONLY"
