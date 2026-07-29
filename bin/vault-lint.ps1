@@ -1192,12 +1192,21 @@ function Invoke-ModeSupersessionSweep {
 			$line = Remove-TrailingCr $rawLine
 			$t = $line.TrimStart($script:SPACE_TAB)
 
-			if ($t.Length -ge 3 -and ($t.Substring(0, 3) -ceq '```' -or $t.Substring(0, 3) -ceq '~~~')) {
-				$c = $t.Substring(0, 1)
+			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
+			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
+			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
+			# [char] both take PowerShell's culture path, which folds a combining
+			# sequence onto its precomposed form and ignores a zero-width space -
+			# and a document read by this mode is founder prose carrying both,
+			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
+			# because it carries awk's `fc = ""` sentinel; the fence character it
+			# holds is compared as a code point.
+			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
+				$c = [int]$t[0]
 				$n = 0
-				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
-				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
-				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ([int]$fc[0] -eq $c -and $n -ge $fn) { $fc = ''; $fn = 0 }
 				continue
 			}
 			if ($fc.Length -gt 0) { continue }
@@ -1560,12 +1569,21 @@ function Invoke-ModeUsedIn {
 
 			# Fences tracked by marker character and run length, so a longer
 			# nested fence cannot close its parent early.
+			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
+			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
+			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
+			# [char] both take PowerShell's culture path, which folds a combining
+			# sequence onto its precomposed form and ignores a zero-width space -
+			# and a document read by this mode is founder prose carrying both,
+			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
+			# because it carries awk's `fc = ""` sentinel; the fence character it
+			# holds is compared as a code point.
 			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
-				$c = $t.Substring(0, 1)
+				$c = [int]$t[0]
 				$n = 0
-				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
-				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
-				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ([int]$fc[0] -eq $c -and $n -ge $fn) { $fc = ''; $fn = 0 }
 				continue
 			}
 			if ($fc.Length -ne 0) { continue }
@@ -1731,21 +1749,37 @@ function Invoke-ModeRedTeam {
 			# --used-in's above for the reason THE STUB SEAM states. A
 			# document that carries its own row template as an example would
 			# otherwise register the template as a dispatched lens.
+			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
+			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
+			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
+			# [char] both take PowerShell's culture path, which folds a combining
+			# sequence onto its precomposed form and ignores a zero-width space -
+			# and a document read by this mode is founder prose carrying both,
+			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
+			# because it carries awk's `fc = ""` sentinel; the fence character it
+			# holds is compared as a code point.
 			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
-				$c = $t.Substring(0, 1)
+				$c = [int]$t[0]
 				$n = 0
-				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
-				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
-				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ([int]$fc[0] -eq $c -and $n -ge $fn) { $fc = ''; $fn = 0 }
 				continue
 			}
-			if ($fc -cne '') { continue }
+			if ($fc.Length -ne 0) { continue }
 
 			$hm = $rxHeading.Match($t)
 			if ($hm.Success) {
 				$h = $t.Substring($hm.Length)
 				$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
-				$inRoster = ((Get-RedTeamKey $h) -ceq 'lenses dispatched')
+				# ORDINAL, never `-ceq`. Get-RedTeamKey lowercases and collapses
+				# whitespace runs and drops nothing else, so a zero-width space in
+				# this heading survives into the comparison - and culture folding
+				# reports the folded heading EQUAL to `lenses dispatched` while awk
+				# compares bytes and does not. That is a live divergence on any
+				# founder prose carrying one, demonstrated by
+				# scripts/fixtures/fence-zwsp.
+				$inRoster = [string]::Equals((Get-RedTeamKey $h), 'lenses dispatched', [System.StringComparison]::Ordinal)
 				continue
 			}
 
@@ -1878,12 +1912,21 @@ function Invoke-ModeRoadmapTable {
 			$line = Remove-TrailingCr $rawLine
 			$t = $line.TrimStart($SPACE_TAB)
 
-			if ($t.Length -ge 3 -and ($t.Substring(0, 3) -ceq '```' -or $t.Substring(0, 3) -ceq '~~~')) {
-				$fenceChar = $t.Substring(0, 1)
+			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
+			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
+			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
+			# [char] both take PowerShell's culture path, which folds a combining
+			# sequence onto its precomposed form and ignores a zero-width space -
+			# and a document read by this mode is founder prose carrying both,
+			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
+			# because it carries awk's `fc = ""` sentinel; the fence character it
+			# holds is compared as a code point.
+			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
+				$fenceChar = [int]$t[0]
 				$n = 0
-				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $fenceChar) { $n++ }
-				if ($fc -ceq '') { $fc = $fenceChar; $fn = $n }
-				elseif ($fenceChar -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $fenceChar) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$fenceChar; $fn = $n }
+				elseif ([int]$fc[0] -eq $fenceChar -and $n -ge $fn) { $fc = ''; $fn = 0 }
 				continue
 			}
 			if ($fc.Length -ne 0) { continue }
@@ -1902,14 +1945,20 @@ function Invoke-ModeRoadmapTable {
 					$h = $h.Substring(0, $anchorMatch.Index).Trim($SPACE_TAB)
 				}
 				if ($inRoadmap -and $nh -le $level) { break }
-				if (-not $seenHeading -and ((ConvertTo-RoadmapFold $explicitAnchor) -ceq 'roadmap' -or (ConvertTo-RoadmapFold $h) -ceq 'roadmap')) {
+				# Ordinal like every other comparison that reads this document.
+				# ConvertTo-RoadmapFold has already dropped everything outside
+				# [a-z0-9], so no culture folding is reachable through these two -
+				# they are converted so the rule is a property of the file rather
+				# than a judgement re-made per site, which is what left three
+				# copies of the fence scan unconverted.
+				if (-not $seenHeading -and ([string]::Equals((ConvertTo-RoadmapFold $explicitAnchor), 'roadmap', [System.StringComparison]::Ordinal) -or [string]::Equals((ConvertTo-RoadmapFold $h), 'roadmap', [System.StringComparison]::Ordinal))) {
 					$inRoadmap = $true; $seenHeading = $true; $level = $nh
 				}
 				continue
 			}
 
 			if (-not $inRoadmap) { continue }
-			if ($t.Length -eq 0 -or $t.Substring(0, 1) -cne '|') {
+			if (-not $t.StartsWith('|', [System.StringComparison]::Ordinal)) {
 				if ($inTable) { break }
 				continue
 			}
@@ -1927,7 +1976,7 @@ function Invoke-ModeRoadmapTable {
 				if ($hdr -cne '') {
 					$hdrCells = $hdr -split '\|'
 					for ($i = 0; $i -lt $hdrCells.Count; $i++) {
-						if ((ConvertTo-RoadmapFold $hdrCells[$i]) -ceq 'item') { $col = $i + 1; break }
+						if ([string]::Equals((ConvertTo-RoadmapFold $hdrCells[$i]), 'item', [System.StringComparison]::Ordinal)) { $col = $i + 1; break }
 					}
 				}
 				$inBody = $true

@@ -58,7 +58,8 @@
 #      vocabulary term to compare against, and leaks no carriage return into
 #      what it prints. This is the input class no other fixture carried, which is
 #      why a vocabulary pass that dropped every term on a CRLF file went
-#      unnoticed by all of them.
+#      unnoticed by all of them. Item 17 below is the same shape one character
+#      over, and a count is not written out here because it moves every release.
 #  15. --monitoring holds competitor-analysis.md's monitoring plan to named axes
 #      with an instrument, a cadence and the decision each would change: it fails
 #      an absent section, a section carrying prose and no axis table, and a row
@@ -72,6 +73,11 @@
 #      silent side is a clean file in the same directory carrying every near miss
 #      a looser rule fires on: FACT-CHECKED, an address with an alphanumeric
 #      character on either boundary, a lowercase anchor slug, and <span>/<script>.
+#  17. A zero-width space is a byte in every comparison that reads a document.
+#      Parity was green over four copies of one fence scan while three compared
+#      under PowerShell's culture rules, which report a ZWSP-carrying heading
+#      EQUAL to one without - so this suite pins the behaviour each implementation
+#      must have and scripts/parity/parity.mjs diffs the two over the same vault.
 
 set -u
 
@@ -872,6 +878,45 @@ DEL_NONE_STATUS=$?
 case "$DEL_NONE" in
 *"no deliverables/*.html"*) ok "nothing-rendered-yet is named rather than reported clean" ;;
 *) no "--deliverable did not say nothing had been rendered (got: $DEL_NONE)" ;;
+esac
+
+# --- 2k. a zero-width space is a byte, in every comparison that reads a doc ----
+# The input class no fixture carried, which is why parity was green over four
+# copies of one fence scan while three of them compared under PowerShell's
+# culture rules. A culture-aware comparison reports `lenses<U+200B> dispatched`
+# EQUAL to `lenses dispatched` and awk does not, so the two implementations read
+# different documents - and "no demonstrated impact" was a fact about the corpus
+# rather than about the code.
+#
+# This suite runs ONE implementation, so what it asserts is the behaviour each
+# must have; scripts/parity/parity.mjs diffs the two --json documents over this
+# same fixture, and the pair of them is the assertion. Both green means both
+# implementations answer this vault identically and correctly.
+printf '\nzero-width space\n'
+
+ZW_RT=$("$LINT" --red-team --vault "$HERE/fence-zwsp" 2>&1)
+ZW_RT_STATUS=$?
+[ "$ZW_RT_STATUS" = "1" ] && ok "a zero-width space in the roster heading leaves the roster unread" ||
+	no "a ZWSP roster heading must not resolve to the roster (got $ZW_RT_STATUS)"
+case "$ZW_RT" in
+*red-team-no-roster*) ok "the heading a culture-aware comparison would have matched is reported absent" ;;
+*) no "--red-team matched a heading carrying a zero-width space (got: $ZW_RT)" ;;
+esac
+
+# The fence half. The fenced row template inside the monitoring section carries a
+# zero-width space in both its markers, and its row would read as an axis naming
+# nothing if the scan folded that character away - so the count is what asserts
+# the fence opened and closed on bytes.
+ZW_MON_J=$("$LINT" --monitoring --vault "$HERE/fence-zwsp" --json 2>/dev/null)
+case "$ZW_MON_J" in
+*'"failure_count": 1'*) ok "a fence whose markers carry a zero-width space still closes" ;;
+*) no "the fenced template inside the monitoring section was read as an axis (got: $ZW_MON_J)" ;;
+esac
+# And the axis whose own NAME carries one is matched on bytes like any other, so
+# it answers its three columns and stays silent.
+case "$ZW_MON_J" in
+*'incumbent'*) no "the complete axis carrying a zero-width space in its name fired" ;;
+*) ok "an axis name carrying a zero-width space is read as itself" ;;
 esac
 
 # --- 3. JSON is well-formed enough to slice ---------------------------------
