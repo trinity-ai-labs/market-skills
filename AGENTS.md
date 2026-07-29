@@ -107,12 +107,12 @@ The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` and
 `bin/vault-lint.ps1` rather than to the repo: it asserts that every check the lint claims
 to make still fires, against corpora built to trigger each one, and `VAULT_LINT` points it
 at whichever implementation you're testing — `VAULT_LINT=bin/vault-lint.ps1 sh
-scripts/fixtures/run-fixtures.sh` runs the same 241 assertions against the PowerShell side.
+scripts/fixtures/run-fixtures.sh` runs the same 250 assertions against the PowerShell side.
 A check that stops firing and a check that was deleted look identical from the outside,
 which is why the assertion has to be written down rather than eyeballed.
 
 The parity gate is the third half: `node scripts/parity/parity.mjs` runs both scripts
-across 9 modes × 18 fixture vaults and fails on any byte-level disagreement between their
+across 9 modes × 19 fixture vaults and fails on any byte-level disagreement between their
 output — key order, an escaped character, row order, a path separator. The fixtures suite
 proves each script still does what it claims; the parity gate proves the two scripts still
 agree with each other — a check that stops firing in only *one* implementation is invisible
