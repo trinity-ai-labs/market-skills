@@ -110,17 +110,60 @@ everything downstream.
   IaC and deploy configs, databases and queues from docker-compose/connection code, LLM and
   third-party APIs from SDK imports and call sites, storage/CDN/email/auth providers — plus
   the usage SHAPE (per-user, per-request, per-token, per-GB) each is billed on. Env
-  *templates* only (`*.example`, `*.sample`) — never read real env/secret files. They return
-  facts; you write the dossier.
+  *templates* only (`*.example`, `*.sample`) — never read real env/secret files. **Another does
+  instrumentation archaeology** — the inventory below. They return facts; you write the dossier.
 - **Doc** (spec, PRD, pitch memo): read it fully. Note what it asserts vs. what it assumes.
 - **Idea** (described in chat): draft the dossier from the description; the gaps you can't fill
   become Phase 1 questions.
 
 The dossier must state: what the product is (one paragraph, precise), who it's for, the core
 jobs it does, its stage (idea / building / shipped / revenue), stack and distribution surface
-(desktop/web/CLI/API), anything priced or monetized today, and — critically — the **category
-boundary**: what adjacent categories this is NOT (the single biggest cause of a mushy analysis
-is an unbounded category; "market size" for a fuzzy category is an unfalsifiable number).
+(desktop/web/CLI/API), anything priced or monetized today, what the product already **records**
+(below), and — critically — the **category boundary**: what adjacent categories this is NOT (the
+single biggest cause of a mushy analysis is an unbounded category; "market size" for a fuzzy
+category is an unfalsifiable number).
+
+**Inventory what the product already measures, not only what it is — it goes first because it is
+the cheapest primary evidence the engagement will ever have.** The passes above establish what
+the product IS; this one establishes what it has already *measured* about its users, its own
+operation, and the job it claims to do. A row this product's own users wrote is free, dated,
+checkable and the one class of evidence a competitor cannot obtain, which is more than anything
+the research fleet below will return. Every schema and migration, event-logging call site,
+analytics or telemetry SDK, admin view, report query and export endpoint is an instrument — **one
+entry per store or event type, never per call site**, since one call site establishes the shape
+and a codebase has hundreds. **Read shapes, never data:** a schema and a call site answer *what
+is recorded*, and the reading itself is a query the founder runs or authorises — the same
+boundary the env-template rule above draws, for the same reason.
+
+Four fields make an entry rather than a filename:
+
+- **what it records**, at what grain — per account, per action, per day
+- **the quantity it could settle**, named, and which claim in this analysis rests on a guess
+  about that quantity today
+- **read?** — the figure and the date pulled, or `unread` with what is blocking it
+- **what reading it costs** — one query, an export the founder has to run, or a migration
+  because the field is not there yet
+
+An entry that names a store and stops is the same silence as no entry: it reads as diligence and
+settles nothing. The inventory lands in the dossier's `## Stage & surface` — what arriving users
+were asked, and how often the core action completes, are stack facts that matter far more than
+the framework — a figure already read is evidence on whichever of the `## Value hypotheses` it
+bears on, and **every entry still `unread` lands in `## Open questions` naming the quantity it
+would settle**. That last one is what routes it into the grill: access to the store is the
+founder's to grant, which makes an unread instrument founder-only by construction — the one class
+of question Phase 1 asks — and asking for access is a different turn from asking them to recall
+what the store says. It is also what stops a Phase 2 dimension from reporting a quantity as
+unavailable over an instrument the dossier already names. **The failure this prevents:** an
+analysis spends its entire budget on competitor documentation, survey statistics and category
+M&A, files the conversion assumption the whole thesis turns on at low confidence because no
+instrument exists, and ships — while the subject's own database held a free-text field asking
+arriving users what they came to do, unread, its row count unknown.
+
+A doc or an idea gets the same four fields and a different answer, and the empty inventory is
+itself a result. A spec describes instruments that may or may not exist, so each is an entry
+marked unbuilt until the founder says otherwise; an idea records nothing yet, which makes the
+first instrument a build item with a date rather than a blank — and the quantity it would have
+settled is the one the plan is otherwise going to assume permanently.
 
 **Extract value, not just facts.** The dossier's load-bearing section is **Value hypotheses**:
 3–6 falsifiable claims about why anyone would pay — each naming the pain it kills, who feels it
