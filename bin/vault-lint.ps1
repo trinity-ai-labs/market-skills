@@ -419,6 +419,77 @@ vault-lint.sh - read-only checks over a claim vault.
       presence, and a ceiling claim carrying none of the five owes none of
       them. A vault with no verdict note passes.
 
+  vault-lint.sh --monitoring [--vault PATH] [--json]
+      Check the monitoring plan in competitor-analysis.md: every axis names an
+      instrument, a cadence, and the decision it would change. A verdict - it
+      exits 1 on any of them.
+
+      A snapshot cannot see a direction. Every profile in that document carries
+      its research date, and every claim note carries `stale_after`, and both
+      of those ask the same question - is this still true. Neither asks which
+      way it is moving, and that is the only thing separating a closing window
+      from an open one: a competitor profiled the day before it was used missed
+      a strategic reversal by that vendor six weeks earlier, which was the
+      single fact that most changed what the competitor meant. The plan read
+      correct and was answering a question nobody asked.
+
+      An axis with no instrument is a thing somebody intends to notice, which
+      is not a mechanism. An axis with no cadence is a re-check with no date,
+      which is the same as no re-check. An axis with no decision behind it is
+      a signal nobody acts on, and collecting it costs the same as collecting
+      one that matters - so the decision column is what keeps the plan from
+      growing a watchlist instead of a trigger.
+
+      A cell is empty when it carries no letter or digit, so an em dash or a
+      run of hyphens is read as empty rather than as an answer. There is no
+      placeholder word list: a check that has to be taught every spelling of
+      `TBD` is one that misses the next one.
+
+      A vault with no competitor-analysis.md profiled no competitors and
+      passes. Gated on schemaVersion 2 - the axes are what version 2 asks the
+      section for, and a vault at 1 is held to the rules it was written under.
+
+  vault-lint.sh --deliverable [--vault PATH] [--json]
+      Read every rendered deliverables/*.html and fail on the vault's own
+      archaeology reaching a reader who was never in the room: a strikethrough
+      span, a note ID, or a red-team objection code. A verdict - it exits 1 on
+      any of the three.
+
+      Retraction stays visible in the vault, and that rule is correct - a
+      silently deleted claim comes back two drafts later with its cause of
+      death erased. The rendered artifact is the other side of it. A note ID
+      and an objection code are VAULT ADDRESSES: they resolve for anyone with
+      the corpus and resolve to nothing for the audience the document is for,
+      and a struck-through line with its reason beside it is a document
+      arguing with its own previous draft. Left unchecked, a finished plan and
+      its model carry well over a hundred pieces of that narrative between
+      them - into the two documents an investor reads.
+
+      IT READS THE RENDERED HTML AND NEVER THE MARKDOWN. The markdown is the
+      working document and keeps every strikethrough it owes; the HTML is what
+      the outside reader holds. It is also the only one a check can hold to
+      this, because the render itself is a judgement - a correction reaches
+      the artifact RESTATED FORWARD, as what is true now, and stripping the
+      `~~` mechanically leaves `That multiple was actually...` with no
+      antecedent. No script can judge an antecedent, so that half stays a
+      read-back item in the render loop and this mode covers the half that is
+      mechanical.
+
+      A note ID is matched as its type prefix plus EIGHT generated characters,
+      the length vault.md's generation rule produces. Validating a note's own
+      ID deliberately accepts any length; DETECTING one that leaked into prose
+      is the opposite job, and the loose form fires on `FACT-CHECKED` and
+      `SOURCE-CONTROL` - a check that cries wolf over ordinary prose gets
+      switched off, and switching it off takes the half that worked with it.
+      For the same reason `WITHDRAWN` and `RETRACTED` are NOT matched: a plan
+      can legitimately discuss a withdrawn product or a retracted filing, and
+      those words are the restate-forward step's job rather than a grep's.
+
+      A vault with no deliverables/*.html has rendered nothing and passes. It
+      is in --release-gate so the call before a render is still one call, but
+      the run that gates what actually ships is the one inside the render loop,
+      after the HTML exists - see the render loop in rendering.md.
+
   vault-lint.sh --assumption-rows [--vault PATH] [--json]
       Check the assumptions table in financial-model.md against the assumption
       notes that declare themselves inputs to the model, both directions. A
@@ -589,6 +660,8 @@ check                gate  note-level checks
 --red-team           gate  panel objection rows
 --roadmap-table      gate  roadmap table against the milestone set
 --binding-driver     gate  verdict drivers and the evidence under them
+--monitoring         gate  monitoring axes and the decision each would change
+--deliverable        gate  what the rendered deliverable carries out of the vault
 --assumption-rows    gate  assumption rows against the model table
 --claim-drift        gate  cited sections against their recorded hash
 '@
@@ -640,9 +713,11 @@ function Get-ModeForFlag {
 #   6. Invoke-ModeRedTeam            red-team                               1943-2120
 #   7. Invoke-ModeRoadmapTable       roadmap-table                          2121-2410
 #   8. Invoke-ModeBindingDriver      binding-driver                         2411-3002
-#   9. Invoke-ModeAssumptionRows     assumption-rows
-#  10. Invoke-ModeClaimDrift         claim-drift
-#  11. Invoke-ModeCheck              check
+#   9. Invoke-ModeMonitoring         monitoring                             3122-3322
+#  10. Invoke-ModeDeliverable        deliverable                            3323-3445
+#  11. Invoke-ModeAssumptionRows     assumption-rows
+#  12. Invoke-ModeClaimDrift         claim-drift
+#  13. Invoke-ModeCheck              check
 #
 # THIS LAYOUT IS A CONTRACT SIX SEPARATE BRANCHES BUILD AGAINST. Each of them
 # replaces exactly one function body below and touches nothing else in this
@@ -655,8 +730,8 @@ function Get-ModeForFlag {
 # them, and DO NOT hoist a helper out of one body into the shared region for
 # another body to reuse. A helper two modes want is a helper two slices are both
 # editing, which is the cross-slice edit this seam exists to prevent - the shell
-# keeps five separate copies of one six-line fenced-block scan for exactly that
-# reason (bin/vault-lint.sh:1283-1285), and this file inherits the rule.
+# keeps six separate copies of one six-line fenced-block scan for exactly that
+# reason (bin/vault-lint.sh:1369), and this file inherits the rule.
 #
 # Every stub answers exit status 3 through Exit-NotPorted. Porting a mode is
 # replacing that one call with the mode's real body; the moment it answers
@@ -1202,12 +1277,12 @@ function Invoke-ModeSupersessionSweep {
 	$RX_HEADING = [regex]'\A#+[ \t]+'
 	$RX_ANCHOR = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
 
-	# One of five copies of the same six-line fenced-block scan
-	# (bin/vault-lint.sh:1283-1285 names the other four) - a `#` inside a
+	# One of six copies of the same six-line fenced-block scan
+	# (bin/vault-lint.sh:1369 names the other five) - a `#` inside a
 	# fenced block is an example, not a heading anyone can jump to, and the
 	# fence marker plus its run length are tracked so a longer nested fence
 	# cannot close its parent early. Kept local rather than hoisted: the other
-	# four copies belong to other mode slices, and reaching across them is
+	# five copies belong to other mode slices, and reaching across them is
 	# exactly the cross-slice edit the stub seam exists to prevent.
 	function Read-SweepSections {
 		param([string]$Doc)
@@ -1220,12 +1295,21 @@ function Invoke-ModeSupersessionSweep {
 			$line = Remove-TrailingCr $rawLine
 			$t = $line.TrimStart($script:SPACE_TAB)
 
-			if ($t.Length -ge 3 -and ($t.Substring(0, 3) -ceq '```' -or $t.Substring(0, 3) -ceq '~~~')) {
-				$c = $t.Substring(0, 1)
+			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
+			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
+			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
+			# [char] both take PowerShell's culture path, which folds a combining
+			# sequence onto its precomposed form and ignores a zero-width space -
+			# and a document read by this mode is founder prose carrying both,
+			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
+			# because it carries awk's `fc = ""` sentinel; the fence character it
+			# holds is compared as a code point.
+			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
+				$c = [int]$t[0]
 				$n = 0
-				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
-				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
-				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ([int]$fc[0] -eq $c -and $n -ge $fn) { $fc = ''; $fn = 0 }
 				continue
 			}
 			if ($fc.Length -gt 0) { continue }
@@ -1570,8 +1654,8 @@ function Invoke-ModeUsedIn {
 	$rxAnchorAttr = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
 
 	# Every heading one document offers an anchor for, ATX form only. Ports
-	# scan() at bin/vault-lint.sh:1829 - ONE OF FIVE COPIES of the fenced-block
-	# scan bin/vault-lint.sh:1283-1285 names; this is the local --used-in copy,
+	# scan() at bin/vault-lint.sh:1829 - ONE OF SIX COPIES of the fenced-block
+	# scan bin/vault-lint.sh:1369 names; this is the local --used-in copy,
 	# kept apart from --red-team's below for the reason THE STUB SEAM states.
 	# Setext headings are deliberately not read - they are document titles, not
 	# a section a #fragment cites.
@@ -1588,12 +1672,21 @@ function Invoke-ModeUsedIn {
 
 			# Fences tracked by marker character and run length, so a longer
 			# nested fence cannot close its parent early.
+			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
+			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
+			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
+			# [char] both take PowerShell's culture path, which folds a combining
+			# sequence onto its precomposed form and ignores a zero-width space -
+			# and a document read by this mode is founder prose carrying both,
+			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
+			# because it carries awk's `fc = ""` sentinel; the fence character it
+			# holds is compared as a code point.
 			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
-				$c = $t.Substring(0, 1)
+				$c = [int]$t[0]
 				$n = 0
-				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
-				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
-				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ([int]$fc[0] -eq $c -and $n -ge $fn) { $fc = ''; $fn = 0 }
 				continue
 			}
 			if ($fc.Length -ne 0) { continue }
@@ -1754,17 +1847,26 @@ function Invoke-ModeRedTeam {
 			$line = Remove-TrailingCr $raw
 			$t = $line.TrimStart($script:SPACE_TAB)
 
-			# ONE OF FIVE COPIES of the fenced-block scan (bin/vault-lint.sh:
-			# 1283-1285 names all five) - the local --red-team copy, kept apart
-			# from --used-in's above for the reason THE STUB SEAM states. A
+			# ONE OF SIX COPIES of the fenced-block scan (bin/vault-lint.sh:1369
+			# names all six) - the local --red-team copy, kept apart from
+			# --used-in's above for the reason THE STUB SEAM states. A
 			# document that carries its own row template as an example would
 			# otherwise register the template as a dispatched lens.
+			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
+			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
+			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
+			# [char] both take PowerShell's culture path, which folds a combining
+			# sequence onto its precomposed form and ignores a zero-width space -
+			# and a document read by this mode is founder prose carrying both,
+			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
+			# because it carries awk's `fc = ""` sentinel; the fence character it
+			# holds is compared as a code point.
 			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
-				$c = $t.Substring(0, 1)
+				$c = [int]$t[0]
 				$n = 0
-				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $c) { $n++ }
-				if ($fc.Length -eq 0) { $fc = $c; $fn = $n }
-				elseif ($c -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+				elseif ([int]$fc[0] -eq $c -and $n -ge $fn) { $fc = ''; $fn = 0 }
 				continue
 			}
 			if ($fc.Length -ne 0) { continue }
@@ -1773,7 +1875,14 @@ function Invoke-ModeRedTeam {
 			if ($hm.Success) {
 				$h = $t.Substring($hm.Length)
 				$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
-				$inRoster = ((Get-RedTeamKey $h) -ceq 'lenses dispatched')
+				# ORDINAL, never `-ceq`. Get-RedTeamKey lowercases and collapses
+				# whitespace runs and drops nothing else, so a zero-width space in
+				# this heading survives into the comparison - and culture folding
+				# reports the folded heading EQUAL to `lenses dispatched` while awk
+				# compares bytes and does not. That is a live divergence on any
+				# founder prose carrying one, demonstrated by
+				# scripts/fixtures/fence-zwsp.
+				$inRoster = [string]::Equals((Get-RedTeamKey $h), 'lenses dispatched', [System.StringComparison]::Ordinal)
 				continue
 			}
 
@@ -1851,7 +1960,7 @@ function Invoke-ModeRedTeam {
 # ----------------------------------------------------------------------------
 function Invoke-ModeRoadmapTable {
 	# Local copies only - not shared with any other stub. bin/vault-lint.sh
-	# :1283-1285 names this fenced-block scan as one of five deliberate
+	# :1369 names this fenced-block scan as one of six deliberate
 	# copies, one per mode that reads a document at the vault root; hoisting
 	# either helper below out from under this stub for another mode to reuse
 	# is the cross-slice edit the seam exists to prevent.
@@ -1906,15 +2015,24 @@ function Invoke-ModeRoadmapTable {
 			$line = Remove-TrailingCr $rawLine
 			$t = $line.TrimStart($SPACE_TAB)
 
-			if ($t.Length -ge 3 -and ($t.Substring(0, 3) -ceq '```' -or $t.Substring(0, 3) -ceq '~~~')) {
-				$fenceChar = $t.Substring(0, 1)
+			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
+			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
+			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
+			# [char] both take PowerShell's culture path, which folds a combining
+			# sequence onto its precomposed form and ignores a zero-width space -
+			# and a document read by this mode is founder prose carrying both,
+			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
+			# because it carries awk's `fc = ""` sentinel; the fence character it
+			# holds is compared as a code point.
+			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
+				$fenceChar = [int]$t[0]
 				$n = 0
-				while ($n -lt $t.Length -and $t.Substring($n, 1) -ceq $fenceChar) { $n++ }
-				if ($fc -ceq '') { $fc = $fenceChar; $fn = $n }
-				elseif ($fenceChar -ceq $fc -and $n -ge $fn) { $fc = ''; $fn = 0 }
+				while ($n -lt $t.Length -and [int]$t[$n] -eq $fenceChar) { $n++ }
+				if ($fc.Length -eq 0) { $fc = [string][char]$fenceChar; $fn = $n }
+				elseif ([int]$fc[0] -eq $fenceChar -and $n -ge $fn) { $fc = ''; $fn = 0 }
 				continue
 			}
-			if ($fc -cne '') { continue }
+			if ($fc.Length -ne 0) { continue }
 
 			$headingMatch = [regex]::Match($t, '\A(#+)[ \t]+')
 			if ($headingMatch.Success) {
@@ -1930,14 +2048,20 @@ function Invoke-ModeRoadmapTable {
 					$h = $h.Substring(0, $anchorMatch.Index).Trim($SPACE_TAB)
 				}
 				if ($inRoadmap -and $nh -le $level) { break }
-				if (-not $seenHeading -and ((ConvertTo-RoadmapFold $explicitAnchor) -ceq 'roadmap' -or (ConvertTo-RoadmapFold $h) -ceq 'roadmap')) {
+				# Ordinal like every other comparison that reads this document.
+				# ConvertTo-RoadmapFold has already dropped everything outside
+				# [a-z0-9], so no culture folding is reachable through these two -
+				# they are converted so the rule is a property of the file rather
+				# than a judgement re-made per site, which is what left three
+				# copies of the fence scan unconverted.
+				if (-not $seenHeading -and ([string]::Equals((ConvertTo-RoadmapFold $explicitAnchor), 'roadmap', [System.StringComparison]::Ordinal) -or [string]::Equals((ConvertTo-RoadmapFold $h), 'roadmap', [System.StringComparison]::Ordinal))) {
 					$inRoadmap = $true; $seenHeading = $true; $level = $nh
 				}
 				continue
 			}
 
 			if (-not $inRoadmap) { continue }
-			if ($t.Length -eq 0 -or $t.Substring(0, 1) -cne '|') {
+			if (-not $t.StartsWith('|', [System.StringComparison]::Ordinal)) {
 				if ($inTable) { break }
 				continue
 			}
@@ -1955,7 +2079,7 @@ function Invoke-ModeRoadmapTable {
 				if ($hdr -cne '') {
 					$hdrCells = $hdr -split '\|'
 					for ($i = 0; $i -lt $hdrCells.Count; $i++) {
-						if ((ConvertTo-RoadmapFold $hdrCells[$i]) -ceq 'item') { $col = $i + 1; break }
+						if ([string]::Equals((ConvertTo-RoadmapFold $hdrCells[$i]), 'item', [System.StringComparison]::Ordinal)) { $col = $i + 1; break }
 					}
 				}
 				$inBody = $true
@@ -2325,7 +2449,7 @@ function Invoke-ModeBindingDriver {
 	# to prevent. A `#` or a `|` inside a fenced block is an example rather than
 	# an assertion the document makes, which is also why fenced lines never reach
 	# BODY: a fenced template carrying a condition would otherwise satisfy the
-	# check for a section that renders nothing. Change one, change all five.
+	# check for a section that renders nothing. Change one, change all six.
 	function Read-BdDoc {
 		param([string]$Doc)
 		if ($SCANNED.Contains($Doc)) { return }
@@ -2822,7 +2946,313 @@ function Invoke-ModeBindingDriver {
 }
 
 # ----------------------------------------------------------------------------
-# 9. --assumption-rows - the model's inputs against the notes that declare them
+# 9. --monitoring - an axis owes an instrument, a cadence and a decision
+#
+# Ports bin/vault-lint.sh:3122-3322. Reads competitor-analysis.md at the vault
+# root, so it is a mode for --red-team's reason rather than a check: a document
+# outside the seven note directories is a different surface.
+# ----------------------------------------------------------------------------
+function Invoke-ModeMonitoring {
+	$competitorsPath = $script:VAULT + '/competitor-analysis.md'
+
+	$okLine = 'every monitoring axis names an instrument, a cadence and the decision it would change - ' + $script:VAULT
+
+	if (-not (Test-Path -LiteralPath $competitorsPath -PathType Leaf)) {
+		exit (Render-Failures 'vault-lint monitoring' ('no competitor-analysis.md under ' + $script:VAULT + ' - no competitor set was profiled, so no axis owes an instrument'))
+	}
+	if ([int]$script:FOUND_SCHEMA -lt 2) {
+		exit (Render-Failures 'vault-lint monitoring' ('competitor-analysis.md at schemaVersion ' + $script:FOUND_SCHEMA + ' - the monitoring axes are a schemaVersion 2 rule and a vault at 1 is held to the rules it was written under'))
+	}
+
+	$RX_MON_ALNUM = [regex]'[A-Za-z0-9]'
+	$RX_MON_HEADING = [regex]'\A#+[ \t]+'
+	$RX_MON_TRAILING_HASH = [regex]'[ \t]*#+[ \t]*\z'
+	$RX_MON_TRAIL_PIPE = [regex]'\|[ \t]*\z'
+	$RX_MON_ALIGN_CELL = [regex]'\A[ \t]*:?-+:?[ \t]*\z'
+
+	# Byte equality, never PowerShell's `-ceq`, for the reason
+	# bin/vault-lint.ps1's --binding-driver body states where it does the same:
+	# `-ceq` compares under the invariant CULTURE, which reports `a` and
+	# `a<U+200B>b` equal and a combining sequence equal to its precomposed form -
+	# and every comparison in this body runs over founder prose, which is exactly
+	# where those turn up. A zero-width space in `## Monitoring plan` would have
+	# this mode read a section the shell does not, over the same document. awk
+	# compares bytes, so this compares ordinals. Declared in this body rather
+	# than beside the shared helpers for the reason the stub seam states: a
+	# helper two modes want is a helper two slices are both editing.
+	function Test-MonEqual {
+		param([string]$A, [string]$B)
+		return [string]::Equals($A, $B, [System.StringComparison]::Ordinal)
+	}
+
+	# key() at bin/vault-lint.sh: trimmed, whitespace runs collapsed, lowercased.
+	function Get-MonKey {
+		param([string]$Text)
+		$t = $Text.Trim($script:SPACE_TAB)
+		$t = $t -creplace '[ \t]+', ' '
+		return $t.ToLowerInvariant()
+	}
+
+	# disp() - the same trim without the folding, for a message that names the
+	# axis in the case the document wrote it in.
+	function Get-MonDisplay {
+		param([string]$Text)
+		return $Text.Trim($script:SPACE_TAB)
+	}
+
+	# answered() - a cell answers its column when it carries a letter or a digit.
+	# Deliberately not a placeholder word list; see the shell's comment.
+	function Test-MonAnswered {
+		param([string]$Text)
+		return $RX_MON_ALNUM.IsMatch($Text)
+	}
+
+	# An ordered map keyed on the folded axis name, for the reason --red-team's
+	# roster is one: awk fakes an ordered map with parallel arrays because it has
+	# no such structure, and OrderedDictionary gives membership and insertion
+	# order in one object. Ordinal, so a zero-width space is a different key on
+	# both sides of the port.
+	$axes = New-Object 'System.Collections.Specialized.OrderedDictionary' -ArgumentList ([System.StringComparer]::Ordinal)
+
+	$fc = ''
+	$fn = 0
+	$inSection = $false
+	$seen = $false
+	$haveHeader = $false
+	$icol = 2
+	$ccol = 3
+	$dcol = 4
+
+	foreach ($raw in (Read-TextLines $competitorsPath)) {
+		$line = Remove-TrailingCr $raw
+		$t = $line.TrimStart($script:SPACE_TAB)
+
+		# ONE OF SIX COPIES of the fenced-block scan (bin/vault-lint.sh:1369
+		# names them all) - the local --monitoring copy, kept apart from its five
+		# siblings for the reason THE STUB SEAM states. Every comparison here is
+		# ordinal: `$fc` stays a string because it carries awk's `fc = ""`
+		# sentinel, and the fence character inside it is compared as a code point.
+		if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
+			$c = [int]$t[0]
+			$n = 0
+			while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
+			if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
+			elseif ([int]$fc[0] -eq $c -and $n -ge $fn) { $fc = ''; $fn = 0 }
+			continue
+		}
+		if ($fc.Length -ne 0) { continue }
+
+		# A heading ends the section as reliably as it starts it, so the rows read
+		# are the ones under this heading and no others - a `| ... |` row in
+		# Threat ranking is not an axis.
+		$hm = $RX_MON_HEADING.Match($t)
+		if ($hm.Success) {
+			$h = $RX_MON_TRAILING_HASH.Replace($t.Substring($hm.Length), '')
+			$inSection = (Test-MonEqual (Get-MonKey $h) 'monitoring plan')
+			if ($inSection) { $seen = $true }
+			continue
+		}
+		if (-not $inSection) { continue }
+
+		if (-not $t.StartsWith('|', [System.StringComparison]::Ordinal)) { continue }
+		$row = $RX_MON_TRAIL_PIPE.Replace($t.Substring(1), '')
+		$cell = $row.Split('|')
+		if ($cell.Length -lt 2) { continue }
+
+		# The |---| rule is skipped by testing every cell rather than by counting
+		# lines, so a table written with a colon-carrying alignment row is read
+		# the same as one without.
+		$allRule = $true
+		foreach ($cc in $cell) {
+			if (-not $RX_MON_ALIGN_CELL.IsMatch($cc)) { $allRule = $false; break }
+		}
+		if ($allRule) { continue }
+
+		# The FIRST row of the section is the header, and the columns are located
+		# by the names it carries rather than by position - the rule
+		# --roadmap-table applies to its `Item` cell. Each defaults to its
+		# template position, so a table with no recognisable header is still read
+		# rather than silently skipped.
+		if (-not $haveHeader) {
+			$haveHeader = $true
+			for ($i = 0; $i -lt $cell.Length; $i++) {
+				$hk = Get-MonKey $cell[$i]
+				if (Test-MonEqual $hk 'instrument') { $icol = $i + 1 }
+				elseif (Test-MonEqual $hk 'cadence') { $ccol = $i + 1 }
+				elseif ($hk.StartsWith('decision', [System.StringComparison]::Ordinal)) { $dcol = $i + 1 }
+			}
+			continue
+		}
+
+		$ax = Get-MonDisplay $cell[0]
+		if (-not (Test-MonAnswered $ax)) { continue }
+		$axk = Get-MonKey $ax
+		if ($axes.Contains($axk)) { continue }
+		$inst = ''
+		$cad = ''
+		$dec = ''
+		if ($icol -le $cell.Length) { $inst = Get-MonDisplay $cell[$icol - 1] }
+		if ($ccol -le $cell.Length) { $cad = Get-MonDisplay $cell[$ccol - 1] }
+		if ($dcol -le $cell.Length) { $dec = Get-MonDisplay $cell[$dcol - 1] }
+		$axes[$axk] = @($ax, $inst, $cad, $dec)
+	}
+
+	# One check for the absent section and the empty one, because they take the
+	# same fix - write the axes - and the detail says which of the two it found.
+	if ($axes.Count -eq 0) {
+		if ($seen) {
+			[void]$script:FAILURES.Add("competitor-analysis.md`tmonitoring-plan-no-axes`t`tcompetitor-analysis.md carries a ``## Monitoring plan`` section with no axis in it. The section it replaces asked which pages to re-check and how often, which is freshness - and freshness is the question the per-profile research date and every claim note``s ``stale_after`` already ask. Neither of them asks which way a competitor is moving, and a direction is the only thing that separates a closing window from an open one: a profile researched the day before it was used missed a strategic reversal six weeks earlier, because a snapshot cannot see one. Name the axes, an instrument per axis, a cadence, and the decision each would change")
+		} else {
+			[void]$script:FAILURES.Add("competitor-analysis.md`tmonitoring-plan-no-axes`t`tcompetitor-analysis.md carries no ``## Monitoring plan`` section at all, so nothing in the corpus says which way any competitor is moving. Every profile in this document is a snapshot dated on the day it was taken, and a snapshot cannot see a direction - a competitor profiled the day before it was used missed a strategic reversal six weeks earlier, which was the single fact that most changed what that competitor meant. Add the section: named axes, an instrument per axis, a cadence, and the decision each would change")
+		}
+		exit (Render-Failures 'vault-lint monitoring' $okLine)
+	}
+
+	foreach ($axk in @($axes.Keys)) {
+		$rec = $axes[$axk]
+		# A colon-list rather than a conjunction, because the same sentence has
+		# to read correctly at one missing column and at three, and a joiner that
+		# changes with the count is one more thing the two implementations can
+		# disagree about.
+		$miss = ''
+		if (-not (Test-MonAnswered $rec[1])) { $miss = $miss + ', instrument' }
+		if (-not (Test-MonAnswered $rec[2])) { $miss = $miss + ', cadence' }
+		if (-not (Test-MonAnswered $rec[3])) { $miss = $miss + ', the decision it would change' }
+		if ($miss.Length -eq 0) { continue }
+		$miss = $miss.Substring(2)
+		[void]$script:FAILURES.Add("competitor-analysis.md`tmonitoring-axis-incomplete`t" + $rec[0] + "`tthe ``" + $rec[0] + "`` axis leaves empty: " + $miss + ". An axis with no instrument is a thing somebody intends to notice, which is not a mechanism; one with no cadence is a re-check with no date, which is the same as no re-check; and one with no decision behind it is a signal nobody acts on, which costs the same to collect as one that matters. A cell carrying no letter or digit - an em dash, a run of hyphens - reads as empty here rather than as an answer, because that is the cheapest way past this rule")
+	}
+
+	exit (Render-Failures 'vault-lint monitoring' $okLine)
+}
+
+# ----------------------------------------------------------------------------
+# 10. --deliverable - the artifact stops inheriting the ledger's archaeology
+#
+# Ports bin/vault-lint.sh:3323-3445. Reads the RENDERED deliverables/*.html and
+# never the markdown; the header comment on the shell side carries the reasoning
+# for that and for why the dangling-antecedent half is a read-back item rather
+# than a check.
+#
+# There is no fenced-block scan in this body, and that is the shell's design
+# rather than an omission: a deliverable is prose for an outside reader and does
+# not document its own format.
+# ----------------------------------------------------------------------------
+function Invoke-ModeDeliverable {
+	$dir = $script:VAULT + '/deliverables'
+	$rendered = New-Object 'System.Collections.Generic.List[string]'
+	if (Test-Path -LiteralPath $dir -PathType Container) {
+		# THE WALK STARTS AT THE PREFIX, not at $dir, for the reason the note-file
+		# walk in the shared region states at length: two resolutions of one
+		# directory need not spell it the same way, and a Substring against the
+		# wrong spelling cuts into the file name rather than off it. -Force
+		# because `find` lists dot-prefixed files and PowerShell marks them
+		# hidden; -cnotlike because `find -name '*.html'` matches case-sensitively
+		# even on a case-insensitive filesystem.
+		$prefix = Get-PathPrefix $dir
+		if ($prefix.Length -ne 0) {
+			foreach ($entry in (Get-ChildItem -LiteralPath $prefix -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+				if ($entry.Name -cnotlike '*.html') { continue }
+				[void]$rendered.Add('deliverables/' + (Get-RelativeSlashPath $entry.FullName $prefix))
+			}
+		}
+	}
+	# `LC_ALL=C sort` over the paths find hands back, so the two implementations
+	# read the same files in the same order. Ordinal, never Sort-Object's
+	# culture-aware default - the reason Render-Failures gives for its own sort.
+	$paths = $rendered.ToArray()
+	[System.Array]::Sort($paths, [System.StringComparer]::Ordinal)
+
+	if ($paths.Length -eq 0) {
+		exit (Render-Failures 'vault-lint deliverable' ('no deliverables/*.html under ' + $script:VAULT + ' - nothing has been rendered yet, so no artifact carries anything out'))
+	}
+
+	# EIGHT character classes rather than a `{8}` quantifier, transcribed from the
+	# shell as written: the length is what keeps this off `FACT-CHECKED` and
+	# `CLAIM-HANDLING`, and a pattern written differently on the two sides is a
+	# pattern that can be changed on one.
+	$AN = '[A-Za-z0-9]'
+	$RX_DEL_ID = [regex]('(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)-' + $AN + $AN + $AN + $AN + $AN + $AN + $AN + $AN)
+	$RX_DEL_OBJ = [regex]'R[0-9]+-O[0-9]+'
+	$RX_DEL_TAG = [regex]'<(del|s|strike)([ \t>/]|$)'
+	$RX_DEL_TILDES = [regex]'~~[^~]+~~'
+	$RX_DEL_ALNUM = [regex]'\A[A-Za-z0-9]\z'
+
+	# scan() at bin/vault-lint.sh: every match of one pattern on one line, with
+	# the alphanumeric-boundary test the pattern itself cannot carry - awk has no
+	# \b, and writing the boundary into the ERE consumes it, so a second address
+	# immediately after the first would be skipped. Written as an explicit walk
+	# rather than as a lookaround, so the two implementations apply the same rule
+	# in the same place: a lookaround here and a manual test there is the shape a
+	# divergence hides in. A rejected match is stepped over rather than ending the
+	# scan, which is what makes `XCLAIM-AS23SD44 CLAIM-BB77KK12` report the second
+	# address and not the first.
+	function Add-DeliverableAddresses {
+		param(
+			[string]$Rel,
+			[string]$Line,
+			[int]$LineNo,
+			[System.Collections.Generic.HashSet[string]]$Seen,
+			[regex]$Pattern,
+			[string]$Check,
+			[string]$What
+		)
+		$at = 0
+		while ($at -le $Line.Length) {
+			$m = $Pattern.Match($Line, $at)
+			if (-not $m.Success) { break }
+			$tok = $m.Value
+			$before = ''
+			if ($m.Index -gt 0) { $before = $Line.Substring($m.Index - 1, 1) }
+			$after = ''
+			if ($m.Index + $m.Length -lt $Line.Length) { $after = $Line.Substring($m.Index + $m.Length, 1) }
+			if (-not $RX_DEL_ALNUM.IsMatch($before) -and -not $RX_DEL_ALNUM.IsMatch($after) -and
+				$Seen.Add($Check + "`t" + $tok + "`t" + $LineNo)) {
+				# The token goes in the DETAIL as well as the id column, because
+				# human output prints the check and the detail and nothing else -
+				# a message naming no address sends the reader to a page to find
+				# it by eye.
+				[void]$script:FAILURES.Add($Rel + "`t" + $Check + "`t" + $tok + "`tline " + $LineNo + " carries ``" + $tok + "``, " + $What)
+			}
+			$at = $m.Index + $m.Length
+		}
+	}
+
+	$idWhat ='which is a note ID. An ID is an ADDRESS into the vault: it resolves for anyone holding the corpus and resolves to nothing for the audience this document is for, who has no ledger to look it up in. vault.md says as much outright - a rendered document shows the title, and nobody ever sees a note ID in a sentence. Name the claim, or drop the citation; the traceability lives in the vault, which is the half that does not ship'
+	$objWhat = 'which is a red-team objection code. That code addresses a row in red-team.md, which this reader does not have, so it reads as a reference to an argument they were not in. If the objection changed the plan, the plan states what it now claims; if it did not, it does not belong here at all'
+
+	foreach ($rel in $paths) {
+		# One row per address per line, so two copies of one address on one line
+		# are one row. Per FILE, because the shell runs one awk per deliverable
+		# and its SEEN table dies with the process.
+		$seen = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+		$ln = 0
+		foreach ($raw in (Read-TextLines ($script:VAULT + '/' + $rel))) {
+			$line = Remove-TrailingCr $raw
+			$ln++
+
+			# Lowercased for the tag test only. The two addresses below are
+			# matched on the original line because a note ID and an objection
+			# code are upper case by construction, which is most of what keeps
+			# this off ordinary prose.
+			if ($RX_DEL_TAG.IsMatch($line.ToLowerInvariant()) -and $seen.Add("tag`t" + $ln)) {
+				[void]$script:FAILURES.Add($rel + "`tdeliverable-strikethrough`tline " + $ln + "`tline " + $ln + " renders a strikethrough element. Invariant 14 is why the markdown carries one - a retraction that is silently deleted comes back two drafts later with its cause of death erased - and this is that rule inverted in the artifact: the reader of this file was never in the room, so a struck-through line with its reason beside it is a document arguing with its own previous draft. The correction reaches here RESTATED FORWARD, as what is true now. Deleting the ``~~`` is not the fix - it leaves the sentence after it with no antecedent, which is why this is a step in the render loop rather than a filter")
+			}
+
+			if ($RX_DEL_TILDES.IsMatch($line) -and $seen.Add("tildes`t" + $ln)) {
+				[void]$script:FAILURES.Add($rel + "`tdeliverable-strikethrough`tline " + $ln + "`tline " + $ln + " carries a literal ``~~...~~`` span, so a markdown strikethrough reached the render and came out as text - this reader sees the tildes. Either way it is the ledger``s correction narrative in the artifact: restate the claim forward as what is true now, and leave the retraction visible in the vault, where invariant 14 wants it")
+			}
+
+			Add-DeliverableAddresses $rel $line $ln $seen $RX_DEL_ID 'deliverable-note-id' $idWhat
+			Add-DeliverableAddresses $rel $line $ln $seen $RX_DEL_OBJ 'deliverable-objection-code' $objWhat
+		}
+	}
+
+	exit (Render-Failures 'vault-lint deliverable' ('every rendered deliverable carries what is true now and no vault address - ' + $script:VAULT))
+}
+
+# ----------------------------------------------------------------------------
+# 11. --assumption-rows - the model's inputs against the notes that declare them
 #
 # Ports the --assumption-rows body of bin/vault-lint.sh. It is --roadmap-table
 # one artifact over, deliberately, so this body is that one's twin with two
@@ -3142,7 +3572,7 @@ function Invoke-ModeAssumptionRows {
 }
 
 # ----------------------------------------------------------------------------
-# 10. --claim-drift - a cited section against the hash the note recorded
+# 12. --claim-drift - a cited section against the hash the note recorded
 #
 # Ports the --claim-drift body of bin/vault-lint.sh. The section boundary rule,
 # the normaliser and the polynomial are transcribed from the awk program, and all
@@ -3486,7 +3916,7 @@ function Invoke-ModeClaimDrift {
 }
 
 # ----------------------------------------------------------------------------
-# 11. check - pass 3, the note-level checks
+# 13. check - pass 3, the note-level checks
 #
 # Ports bin/vault-lint.sh:3003-3629. The largest body in the file, gated on
 # schemaVersion throughout, and the mode a bare invocation runs.
@@ -3500,8 +3930,8 @@ function Invoke-ModeClaimDrift {
 #
 # THE HELPERS BELOW ARE LOCAL TO THIS FUNCTION ON PURPOSE. present() in
 # particular is copied verbatim into the --binding-driver pass
-# (bin/vault-lint.sh:2513-2517), and the shell keeps five separate copies of one
-# fenced-block scan for the same reason (:1283-1285): a helper two modes want is
+# (bin/vault-lint.sh:2513-2517), and the shell keeps six separate copies of one
+# fenced-block scan for the same reason (:1369): a helper two modes want is
 # a helper two slices are both editing. Hoisting one into the shared region is
 # the cross-slice edit the stub seam exists to prevent, and a divergence between
 # two copies is what the parity gate is there to report.
@@ -4577,7 +5007,6 @@ if (Test-Path -LiteralPath $VOCAB -PathType Leaf) { $HAS_VOCAB = 1 }
 $PLAN = $VAULT + '/business-plan.md'
 $HAS_PLAN = 0
 if (Test-Path -LiteralPath $PLAN -PathType Leaf) { $HAS_PLAN = 1 }
-
 # The financial model beside it, on the same terms and for the same reason:
 # --assumption-rows reads its assumptions table, so the predicate is computed
 # once here rather than prefixed onto a copy of the three lines above.
@@ -5075,10 +5504,10 @@ if ($MODE -ceq 'supersession-sweep') { Invoke-ModeSupersessionSweep }
 # Ports bin/vault-lint.sh:1606-1708. Every mode that emits failure rows and
 # carries a verdict out in its exit status builds on what follows, so the date,
 # the path index and the renderer are built once here rather than once per mode.
-# That is `check`, --used-in, --red-team, --roadmap-table and --binding-driver
-# today, and a mode joins the list by being dispatched below this point rather
-# than by registering anywhere - which is why this comment names them and the
-# code does not.
+# That is `check`, --used-in, --red-team, --roadmap-table, --binding-driver,
+# --monitoring and --deliverable today, and a mode joins the list by being
+# dispatched below this point rather than by registering anywhere - which is why
+# this comment names them and the code does not.
 # ----------------------------------------------------------------------------
 
 # InvariantCulture, not the ambient one: a Windows install whose locale has a
@@ -5176,7 +5605,7 @@ function Render-Failures {
 	if ($OkLine.Length -eq 0) { $OkLine = 'clean - ' + $script:VAULT }
 
 	# `LC_ALL=C sort` over the failure rows. Ordinal, never Sort-Object's
-	# culture-aware default: all five modes that render through here inherit the
+	# culture-aware default: all seven modes that render through here inherit the
 	# ordering, so a culture-aware comparer reorders rows in every one of them at
 	# once and each JSON diff then reads as a bug in whichever mode was checked
 	# first.
@@ -5245,6 +5674,8 @@ if ($MODE -ceq 'used-in') { Invoke-ModeUsedIn }
 if ($MODE -ceq 'red-team') { Invoke-ModeRedTeam }
 if ($MODE -ceq 'roadmap-table') { Invoke-ModeRoadmapTable }
 if ($MODE -ceq 'binding-driver') { Invoke-ModeBindingDriver }
+if ($MODE -ceq 'monitoring') { Invoke-ModeMonitoring }
+if ($MODE -ceq 'deliverable') { Invoke-ModeDeliverable }
 if ($MODE -ceq 'assumption-rows') { Invoke-ModeAssumptionRows }
 if ($MODE -ceq 'claim-drift') { Invoke-ModeClaimDrift }
 Invoke-ModeCheck

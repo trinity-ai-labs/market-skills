@@ -1232,6 +1232,7 @@ not exist when a version-1 corpus was written:
 | `reconciled:` on a supersession | `--supersession-sweep` | a note carrying `supersedes` with no `reconciled:` date, or one earlier than that note's own `created` |
 | the lens roster | `--red-team` | a `red-team.md` carrying no `## Lenses dispatched` roster |
 | the roadmap table renders this set | `--roadmap-table` | a roadmap row whose item cell matches no milestone `title` verbatim, a milestone the table never lists, and milestones with no `business-plan.md` to render them |
+| the monitoring plan names axes | `--monitoring` | a `## Monitoring plan` section carrying prose and no axis table, and a row leaving the instrument, the cadence or the decision it would change empty |
 
 **What version 3 adds**, on the same terms, and both rules read a field no corpus written before
 this release can carry:
@@ -1252,8 +1253,11 @@ at them rather than restating them, because a version that adds a rule in one re
 in the next ends up with two lists, one of which is quietly short. A short list of what a version
 costs is worse than no list: it reads as complete.
 
-**`--binding-driver` is deliberately not a row in it**, and the omission is the design rather than a
-gap in the list. Its four rules are triggered by a note's `subject`, or by the plan section a verdict
+**Neither `--binding-driver` nor `--deliverable` is a row in it**, and in both cases the omission is
+the design rather than a gap in the list. `--deliverable` reads `deliverables/*.html`, so its
+trigger is a rendered file rather than a version: a vault that has rendered nothing owes it nothing
+at any version, and a vault that has rendered something owes it at every version, because a note ID
+resolves to nothing for that reader whenever the corpus was written. Its four rules are triggered by a note's `subject`, or by the plan section a verdict
 renders into, never by a version — so a corpus written before those fields existed owes nothing at
 either `1` or `2` and needs no exemption bought with a version — the fields and the argument are
 [above](#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type). A row here

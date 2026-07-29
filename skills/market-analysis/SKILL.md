@@ -110,17 +110,60 @@ everything downstream.
   IaC and deploy configs, databases and queues from docker-compose/connection code, LLM and
   third-party APIs from SDK imports and call sites, storage/CDN/email/auth providers — plus
   the usage SHAPE (per-user, per-request, per-token, per-GB) each is billed on. Env
-  *templates* only (`*.example`, `*.sample`) — never read real env/secret files. They return
-  facts; you write the dossier.
+  *templates* only (`*.example`, `*.sample`) — never read real env/secret files. **Another does
+  instrumentation archaeology** — the inventory below. They return facts; you write the dossier.
 - **Doc** (spec, PRD, pitch memo): read it fully. Note what it asserts vs. what it assumes.
 - **Idea** (described in chat): draft the dossier from the description; the gaps you can't fill
   become Phase 1 questions.
 
 The dossier must state: what the product is (one paragraph, precise), who it's for, the core
 jobs it does, its stage (idea / building / shipped / revenue), stack and distribution surface
-(desktop/web/CLI/API), anything priced or monetized today, and — critically — the **category
-boundary**: what adjacent categories this is NOT (the single biggest cause of a mushy analysis
-is an unbounded category; "market size" for a fuzzy category is an unfalsifiable number).
+(desktop/web/CLI/API), anything priced or monetized today, what the product already **records**
+(below), and — critically — the **category boundary**: what adjacent categories this is NOT (the
+single biggest cause of a mushy analysis is an unbounded category; "market size" for a fuzzy
+category is an unfalsifiable number).
+
+**Inventory what the product already measures, not only what it is — it goes first because it is
+the cheapest primary evidence the engagement will ever have.** The passes above establish what
+the product IS; this one establishes what it has already *measured* about its users, its own
+operation, and the job it claims to do. A row this product's own users wrote is free, dated,
+checkable and the one class of evidence a competitor cannot obtain, which is more than anything
+the research fleet below will return. Every schema and migration, event-logging call site,
+analytics or telemetry SDK, admin view, report query and export endpoint is an instrument — **one
+entry per store or event type, never per call site**, since one call site establishes the shape
+and a codebase has hundreds. **Read shapes, never data:** a schema and a call site answer *what
+is recorded*, and the reading itself is a query the founder runs or authorises — the same
+boundary the env-template rule above draws, for the same reason.
+
+Four fields make an entry rather than a filename:
+
+- **what it records**, at what grain — per account, per action, per day
+- **the quantity it could settle**, named, and which claim in this analysis rests on a guess
+  about that quantity today
+- **read?** — the figure and the date pulled, or `unread` with what is blocking it
+- **what reading it costs** — one query, an export the founder has to run, or a migration
+  because the field is not there yet
+
+An entry that names a store and stops is the same silence as no entry: it reads as diligence and
+settles nothing. The inventory lands in the dossier's own `## Instrumentation inventory` section,
+beside the infra-cost pass's — one section per archaeology pass, because an enumeration that
+names one of two siblings drops the other. A figure already read is additionally evidence on
+whichever of the `## Value hypotheses` it bears on, and **every entry still `unread` lands in
+`## Open questions` naming the quantity it would settle**. That last hop is the firing mechanism,
+and both ends of it are steps rather than inferences: Phase 1 asks for access to each `unread` row
+by name, and the dispatching plan's own verification checklist reconciles every row against what
+the fleet came back with. An inventory whose consumers were left implicit is the shape this whole
+release is repairing. **The failure this prevents:** an
+analysis spends its entire budget on competitor documentation, survey statistics and category
+M&A, files the conversion assumption the whole thesis turns on at low confidence because no
+instrument exists, and ships — while the subject's own database held a free-text field asking
+arriving users what they came to do, unread, its row count unknown.
+
+A doc or an idea gets the same four fields and a different answer, and the empty inventory is
+itself a result. A spec describes instruments that may or may not exist, so each is an entry
+marked unbuilt until the founder says otherwise; an idea records nothing yet, which makes the
+first instrument a build item with a date rather than a blank — and the quantity it would have
+settled is the one the plan is otherwise going to assume permanently.
 
 **Extract value, not just facts.** The dossier's load-bearing section is **Value hypotheses**:
 3–6 falsifiable claims about why anyone would pay — each naming the pain it kills, who feels it
@@ -157,6 +200,18 @@ Ask only what changes the analysis:
   (history, pivots, why now, who this is for). Read every pointer before dispatching the
   dimension it touches; named competitors join `mustProfile`. One open ask, cheap to make,
   and it catches whole directions the dossier alone would miss.
+- **Access to the instruments Phase 0 could not open** — every `unread` row of the dossier's
+  `## Instrumentation inventory` is also an `## Open questions` entry naming the quantity it would
+  settle. Ask for each by name, and ask for **access** rather than for what it says: the founder's
+  recollection of their own store is commentary and tags `L` like everything else they say, while
+  one query returns a figure anyone can re-check against the same rows. Founder-only by
+  construction — the credentials are theirs — so it is the one class this phase asks about and
+  never a turn research could have replaced. **Ask it early**, ahead of the conviction questions:
+  an export has lead time, and a figure that lands after the fleet has dispatched changes nothing
+  it already wrote. **The failure this prevents:** the inventory names the instrument, the grill
+  never asks for the key, and the run reports the quantity as unevidenced with the evidence one
+  query away — which is the whole defect the inventory was added to close, surviving into the one
+  phase that could have finished the job.
 - **Feature conviction** — which features they find the most valuable, ranked. This is
   founder-only, never inferable from the source, and always
   asked: where their ranking diverges from where the repo's effort or the docs' pitch went is

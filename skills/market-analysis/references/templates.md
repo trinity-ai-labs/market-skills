@@ -38,6 +38,16 @@ class: differentiated | table-stakes · status: settled | research-testable | fo
 SDK import). Plus the scaling shape in one line: which cost grows with users, which with
 usage, which is flat. Feeds the unit-economics dimension.>
 
+## Instrumentation inventory (repo sources — from the instrumentation archaeology pass)
+<one row per store or event type, never per call site: instrument · what it records and at
+what grain (per account / per action / per day) · the quantity it could settle, named, and
+which claim rests on a guess about it today · read? — the figure and the date pulled, or
+`unread` with what is blocking it · what reading it costs (one query / an export the founder
+runs / a migration, because the field is not there yet). Every `unread` row is ALSO an Open
+questions entry naming the quantity it would settle — that hop is what gets access asked for
+in the grill instead of the quantity being estimated for the rest of the run. A row that
+names a store and stops settles nothing while reading as diligence.>
+
 ## Category boundary
 **In:** <the category this competes in>
 **Out:** <adjacent categories explicitly excluded, and why>
@@ -210,9 +220,29 @@ curve — a level check for a projection, never a substitute for modelling its t
 Thin-evidence threats are "watch", not "act".>
 
 ## Monitoring plan
-<the analysis rots — a standing refresh beats a stale report: which competitor pricing pages,
-changelogs, and job boards to re-check, on what cadence (monthly is typical), and the signal
-each would give. Every profile above carries its research date as signal freshness.>
+<a table, one row per axis, and `vault-lint.sh --monitoring` fails an axis that leaves any
+column empty:
+
+| Axis | Instrument | Cadence | Decision it would change |
+|---|---|---|---|
+| <the direction being watched, as a question with a direction in it> | <what is read to answer it, specifically enough that somebody else could read it> | <how often> | <the decision that flips if the answer changes> |
+
+**Axes, not pages.** The wording this replaces asked which pricing pages, changelogs and job
+boards to re-check and on what cadence — which is *freshness*, and freshness is the question
+every profile's research date and every claim note's `stale_after` already ask: is this still
+true. Neither asks *which way is this moving*, and a direction is the only thing that separates
+a closing window from an open one. A competitor profile researched one day before it was used
+missed a strategic reversal by that vendor six weeks earlier — the single fact that most changed
+what the competitor meant — because a snapshot cannot see a direction and nothing asked for one.
+
+Each column earns its place by what goes wrong without it. An axis with no **instrument** is a
+thing somebody intends to notice, which is not a mechanism. One with no **cadence** is a re-check
+with no date, which is the same as no re-check. One with no **decision** behind it is a signal
+nobody acts on, and collecting it costs the same as collecting one that matters — so the last
+column is what keeps this from growing a watchlist instead of a trigger.
+
+A cell carrying no letter or digit — an em dash, a run of hyphens — reads as empty to the lint,
+because that is the cheapest way past this rule.>
 ```
 
 ## `sources.md`

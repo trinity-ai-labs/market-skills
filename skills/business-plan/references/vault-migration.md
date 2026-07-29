@@ -784,7 +784,8 @@ vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 
 **Before the first render — not here — the first and third of those are part of one call.**
 `vault-lint.sh --release-gate` runs the bare check, `--used-in`, the sweep, `--red-team`,
-`--roadmap-table`, `--binding-driver`, `--assumption-rows` and `--claim-drift`
+`--roadmap-table`, `--binding-driver`, `--monitoring`, `--deliverable`,
+`--assumption-rows` and `--claim-drift`
 together and exits
 non-zero unless every part passes, which is what the render gate is held to. It is deliberately
 not the migration's acceptance test: `coverage-gap` and `orphan-source` legitimately survive a

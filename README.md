@@ -5,9 +5,10 @@ Two agent skills that take a product to market, packaged as one plugin. Both are
 - **`market-analysis`** — heavy, evidence-first market research for a product (a code repo, a
   spec/doc, or an idea): value-hypothesis extraction, multi-agent competitor discovery and
   profiling, bottom-up market sizing, customers/JTBD, pricing & willingness-to-pay, timing,
-  channels, moats — plus infra-cost archaeology on repo sources (derive COGS from the actual
-  stack, project cost vs revenue at scale) — with adversarial verification of every
-  load-bearing number.
+  channels, moats — plus two archaeology passes over repo sources: infra-cost (derive COGS from
+  the actual stack, project cost vs revenue at scale) and instrumentation (what the product
+  already records, and which number in the analysis it could settle) — with adversarial
+  verification of every load-bearing number.
 - **`business-plan`** — the conductor that grills the founder, runs `market-analysis` as its
   research engine, and produces the plan artifact the founder's track actually needs
   (investor memo / bootstrap operating plan / lender classic) plus a one-pager, a bottom-up
@@ -157,6 +158,15 @@ documents you produced for clients, products in the category you've used — rat
 asking about them. Where those documents are confidential, the corpus records what they
 establish with a provenance note, never the file itself.
 
+It inventories what your **product** already records on the same reasoning, and before any
+research is commissioned: the tables, event logs, forms and admin reports it carries, what each
+one measures, and which number in the plan it could settle. A form field asking arriving users
+what they came to do is first-party evidence about demand that no competitor can obtain and no
+survey improves on, and its usual state is unread with the row count unknown — so whatever is
+readable gets read in that phase rather than estimated for the rest of the run. What enters the
+corpus is the figure, the date and the query behind it: never the rows, never a free-text answer
+verbatim, and never a copy of your users' data.
+
 ---
 
 ## On disk
@@ -229,6 +239,8 @@ vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 vault-lint.sh --red-team --vault "$VAULT_PATH"
 vault-lint.sh --roadmap-table --vault "$VAULT_PATH"
 vault-lint.sh --binding-driver --vault "$VAULT_PATH"
+vault-lint.sh --monitoring --vault "$VAULT_PATH"
+vault-lint.sh --deliverable --vault "$VAULT_PATH"
 vault-lint.sh --assumption-rows --vault "$VAULT_PATH"
 vault-lint.sh --claim-drift --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
@@ -321,6 +333,39 @@ section being there and non-empty, never on what it says. A vault with no verdic
 corpus's ceiling claim that carries none of the new fields — the fields are owed outright only under
 the subject this release introduced, which no corpus written before it can hold.
 
+`--monitoring` asks the competitor analysis which way things are moving, which is the one question
+nothing else in the corpus asks. Every profile carries the date it was researched and every claim
+note carries a `stale_after`, and both of those answer *is this still true* — a snapshot, and a
+snapshot cannot see a direction. So `competitor-analysis.md`'s `## Monitoring plan` is a table
+rather than a paragraph: one row per axis, each naming the **instrument** that reads it, the
+**cadence**, and the **decision it would change**. This fails an absent section, a section with no
+axis in it, and any row that leaves one of those three columns empty. Each column earns its place
+by what goes wrong without it — an axis with no instrument is a thing somebody intends to notice,
+one with no cadence is a re-check with no date, and one with no decision behind it is a signal
+nobody acts on, which costs the same to collect as one that matters. A cell carrying no letter or
+digit — an em dash, a run of hyphens — reads as empty, because that is the cheapest way past the
+rule. A vault with no `competitor-analysis.md` profiled nobody and passes; gated on
+`schemaVersion` 2.
+
+`--deliverable` is the only mode that reads a rendered file rather than the vault, and it exists
+because the vault's rules and the artifact's are opposites. In the vault a retraction stays
+visible — a struck-through line keeps its reason, because silently deleting a dead claim lets it
+come back two drafts later with its cause of death erased. The reader of the PDF was never in the
+room, and a note ID or a red-team `R<n>-O<n>` code is a **vault address**: it resolves for anyone
+holding the corpus and resolves to nothing for the audience the document is for. Get both and you
+are reading a document arguing with its own previous draft. So this reads `deliverables/*.html`
+and fails on a strikethrough span, a note ID, or an objection code.
+
+**It gates the rendered HTML, not the markdown, and that is the design.** The markdown is the
+working document and keeps everything the retraction rule owes it. The HTML is what the outside
+reader holds — and it is the only one a check can hold to this at all, because the fix is a
+judgement: a correction reaches the artifact **restated forward**, as what is true now. Deleting
+the `~~` leaves *"That multiple was actually…"* with no antecedent, which still renders, still
+reads like prose, and now asserts nothing. No script can judge an antecedent, so that half is a
+step in the render loop's page-by-page read-back and this is the half that is mechanical. A note
+ID is matched as its type prefix plus the eight characters a generated ID carries, which is what
+keeps it off `FACT-CHECKED` in ordinary prose. A vault that has rendered nothing passes.
+
 `--assumption-rows` does the same job for the financial model that `--roadmap-table` does for the
 roadmap, and it exists because the rule it inverts had no other half. The plan template requires
 that no number in a projection is anything but a named assumption row — correct, and load-bearing
@@ -366,15 +411,17 @@ every existing vault red the day the plugin updated.
 
 `--release-gate` is the call before a render, and the only one that asks every question. It runs
 the bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
-`--binding-driver`, `--assumption-rows` and `--claim-drift`, prints each part under its own heading, and exits with the worst status any part returned — so the gate
+`--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and `--claim-drift`,
+prints each part under its own heading, and exits with the worst status any part returned — so the gate
 is clean only when every part is. The alternative was several calls made from memory, and which
 of them actually ran was a matter of recall.
 
 **The bare run's success line says what it checked and what it did not**, because it used to say
 `clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
 checks passed … not opened: citation targets, supersession blast radius, panel objection rows,
-roadmap table against the milestone set, verdict drivers and the evidence under them, assumption
-rows against the model table, cited sections against their recorded hash* —
+roadmap table against the milestone set, verdict drivers and the evidence under them, monitoring
+axes and the decision each would change, what the rendered deliverable carries out of the vault,
+assumption rows against the model table, cited sections against their recorded hash* —
 and the list of what it skipped is read off the same mode table `--release-gate` composes itself
 from, so a mode added to the gate cannot leave the line quietly overstating what it covered. A
 success line is what somebody renders on, so it has to be narrower than the verdict its reader

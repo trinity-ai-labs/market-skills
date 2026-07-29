@@ -87,7 +87,8 @@ and is never restated here.
     for which one a given session picks.) A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
     bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
-    `--binding-driver`, `--assumption-rows` and `--claim-drift`, and exits
+    `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and
+    `--claim-drift`, and exits
     non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
@@ -114,6 +115,16 @@ and is never restated here.
     `--binding-driver` is in the gate for that same reason one section over — the verdict section
     is hand-edited to the last minute and its note was minted once — and invariant 16 states what
     it holds.
+    `--monitoring` is in the gate because a snapshot cannot see a direction: every profile carries
+    the date it was researched and every claim a `stale_after`, and both answer *is this still
+    true* rather than *which way is this moving* — which is the only thing separating a closing
+    window from an open one. It fails an axis with no instrument, no cadence, or no decision it
+    would change. `--deliverable` is in the gate because what an outside reader receives is held
+    to the same terms the ledger is: it reads the rendered `deliverables/*.html` and fails on a
+    strikethrough span, a note ID or an objection code — vault addresses that resolve for anyone
+    holding the corpus and resolve to nothing for the audience the document is for. **Invariant 14
+    does not change**: retraction stays visible in the plan, and the deliverable reaches its reader
+    through Phase 5's restate-forward step rather than through a strip filter.
     `--assumption-rows` is in the gate because it is the only inverse the assumptions table has:
     the rule that every number in a projection is a named row is checked by reading the model, and
     whether a named assumption is MISSING from the table can only be checked against the notes. It
@@ -551,6 +562,42 @@ a copy in the vault. That rule is stated in the paragraph that creates the expos
 vault is a git repo from this phase and is offered a remote in Phase 5: omit it and the sweep's
 own success is what puts a client's confidential document into a corpus built to be shared.
 
+**The product's own records are the third inventory, and the one this method kept walking past.**
+The two sweeps above cover what the founder **wrote**; this one covers what the product
+**measures** — its users, its own operation, and the job it claims to do. It is the artifact
+sweep's argument one step closer to the subject, with one property none of the founder's own
+artifacts has: it is a dated series about the very people the plan is about. The dossier pass
+above built the inventory; **this phase is where the readable entries get read**, because that
+pass can only see shapes — the query itself needs the founder, and the founder is here. An
+inventory of unopened stores is the original defect wearing the shape of a fix.
+
+**Each figure read becomes a note, on the same terms the artifact sweep uses.** The instrument is
+a [source with no public URL](references/vault.md#the-source-note-keeps-the-quote-that-outlives-the-url)
+whose provenance names the store and the query, and each figure read off it is a `fact` resting on
+that source. Notes rather than prose, for the reason every rule in this release exists: the
+dossier's inventory is prose a later phase may never re-open, while a dated note is on disk at the
+moment a dimension files the binding driver at `L` for *"no instrument exists"* — which puts the
+contradiction in the corpus instead of in somebody's memory of Phase 0, and is the only reason the
+conductor's read at Phase 2's checkpoint can catch it at all. Invariant 3 then governs what the
+figure means before it is cited as evidence for a mechanism.
+
+**An entry closes with a figure and its date, or with its blocker named — never with the store
+named and nothing else.** A blocker is a real one: the instrument is not built, the access is the
+founder's to grant, the export is theirs to run. *Nobody ran the query* is not a blocker, and on
+the run this comes from it was the only thing standing between the corpus and every instrument it
+needed. Invented, and the shape rather than the products is the point: a completion log for the
+product's core action settles how often the job actually gets done per active account — the
+denominator the plan's retention assumptions are otherwise guessing — and a per-account progress
+table settles what fraction of accounts reach the step the whole thesis turns on, **as a
+percentage**, which ends an argument between founder and analyst that no quantity of category
+research could.
+
+**What enters the vault is the figure, never the rows** — the count, the fraction, the date and
+the query that produced it, and never a row, never a free-text answer verbatim, never an export
+copied into `research/`. Same rule as the client document above, and worse here in one way: this
+data is the subject's own users', which makes copying it into the corpus the easier thing to talk
+yourself into.
+
 **The dossier is the plan's product-truth spine — thinness here propagates everywhere.** A
 dossier that is *true but small* is more dangerous than one that is wrong, because nothing in
 it trips a check and every downstream document inherits its omissions. Two habits prevent it:
@@ -762,6 +809,19 @@ skips the question the error existed to ask.
   were guessed silently.
 - `Value hypothesis verdicts` covers every VH in the dossier (confirmed / weakened / refuted /
   untested) — Phase 3's Solution section may only build on confirmed ones.
+- `research/product-dossier.md` carries its `## Instrumentation inventory`, and **every row is
+  reconciled by name against what the fleet came back with, both directions.** *Forward:* a
+  `question` note's `gaps` entry or an `L`-tagged driver naming a quantity some row says an
+  instrument could settle means that instrument was never opened — the binding driver gets filed
+  at `L` for *"no instrument exists"* while a dated `fact` note carrying the figure sits in the
+  same vault, and nothing compares the two. *Reverse:* a row marked read, with its `fact` note
+  minted, and the dimension owning that quantity resolved through a comparable anyway — the
+  measurement is on disk and the plan is about to run on somebody else's proxy for it. Both
+  directions carry weight for `--red-team`'s reason: with only the forward one, the cheapest way
+  past an instrument nobody wanted to query is to delete its row from the inventory. This phase
+  is the last one whose context is still live when the fix costs a single query, and the first
+  line's "all contract files exist" cannot do the work — it is satisfied by the dossier existing,
+  and a dossier existing says nothing about whether anything in it was opened.
 - Lint is clean, and every dimension left a `question` note. A dimension with no gaps is a
   dimension that did not look.
 
@@ -1146,6 +1206,40 @@ vault comes back clean or nothing renders: a plan citing a retracted or supersed
 not ship, and neither does one whose citation names a document that was renamed or a section
 that was cut. The failure this stops is the worst one available — a polished PDF asserting
 flatly what the corpus already withdrew, handed to the one reader with no way to check it.
+
+**Restate forward before you render — the artifact states what is true now, and the ledger keeps
+the archaeology.** Invariant 14 is right and does not change: a retracted note keeps its status
+and its reason, and a withdrawn line in the *markdown* stays struck through with the reason,
+because silent deletion lets a dead claim return two drafts later with its cause of death erased.
+The deliverable is the other side of that rule. Its reader was never in the room, and a note ID or
+a red-team objection code is a **vault address** — it resolves for anyone holding the corpus and
+resolves to nothing for the audience the document is for. A reader who gets both sees a document
+arguing with its own previous draft. Left unchecked, a finished plan and its model carry well over
+a hundred pieces of that narrative between them — into the two documents an investor reads.
+
+So this is a step with an output, not a cleanup pass. For every correction the markdown carries —
+a strikethrough, a superseded figure, an objection that changed the answer — **write the sentence
+the corrected claim now supports** and let the artifact carry that. Then drop the address:
+`[S#]` and `[F#]` citation codes are the reader's trace and stay; note IDs and `R<n>-O<n>` codes
+do not.
+
+**It is a restatement, never a strip filter, and that distinction is the whole design.** Removing
+`~~…~~` mechanically leaves *"That multiple was actually…"* with no antecedent — the sentence
+still renders, still reads like prose, and now asserts nothing. No script can judge an antecedent,
+so the dangling-antecedent half is a named item in `rendering.md`'s render → Read the PDF back →
+check every page loop, and the mechanical half is a check:
+
+- **`vault-lint.sh --deliverable --vault "$VAULT_PATH"`** reads the *rendered*
+  `deliverables/*.html` and fails on a strikethrough span, a note ID or an objection code. It
+  gates the **rendered HTML rather than the markdown** on purpose: the markdown is the working
+  document and keeps everything invariant 14 owes it, the HTML is what the outside reader holds,
+  and the HTML is the only one a check can hold to this at all — the restatement itself is a
+  judgement.
+- It is one of `--release-gate`'s parts, so the call before the first render is still one call.
+  But at that point nothing has been rendered yet and the mode says so, which means **the run that
+  gates what ships is the one inside the render loop**, after the HTML exists and before the PDF
+  is called done. A deliverable that failed it goes back through the restatement above, not
+  through a find-and-replace.
 
 Render `business-plan.md` (+ the financial model) into ONE polished, self-contained
 `deliverables/business-plan.html` and a print-quality `deliverables/business-plan.pdf`, and

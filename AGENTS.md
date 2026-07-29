@@ -107,12 +107,12 @@ The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` and
 `bin/vault-lint.ps1` rather than to the repo: it asserts that every check the lint claims
 to make still fires, against corpora built to trigger each one, and `VAULT_LINT` points it
 at whichever implementation you're testing — `VAULT_LINT=bin/vault-lint.ps1 sh
-scripts/fixtures/run-fixtures.sh` runs the same 296 assertions against the PowerShell side.
+scripts/fixtures/run-fixtures.sh` runs the same 332 assertions against the PowerShell side.
 A check that stops firing and a check that was deleted look identical from the outside,
 which is why the assertion has to be written down rather than eyeballed.
 
 The parity gate is the third half: `node scripts/parity/parity.mjs` runs both scripts
-across 11 modes × 23 fixture vaults and fails on any byte-level disagreement between their
+across 13 modes × 27 fixture vaults and fails on any byte-level disagreement between their
 output — key order, an escaped character, row order, a path separator. The fixtures suite
 proves each script still does what it claims; the parity gate proves the two scripts still
 agree with each other — a check that stops firing in only *one* implementation is invisible
@@ -232,10 +232,13 @@ document sections a supersession put in doubt, `--red-team` for whether every di
 panel lens wrote objection rows, `--roadmap-table` for whether the plan's roadmap table
 still matches the milestone set it renders, `--binding-driver` for whether a target
 verdict's driver and the evidence under it survive contact with the plan section that
-renders them, `--assumption-rows` for whether the model's assumptions table and the notes that
+renders them, `--monitoring` for whether the monitoring plan names axes with an instrument, a
+cadence and the decision each would change, `--deliverable` for whether the rendered
+`deliverables/*.html` carries a vault address out to a reader who has no vault,
+`--assumption-rows` for whether the model's assumptions table and the notes that
 declare themselves inputs to it are the same set, `--claim-drift` for whether a cited section
 still carries what it carried when the claim recorded reading it, `--release-gate` for all
-eight of those run as one call, and
+ten of those run as one call, and
 `graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it, in both
 scripts** — an enumeration that has gone stale reads exactly like one that is complete.
@@ -256,8 +259,8 @@ the arm that parses its flag; `node scripts/parity/parity.mjs` is what catches a
 to one script's table and not its twin's.
 
 `--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
-`--supersession-sweep`, `--red-team`, `--roadmap-table`, `--binding-driver`, `--assumption-rows`
-and `--claim-drift` as separate
+`--supersession-sweep`, `--red-team`, `--roadmap-table`, `--binding-driver`, `--monitoring`,
+`--deliverable`, `--assumption-rows` and `--claim-drift` as separate
 invocations of the script and exits with the
 **worst** status any part returned, so a refusal (2) is never reported as a failed check (1). It
 exists because the render gate was several calls made from memory — which of them ran was a
