@@ -4,6 +4,13 @@ One block per dimension: what the research agent hunts, which sources to prefer,
 return shape. Paste the relevant block into each research agent's brief along with the dossier,
 the category boundary, the citation contract, and the output file path.
 
+**A dimension's playbook is this shared preamble PLUS its own block, and both get pasted.** The
+skeleton below and the gap-entry rules under it apply to every dimension, so they live here once
+instead of nine times — but a brief carrying only the `##` block hands its agent a rule set the
+file states and the agent never sees. That failure is invisible from either end: the preamble reads
+correct, the block reads correct, and the agent writes a file missing a section neither of them told
+it about. `orchestration.md` names the composition in the arg it passes; keep the two in step.
+
 **Every dimension tests the value hypotheses.** The dossier's VH list rides in every brief, and
 each agent reports what its dimension says about them: customers — is the pain real and acute
 for the named segment (voice-of-customer evidence)? competitors — is the differentiated value
@@ -25,8 +32,41 @@ _Researched: <date> · Confidence key: H = disclosed/primary, M = derived via st
 |---|---|---|---|---|
 
 ## Gaps & assumptions
-<what couldn't be sourced, what was assumed instead, what would change if wrong>
+<one entry per gap: what is missing · the instruments tried, each with the date tried · what was
+assumed instead · what would change if it were found. "Not found via <instruments>, as of <date>",
+never "does not exist".>
 ```
+
+**A gap entry names the instruments tried, not only the sources searched.** *"No published cohort
+statistic exists"* is a true statement about publishers that gets read as a statement about the
+world, and the conclusion drawn from it — this quantity is unknowable — is a different claim with
+nothing behind it. The skill already refuses that move in the other direction: a claim that the
+subject *"has no X"* is unactionable until it is checked against source. A dimension reporting that
+the DATA does not exist owes the same check, and an entry naming no instrument is the one nobody can
+re-open, because there is nothing left to try. That entry text is also what the dimension's
+`question` note carries into the vault, so an instrument-free entry mints a note asserting an absence
+no later run can re-check — it reads as settled and is only unexamined.
+
+**Where the quantity is regulated-disclosure-adjacent, a filings check is required before "no data
+exists" is written.** Revenue, headcount, customer counts, segment splits and the structure of a
+deal's consideration are disclosed, audited and dated by every public filer in a category, in
+documents nobody has to publish a study about first. The failure this prevents: a reference class
+assembled from private companies with estimated revenue, sitting beside a dozen public filers in the
+same segment that went unread — same category, better evidence, missed because the search was for
+studies rather than for filings. **The instruments are not the sources.** Publisher and analyst
+search, the regulator's own full-text filing search, a filer's periodic reports and the segment
+notes inside them, and the earnings-call transcripts are four different instruments; "searched
+extensively" names none of them, and a gap written that way cannot be told apart from one where the
+filings were never opened. Read what is already on disk before running any of them — the profiles and
+every `research/*.md` Sources table carry what other dimensions have already pulled — or nine
+dimensions search the same filer's disclosures in parallel, which is the duplicate the
+read-the-profiles rule already removes for traction points.
+
+**Write "unknowable" only where the entry's own instrument list shows the disclosure-adjacent
+instruments were tried and came back empty.** Everywhere else the gap is open, not closed. The
+hedge is what gets stripped at the first hop — a dated "not found via X and Y" survives being
+quoted; "no data exists" arrives downstream reading like a sourced finding, and the number that
+replaces it is then assumed rather than sought.
 
 The agent also RETURNS (as its final text) a ≤200-word summary: the 3–5 findings that should
 change the analysis, each with its confidence tag. The conductor reads summaries, not files.
@@ -35,8 +75,9 @@ change the analysis, each with its confidence tag. The conductor reads summaries
 
 ## Competitive landscape (`research/competitors.md`) — runs FIRST, alone
 
-The wedge-finder, and the category-boundary falsifier. For each competitor the deliverable is
-not a feature list — it's an account of where they leave the market open.
+The wedge-finder, the category-boundary falsifier, and the adoption-finder. For each competitor
+the deliverable is not a feature list — it's an account of where they leave the market open, and
+of what they have already got right that this product has not.
 
 Hunt:
 - **True alternatives first, competitors second** (Dunford): the list opens with at least one
@@ -50,8 +91,45 @@ Hunt:
   which rule you applied (this call moves the sizing, so it's never left implicit).
 - Per competitor: what it does (one paragraph), pricing model + actual price points, disclosed
   traction points (dated — see below), funding/investors, positioning claim in their own words,
-  **most likely next move**, and **what they structurally don't cover and why** — the wedge
-  line. Every profile ends with it.
+  **most likely next move**, **what they structurally don't cover and why** — the wedge line —
+  and the adopt section below. Every profile carries BOTH of the last two.
+- **What this competitor does BETTER, and what adopting it would cost — a roadmap candidate, not a
+  paragraph.** The wedge line is a sales differentiator: it records where a competitor is weak, so a
+  contract that ends every profile there makes the whole dimension a positioning instrument and
+  nothing a competitor got RIGHT has a route out of the research. The subject is usually behind on
+  something, and a method that only finds wedges cannot see it — while the cheapest move available
+  to a founder is to copy the part that already works, from a company that has already paid to learn
+  it. Measured on one engagement: 31 profiles, every one ending at the wedge line. The single
+  profile that asked what to adopt did so off-contract, found six concrete items including one it
+  called the reference implementation to copy, and none of the six became a roadmap item — not
+  because they were rejected, but because no artifact downstream was shaped to receive them. Per
+  profile:
+  - **The thing itself, judged against the dossier's jobs and never against a feature list.** A
+    competitor with more features is not doing something better; a competitor whose flow completes a
+    job this product breaks is. State it as an observable — a step its onboarding removes that this
+    product still requires, a price structure that ends a stall this product's trial has, a default
+    that prevents a class of support ticket — with its evidence and pull date, under the same
+    citation contract as every other figure here.
+  - **What adopting it costs, in the two words the plan already uses.** The moves it takes, the
+    resource it spends, and whether it is **policy** for this founder at their grilled hours,
+    channels and capital or **structural** — gated on headcount, capital or an advantage they do not
+    have. The vocabulary is defined in `business-plan`'s `references/plan-template.md` and
+    `references/target.md`; apply it, never coin a variant. Unpriced, every candidate reads as free,
+    and a list where everything is free is a wish rather than a sequence.
+  - **A candidate, not a recommendation.** Write the fields a `milestone` note is authored from —
+    the schema is `business-plan`'s `references/vault.md`, and the ones to fill here are the change
+    as a title, **what it moves**, the resource it spends, and the evidence it rests on — so the
+    plan's roadmap step either adopts it and dates it or refuses it with a reason on the record. A
+    paragraph offers neither: it cannot be sequenced and it cannot be refused, so it is dropped
+    silently, which is the defect this section exists to close and the one prose alone reproduces.
+    Name what it moves even when the answer is nothing — `references/roadmap-sequencing.md` admits
+    an item only where an assumption is named, so a candidate that moves none is maintenance, and
+    saying so keeps it from being dressed as a roadmap item and refused one document later on a
+    technicality nobody recorded.
+  - **Record absence as absence**: "nothing to adopt found, checked <date>". A profile that skips
+    the line and a competitor genuinely doing nothing better are identical in the roll-up, and the
+    roll-up then reads as this product being ahead of every company in the set — the one conclusion
+    the research never tested.
 - **Traction points are dated, not a single snapshot, and the ask is every point, not a count**:
   capture every citable dated point found (ARR, users, downloads — only if stated somewhere
   citable), each tagged with its own date and source. Two is the bare minimum below which no
@@ -73,6 +151,13 @@ Hunt:
 - **Category verdict**: does the competitive set confirm the dossier's category boundary, or
   does it pull the product into a different category? Say so explicitly — the conductor adjusts
   the frame on this verdict before the other dimensions run.
+- **Adoption candidates**: a named output alongside the category verdict, assembled from the
+  profile files rather than re-derived — every candidate the profiles carry, policy ones first and
+  ordered by what each costs, each keeping its competitor and its evidence. **A profile that arrived
+  without the section is named here as missing it**, because the roll-up is the only place that
+  omission is visible: a short list and a category with little worth copying read identically, and
+  the second is the reading a founder acts on. This is the wedge line inverted — the same jobs, read
+  for where THIS product is the one that is behind.
 - **Observed growth band**: a named output alongside the category verdict, not folded into it.
   For each competitor, derive a %/mo rate from its earliest and latest dated point (whatever the
   full count collected above) and report the slowest-to-fastest range across the profiled set.
@@ -94,6 +179,12 @@ Sources: competitor pricing pages + changelogs + docs (primary), funding databas
 founder interviews/podcasts, G2/Capterra reviews (for weaknesses users actually complain about
 AND invoice-level real-price signals), HN/Reddit launch threads, job boards, Wayback Machine
 pricing-page diffs (restructuring direction).
+
+The adopt evidence needs no additional sources — it is the same corpus read the other way. A review
+thread carries what users praise beside what they complain about, a docs site shows the step a
+competitor removed as plainly as the one it kept, and a free trial is the cheapest primary source
+either way. Only the question is new, which is why the omission survived: nothing in the fetch
+pattern looked wrong.
 
 ## Growth curves & reference class (`research/growth-curves.md`) — runs after competitors, in the parallel wave
 
@@ -183,6 +274,47 @@ Hunt:
   — apply it, never coin a variant. Unfiltered, the dimension hands a founder a list of things
   that worked for companies that were not them, and the structural ones read as choices they are
   failing to make.
+- **Run a mechanism pass beside the rate pass, over the origin the rate pass structurally cannot
+  reach.** Every other output here is a rate: a re-based series, a fitted decay, a
+  time-to-milestone, a survivorship note. The stretch record above is the closest thing to a
+  mechanism and it is keyed to a stretch of an *indexed curve*, so it exists only where dated points
+  exist — and the lowest ARR bucket is where almost nobody has published any. The bucket rule above
+  forces you to notice that and cannot fix it: in a typical category the sub-$1M bucket comes back
+  at one named company or none, so **the bucket the subject is actually in is the bucket the
+  reference class cannot see.** It is also the one bucket where a mechanism is available when a rate
+  is not — a retrospective post, a founder interview and a launch thread survive where no dated
+  series does. So for 5–8 comparables (the floor at which the set stops being an anecdote, never the
+  target — a run that finds eleven origin accounts records eleven), answer how each got from zero to
+  its first $1M, or to the category's own first-revenue threshold, named:
+  - **the launch motion** — what the first release actually was, and where it was put;
+  - **the first channel that produced PAYING customers**, which is rarely the first channel tried
+    and is often not the channel the company is known for now;
+  - **what the founder did personally that did not scale** — the manual onboarding, the hand-written
+    outreach, the conference floor, the ten customers they knew already. This is usually what
+    produced the first cohort, and it is exactly what a plan written from category norms omits,
+    because norms describe the machine a company had after it worked;
+  - **what compounded, and what was tried and abandoned.** The second half is the one nobody
+    publishes: a retrospective names the channel that worked, while what was dropped survives only
+    in a dated changelog, a removed pricing page, an old launch thread, or a job posting for a role
+    that quietly disappeared. Left out, the pass hands a founder a list of things that worked with
+    the failures filtered out by the same survivorship the band already carries — and this time the
+    filtering happens inside a single company's story, where naming survivorship over the set does
+    not catch it.
+
+  Two rules above govern these entries rather than any new ones: an origin account is a `claim` and
+  never a `fact`, quoted rather than paraphrased into causation, and each entry is filtered **policy**
+  or **structural** for THIS founder. This pass adds a question, not a second confidence scheme.
+  Absence is recorded as absence — "no origin account found, checked <date>".
+- **A file carrying rates and no mechanism entries says so, and names which comparables lack one.**
+  Per comparable, in those words: "rates only, no origin account found". Silence here cannot be told
+  apart from a set nobody asked, and the consumer is what pays for the difference.
+  `business-plan`'s `references/growth-engine.md` writes the plan's `## Growth engine` section out
+  of category-general rules — what survives a search engine, which creative shapes work, what
+  cadence holds — and nothing in it says what got a company of this size its first paying customers
+  in THIS category. With no mechanism record to cite, the plan's own acquisition assumptions (trials
+  per month, the growth rate, the channel behind them) are **designed rather than learned**: their
+  terms are only ever checked against each other, so the inconsistency surfaces when a red team
+  multiplies them together, and by then every available fix is another guess.
 - **Sector extrapolation is the top-down corroborant — reconcile it, never average it.** Put the
   fitted set against the category growth from the market-sizing dimension below. Company
   trajectories that would have the profiled set outgrowing its own category are not automatically
@@ -276,6 +408,14 @@ and launch threads, job boards (a hiring wave dates a channel or a team the foun
 Wayback pricing-page diffs, and for public companies the filings and investor letters. Reading the
 same page twice costs nothing; discovering at synthesis that nobody asked how the curve was grown
 costs the whole dimension a re-run.
+
+The mechanism pass reads that same set with the origin in view rather than the curve, and adds the
+three that only speak about the beginning: the launch-platform threads themselves (where the first
+channel is usually stated outright, by the founder, on the day), the earliest archived capture of the
+pricing page — which dates a first paid tier when no disclosed figure does — and the "first N
+customers" post, which is a genre precisely because the origin is what nobody else records. These are
+reachable for companies with no dated series at all, which is what makes this pass available in the
+bucket the indexed overlay is empty in.
 
 For the exit set the sources are the acquirer's own disclosures rather than the coverage of them:
 the acquisition announcement and the acquirer's investor communications around it (the stated

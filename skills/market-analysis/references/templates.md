@@ -103,6 +103,13 @@ that company's indexed series is accounted for here or written down as a stated 
 at month <n>, no driver found in the public record" — never left silent. A company's account of
 its own growth is a claim, never a fact: it is evidence of what they did, not proof of what caused
 the curve, and it is tagged accordingly.>
+<the mechanism record, per comparable: how it got from zero to its first $1M (or the category's own
+named first-revenue threshold) — the launch motion, the first channel that produced PAYING customers,
+what the founder did personally that did not scale, what compounded, and what was tried and
+abandoned — each a claim with its source and pull date, filtered policy or structural for THIS
+founder. Comparables with rates and no origin account are named in those words, "rates only, no
+origin account found": the lowest ARR bucket is the one the indexed set cannot see, so it is the one
+where this record is the only evidence there is, and it is the bucket this product is in.>
 <the reconciliation against category growth from Market sizing above: trajectories implying the
 profiled set outgrows its own category are named and defended with a mechanism, or flagged as too
 hot. Reconciled, never averaged.>
@@ -202,7 +209,11 @@ _Analyzed: <date>_
 the bare minimum below which no rate can be derived, never the target quantity), each with its
 source (or "no disclosed traction, checked <date>" if none — absence recorded, never omitted) ·
 funding · their positioning claim · most likely next move · **wedge line: what they don't cover
-and why**>
+and why** · **what they do better, and what adopting it would cost**: the thing itself as an
+observable, judged against the dossier's jobs (a step their onboarding removes that this product
+still requires, a default that prevents a class of ticket), with its source and pull date · what
+adopting it would move · the moves it takes · the resource it spends · policy or structural for THIS
+founder — or "nothing to adopt found, checked <date>", absence recorded, never omitted>
 <...one block per competitor...>
 
 ## Observed growth band
@@ -214,6 +225,14 @@ describe no company in the set. Then the per-competitor rate that produced each 
 carrying its own span, one line per competitor, including any recorded as having no disclosed
 traction (excluded from the band, not silently dropped). A scalar reference range, not a growth
 curve — a level check for a projection, never a substitute for modelling its trajectory.>
+
+## Adoption candidates
+<what the profiled set already does better than this product, rolled up from the profiles above and
+ranked by what each would cost to adopt, policy ones first: the change · what adopting it would move
+· the moves it takes · the resource · the competitor and the evidence it came from. Any profile that
+carried no adopt section is named here as missing it — a short list and a category with little worth
+copying read identically, and the second is the one a founder acts on. The inverse of the wedge lines
+above: same jobs, read for where THIS product is the one that is behind.>
 
 ## Threat ranking
 <who hurts this product most: Impact × Probability × Confidence per threat, with the scenario.
