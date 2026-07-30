@@ -75,8 +75,9 @@ change the analysis, each with its confidence tag. The conductor reads summaries
 
 ## Competitive landscape (`research/competitors.md`) — runs FIRST, alone
 
-The wedge-finder, and the category-boundary falsifier. For each competitor the deliverable is
-not a feature list — it's an account of where they leave the market open.
+The wedge-finder, the category-boundary falsifier, and the adoption-finder. For each competitor
+the deliverable is not a feature list — it's an account of where they leave the market open, and
+of what they have already got right that this product has not.
 
 Hunt:
 - **True alternatives first, competitors second** (Dunford): the list opens with at least one
@@ -90,8 +91,45 @@ Hunt:
   which rule you applied (this call moves the sizing, so it's never left implicit).
 - Per competitor: what it does (one paragraph), pricing model + actual price points, disclosed
   traction points (dated — see below), funding/investors, positioning claim in their own words,
-  **most likely next move**, and **what they structurally don't cover and why** — the wedge
-  line. Every profile ends with it.
+  **most likely next move**, **what they structurally don't cover and why** — the wedge line —
+  and the adopt section below. Every profile carries BOTH of the last two.
+- **What this competitor does BETTER, and what adopting it would cost — a roadmap candidate, not a
+  paragraph.** The wedge line is a sales differentiator: it records where a competitor is weak, so a
+  contract that ends every profile there makes the whole dimension a positioning instrument and
+  nothing a competitor got RIGHT has a route out of the research. The subject is usually behind on
+  something, and a method that only finds wedges cannot see it — while the cheapest move available
+  to a founder is to copy the part that already works, from a company that has already paid to learn
+  it. Measured on one engagement: 31 profiles, every one ending at the wedge line. The single
+  profile that asked what to adopt did so off-contract, found six concrete items including one it
+  called the reference implementation to copy, and none of the six became a roadmap item — not
+  because they were rejected, but because no artifact downstream was shaped to receive them. Per
+  profile:
+  - **The thing itself, judged against the dossier's jobs and never against a feature list.** A
+    competitor with more features is not doing something better; a competitor whose flow completes a
+    job this product breaks is. State it as an observable — a step its onboarding removes that this
+    product still requires, a price structure that ends a stall this product's trial has, a default
+    that prevents a class of support ticket — with its evidence and pull date, under the same
+    citation contract as every other figure here.
+  - **What adopting it costs, in the two words the plan already uses.** The moves it takes, the
+    resource it spends, and whether it is **policy** for this founder at their grilled hours,
+    channels and capital or **structural** — gated on headcount, capital or an advantage they do not
+    have. The vocabulary is defined in `business-plan`'s `references/plan-template.md` and
+    `references/target.md`; apply it, never coin a variant. Unpriced, every candidate reads as free,
+    and a list where everything is free is a wish rather than a sequence.
+  - **A candidate, not a recommendation.** Write the fields a `milestone` note is authored from —
+    the schema is `business-plan`'s `references/vault.md`, and the ones to fill here are the change
+    as a title, **what it moves**, the resource it spends, and the evidence it rests on — so the
+    plan's roadmap step either adopts it and dates it or refuses it with a reason on the record. A
+    paragraph offers neither: it cannot be sequenced and it cannot be refused, so it is dropped
+    silently, which is the defect this section exists to close and the one prose alone reproduces.
+    Name what it moves even when the answer is nothing — `references/roadmap-sequencing.md` admits
+    an item only where an assumption is named, so a candidate that moves none is maintenance, and
+    saying so keeps it from being dressed as a roadmap item and refused one document later on a
+    technicality nobody recorded.
+  - **Record absence as absence**: "nothing to adopt found, checked <date>". A profile that skips
+    the line and a competitor genuinely doing nothing better are identical in the roll-up, and the
+    roll-up then reads as this product being ahead of every company in the set — the one conclusion
+    the research never tested.
 - **Traction points are dated, not a single snapshot, and the ask is every point, not a count**:
   capture every citable dated point found (ARR, users, downloads — only if stated somewhere
   citable), each tagged with its own date and source. Two is the bare minimum below which no
@@ -113,6 +151,13 @@ Hunt:
 - **Category verdict**: does the competitive set confirm the dossier's category boundary, or
   does it pull the product into a different category? Say so explicitly — the conductor adjusts
   the frame on this verdict before the other dimensions run.
+- **Adoption candidates**: a named output alongside the category verdict, assembled from the
+  profile files rather than re-derived — every candidate the profiles carry, policy ones first and
+  ordered by what each costs, each keeping its competitor and its evidence. **A profile that arrived
+  without the section is named here as missing it**, because the roll-up is the only place that
+  omission is visible: a short list and a category with little worth copying read identically, and
+  the second is the reading a founder acts on. This is the wedge line inverted — the same jobs, read
+  for where THIS product is the one that is behind.
 - **Observed growth band**: a named output alongside the category verdict, not folded into it.
   For each competitor, derive a %/mo rate from its earliest and latest dated point (whatever the
   full count collected above) and report the slowest-to-fastest range across the profiled set.
@@ -134,6 +179,12 @@ Sources: competitor pricing pages + changelogs + docs (primary), funding databas
 founder interviews/podcasts, G2/Capterra reviews (for weaknesses users actually complain about
 AND invoice-level real-price signals), HN/Reddit launch threads, job boards, Wayback Machine
 pricing-page diffs (restructuring direction).
+
+The adopt evidence needs no additional sources — it is the same corpus read the other way. A review
+thread carries what users praise beside what they complain about, a docs site shows the step a
+competitor removed as plainly as the one it kept, and a free trial is the cheapest primary source
+either way. Only the question is new, which is why the omission survived: nothing in the fetch
+pattern looked wrong.
 
 ## Growth curves & reference class (`research/growth-curves.md`) — runs after competitors, in the parallel wave
 
