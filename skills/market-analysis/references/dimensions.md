@@ -32,8 +32,41 @@ _Researched: <date> · Confidence key: H = disclosed/primary, M = derived via st
 |---|---|---|---|---|
 
 ## Gaps & assumptions
-<what couldn't be sourced, what was assumed instead, what would change if wrong>
+<one entry per gap: what is missing · the instruments tried, each with the date tried · what was
+assumed instead · what would change if it were found. "Not found via <instruments>, as of <date>",
+never "does not exist".>
 ```
+
+**A gap entry names the instruments tried, not only the sources searched.** *"No published cohort
+statistic exists"* is a true statement about publishers that gets read as a statement about the
+world, and the conclusion drawn from it — this quantity is unknowable — is a different claim with
+nothing behind it. The skill already refuses that move in the other direction: a claim that the
+subject *"has no X"* is unactionable until it is checked against source. A dimension reporting that
+the DATA does not exist owes the same check, and an entry naming no instrument is the one nobody can
+re-open, because there is nothing left to try. That entry text is also what the dimension's
+`question` note carries into the vault, so an instrument-free entry mints a note asserting an absence
+no later run can re-check — it reads as settled and is only unexamined.
+
+**Where the quantity is regulated-disclosure-adjacent, a filings check is required before "no data
+exists" is written.** Revenue, headcount, customer counts, segment splits and the structure of a
+deal's consideration are disclosed, audited and dated by every public filer in a category, in
+documents nobody has to publish a study about first. The failure this prevents: a reference class
+assembled from private companies with estimated revenue, sitting beside a dozen public filers in the
+same segment that went unread — same category, better evidence, missed because the search was for
+studies rather than for filings. **The instruments are not the sources.** Publisher and analyst
+search, the regulator's own full-text filing search, a filer's periodic reports and the segment
+notes inside them, and the earnings-call transcripts are four different instruments; "searched
+extensively" names none of them, and a gap written that way cannot be told apart from one where the
+filings were never opened. Read what is already on disk before running any of them — the profiles and
+every `research/*.md` Sources table carry what other dimensions have already pulled — or nine
+dimensions search the same filer's disclosures in parallel, which is the duplicate the
+read-the-profiles rule already removes for traction points.
+
+**Write "unknowable" only where the entry's own instrument list shows the disclosure-adjacent
+instruments were tried and came back empty.** Everywhere else the gap is open, not closed. The
+hedge is what gets stripped at the first hop — a dated "not found via X and Y" survives being
+quoted; "no data exists" arrives downstream reading like a sourced finding, and the number that
+replaces it is then assumed rather than sought.
 
 The agent also RETURNS (as its final text) a ≤200-word summary: the 3–5 findings that should
 change the analysis, each with its confidence tag. The conductor reads summaries, not files.
