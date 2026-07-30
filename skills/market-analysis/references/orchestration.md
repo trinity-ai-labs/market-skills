@@ -17,6 +17,19 @@ job, on its own strongest-model turn, after reading everything.
 - `outDir` is ABSOLUTE (expand `~` yourself — briefs never carry `~` paths). So is the vault
   path, when the run has one: note resolution is an explicit path or nothing, and an agent that
   searches upward for a vault finds a different engagement's corpus and writes into it silently.
+- **List the actor corpus and pass its roster in.** `ls` over the `actors/` directory that ships with
+  this skill is the roster; a directory named with a leading `_` is skipped, per
+  [`actors/README.md`](../actors/README.md). Read each remaining record's identity notes for the name and
+  canonical URL, and pass `{ name, url, record }` with `record` the record directory's ABSOLUTE path —
+  the `outDir` rule above for its reason, since an agent handed a relative path resolves it against the
+  user's own project directory where nothing of the sort exists. **Pass only the records that fall inside
+  this dossier's category boundary**, judged off each record's own description note, which is on disk and
+  costs no dispatch. The corpus is one flat directory shared by every engagement and holds no category
+  field, so an unfiltered pass grows the profiled set with every unrelated engagement anyone ever
+  contributed to: a profile dispatch per out-of-boundary company, each one then a column in the
+  capability matrix and a line in the growth band. Passing nothing is always valid and costs only the
+  re-discovery the corpus exists to avoid. **A run never writes to `actors/`** — a verified point goes
+  back as a pull request the founder asked for.
 - Scripts can't call `Date.now()` — pass `date` in.
 - On a re-run, load each existing `research/*.md` into `prior` so agents update instead of
   clobbering.
@@ -31,6 +44,10 @@ Workflow({ script: <Workflow A below>, args: {
   vaultNotes: "",          // "" when the run has no vault. Otherwise the vault note contract from
                            // SKILL.md, verbatim, with <vault> already expanded to the absolute path.
   mustProfile: ["<competitor the founder/user named>", ...],   // always profiled, regardless of kind
+  seededActors: [{ name: "<company>", url: "<canonical URL>", record: "<absolute path to its record dir>" }],
+                           // the corpus roster, filtered to the boundary. Every lens below still runs,
+                           // and `maxCompetitors` still bounds only what the sweep itself adds.
+                           // [] when the corpus covers nothing inside this category.
   playbookCompetitors: "<dimensions.md's shared preamble + its Competitive landscape block, verbatim>",
                            // The preamble carries the output skeleton and the gap-entry rules EVERY
                            // dimension owes; the block on its own hands the agent neither.
@@ -66,7 +83,7 @@ export const meta = {
 }
 
 const { date, outDir, dossier, boundary, citation, vaultNotes = '', mustProfile = [],
-        profileCap = 12, maxCompetitors = 60, dryRounds = 2, playbookCompetitors } = args
+        seededActors = [], profileCap = 12, maxCompetitors = 60, dryRounds = 2, playbookCompetitors } = args
 if (!playbookCompetitors) throw new Error('no competitors playbook — pass the dimensions.md block')
 const CTX = `Product dossier:\n${dossier}\n\nCategory boundary: ${boundary}\n\n${citation}\n${vaultNotes}\nDate: ${date}. Use WebSearch and WebFetch for every factual claim.`
 
@@ -88,9 +105,25 @@ const LENSES = [
   'the NON-PRODUCT alternative: what do these people do today with no tool — spreadsheet, manual process, internal build? Search forums and case studies for the workaround being displaced (kind: "status-quo")',
 ]
 const seen = new Map()
-mustProfile.forEach(n => seen.set(n.toLowerCase(), { name: n, kind: 'direct', why: 'named by founder/user — must profile' }))
+// A corpus record enters `seen` exactly as a mustProfile name does, and carries no bucket: a bucket is
+// keyed to this dossier's target segment, so the profiling agent sets it. `unbucketed` is not a
+// COMP_SCHEMA value and does not need to be — that enum constrains what a finder agent may RETURN,
+// while this entry is constructed here. Membership in `seen` is what keeps a lens from spending a round
+// re-reporting a company already held, and it cannot defeat the dry-round test: `fresh` is filtered
+// against `seen`, so a seeded name is never fresh and never resets `dry`.
+seededActors.forEach(a => seen.set(a.name.toLowerCase(), { ...a, kind: 'unbucketed', why: 'in the actor corpus — verify, do not re-discover' }))
+// mustProfile lands SECOND and merges, so a founder-named company that is also in the corpus keeps its
+// record path while the founder's own signal wins the bucket. Seeded second it would overwrite that
+// signal, and the profiling agent would read a company the founder asked for as a generic corpus hit.
+mustProfile.forEach(n => seen.set(n.toLowerCase(),
+  { ...seen.get(n.toLowerCase()), name: n, kind: 'direct', why: 'named by founder/user — must profile' }))
 let dry = 0
-while (dry < dryRounds && seen.size < maxCompetitors) {
+// `maxCompetitors` bounds what the SWEEP adds, not what the map already holds — hence the subtraction.
+// Compared straight against `seen.size` it is a second and quieter way to lose the sweep than misreading
+// the roster: a corpus that fills the cap on its own skips the loop entirely, so the roster becomes a
+// substitute for discovery by way of the budget rather than by way of anyone's reading of it.
+const seeded = seen.size
+while (dry < dryRounds && seen.size - seeded < maxCompetitors) {
   const round = await parallel(LENSES.map((lens, i) => () =>
     agent(`${CTX}\n\nFind competitors/alternatives via ONE lens only: ${lens}.\nAlready known (do not re-report): ${[...seen.keys()].join(', ') || 'none'}.\nReturn everything plausibly competing inside the category boundary.`,
       { label: `find:${i}`, phase: 'Discover', model: 'sonnet', effort: 'low', schema: COMP_SCHEMA })))
@@ -108,21 +141,30 @@ phase('Profile')
 const roster = [...seen.values()]
 const byName = (a, b) => a.name.localeCompare(b.name)
 const must = roster.filter(c => mustProfile.some(m => m.toLowerCase() === c.name.toLowerCase()))
-const direct = roster.filter(c => c.kind === 'direct' && !must.includes(c)).sort(byName).slice(0, profileCap)
-const others = roster.filter(c => c.kind !== 'direct' && c.kind !== 'status-quo' && !must.includes(c))
+// A held record's profile is verification against URLs it already carries rather than discovery, so it
+// does not spend `profileCap` — and the cap goes on bounding the sweep's own finds, which is what stops
+// a growing corpus from crowding a newly discovered entrant out of the profiled set. Nothing here caps
+// `held`, because dropping a company the corpus already covers is the roster read as a ceiling; the
+// bound is the conductor's boundary filter, and the log line is what makes an unfiltered seed visible
+// instead of arriving as a profile dispatch per company in a corpus this category never shared.
+const held = roster.filter(c => c.record && !must.includes(c))
+if (held.length) log(`${held.length} from the actor corpus — verified, not re-discovered, and outside profileCap`)
+const budgeted = new Set([...must, ...held])
+const direct = roster.filter(c => c.kind === 'direct' && !budgeted.has(c)).sort(byName).slice(0, profileCap)
+const others = roster.filter(c => c.kind !== 'direct' && c.kind !== 'status-quo' && !budgeted.has(c))
   .sort(byName).slice(0, Math.ceil(profileCap / 2))
-const toProfile = [...must, ...direct, ...others]
+const toProfile = [...must, ...held, ...direct, ...others]
 const skipped = roster.filter(c => !toProfile.includes(c) && c.kind !== 'status-quo').map(c => c.name)
 if (skipped.length) log(`NOT profiled (visible omission, listed in competitors.md): ${skipped.join(', ')}`)
 
 const profiles = await parallel(toProfile.map(c => () =>
-  agent(`${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nApply that playbook's PER-COMPETITOR rules to exactly one: "${c.name}" (${c.kind}; ${c.url || 'find their site'}). Only those — the roster ordering, the capability matrix, the category verdict and the growth band belong to the competitors.md writer, which reads your file. Write the full profile, with its full source table, to ${outDir}/research/profiles/${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md. RETURN only: a <=180-word summary ending with the wedge line, then one line per adoption candidate in the form "<the change> · policy|structural · <what it costs>" — or the single line "nothing to adopt found, checked ${date}". The playbook owes your FILE both of those sections in full; this return is triage, and the roll-up reads the file.`,
+  agent(`${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nApply that playbook's PER-COMPETITOR rules to exactly one: "${c.name}" (${c.kind}; ${c.url || 'find their site'}).${c.record ? ` The actor corpus already holds a record for it, at ${c.record} — apply the playbook's read-the-corpus rules to that directory.` : ''} Only those — the roster ordering, the capability matrix, the category verdict and the growth band belong to the competitors.md writer, which reads your file. Write the full profile, with its full source table, to ${outDir}/research/profiles/${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md. RETURN only: a <=180-word summary ending with the wedge line, then one line per adoption candidate in the form "<the change> · policy|structural · <what it costs>" — or the single line "nothing to adopt found, checked ${date}". The playbook owes your FILE both of those sections in full; this return is triage, and the roll-up reads the file.`,
     { label: `profile:${c.name}`, phase: 'Profile', model: 'sonnet', effort: 'medium' })
     .then(p => ({ name: c.name, kind: c.kind, summary: p }))))
 
 // competitors.md writer: assembles the dimension contract file from the profile FILES
 const verdict = await agent(
-  `${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nRead every profile in ${outDir}/research/profiles/ plus this roster (incl. unprofiled + status-quo entries): ${roster.map(c => `${c.name} (${c.kind})`).join(', ')}. Write ${outDir}/research/competitors.md per the playbook's skeleton: alternatives-first ordering (status-quo entries OPEN the file), the jobs x competitors capability matrix keyed to the dossier's jobs, per-competitor CTA/motion, the signal-disciplined next-move calls, and the unprofiled names listed as discovered-not-profiled. If the file already exists, UPDATE it — keep prior source rows with their original Pulled dates. End the file with an explicit Category verdict section, the adoption-candidate roll-up, and the observed growth band. Then return the verdict JSON: does the competitive set confirm the dossier's category boundary? revisedBoundary = the boundary as it should now read (unchanged if confirms).`,
+  `${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nRead every profile in ${outDir}/research/profiles/ plus this roster (incl. unprofiled + status-quo entries): ${roster.map(c => `${c.name} (${c.kind})`).join(', ')}. An entry marked "unbucketed" came from the actor corpus, so read its bucket off its profile rather than the roster. Write ${outDir}/research/competitors.md per the playbook's skeleton: alternatives-first ordering (status-quo entries OPEN the file), the jobs x competitors capability matrix keyed to the dossier's jobs, per-competitor CTA/motion, the signal-disciplined next-move calls, and the unprofiled names listed as discovered-not-profiled. If the file already exists, UPDATE it — keep prior source rows with their original Pulled dates. End the file with an explicit Category verdict section, the adoption-candidate roll-up, and the observed growth band. Then return the verdict JSON: does the competitive set confirm the dossier's category boundary? revisedBoundary = the boundary as it should now read (unchanged if confirms).`,
   { label: 'competitors:verdict', phase: 'Profile', model: 'opus', effort: 'high', schema: VERDICT_SCHEMA })
 
 return {
@@ -132,6 +174,15 @@ return {
   categoryVerdict: verdict,
 }
 ```
+
+**The corpus seeds the sweep and cannot shorten it, and two separate budgets decide that.** The
+dry-round test needed nothing: `fresh` is filtered against `seen`, so a seeded name is never fresh and
+never resets `dry` — seeding cannot make a round look non-empty, and the loop terminates exactly as it
+did before, on the sweep's own finds. What did need changing is `maxCompetitors`, which was compared
+against `seen.size` and so read a pre-seeded map as a nearly-spent budget: a corpus big enough to fill
+the cap would have skipped the sweep altogether, with no lens run and no log line saying so. It now
+bounds the sweep's own additions, which is the only reading under which a corpus cannot buy the sweep
+out of running.
 
 **Conductor checkpoint (between A and B):** read `categoryVerdict`. If `confirms: false`,
 update `product-dossier.md`'s Category boundary to `revisedBoundary`, note the change to the
