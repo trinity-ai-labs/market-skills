@@ -8,7 +8,10 @@ Two agent skills that take a product to market, packaged as one plugin. Both are
   channels, moats — plus two archaeology passes over repo sources: infra-cost (derive COGS from
   the actual stack, project cost vs revenue at scale) and instrumentation (what the product
   already records, and which number in the analysis it could settle) — with adversarial
-  verification of every load-bearing number.
+  verification of every load-bearing number. Each competitor comes back twice: where they leave
+  the market open, and what they already do better than you, priced as something you could adopt.
+  Comparable companies come back the same way — how fast they grew, and how they actually got
+  their first paying customers.
 - **`business-plan`** — the conductor that grills the founder, runs `market-analysis` as its
   research engine, and produces the plan artifact the founder's track actually needs
   (investor memo / bootstrap operating plan / lender classic) plus a one-pager, a bottom-up
