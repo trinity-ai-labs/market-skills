@@ -2,6 +2,228 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.14.0
+
+- **Every defect in this release is a rule that exists, is correct, and does not fire — or a
+  rule with no inverse — and the through-line is worth stating once before the list, because it
+  is a property of how the method was built rather than nine unrelated bugs.** None was found by
+  reading the code. All came from running an engagement end to end and noticing which correct
+  rule failed to catch a wrong output. **The method is strong at preventing false statements and
+  weak at noticing missing ones**: every check was pointed at what is *present* — a number with
+  no source, a citation that does not resolve, a cell that disagrees with its note — and a
+  method that only inspects what got written cannot see the assumption that never became a row,
+  the competitor strength nobody wrote down, or the section a rewrite quietly emptied. This is
+  the same shape as the seven defects behind 1.10.0 and the one behind 1.12.0, and it is the
+  third release in a row where the fix was a *counterpart* to a rule already on the page rather
+  than a new idea. So the entries below are grouped by which absence they made visible, and the
+  release adds no rule whose failure mode is *something incorrect was stated*.
+- **The deliverable stops inheriting the ledger's archaeology — `vault-lint.sh --deliverable`
+  reads the rendered `deliverables/*.html` and fails on a strikethrough span, a note ID or a
+  red-team `R<n>-O<n>` code.** Invariant 14 is unchanged and still right for the vault: a
+  retracted claim keeps its reason, because silently deleting a dead claim lets it come back two
+  drafts later with its cause of death erased. It had no counterpart on the way out. The reader
+  of the artifact was never in the room, and a note ID is a **vault address** — it resolves for
+  anyone holding the corpus and resolves to nothing for the audience the document is for — so a
+  document that carries both is arguing with its own previous draft in front of the person it is
+  trying to convince. **The fix is a step, not a strip filter, and that distinction is the whole
+  design**: deleting the `~~` leaves *"That multiple was actually…"* with no antecedent, which
+  still renders, still reads like prose, and now asserts nothing. No script can judge an
+  antecedent. So Phase 5 gained a named **restate-forward** step — the artifact states what is
+  true now and the ledger keeps the archaeology — performed in the render loop's page-by-page
+  read-back, and the mode is the mechanical half beneath it. `SKILL.md` now says outright that
+  invariant 14 does not change, because a reader hitting two rules that point opposite ways will
+  otherwise assume one of them was superseded. `[S#]` and `[F#]` codes are the reader's own
+  trace and stay; a note ID is matched as its type prefix plus the eight characters a generated
+  ID carries, which is what keeps the check off `FACT-CHECKED` in ordinary prose. A vault that
+  has rendered nothing passes.
+- **The ARR term now declares its composition — `--assumption-rows`, four checks, and the one
+  that matters most is the reverse direction.** `plan-template.md` requires that no number in a
+  projection is anything but a named assumption row: correct, load-bearing against fake
+  precision, and it has been the wrong half of the pair since it shipped, because nothing ever
+  asked whether a named assumption was **missing** from the table. Two assumptions governing a
+  whole revenue line existed as properly authored notes, never became rows, and the rule meant
+  to enforce rigour made that line structurally unable to enter the projection. It was then
+  filed as *revenue outside this model* — which reads as a modelling decision and was a
+  consequence of the omission — and every verdict downstream inherited a denominator missing a
+  line the roadmap ships. So an `assumption` carrying `model_input: revenue` or `cost` owes
+  either a row matched on its `title` **verbatim** or an `excluded_from_model` reason;
+  `model-row-no-assumption` runs the table the other way, because otherwise the cheapest way
+  past the first check is a row nothing in the ledger stands behind; and `model-table-missing`
+  covers notes that declare inputs a table renders none of. **The fourth check belongs to the
+  identity rather than to the table, and it is `roadmap-sequencing.md`'s Rule 1 run backwards**:
+  that rule says every roadmap item names the assumption it moves, and `excluded-line-on-roadmap`
+  reads the same edge from the other end — an assumption carrying `excluded_from_model` that a
+  `milestone`'s `moves` names, and that no verdict note lists in `arr_excludes`, is a dated
+  change to a revenue line the model does not carry. **Excluding a line is legitimate** — a
+  metered layer must not be allowed to flatter subscription churn — so what fails is the
+  *silence*, and the escape is stating it where the identity is stated rather than inside the
+  model: the exit identity is ARR × multiple and none of the multiple's inputs is ARR, so an
+  undeclared exclusion is a denominator nobody can see. One reading rule differs from
+  `--roadmap-table` and it is the one that would have cried wolf: the item column defaults to
+  **two**, because the template ships `| # | Assumption | … |` and column one is the `A-n` label
+  the plan's prose and a milestone's `moves` both cite.
+- **Competitor research can now produce product, not only positioning.** A profile ended once —
+  where the competitor structurally leaves the market open, which is the wedge — and the other
+  direction was left to a founder's own reading of a document they commissioned precisely
+  because they could not do that reading. So every profile now ends **twice**, and the second
+  half is *what this competitor does better, and what adopting it would cost*, judged against
+  the dossier's jobs rather than against a feature list and priced in the two words the plan
+  already uses. Absence is recorded as absence — `"nothing to adopt found, checked <date>"` —
+  because a profile that simply stops is indistinguishable from one where nobody looked. The
+  profiles roll up into `## Adoption candidates` on `competitor-analysis.md`, assembled from the
+  profile files rather than re-derived, and `roadmap-sequencing.md` gained **Rule 8**: an
+  adoption candidate is the other legitimate source of a roadmap item, since Rules 1–7 all
+  assume an item came from the founder's own intent. It is written as a **disjunction with no
+  third branch** — every candidate is adopted and dated, or refused with the reason on the
+  record — because refusing one costs a sentence while dropping one costs nothing and is
+  invisible, and invisible-and-free is what the whole release is about. A candidate that moves
+  no assumption is maintenance, and saying so *is* the refusal.
+- **Growth research learned mechanisms, not only rates.** `research/growth-curves.md` came back
+  with how fast comparable companies grew and nothing about how any of them started, so
+  `growth-engine.md` had a reference class it could not use for the one question a pre-launch
+  founder actually has, and invented a funnel instead — a plausible one, resting on nothing. A
+  mechanism pass now runs beside the rate pass over the origin the rate pass structurally cannot
+  reach: per comparable, the launch motion and where the first release was put, **the first
+  channel that produced paying customers** (rarely the first channel tried, and often not the
+  channel the company is known for now), what the founder did personally that did not scale, what
+  compounded, and what was tried and abandoned. `growth-engine.md` now cites that record instead
+  of choosing a channel out of its own rules, and where no record exists it says the assumption
+  is assumed rather than learned. **`"rates only, no origin account found"` against a comparable
+  is a pass**, in those words: it is the record doing its job, and silence is the failure —
+  which is the same reason the adopt section has to write down that it found nothing.
+- **The monitoring plan became a contract artifact — `--monitoring`.** Every profile carries the
+  date it was researched and every claim note carries a `stale_after`, and both of those answer
+  *is this still true*. Nothing in the corpus asked **which way is this moving**, which is a
+  different question a snapshot cannot answer however fresh it is. The old monitoring section was
+  prose naming pages to re-check, so it degraded into a list of URLs with no obligation attached.
+  It is now a table — one row per axis, each naming the **instrument** that reads it, the
+  **cadence**, and the **decision it would change** — and the mode fails an absent section, a
+  section with no axis in it, and any row that leaves one of those columns empty. Each column
+  earns its place by what goes wrong without it: an axis with no instrument is a thing somebody
+  intends to notice, one with no cadence is a re-check with no date, and one with no decision
+  behind it is a signal nobody acts on, which costs exactly as much to collect as one that
+  matters. A cell carrying no letter or digit — an em dash, a run of hyphens — reads as empty,
+  because that is the cheapest way past the rule. A vault with no `competitor-analysis.md`
+  profiled nobody and passes; gated on `schemaVersion` 2.
+- **Phase 0 inventories what the product measures, not only what the founder wrote about it —
+  and it goes first because it is the cheapest primary evidence the engagement will ever have.**
+  The method already ran an infra-cost archaeology pass over repo sources and already inventoried
+  the founder's own artifacts, and it walked past the product's own records every time. A form
+  field asking arriving users what they came to do is dated, checkable, free, and the one class
+  of evidence a competitor cannot obtain and no survey improves on — and its usual state is
+  unread with the row count unknown. So a product-instrumentation pass joins the Phase 0 fan-out
+  with its own dossier section, one entry per store or event type rather than per call site, each
+  naming what it records and at what grain, the quantity in the analysis it could settle, whether
+  it has been read, and what reading it would cost. `business-plan`'s Phase 0 is where the
+  readable entries actually get read: the instrument becomes a source with no public URL whose
+  provenance names the store and the query, and each figure read off it is a `fact` resting on
+  that source, so the cheapest evidence in the engagement enters the ledger on the same terms as
+  the most expensive. The unreadable ones become a grill question — access to the instruments
+  Phase 0 could not open — rather than an estimate nobody revisits, and Phase 2's verify list
+  names the inventory outright and reconciles it in both directions. **What enters the corpus is
+  the figure, the date and the query**: never the rows, never a free-text answer verbatim, and
+  never a copy of a user's data.
+- **A rewritten section now re-opens the claim that cited it — `--claim-drift`.** `--used-in`
+  says at length that it will only ever prove a citation **resolves**, and it is right to; but a
+  heading nobody renamed keeps resolving through any rewrite of the prose beneath it. So a claim
+  written into a plan section satisfying every rule there is, a later re-solve that rewrote the
+  block, an untouched heading, and a green gate were all consistent with each other, and the
+  drift was found by hand days later. A claim therefore records the content hash of each cited
+  section in `reconciled_sections` — itemising the `reconciled:` date rather than sitting beside
+  it as a second field that can disagree with it — and a changed hash **re-opens** the claim.
+  Three properties are load-bearing. **The hash is over bytes with three normalisations and no
+  others** — trailing whitespace per line, and leading, trailing and repeated blank lines —
+  because all three are invisible in a rendered document and a hash sensitive to them re-opens
+  every claim in the corpus the first time an editor trims a file; a rewrapped paragraph *is* an
+  edit and does re-open. **The polynomial is 31-bit and arithmetic-only** — `h = (h·131 + byte)
+  mod 2³¹−1`, length mixed in last — because it has to be byte-identical in POSIX awk, which has
+  no bitwise operators, and in Windows PowerShell 5.1 with zero dependencies on either side, and
+  because it is detecting an edit rather than resisting an adversary. **The failure message
+  carries the current hash**, which is what makes a read-only tool usable here: there is no write
+  mode, so re-reconciling is re-reading the section and pasting one token, and pasting it is the
+  assertion that the read happened exactly as stamping a date is. It reads only `current` `claim`
+  and `assumption` notes, and only entries whose `#anchor` already resolves — a dead anchor is
+  `--used-in`'s verdict, and reporting it twice under a name about reconciliation sends its reader
+  to the wrong fix.
+- **A gap entry names the instruments tried, not only the sources searched.** *Searched
+  extensively, no data found* is unfalsifiable and unquotable, and it cannot be told apart from
+  a gap where the disclosure-adjacent instruments were never opened. Publisher and analyst
+  search, the regulator's own full-text filing search, a filer's periodic reports and the segment
+  notes inside them, and the earnings-call transcripts are **four different instruments**, and
+  where a quantity is regulated-disclosure-adjacent a filings check is now required before *no
+  data exists* can be written. The entry is `"Not found via <instruments>, as of <date>"` and
+  never `"does not exist"` — the first survives being quoted in a document somebody defends, the
+  second is a claim about the world made from a failed search. *Unknowable* is likewise narrowed
+  to entries whose own instrument list shows those instruments were tried and came back empty.
+  A dimension also reads the existing `research/*.md` Sources tables before it starts, so nine
+  parallel dimensions stop each paying separately to search the same filer.
+- **`schemaVersion` 3, and the two modes that read fields no existing corpus carries are gated on
+  it.** `--assumption-rows` reads `model_input`, `excluded_from_model` and `arr_excludes`;
+  `--claim-drift` reads `reconciled_sections`. At 1 or 2 each exits 0 **and says the rule was not
+  applied**, naming the fields that were added at 3 — not the same thing as reporting that the
+  documents agree, and the distinction is the entire reason the version field exists.
+  `--claim-drift` is the exact shape of upgrade the mechanism was built for: every claim in a
+  finished corpus is already cited into a plan, so a hash rule firing unconditionally would turn
+  every existing vault red on the day the plugin updated. `vault-migration.md` gained the 2→3
+  section, and it is deliberately two halves with different costs — the `--assumption-rows` half
+  is a transcription (copy each row's `Assumption` cell into the note's `title` unchanged, since
+  the match is verbatim and a title tidied on the way in fails in both directions), while the
+  `--claim-drift` half is a real read, using the mode's own output as the worklist. Running out of
+  session is a supported outcome: revert the `3` and come back, and commit the stamp together with
+  the entries as the last edit. Migrations stay forward-only — there is no 3→2 path, for the same
+  reason there is no 2→1.
+- **Cross-platform correctness, in two fixes that were each invisible from the platform they were
+  authored on.** The first is the fixture harness's own: a checkout with Git for Windows' default
+  `core.autocrlf=true` failed **89 assertions** while the shipped lint was fine, because
+  `run-fixtures.sh` compared harness-read document lines against literals in three reader shapes
+  across four call sites. That is a defect in the instrument rather than in the product, which is
+  the worst place for one — it reddens a correct implementation and sends the reader to the wrong
+  file. A single `strip_cr` helper now serves all four, with the rewriting pair fed clean input
+  *before* the comparison rather than filtered after it, and the CRLF fixture's own pinning guard
+  counts carriage-return bytes instead of pattern-matching lines, because Git for Windows' awk
+  reads in text mode and hands every pattern a line with no `\r` in it — so the guard would have
+  reported a correctly pinned fixture as unpinned. The second is the PowerShell port's: `bin/`
+  compares bytes in awk, so a culture-aware comparison over document text is a parity divergence
+  where the two implementations read different documents over the same file. Three sibling copies
+  of one fence scan were never converted to ordinal, and a fourth in `--roadmap-table` was not
+  either — the enumeration on file said three. **The one with a reachable divergence is
+  `--red-team`'s roster heading, through `Get-RedTeamKey`**: that fold lowercases and collapses
+  whitespace runs and drops nothing else, so a zero-width space survives into the comparison, and
+  culture folding reports `lenses<ZWSP> dispatched` **equal** to `lenses dispatched` while awk
+  compares bytes and does not — PowerShell reads a roster the shell does not. Worth naming
+  precisely, because `-ceq` is not the fix: `-ceq` on a string and `-eq` on a `[char]` both take
+  the culture path, so the conversion is to ordinal APIs. `scripts/fixtures/fence-zwsp` is what
+  turns *no demonstrated impact* from a fact about the corpus into a fact about the code — its
+  `red-team.md` carries the space in the roster heading and its `competitor-analysis.md` carries
+  one inside a fence whose row would read as an axis if the scan folded that character away, so
+  the fence half has an observable consequence too rather than only a comment. Reverted, the
+  PowerShell side answers `"ok": true` where the shell answers `"ok": false` over the same vault.
+  The roadmap pair is the genuinely unreachable one — already folded to ASCII alphanumerics —
+  and was converted anyway, so the rule is a property of the file rather than a judgement
+  re-made per site; re-making it per site is what left three copies of one scan behind.
+- **The release then turned the same question on its own new rules, and five of them did not
+  fire.** A release whose entire subject is correct rules that never run is the worst possible
+  place to add eleven more without checking, and the pass found: quality bars still naming seven
+  gate modes after the gate reached ten; a Phase 2 checkpoint that never named the monitoring
+  artifact it depends on, so a research return without one passed; Phase 0 scaffolding a new
+  vault at a `schemaVersion` below the one whose checks this release added, which would have
+  exempted every new corpus from them by default; a partial-refresh instruction still saying
+  re-read the pages after monitoring became axes; and a migration whose scaffold version made
+  stamping last impossible. `check.mjs` gained a check of its own in the same spirit — it holds
+  `--assumption-rows`' `readmodel()` to the transcription of `--roadmap-table`'s `readplan()` that
+  the file claims, comments and blank lines dropped and the declared differences substituted,
+  compared byte for byte, because `parity.mjs` diffs the `.sh` against the `.ps1` and can never
+  diff one reader against its own twin.
+- **Two numbers a user can act on.** `--release-gate` is now **ten parts** — the bare `check`
+  plus nine flags — so the one call before a render asks every question the tool can ask, and its
+  success line names what it did not open off the same mode table it composes itself from. And
+  the suites moved with the modes rather than behind them: the fixture suite went from **250
+  assertions to 332** across eight new corpora, each failing exactly one new rule while passing
+  the rest, and the parity gate from 9 modes × 19 fixture vaults to **13 modes × 27, with 0
+  allowlisted**. A composite that silently reported one part's verdict as the whole is the failure
+  those corpora exist to catch, and an allowlist entry is how a mode ported to one script and not
+  its twin would have hidden.
+
 ## 1.13.0
 
 - **A Claude Code session on native Windows with no Git for Windows has the PowerShell tool and
