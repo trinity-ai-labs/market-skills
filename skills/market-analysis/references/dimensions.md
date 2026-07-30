@@ -274,6 +274,47 @@ Hunt:
   — apply it, never coin a variant. Unfiltered, the dimension hands a founder a list of things
   that worked for companies that were not them, and the structural ones read as choices they are
   failing to make.
+- **Run a mechanism pass beside the rate pass, over the origin the rate pass structurally cannot
+  reach.** Every other output here is a rate: a re-based series, a fitted decay, a
+  time-to-milestone, a survivorship note. The stretch record above is the closest thing to a
+  mechanism and it is keyed to a stretch of an *indexed curve*, so it exists only where dated points
+  exist — and the lowest ARR bucket is where almost nobody has published any. The bucket rule above
+  forces you to notice that and cannot fix it: in a typical category the sub-$1M bucket comes back
+  at one named company or none, so **the bucket the subject is actually in is the bucket the
+  reference class cannot see.** It is also the one bucket where a mechanism is available when a rate
+  is not — a retrospective post, a founder interview and a launch thread survive where no dated
+  series does. So for 5–8 comparables (the floor at which the set stops being an anecdote, never the
+  target — a run that finds eleven origin accounts records eleven), answer how each got from zero to
+  its first $1M, or to the category's own first-revenue threshold, named:
+  - **the launch motion** — what the first release actually was, and where it was put;
+  - **the first channel that produced PAYING customers**, which is rarely the first channel tried
+    and is often not the channel the company is known for now;
+  - **what the founder did personally that did not scale** — the manual onboarding, the hand-written
+    outreach, the conference floor, the ten customers they knew already. This is usually what
+    produced the first cohort, and it is exactly what a plan written from category norms omits,
+    because norms describe the machine a company had after it worked;
+  - **what compounded, and what was tried and abandoned.** The second half is the one nobody
+    publishes: a retrospective names the channel that worked, while what was dropped survives only
+    in a dated changelog, a removed pricing page, an old launch thread, or a job posting for a role
+    that quietly disappeared. Left out, the pass hands a founder a list of things that worked with
+    the failures filtered out by the same survivorship the band already carries — and this time the
+    filtering happens inside a single company's story, where naming survivorship over the set does
+    not catch it.
+
+  Two rules above govern these entries rather than any new ones: an origin account is a `claim` and
+  never a `fact`, quoted rather than paraphrased into causation, and each entry is filtered **policy**
+  or **structural** for THIS founder. This pass adds a question, not a second confidence scheme.
+  Absence is recorded as absence — "no origin account found, checked <date>".
+- **A file carrying rates and no mechanism entries says so, and names which comparables lack one.**
+  Per comparable, in those words: "rates only, no origin account found". Silence here cannot be told
+  apart from a set nobody asked, and the consumer is what pays for the difference.
+  `business-plan`'s `references/growth-engine.md` writes the plan's `## Growth engine` section out
+  of category-general rules — what survives a search engine, which creative shapes work, what
+  cadence holds — and nothing in it says what got a company of this size its first paying customers
+  in THIS category. With no mechanism record to cite, the plan's own acquisition assumptions (trials
+  per month, the growth rate, the channel behind them) are **designed rather than learned**: their
+  terms are only ever checked against each other, so the inconsistency surfaces when a red team
+  multiplies them together, and by then every available fix is another guess.
 - **Sector extrapolation is the top-down corroborant — reconcile it, never average it.** Put the
   fitted set against the category growth from the market-sizing dimension below. Company
   trajectories that would have the profiled set outgrowing its own category are not automatically
@@ -367,6 +408,14 @@ and launch threads, job boards (a hiring wave dates a channel or a team the foun
 Wayback pricing-page diffs, and for public companies the filings and investor letters. Reading the
 same page twice costs nothing; discovering at synthesis that nobody asked how the curve was grown
 costs the whole dimension a re-run.
+
+The mechanism pass reads that same set with the origin in view rather than the curve, and adds the
+three that only speak about the beginning: the launch-platform threads themselves (where the first
+channel is usually stated outright, by the founder, on the day), the earliest archived capture of the
+pricing page — which dates a first paid tier when no disclosed figure does — and the "first N
+customers" post, which is a genre precisely because the origin is what nobody else records. These are
+reachable for companies with no dated series at all, which is what makes this pass available in the
+bucket the indexed overlay is empty in.
 
 For the exit set the sources are the acquirer's own disclosures rather than the coverage of them:
 the acquisition announcement and the acquirer's investor communications around it (the stated

@@ -103,6 +103,13 @@ that company's indexed series is accounted for here or written down as a stated 
 at month <n>, no driver found in the public record" — never left silent. A company's account of
 its own growth is a claim, never a fact: it is evidence of what they did, not proof of what caused
 the curve, and it is tagged accordingly.>
+<the mechanism record, per comparable: how it got from zero to its first $1M (or the category's own
+named first-revenue threshold) — the launch motion, the first channel that produced PAYING customers,
+what the founder did personally that did not scale, what compounded, and what was tried and
+abandoned — each a claim with its source and pull date, filtered policy or structural for THIS
+founder. Comparables with rates and no origin account are named in those words, "rates only, no
+origin account found": the lowest ARR bucket is the one the indexed set cannot see, so it is the one
+where this record is the only evidence there is, and it is the bucket this product is in.>
 <the reconciliation against category growth from Market sizing above: trajectories implying the
 profiled set outgrows its own category are named and defended with a mechanism, or flagged as too
 hot. Reconciled, never averaged.>
