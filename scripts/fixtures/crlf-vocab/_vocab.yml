@@ -1,5 +1,5 @@
 # EVERY FILE IN THIS VAULT IS CRLF, AND THAT IS THE WHOLE POINT OF THE FIXTURE.
-# The other vaults here are LF, so for eighteen fixtures the corpus never once
+# Every other vault here is LF, so until this one landed the corpus never once
 # contained a carriage return - and a vocabulary pass that dropped every term on
 # a CRLF file passed all of them. A term key read as `price-anchor:\r` fails a
 # pattern that requires nothing after the colon, so nothing is emitted and the

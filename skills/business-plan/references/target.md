@@ -22,6 +22,7 @@ inside Phase 3 is not in context when Phase 3 runs.
 - [The outcome decomposes into drivers before any number goes into it](#the-outcome-decomposes-into-drivers-before-any-number-goes-into-it)
   - [Each driver takes its value from a named place in the corpus](#each-driver-takes-its-value-from-a-named-place-in-the-corpus)
   - [The multiple's inputs have homes too, and not one of them is ARR](#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)
+  - [The ARR term declares its composition, or the exclusion is invisible](#the-arr-term-declares-its-composition-or-the-exclusion-is-invisible)
   - [A structural driver may be sourced from the reference class; a policy driver may only be checked by it](#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it)
 - [Every driver value names its driver in both directions, and a low one with none is unmodelled](#every-driver-value-names-its-driver-in-both-directions-and-a-low-one-with-none-is-unmodelled)
 - [The verdict names which driver binds, and by how much](#the-verdict-names-which-driver-binds-and-by-how-much)
@@ -205,6 +206,41 @@ for that, when what is true is that this roadmap cannot sell it for that.
 memory.** A band whose ends trace to nothing is a scalar with error bars painted on, and it fails
 in the direction that hides: it *passes* the flip test, because ends chosen close together give
 the same verdict at both, and the run then reports a verdict that rests on the width of a guess.
+
+### The ARR term declares its composition, or the exclusion is invisible
+
+The table above establishes that none of the multiple's inputs is ARR. That makes the left term of
+`exit value = ARR at exit × multiple` the one place the revenue composition enters the identity at
+all — and it enters as a single number, which is exactly the shape that hides what is not in it.
+
+**A financial model may legitimately exclude a revenue line, and a good one sometimes must.** A
+metered layer and a subscription layer have different retention, so mixing them lets usage revenue
+flatter seat churn — and refusing to mix them is the model being right. What the model then reports
+is a **subset** figure, and if the exclusion is filed inside the model as *revenue outside this
+model* it reads as a modelling decision and disappears. **The identity is where it has to be
+stated**, because the identity is what a verdict is solved from.
+
+**So the ARR term names what it leaves out.** The included side is already enumerated — it is the
+rows of the assumptions table in [plan-template.md](plan-template.md) — so restating it on the
+verdict note would be a second source of truth nothing keeps in sync. The excluded side has no such
+home, and that is the field: the verdict note carries **`arr_excludes`**, a block list of the
+`assumption` notes whose revenue the ARR term does not carry. `vault-lint.sh --assumption-rows`
+fails a line that the roadmap ships a change to, that the model has no row for, and that no verdict
+note declares — the exclusion is allowed, the silence is not.
+
+**The failure this prevents, and it is the most expensive one this file has on record.** A revenue
+line was excluded from the model and shipped on the roadmap, at roughly ten times the revenue per
+account of the line that stayed in, and the plan said so in its own one-pager. The verdict was
+re-solved three times. Each re-solve corrected a different term — a rate, a convention, a sample
+size — and each inherited the same denominator, so **the answer never moved.** Nothing was wrong
+with any of the three solves. What was wrong was a term of the identity that no check was pointed
+at, because every check was pointed at what was present.
+
+**This is `roadmap-sequencing.md`'s rule run backwards.** That file makes every roadmap item name
+the assumption it moves, which is what stops an item being maintenance wearing a roadmap label. The
+missing half was the reverse: a revenue line on the roadmap has to be reachable from the model that
+solves the target. Both directions or neither — with only the forward one, the roadmap can ship a
+line the identity has never heard of and every document reads correct.
 
 ### A structural driver may be sourced from the reference class; a policy driver may only be checked by it
 

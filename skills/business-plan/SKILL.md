@@ -86,8 +86,9 @@ and is never restated here.
     [vault.md](references/vault.md#a-session-invokes-whichever-script-its-shell-tool-can-run)
     for which one a given session picks.) A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
-    bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table` and
-    `--binding-driver`, and exits
+    bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
+    `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and
+    `--claim-drift`, and exits
     non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
@@ -114,6 +115,31 @@ and is never restated here.
     `--binding-driver` is in the gate for that same reason one section over — the verdict section
     is hand-edited to the last minute and its note was minted once — and invariant 16 states what
     it holds.
+    `--monitoring` is in the gate because a snapshot cannot see a direction: every profile carries
+    the date it was researched and every claim a `stale_after`, and both answer *is this still
+    true* rather than *which way is this moving* — which is the only thing separating a closing
+    window from an open one. It fails an axis with no instrument, no cadence, or no decision it
+    would change. `--deliverable` is in the gate because what an outside reader receives is held
+    to the same terms the ledger is: it reads the rendered `deliverables/*.html` and fails on a
+    strikethrough span, a note ID or an objection code — vault addresses that resolve for anyone
+    holding the corpus and resolve to nothing for the audience the document is for. **Invariant 14
+    does not change**: retraction stays visible in the plan, and the deliverable reaches its reader
+    through Phase 5's restate-forward step rather than through a strip filter.
+    `--assumption-rows` is in the gate because it is the only inverse the assumptions table has:
+    the rule that every number in a projection is a named row is checked by reading the model, and
+    whether a named assumption is MISSING from the table can only be checked against the notes. It
+    fails a declared model input with no row and no stated exclusion, a row matching no assumption
+    `title`, and a revenue line the roadmap ships that the model does not carry and the identity
+    does not declare. **What that last one cost, undetected, is the largest miss on record here:**
+    a revenue line existed as correctly authored notes, never became rows, was filed as revenue
+    outside the model, and three separate verdict re-solves each corrected a different term and
+    inherited the same denominator — so the answer never moved.
+    `--claim-drift` is in the gate because it is the only check that can see invariant 20 being
+    undone after it was satisfied: it re-opens a claim whose cited section has been rewritten
+    since the note recorded reading it. `--used-in` cannot — the heading is untouched, so the
+    citation still resolves — and the render is the last moment before the section reaches a
+    reader with no way to check it. Both are `schemaVersion` 3 rules, so a vault at 1 or 2 is told
+    the rule was not applied rather than that its documents agree.
     **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
     cites it, so the gate's second part would check an empty set there, and running the whole
     gate anyway teaches it as cadence-wide when it belongs to one phase.
@@ -139,6 +165,19 @@ nearest-reachable solve and the negotiation script are in
     `Kind` cell hand-edited away from its note's `driver_kind` in either direction — the cell being
     otherwise the cheapest way past the first check. The fields it reads are
     [references/vault.md](references/vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
+    **A third clause sits on the identity's own terms: the ARR term declares its composition.** A
+    model may legitimately exclude a revenue line — a metered layer must not be allowed to flatter
+    subscription churn — but an exclusion the identity does not state is a denominator nobody can
+    see, and `vault-lint.sh --assumption-rows` fails a line the roadmap ships a change to that the
+    model has no row for and no verdict note names in `arr_excludes`. **The failure:** the excluded
+    layer was a roadmap item carrying an order of magnitude more revenue per account than the line
+    that stayed in, the plan said so in its own one-pager, and three verdict re-solves each
+    corrected a different term — a rate, a convention, a sample size — while inheriting the same
+    denominator, so the answer never moved. Nothing was wrong with any solve; a term of the
+    identity had no check pointed at it. The method is strong at preventing false statements and
+    weak at noticing missing ones, and this is the term that costs most.
+    [references/target.md](references/target.md#the-arr-term-declares-its-composition-or-the-exclusion-is-invisible)
+    carries it.
 
 17. **The vault is a git repo (Phase 0): commit at every meaningful write, regenerate the vault's
     `README.md` and `research/timeline.md` in the commit that changes a fact either one states,
@@ -219,12 +258,25 @@ nearest-reachable solve and the negotiation script are in
     document. What the verdicts remove is skipping it silently.
 
 20. **A claim is not finished when the note is written; it is finished when the prose it names
-    carries it.** Writing the note and writing `used_in` are one act, and the claim stays open
-    until the section `used_in` names actually says what the note says — invariant 19 is where
-    that gets read. **Where the note is a supersession, the closing edit is the `reconciled:`
-    date on it**, which is the one form of this obligation the corpus can see: the sweep fails a
-    supersession carrying none, so the open claim is visible from outside instead of being a
-    thing the conductor is trusted to remember. This is an invariant rather than a Phase 3 step because the obligation
+    carries it — and it does not stay finished on its own.** Writing the note and writing
+    `used_in` are one act, and the claim stays open until the section `used_in` names actually
+    says what the note says — invariant 19 is where that gets read. **Where the note is a
+    supersession, the closing edit is the `reconciled:` date on it**, which is the one form of
+    this obligation the corpus can see: the sweep fails a supersession carrying none, so the open
+    claim is visible from outside instead of being a thing the conductor is trusted to remember.
+    **And the read expires when the section is rewritten**, which is the half that was invisible:
+    the claim records the content hash of each section it was read against, in
+    `reconciled_sections` beside that same date, and `vault-lint.sh --claim-drift` **re-opens** the
+    claim when a hash no longer matches. The failure it closes happened *after* this invariant had
+    been satisfied once — a claim was written into a plan section, a later re-solve rewrote that
+    block, the heading was untouched so `used_in` still resolved, the gate stayed green, and the
+    drift was found by hand days later. A hash cannot say the section still agrees with the note;
+    that is invariant 19's read. What it says is that the text somebody read is the text standing
+    there now, so a rewrite is visible from outside instead of being something the conductor has
+    to notice. Gated on `schemaVersion` 3, because every claim in every finished corpus is already
+    cited into a plan and a rule demanding a recorded hash from each of them would fail every
+    existing vault the day the plugin updates;
+    [references/vault-migration.md](references/vault-migration.md) carries the back-fill. This is an invariant rather than a Phase 3 step because the obligation
     outlives Phase 3: the vault keeps growing through drafting and into the red team, and a
     claim minted while the panel is running is subject to it exactly as one minted while the
     plan was being written. Written into the drafting phase, the rule would stop applying at
@@ -346,14 +398,21 @@ name wins; for an idea with no name, do NOT write any file — settling the name
 grill turn). Look inside `~/Documents/go-to-market/<slug>/` (and `ls` the parent for an existing
 folder naming the same product). A market analysis already there is prior work: **reuse** if
 the dossier still matches reality and `_Analyzed:` is under ~90 days old in a fast-moving
-category (AI tooling, consumer apps) or ~12 months otherwise; between those, run the
-competitor-analysis Monitoring plan re-check (pricing pages, changelogs) as a partial refresh
-and note it in Coverage; past them, or if the product's stage/boundary moved, plan a full
-refresh.
+category (AI tooling, consumer apps) or ~12 months otherwise; between those, work
+`competitor-analysis.md`'s `## Monitoring plan` axis by axis as a partial refresh — each axis's
+instrument read, and the decision that axis says would flip stated as flipped or not — and note
+it in Coverage; past them, or if the product's stage/boundary moved, plan a full refresh.
+
+**A partial refresh re-reads the axes, never the pages.** A pass over pricing pages and
+changelogs answers *is this still true*, which is the question the `_Analyzed:` date beside it has
+already answered and which every claim note's `stale_after` asks again — so it returns *still
+accurate* over a vendor whose direction reversed a month ago, and a direction is the only thing
+separating a closing window from an open one. Only an axis carries one, which is why this branch
+reads the axes and their decisions rather than re-checking the pages those axes are read from.
 
 **Scaffold the vault before anything writes.** The vault path IS the slug directory — never a
 `vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with
-`"schemaVersion": 2` — the current version, so every check the schema carries applies to this
+`"schemaVersion": 3` — the current version, so every check the schema carries applies to this
 vault from its first note — and copy [references/vocabulary.yml](references/vocabulary.yml) to
 `<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
 vocabulary it was written under after the skill ships new terms. The copy carries the shipped
@@ -509,6 +568,42 @@ whose provenance names the document's kind and its year — never the text, neve
 a copy in the vault. That rule is stated in the paragraph that creates the exposure, because the
 vault is a git repo from this phase and is offered a remote in Phase 5: omit it and the sweep's
 own success is what puts a client's confidential document into a corpus built to be shared.
+
+**The product's own records are the third inventory, and the one this method kept walking past.**
+The two sweeps above cover what the founder **wrote**; this one covers what the product
+**measures** — its users, its own operation, and the job it claims to do. It is the artifact
+sweep's argument one step closer to the subject, with one property none of the founder's own
+artifacts has: it is a dated series about the very people the plan is about. The dossier pass
+above built the inventory; **this phase is where the readable entries get read**, because that
+pass can only see shapes — the query itself needs the founder, and the founder is here. An
+inventory of unopened stores is the original defect wearing the shape of a fix.
+
+**Each figure read becomes a note, on the same terms the artifact sweep uses.** The instrument is
+a [source with no public URL](references/vault.md#the-source-note-keeps-the-quote-that-outlives-the-url)
+whose provenance names the store and the query, and each figure read off it is a `fact` resting on
+that source. Notes rather than prose, for the reason every rule in this release exists: the
+dossier's inventory is prose a later phase may never re-open, while a dated note is on disk at the
+moment a dimension files the binding driver at `L` for *"no instrument exists"* — which puts the
+contradiction in the corpus instead of in somebody's memory of Phase 0, and is the only reason the
+conductor's read at Phase 2's checkpoint can catch it at all. Invariant 3 then governs what the
+figure means before it is cited as evidence for a mechanism.
+
+**An entry closes with a figure and its date, or with its blocker named — never with the store
+named and nothing else.** A blocker is a real one: the instrument is not built, the access is the
+founder's to grant, the export is theirs to run. *Nobody ran the query* is not a blocker, and on
+the run this comes from it was the only thing standing between the corpus and every instrument it
+needed. Invented, and the shape rather than the products is the point: a completion log for the
+product's core action settles how often the job actually gets done per active account — the
+denominator the plan's retention assumptions are otherwise guessing — and a per-account progress
+table settles what fraction of accounts reach the step the whole thesis turns on, **as a
+percentage**, which ends an argument between founder and analyst that no quantity of category
+research could.
+
+**What enters the vault is the figure, never the rows** — the count, the fraction, the date and
+the query that produced it, and never a row, never a free-text answer verbatim, never an export
+copied into `research/`. Same rule as the client document above, and worse here in one way: this
+data is the subject's own users', which makes copying it into the corpus the easier thing to talk
+yourself into.
 
 **The dossier is the plan's product-truth spine — thinness here propagates everywhere.** A
 dossier that is *true but small* is more dangerous than one that is wrong, because nothing in
@@ -691,6 +786,31 @@ skips the question the error existed to ask.
   their competitor, its two dated traction points and its stage. Without it a run passes every
   other check on this list and Phase 3's implied-growth test then points at a section that was
   never produced — a check that silently does nothing is worse than one that was never written.
+- `competitor-analysis.md` carries its `## Adoption candidates` section, rolled up from the
+  profiles, **and every profile that carried no adopt section is named there as missing it.** Each
+  candidate arrives as the fields a `milestone` note is authored from, which is what lets Phase 3's
+  roadmap step adopt and date it or refuse it with the reason on the record
+  ([references/roadmap-sequencing.md](references/roadmap-sequencing.md#rule-8--an-adoption-candidate-is-the-other-legitimate-source-of-an-item-admitted-or-refused)).
+  Without the roll-up the profiles found what to copy and the plan never sees it: the run passes
+  every other check on this list while the cheapest move available to a founder — copy the part
+  that already works, from a company that has already paid to learn it — never reaches the roadmap.
+  The named-as-missing half is what stops the roll-up from clearing this line while being short for
+  the wrong reason, since a category with little worth copying and a set of profiles nobody asked
+  read identically here and only the second is worth re-running. The first line's "all contract
+  files exist" cannot do the work — it is satisfied by `competitor-analysis.md` existing, and a
+  document existing says nothing about whether anything in it points at what this product is
+  behind on.
+- `competitor-analysis.md` carries its `## Monitoring plan`, and **every axis names an instrument,
+  a cadence and the decision it would change.** Those three columns are what the render gate's
+  `--monitoring` fails an axis for leaving empty, and this checkpoint is the last one at which
+  filling one in costs a sentence: the researcher who knows which direction a profile was pointed
+  is here now and gone by Phase 5, and an axis invented at the render is a watchlist entry rather
+  than a trigger. Every profile in that document is a snapshot dated on the day it was taken, and
+  a snapshot cannot see a direction — one researched the day before it was used missed a strategic
+  reversal by that vendor six weeks earlier, the single fact that most changed what the competitor
+  meant. The first line's "all contract files exist" cannot do this work: it is satisfied by the
+  document existing, and a document existing says nothing about whether anything in it watches a
+  direction rather than a page.
 - `research/growth-curves.md` exists, and `market-analysis.md` carries its `## Comparable growth
   curves` section: the series indexed to months since origin, each company's origin event named,
   and the companies held out of the indexed overlay listed rather than dropped. The band says how
@@ -700,6 +820,18 @@ skips the question the error existed to ask.
   still passes. An origin left unnamed makes two series incomparable while they sit on one axis
   looking comparable, and an exclusion left off the list reads as a comparable nobody found rather
   than one whose origin could not be dated.
+- That same `## Comparable growth curves` section carries the **mechanism record** beside the
+  indexed series — per comparable, how it got from zero to its first $1M: the launch motion, the
+  first channel that produced PAYING customers, what the founder did personally that did not scale,
+  what compounded, and what was tried and abandoned. A `"rates only, no origin account found"`
+  line against a comparable is a **pass** on this check: it is the record doing its job, and
+  silence is the failure. Without the record Phase 3's `## Growth engine` section has only
+  category-general rules to write from, and the plan's acquisition assumptions read as evidenced
+  when they were designed
+  ([references/growth-engine.md](references/growth-engine.md#the-first-channel-is-cited-from-the-mechanism-record-never-chosen-out-of-the-rules-above)
+  carries that rule and the failure behind it). This checkpoint is also the last one whose context
+  is live: the bucket this product sits in is the one the indexed set is emptiest in, so a mechanism
+  nobody hunted here is one nobody can hunt by Phase 5.
 - **Where the settled target is an exit**, `market-analysis.md` additionally carries its `## Exit
   comparables & implied multiple` section: the disclosed acquisitions in the category, each indexed
   to the acquired company's growth slope at the moment of sale, the multiple each one implies, and
@@ -721,6 +853,19 @@ skips the question the error existed to ask.
   were guessed silently.
 - `Value hypothesis verdicts` covers every VH in the dossier (confirmed / weakened / refuted /
   untested) — Phase 3's Solution section may only build on confirmed ones.
+- `research/product-dossier.md` carries its `## Instrumentation inventory`, and **every row is
+  reconciled by name against what the fleet came back with, both directions.** *Forward:* a
+  `question` note's `gaps` entry or an `L`-tagged driver naming a quantity some row says an
+  instrument could settle means that instrument was never opened — the binding driver gets filed
+  at `L` for *"no instrument exists"* while a dated `fact` note carrying the figure sits in the
+  same vault, and nothing compares the two. *Reverse:* a row marked read, with its `fact` note
+  minted, and the dimension owning that quantity resolved through a comparable anyway — the
+  measurement is on disk and the plan is about to run on somebody else's proxy for it. Both
+  directions carry weight for `--red-team`'s reason: with only the forward one, the cheapest way
+  past an instrument nobody wanted to query is to delete its row from the inventory. This phase
+  is the last one whose context is still live when the fix costs a single query, and the first
+  line's "all contract files exist" cannot do the work — it is satisfied by the dossier existing,
+  and a dossier existing says nothing about whether anything in it was opened.
 - Lint is clean, and every dimension left a `question` note. A dimension with no gaps is a
   dimension that did not look.
 
@@ -1106,6 +1251,40 @@ not ship, and neither does one whose citation names a document that was renamed 
 that was cut. The failure this stops is the worst one available — a polished PDF asserting
 flatly what the corpus already withdrew, handed to the one reader with no way to check it.
 
+**Restate forward before you render — the artifact states what is true now, and the ledger keeps
+the archaeology.** Invariant 14 is right and does not change: a retracted note keeps its status
+and its reason, and a withdrawn line in the *markdown* stays struck through with the reason,
+because silent deletion lets a dead claim return two drafts later with its cause of death erased.
+The deliverable is the other side of that rule. Its reader was never in the room, and a note ID or
+a red-team objection code is a **vault address** — it resolves for anyone holding the corpus and
+resolves to nothing for the audience the document is for. A reader who gets both sees a document
+arguing with its own previous draft. Left unchecked, a finished plan and its model carry well over
+a hundred pieces of that narrative between them — into the two documents an investor reads.
+
+So this is a step with an output, not a cleanup pass. For every correction the markdown carries —
+a strikethrough, a superseded figure, an objection that changed the answer — **write the sentence
+the corrected claim now supports** and let the artifact carry that. Then drop the address:
+`[S#]` and `[F#]` citation codes are the reader's trace and stay; note IDs and `R<n>-O<n>` codes
+do not.
+
+**It is a restatement, never a strip filter, and that distinction is the whole design.** Removing
+`~~…~~` mechanically leaves *"That multiple was actually…"* with no antecedent — the sentence
+still renders, still reads like prose, and now asserts nothing. No script can judge an antecedent,
+so the dangling-antecedent half is a named item in `rendering.md`'s render → Read the PDF back →
+check every page loop, and the mechanical half is a check:
+
+- **`vault-lint.sh --deliverable --vault "$VAULT_PATH"`** reads the *rendered*
+  `deliverables/*.html` and fails on a strikethrough span, a note ID or an objection code. It
+  gates the **rendered HTML rather than the markdown** on purpose: the markdown is the working
+  document and keeps everything invariant 14 owes it, the HTML is what the outside reader holds,
+  and the HTML is the only one a check can hold to this at all — the restatement itself is a
+  judgement.
+- It is one of `--release-gate`'s parts, so the call before the first render is still one call.
+  But at that point nothing has been rendered yet and the mode says so, which means **the run that
+  gates what ships is the one inside the render loop**, after the HTML exists and before the PDF
+  is called done. A deliverable that failed it goes back through the restatement above, not
+  through a find-and-replace.
+
 Render `business-plan.md` (+ the financial model) into ONE polished, self-contained
 `deliverables/business-plan.html` and a print-quality `deliverables/business-plan.pdf`, and
 `one-pager.md` into its own single-page pair (no cover page — rendering.md's single-page
@@ -1153,6 +1332,15 @@ three milestones, and where everything landed. Invite pushback on the specific b
 ## Quality bars — non-negotiable
 
 - Every market fact traces to `sources.md` or the founder brief; confidence tags survive import.
+- `competitor-analysis.md`'s `## Monitoring plan` watches axes rather than pages: every axis names
+  the direction being watched, the instrument read to answer it, a cadence, and the decision that
+  flips if the answer changes — and `vault-lint.sh --monitoring` fails a row leaving any of the
+  three empty. Every profile carries the date it was researched and every claim its `stale_after`,
+  so the corpus asks *is this still true* twice over and nothing in it asks *which way is this
+  moving* — and a direction is the only thing separating a closing window from an open one. A
+  profile researched the day before it was used missed a strategic reversal by that vendor six
+  weeks earlier: the single fact that most changed what the competitor meant, and a re-check of
+  pricing pages could not have seen it, because a snapshot cannot see a direction.
 - Wherever the plan or the red team reasons from a count to a cause, the metric states what else
   produces that number, and a metric introduced after the conclusion it supports is named as one.
   Unexcluded, the alternative explanation ships as the evidenced part of the argument — and a
@@ -1185,6 +1373,14 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
   the claim — a claim whose named section does not say what the note says is still open,
   whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
+- Every cited section's content hash is recorded in the claim's `reconciled_sections` as it was
+  read, and `vault-lint.sh --claim-drift` re-opens the claim when the section no longer matches.
+  The bar above is satisfied once, at drafting; this is the only thing that keeps it satisfied
+  afterwards. A later re-solve rewrites the block and leaves the heading alone, so `--used-in`
+  still resolves and the gate stays green over a section that has stopped saying what the note
+  says — found by hand days later, or not at all, by which point the one reader with no way to
+  check it has acted on it. A `schemaVersion` 3 rule, so a vault at 1 or 2 is told the rule was
+  not applied rather than that its documents agree.
 - The steady-state ceiling is computed and stated, not implied by a 12-month curve, with every
   input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
   the ceiling of that configuration, with one changed policy value beside it.
@@ -1235,8 +1431,20 @@ three milestones, and where everything landed. Invite pushback on the specific b
   declares, and no two items sharing a constrained `resource` are asserted concurrent. Both are
   read off the notes by `vault-lint.sh`, and a plan that has a roadmap and no `milestones/`
   directory has neither check run over it — which prints the same green as one that passed them.
-- The financial model's assumptions table is complete — no number appears in a projection that
-  isn't a named assumption row.
+- The financial model's assumptions table is complete in **both** directions — no number appears
+  in a projection that isn't a named assumption row, **and** no assumption note that declares
+  itself a model input is missing from the table. `vault-lint.sh --assumption-rows` reads the two
+  against each other; the second half is the one that was prose and never fired, and what it cost
+  was a whole revenue line that existed as correctly authored notes, never became rows, and was
+  therefore filed as *revenue outside this model* — which reads as a modelling decision and was a
+  consequence of the omission. Every verdict downstream inherited a denominator missing it.
+- A revenue line the roadmap ships a change to is reachable from the model that solves the
+  target, or the exclusion is stated at the identity. Excluding one is legitimate — a metered
+  layer must not be allowed to flatter subscription churn — so the note carries
+  `excluded_from_model` with the reason and the verdict note names it in `arr_excludes`. Undeclared,
+  the ARR term every corner is solved against is a subset figure and nothing says which subset, so
+  three re-solves can each correct a different term, inherit the same denominator, and never move
+  the answer.
 - A ranged target's readout is the set of corner verdicts, with the binding driver and its `kind`
   named per corner, and the founder's stated range labelled apart from the evidenced range.
   Collapsed to one verdict or one interval, the finding is destroyed exactly where it matters — a
@@ -1260,6 +1468,14 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Where the target is an exit, the red team met the acquirer's question: a *named* buyer, the hole
   it patches, and the bidder count. An unnamed acquirer is not a driver value, and a lens that
   accepts "someone would want this" grants the driver the verdict was most sensitive to.
+- Every rendered deliverable reaches its reader carrying no vault address, and
+  `vault-lint.sh --deliverable` reads `deliverables/*.html` and fails on a strikethrough span, a
+  note ID or an objection code. Invariant 14 keeps retraction visible in the plan, which is right
+  for the working document and wrong for this one: a note ID and an objection code are addresses
+  into a corpus that reader does not hold, and a struck-through line with its reason beside it is
+  a document arguing with its own previous draft. The route out is Phase 5's restate-forward step
+  and never a strip filter — deleting a `~~…~~` span leaves the sentence after it correcting an
+  antecedent the reader can no longer see.
 - Rendered deliverables verified page-by-page.
 
 ## Common failure modes

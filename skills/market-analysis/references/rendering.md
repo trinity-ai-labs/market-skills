@@ -195,6 +195,21 @@ Render, then **Read the PDF back** (the Read tool renders PDF pages) and inspect
    the strip was skipped, so nothing errors and the layout is perfect — the only detector is
    reading the headings. Grep the HTML for `{#` before rendering the PDF, and confirm each
    anchor came out as the heading's `id` rather than as part of its text.
+9. **`vault-lint.sh --deliverable --vault "$VAULT_PATH"` over the rendered HTML, and it has to
+   pass before the PDF is called done.** It fails on a strikethrough span, a note ID, or a
+   red-team `R<n>-O<n>` code — the vault addresses that resolve for anyone holding the corpus and
+   resolve to nothing for the reader this document is for. It reads the **rendered HTML**, not the
+   markdown: the markdown is the working document and keeps every strikethrough the vault's
+   retraction rule owes it, and the HTML is what the outside reader holds. The mode is one of
+   `--release-gate`'s parts, but that call happens *before* the first render, where there is
+   nothing to read — so this is where it actually gates.
+10. **No sentence left without its antecedent, and this is the item no script can cover.** A
+    correction reaches the artifact **restated forward**, as what is true now — not with the
+    `~~…~~` deleted, which leaves *"That multiple was actually…"* pointing at a clause that is no
+    longer there. The sentence still renders, still reads like prose, and now asserts nothing;
+    judging an antecedent is a read, which is why the mechanical half is item 9 and this half is
+    here. Read each page where item 9 reported anything, and each page whose source markdown
+    carried a correction, and check that every sentence still says something.
 
 **The Chromium two-column silent clip — this has bitten twice; check for it explicitly.** With
 a multi-column layout, headless Chromium can silently DROP overflow content instead of

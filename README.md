@@ -5,16 +5,25 @@ Two agent skills that take a product to market, packaged as one plugin. Both are
 - **`market-analysis`** — heavy, evidence-first market research for a product (a code repo, a
   spec/doc, or an idea): value-hypothesis extraction, multi-agent competitor discovery and
   profiling, bottom-up market sizing, customers/JTBD, pricing & willingness-to-pay, timing,
-  channels, moats — plus infra-cost archaeology on repo sources (derive COGS from the actual
-  stack, project cost vs revenue at scale) — with adversarial verification of every
-  load-bearing number.
+  channels, moats — plus two archaeology passes over repo sources: infra-cost (derive COGS from
+  the actual stack, project cost vs revenue at scale) and instrumentation (what the product
+  already records, and which number in the analysis it could settle) — with adversarial
+  verification of every load-bearing number. Each competitor comes back twice: where they leave
+  the market open, and what they already do better than you, priced as something you could adopt.
+  Comparable companies come back the same way — how fast they grew, and how they actually got
+  their first paying customers. The analysis closes with a monitoring plan that says which way each
+  axis is moving rather than which pages to re-check: the instrument that reads each axis, the
+  cadence, and the decision it would change.
 - **`business-plan`** — the conductor that grills the founder, runs `market-analysis` as its
   research engine, and produces the plan artifact the founder's track actually needs
   (investor memo / bootstrap operating plan / lender classic) plus a one-pager, a bottom-up
   financial model with strategy simulations (bootstrap vs raise as parallel paths, beachhead
   sequencing, profit-reinvestment loops, pre-committed switch triggers), an adversarial
   red-team pass, and a growth-engine section that turns GTM into automated per-product agent
-  skills (content, screenshots/video, docs-sync).
+  skills (content, screenshots/video, docs-sync). It consumes both halves of the research the
+  bullet above promises: an adoption candidate is either sequenced onto the roadmap as a dated
+  item or refused with the reason on the record, and the first channel is cited from what
+  comparable companies actually did rather than picked out of the growth-engine's own rules.
 
 Both write deterministically to `~/Documents/go-to-market/<product-slug>/` (same product → same
 folder, re-runs update in place) and render polished, self-contained HTML + page-verified PDF
@@ -110,8 +119,8 @@ guessed conversion rate talks you out of something the evidence never spoke to.
 with the driver that binds, that driver's kind and the count of what stands under it, and
 `vault-lint.sh --binding-driver` holds the rendered plan to them: a section that says *unreachable*
 where the note says *unreachable at six hours a week across two channels* fails, and so does a
-finding whose evidence is two deals with the same counterparty and does not say so. Until this
-release both were prose that read correctly and nothing verified — and a verdict is the one output
+finding whose evidence is two deals with the same counterparty and does not say so. For nine
+releases both were prose that read correctly and nothing verified — and a verdict is the one output
 here most likely to make you stop, so it was the one held to the loosest standard.
 
 That scrutiny runs in **both directions**. A cautious number is a claim about your business
@@ -157,6 +166,15 @@ documents you produced for clients, products in the category you've used — rat
 asking about them. Where those documents are confidential, the corpus records what they
 establish with a provenance note, never the file itself.
 
+It inventories what your **product** already records on the same reasoning, and before any
+research is commissioned: the tables, event logs, forms and admin reports it carries, what each
+one measures, and which number in the plan it could settle. A form field asking arriving users
+what they came to do is first-party evidence about demand that no competitor can obtain and no
+survey improves on, and its usual state is unread with the row count unknown — so whatever is
+readable gets read in that phase rather than estimated for the rest of the run. What enters the
+corpus is the figure, the date and the query behind it: never the rows, never a free-text answer
+verbatim, and never a copy of your users' data.
+
 ---
 
 ## On disk
@@ -167,7 +185,7 @@ lives inside it:
 
 ```
 ~/Documents/go-to-market/<product-slug>/
-├── .vault/config.json       # schemaVersion — a directory without it is not a vault
+├── .vault/config.json       # schemaVersion — currently 3; a directory without it is not a vault
 ├── _vocab.yml               # controlled subject vocabulary
 ├── sources/ facts/ claims/ assumptions/ questions/ decisions/ milestones/ # one file per note
 ├── research/                # all prose — market-analysis dimensions, product-dossier.md,
@@ -190,6 +208,15 @@ vault-relative, resolve nowhere, and lint clean anyway.
 It's also what makes a corpus **portable**: copy the slug directory and every citation, every
 `rests_on` edge, and every research file travels with it.
 
+**A vault created under an earlier version keeps working, and that is a promise rather than an
+accident.** `.vault/config.json` carries a `schemaVersion`; a new vault is created at **3**, and a
+vault at 1 or 2 is held to exactly the rules it was written under — where a check reads a field
+that version does not have, it reports that the rule was not applied rather than that your
+documents agree. Moving a vault up is opt-in, one version at a time, and forward-only; what each
+step asks for is in
+[`vault-migration.md`](skills/business-plan/references/vault-migration.md), and until you take it
+nothing you already have changes.
+
 This is a summary, not the authority — see
 [`skills/business-plan/references/vault.md`](skills/business-plan/references/vault.md#layout-one-directory-per-type-one-file-per-note)
 ("Layout: one directory per type, one file per note") and
@@ -203,12 +230,25 @@ The plugin ships two executables, `vault-lint.sh` and `vault-lint.ps1` — the s
 POSIX shell and in PowerShell 5.1, held byte-identical by a JSON parity gate. `business-plan`
 builds a claim vault at `~/Documents/go-to-market/<product-slug>/` — every load-bearing
 number traced to a dated source — and `vault-lint` is the read-only whole-corpus check that
-gates it: dangling edges,
-confidence that stopped propagating, near-miss subject terms, duplicate sources, retracted notes
-still cited, and — on a vault at `schemaVersion: 2` — a roadmap whose order contradicts itself,
-either a prerequisite scheduled after the item that needs it or two items competing for one
-constrained resource while the plan asserts they run side by side. It also reads the roadmap
-table in the plan against the milestone notes it was rendered from, in both directions.
+gates it.
+
+**Inside the note directories** it finds dangling edges, confidence that stopped propagating,
+near-miss subject terms, duplicate sources, retracted notes still cited, and — on a vault at
+`schemaVersion: 2` — a roadmap whose order contradicts itself, either a prerequisite scheduled
+after the item that needs it or two items competing for one constrained resource while the plan
+asserts they run side by side.
+
+**Nine further modes leave the note directories and read the documents**, because the disagreement
+worth catching before a render is between the ledger and the document somebody is about to hand
+over: citations that no longer resolve, sections a supersession put in doubt, panel lenses that
+wrote no objection row, the roadmap table against the milestone notes it was rendered from, the
+verdict on your target against the drivers stored under it, whether the monitoring plan names an
+axis with an instrument, a cadence and the decision it would change, the financial model's
+assumptions table against the notes that declare themselves inputs to it, every cited section
+against the content hash the claim recorded when it read it, and — the only mode that reads a
+rendered file rather than the vault — whether a deliverable carries a vault address out to a reader
+who has no vault. **`--release-gate` is all ten as one call**, which is what you run before a
+render.
 
 Claude Code puts an enabled plugin's `bin/` on whichever shell tool the session has — a
 session with the Bash tool gets `vault-lint.sh` on that tool's `PATH`; a session with only
@@ -226,6 +266,10 @@ vault-lint.sh --supersession-sweep --vault "$VAULT_PATH"
 vault-lint.sh --red-team --vault "$VAULT_PATH"
 vault-lint.sh --roadmap-table --vault "$VAULT_PATH"
 vault-lint.sh --binding-driver --vault "$VAULT_PATH"
+vault-lint.sh --monitoring --vault "$VAULT_PATH"
+vault-lint.sh --deliverable --vault "$VAULT_PATH"
+vault-lint.sh --assumption-rows --vault "$VAULT_PATH"
+vault-lint.sh --claim-drift --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
@@ -314,18 +358,97 @@ numbers, because a stray pair of digits in the same paragraph would otherwise si
 Nothing here reads your prose for sentiment or shape: the section-with-no-note check fires on the
 section being there and non-empty, never on what it says. A vault with no verdict passes, and so does an existing
 corpus's ceiling claim that carries none of the new fields — the fields are owed outright only under
-the subject this release introduced, which no corpus written before it can hold.
+the `target-verdict` subject, which no corpus written before that term can hold.
 
-`--release-gate` is the call before a render, and the only one that asks every question. It runs
-the bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table` and
-`--binding-driver`, prints each part under its own heading, and exits with the worst status any part returned — so the gate
-is clean only when every part is. The alternative was several calls made from memory, and which
-of them actually ran was a matter of recall.
+`--monitoring` asks the competitor analysis which way things are moving, which is the one question
+nothing else in the corpus asks. Every profile carries the date it was researched and every claim
+note carries a `stale_after`, and both of those answer *is this still true* — a snapshot, and a
+snapshot cannot see a direction. So `competitor-analysis.md`'s `## Monitoring plan` is a table
+rather than a paragraph: one row per axis, each naming the **instrument** that reads it, the
+**cadence**, and the **decision it would change**. This fails an absent section, a section with no
+axis in it, and any row that leaves one of those three columns empty. Each column earns its place
+by what goes wrong without it — an axis with no instrument is a thing somebody intends to notice,
+one with no cadence is a re-check with no date, and one with no decision behind it is a signal
+nobody acts on, which costs the same to collect as one that matters. A cell carrying no letter or
+digit — an em dash, a run of hyphens — reads as empty, because that is the cheapest way past the
+rule. A vault with no `competitor-analysis.md` profiled nobody and passes; gated on
+`schemaVersion` 2.
+
+`--deliverable` is the only mode that reads a rendered file rather than the vault, and it exists
+because the vault's rules and the artifact's are opposites. In the vault a retraction stays
+visible — a struck-through line keeps its reason, because silently deleting a dead claim lets it
+come back two drafts later with its cause of death erased. The reader of the PDF was never in the
+room, and a note ID or a red-team `R<n>-O<n>` code is a **vault address**: it resolves for anyone
+holding the corpus and resolves to nothing for the audience the document is for. Get both and you
+are reading a document arguing with its own previous draft. So this reads `deliverables/*.html`
+and fails on a strikethrough span, a note ID, or an objection code.
+
+**It gates the rendered HTML, not the markdown, and that is the design.** The markdown is the
+working document and keeps everything the retraction rule owes it. The HTML is what the outside
+reader holds — and it is the only one a check can hold to this at all, because the fix is a
+judgement: a correction reaches the artifact **restated forward**, as what is true now. Deleting
+the `~~` leaves *"That multiple was actually…"* with no antecedent, which still renders, still
+reads like prose, and now asserts nothing. No script can judge an antecedent, so that half is a
+step in the render loop's page-by-page read-back and this is the half that is mechanical. A note
+ID is matched as its type prefix plus the eight characters a generated ID carries, which is what
+keeps it off `FACT-CHECKED` in ordinary prose. A vault that has rendered nothing passes.
+
+`--assumption-rows` does the same job for the financial model that `--roadmap-table` does for the
+roadmap, and it exists because the rule it inverts had no other half. The plan template requires
+that no number in a projection is anything but a named assumption row — correct, and load-bearing
+against fake precision — and nothing asked whether a named assumption was *missing* from the table.
+On a real engagement two assumptions governing a whole revenue line existed as properly authored
+notes, never became rows, and the rule meant to enforce rigour made that revenue line unable to
+enter the projection at all; it was then filed as "revenue outside this model", which reads as a
+modelling decision and was a consequence of the omission. Every verdict downstream inherited a
+denominator missing a line the roadmap ships.
+
+So an `assumption` note that declares itself a model input — `model_input: revenue` or `cost` — owes
+either a row in the assumptions table, matched on its `title` **verbatim**, or an
+`excluded_from_model` reason saying why the model does not carry it. Either clears the rule; neither
+is the failure. It reads the reverse direction too, because otherwise the cheapest way past the
+first check is a row nothing in the ledger stands behind. **And there is one rule that is about the
+target rather than the table:** where the roadmap ships a dated change to a line the model excludes,
+the verdict note has to name that line in `arr_excludes` — the exit identity is ARR × multiple and
+none of the multiple's inputs is ARR, so an undeclared exclusion is a denominator nobody can see.
+Excluding a revenue line is legitimate; a metered layer must not be allowed to flatter subscription
+churn. Excluding it silently is what fails.
+
+`--claim-drift` answers the one question `--used-in` says outright it cannot: whether a section still
+carries what it carried yesterday. `--used-in` checks that a citation resolves, and a heading that
+nobody renamed keeps resolving through any rewrite of the prose beneath it — so a claim written into
+a plan section, a later re-solve that rewrote the block, and a green gate are all consistent with
+each other, and the drift gets found by hand days later or not at all.
+
+The claim therefore records the content hash of each section it was read against, in
+`reconciled_sections` beside the `reconciled:` date, and a changed hash **re-opens** the claim rather
+than passing. The failure message carries the current hash, so re-reconciling is re-reading the
+section and pasting one token — the tool has no write mode, and pasting the token is the assertion
+that the read happened, exactly as stamping a date is. The hash ignores what a renderer ignores
+(trailing whitespace, blank-line runs) so a trimmed file does not re-open the whole corpus, and it
+is deliberately not a cryptographic digest: it is detecting an edit, and it has to be identical in
+POSIX `sh` and PowerShell with no dependencies on either side. What it cannot tell you is whether the
+section still *agrees* with the note — that is a read, not a grep. What it removes is the read
+silently expiring.
+
+Both are `schemaVersion: 3` rules, and a vault at 1 or 2 is told the rule was not applied rather
+than that its documents agree. That is the whole reason the version field exists: every claim in a
+finished corpus is already cited into a plan, so a hash rule that fired unconditionally would turn
+every existing vault red the day the plugin updated.
+
+`--release-gate` is the call before a render, and the only one that asks every question. It is
+**ten parts** — the bare check plus `--used-in`, `--supersession-sweep`, `--red-team`,
+`--roadmap-table`, `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and
+`--claim-drift` — and it prints each under its own heading and exits with the worst status any part
+returned, so the gate is clean only when every part is. The alternative was several calls made from
+memory, and which of them actually ran was a matter of recall.
 
 **The bare run's success line says what it checked and what it did not**, because it used to say
 `clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
 checks passed … not opened: citation targets, supersession blast radius, panel objection rows,
-roadmap table against the milestone set, verdict drivers and the evidence under them* —
+roadmap table against the milestone set, verdict drivers and the evidence under them, monitoring
+axes and the decision each would change, what the rendered deliverable carries out of the vault,
+assumption rows against the model table, cited sections against their recorded hash* —
 and the list of what it skipped is read off the same mode table `--release-gate` composes itself
 from, so a mode added to the gate cannot leave the line quietly overstating what it covered. A
 success line is what somebody renders on, so it has to be narrower than the verdict its reader

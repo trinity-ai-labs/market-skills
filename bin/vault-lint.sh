@@ -266,6 +266,175 @@ vault-lint.sh - read-only checks over a claim vault.
       presence, and a ceiling claim carrying none of the five owes none of
       them. A vault with no verdict note passes.
 
+  vault-lint.sh --monitoring [--vault PATH] [--json]
+      Check the monitoring plan in competitor-analysis.md: every axis names an
+      instrument, a cadence, and the decision it would change. A verdict - it
+      exits 1 on any of them.
+
+      A snapshot cannot see a direction. Every profile in that document carries
+      its research date, and every claim note carries `stale_after`, and both
+      of those ask the same question - is this still true. Neither asks which
+      way it is moving, and that is the only thing separating a closing window
+      from an open one: a competitor profiled the day before it was used missed
+      a strategic reversal by that vendor six weeks earlier, which was the
+      single fact that most changed what the competitor meant. The plan read
+      correct and was answering a question nobody asked.
+
+      An axis with no instrument is a thing somebody intends to notice, which
+      is not a mechanism. An axis with no cadence is a re-check with no date,
+      which is the same as no re-check. An axis with no decision behind it is
+      a signal nobody acts on, and collecting it costs the same as collecting
+      one that matters - so the decision column is what keeps the plan from
+      growing a watchlist instead of a trigger.
+
+      A cell is empty when it carries no letter or digit, so an em dash or a
+      run of hyphens is read as empty rather than as an answer. There is no
+      placeholder word list: a check that has to be taught every spelling of
+      `TBD` is one that misses the next one.
+
+      A vault with no competitor-analysis.md profiled no competitors and
+      passes. Gated on schemaVersion 2 - the axes are what version 2 asks the
+      section for, and a vault at 1 is held to the rules it was written under.
+
+  vault-lint.sh --deliverable [--vault PATH] [--json]
+      Read every rendered deliverables/*.html and fail on the vault's own
+      archaeology reaching a reader who was never in the room: a strikethrough
+      span, a note ID, or a red-team objection code. A verdict - it exits 1 on
+      any of the three.
+
+      Retraction stays visible in the vault, and that rule is correct - a
+      silently deleted claim comes back two drafts later with its cause of
+      death erased. The rendered artifact is the other side of it. A note ID
+      and an objection code are VAULT ADDRESSES: they resolve for anyone with
+      the corpus and resolve to nothing for the audience the document is for,
+      and a struck-through line with its reason beside it is a document
+      arguing with its own previous draft. Left unchecked, a finished plan and
+      its model carry well over a hundred pieces of that narrative between
+      them - into the two documents an investor reads.
+
+      IT READS THE RENDERED HTML AND NEVER THE MARKDOWN. The markdown is the
+      working document and keeps every strikethrough it owes; the HTML is what
+      the outside reader holds. It is also the only one a check can hold to
+      this, because the render itself is a judgement - a correction reaches
+      the artifact RESTATED FORWARD, as what is true now, and stripping the
+      `~~` mechanically leaves `That multiple was actually...` with no
+      antecedent. No script can judge an antecedent, so that half stays a
+      read-back item in the render loop and this mode covers the half that is
+      mechanical.
+
+      A note ID is matched as its type prefix plus EIGHT generated characters,
+      the length vault.md's generation rule produces. Validating a note's own
+      ID deliberately accepts any length; DETECTING one that leaked into prose
+      is the opposite job, and the loose form fires on `FACT-CHECKED` and
+      `SOURCE-CONTROL` - a check that cries wolf over ordinary prose gets
+      switched off, and switching it off takes the half that worked with it.
+      For the same reason `WITHDRAWN` and `RETRACTED` are NOT matched: a plan
+      can legitimately discuss a withdrawn product or a retracted filing, and
+      those words are the restate-forward step's job rather than a grep's.
+
+      A vault with no deliverables/*.html has rendered nothing and passes. It
+      is in --release-gate so the call before a render is still one call, but
+      the run that gates what actually ships is the one inside the render loop,
+      after the HTML exists - see the render loop in rendering.md.
+  vault-lint.sh --assumption-rows [--vault PATH] [--json]
+      Check the assumptions table in financial-model.md against the assumption
+      notes that declare themselves inputs to the model, both directions. A
+      verdict - it exits 1 on any of its four failures.
+
+      This is --roadmap-table one artifact over, and it exists because the
+      rule it inverts had no counterpart. plan-template.md requires that no
+      number in a projection is anything but a named assumption row, which is
+      load-bearing against fake precision - and nothing asked whether a named
+      assumption was MISSING from the table. Observed: two assumptions
+      governing a whole revenue line existed as notes, correctly authored with
+      subjects and confidence, and were never added as rows. The rule meant to
+      enforce rigour then made that revenue line structurally unable to enter
+      the projection, the model filed it as revenue outside its scope, and
+      every downstream verdict inherited a denominator missing a line the
+      roadmap ships. The notes lint clean, the table lints clean, and until
+      this mode nothing compared them.
+
+      The key is the assumption `title`, matched VERBATIM, the same rule
+      --roadmap-table holds a milestone title to and for the same reason: the
+      table renders `value`, its source and its confidence off the note, so a
+      correct table matches character for character by construction and a
+      mismatch means the row was written by hand.
+
+      assumption-not-in-model: a note carrying `model_input` whose title is no
+      row in the table and which carries no `excluded_from_model` reason. The
+      trigger is the FIELD, not the version - `model_input` is a term this
+      release introduces, so no existing note carries it and no exemption has
+      to be bought for one.
+
+      model-row-no-assumption: a row matching no `assumption` note title. The
+      reverse direction, and it is what stops the rule above being cleared by
+      writing a row nothing in the ledger stands behind.
+
+      excluded-line-on-roadmap: an assumption the roadmap ships a change to -
+      a `milestone` whose `moves` names it - that carries
+      `excluded_from_model` and that no verdict note's `arr_excludes` declares.
+      A model may LEGITIMATELY exclude a revenue line, because a metered layer
+      must not be allowed to flatter subscription churn; what it may not do is
+      exclude it silently. The identity the verdict solves is ARR at the target
+      date times the multiple, so an excluded line is a term missing from the
+      denominator every corner is solved against - and on the engagement this
+      came from the excluded layer was a roadmap item with roughly ten times
+      the revenue per account, three separate re-solves each corrected a
+      different term, and the answer never moved. Declaring it at the identity
+      is what makes the exclusion arguable.
+
+      model-table-missing: notes declare themselves model inputs and the table
+      renders none of them. The inputs are in the ledger and nowhere a reader
+      can see them.
+
+      Gated on schemaVersion 3, which is where the fields it reads were added.
+      A vault at 1 or 2 carries none of them, cannot owe this, and is told the
+      rule was not applied rather than that the table agrees.
+
+  vault-lint.sh --claim-drift [--vault PATH] [--json]
+      Check every cited section against the content hash the note recorded
+      when it was last reconciled. A verdict - it exits 1 on any of its three
+      failures.
+
+      This is the half --used-in deliberately leaves out, obtained without
+      reading prose for meaning. --used-in asserts a citation RESOLVES and
+      --binding-driver asserts one verbatim string is present; neither can say
+      whether a section still carries what it carried yesterday. Observed: a
+      claim was written into a plan section, satisfying invariant 20. A later
+      re-solve rewrote that block. The heading was untouched, so `used_in`
+      still resolved and the gate stayed green while the section no longer
+      said what the note says. It was found by hand, days later - the exact
+      failure invariant 20 exists to prevent, occurring after the invariant
+      had been satisfied once.
+
+      A hash cannot tell you the section still AGREES with the note. It tells
+      you whether the text somebody read is the text standing there now, which
+      is the difference between a claim that was reconciled and one that was
+      reconciled and then quietly rewritten. `reconciled:` records the date
+      that read happened; `reconciled_sections` records what was read, one
+      entry per citation, so a changed section RE-OPENS the claim instead of
+      passing on a date nothing has re-examined since.
+
+      section-hash-drifted: the recorded hash and the section disagree. The
+      message carries the current hash, so re-reconciling is re-reading the
+      section and pasting one token - the mode is read-only and the paste is
+      the assertion that the read happened.
+
+      section-hash-missing: a resolving citation with no entry recording it.
+      Without this the whole rule is cleared by omission, which is not an
+      exemption.
+
+      section-hash-unused: an entry naming a target the note's `used_in` does
+      not name. Bookkeeping for a section this claim no longer cites reads as
+      coverage, and reads that way from both sides.
+
+      It reads only `claim` and `assumption` notes whose `status` is current,
+      and only entries whose #anchor resolves. A dead anchor is --used-in's
+      verdict, and reporting it twice under a name about reconciliation sends
+      its reader to the wrong fix. Gated on schemaVersion 3, which is where
+      `reconciled_sections` was added - vault-migration.md carries the
+      back-fill.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -333,6 +502,10 @@ check                gate  note-level checks
 --red-team           gate  panel objection rows
 --roadmap-table      gate  roadmap table against the milestone set
 --binding-driver     gate  verdict drivers and the evidence under them
+--monitoring         gate  monitoring axes and the decision each would change
+--deliverable        gate  what the rendered deliverable carries out of the vault
+--assumption-rows    gate  assumption rows against the model table
+--claim-drift        gate  cited sections against their recorded hash
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -449,7 +622,14 @@ CONFIG="$VAULT/.vault/config.json"
 # from the FUTURE stays refused, which is the whole reason the field exists: an
 # older tool half-reading a newer vault reports a clean bill of health over
 # every field it never saw.
-SUPPORTED_SCHEMA="1 2"
+#
+# 3 joins the set for --assumption-rows and --claim-drift. Both read fields no
+# corpus written before this release carries, and both would otherwise fire on
+# every existing vault the day the plugin updates: --claim-drift would demand a
+# recorded hash from every claim already cited into a plan, which is every claim
+# in every finished corpus. A version is exactly what that exemption costs, and
+# vault-migration.md carries the 2 -> 3 back-fill.
+SUPPORTED_SCHEMA="1 2 3"
 FOUND_SCHEMA=$(awk '
 	match($0, /"schemaVersion"[ \t]*:[ \t]*[0-9]+/) {
 		s = substr($0, RSTART, RLENGTH)
@@ -530,8 +710,15 @@ PLAN="$VAULT/business-plan.md"
 HAS_PLAN=0
 [ -f "$PLAN" ] && HAS_PLAN=1
 
+# The financial model beside it, on the same terms and for the same reason:
+# --assumption-rows reads its assumptions table, so the predicate is computed
+# once here rather than prefixed onto a copy of the two lines above.
+FINMODEL="$VAULT/financial-model.md"
+HAS_FINMODEL=0
+[ -f "$FINMODEL" ] && HAS_FINMODEL=1
+
 # Every field whose block-list items name other notes. This is DELIBERATELY
-# wider than vault.md's six edges: `covers` is a question field and
+# wider than vault.md's seven edges: `covers` is a question field and
 # `assumptions_low` and `option_evidence` come from decisions.md, and none of
 # the three is called an edge anywhere - but each holds note IDs, so each has to
 # be followed for a dangling target and walked by `graph`. Declared once and
@@ -544,7 +731,13 @@ HAS_PLAN=0
 # nothing there - and gating them would mean the schema-2 check that `moves`
 # names a note that exists is a rule of its own instead of the dangling-edge
 # rule every other edge already gets.
-EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence"
+#
+# `arr_excludes` is here for the same reason `moves` is: its items are note IDs,
+# so a mistyped one has to be a dangling edge rather than a silent exclusion. An
+# ARR term that declares it leaves out a note the vault does not hold is the one
+# form of that declaration nobody can check by reading it, and `graph` walking
+# the edge is what makes the excluded line reachable from the verdict.
+EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes"
 
 # ----------------------------------------------------------------------------
 # scratch space
@@ -1293,13 +1486,13 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		# Every heading a document offers, as fold keys pointing at the
 		# heading ordinal. Read once per document, on first sight.
 		#
-		# The fence tracking is one of five copies in this file - --used-in
+		# The fence tracking is one of six copies in this file - --used-in
 		# scans headings under the same rule, and so do --red-team,
-		# --roadmap-table and --binding-driver. All five are the same six
-		# lines: a `#` inside a fenced block is an example rather than a section
-		# anyone can jump to, and the marker and run length are tracked so a
-		# longer nested fence cannot close its parent early. Change one, change
-		# all five.
+		# --roadmap-table, --binding-driver and --monitoring. All six are the
+		# same six lines: a `#` inside a fenced block is an example rather than a
+		# section anyone can jump to, and the marker and run length are tracked
+		# so a longer nested fence cannot close its parent early. Change one,
+		# change all six.
 		#
 		# The fold() below has two more copies, in --roadmap-table and
 		# --binding-driver, which resolve their own section headings by the same
@@ -1622,9 +1815,10 @@ fi
 # Every mode that emits failure rows and carries a verdict out in its exit status
 # builds on what follows, so the date, the path index and the renderer are built
 # once here rather than once per mode. That is `check`, --used-in, --red-team,
-# --roadmap-table and --binding-driver today, and a mode joins the list by being
-# dispatched below this point rather than by registering anywhere - which is why
-# this comment names them and the code does not. graph, --unverified and
+# --roadmap-table, --binding-driver, --monitoring and --deliverable today, and a
+# mode joins the list by being dispatched below this point rather than by
+# registering anywhere - which is why this comment names them and the code does
+# not. graph, --unverified and
 # --supersession-sweep have already exited above: none of the three produces a
 # failure row, and the path index costs a find over the whole vault.
 # ----------------------------------------------------------------------------
@@ -1835,12 +2029,12 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
-		# THAT FENCE BLOCK IS ONE OF FIVE COPIES in this file. The
+		# THAT FENCE BLOCK IS ONE OF SIX COPIES in this file. The
 		# --supersession-sweep sections(), the --red-team row reader, the
-		# --roadmap-table readplan() and the --binding-driver readdoc() carry the
-		# same six lines, because all five read a document at the vault root and
-		# no one of them can call a function defined in another awk program.
-		# Change one, change all five.
+		# --roadmap-table readplan(), the --binding-driver readdoc() and
+		# --monitoring carry the same six lines, because all six read a document
+		# at the vault root and no one of them can call a function defined in
+		# another awk program. Change one, change all six.
 		#
 		# This copy is the one that most needed saying so. It has been edited
 		# twice already - the `{#anchor}` attribute below landed here alone -
@@ -2025,12 +2219,12 @@ if [ "$MODE" = "red-team" ]; then
 				# character and run length so a longer nested fence cannot
 				# close its parent early.
 				#
-				# One of five copies of those six lines: the --used-in scan(),
+				# One of six copies of those six lines: the --used-in scan(),
 				# the --supersession-sweep sections(), the --roadmap-table
-				# readplan() and the --binding-driver readdoc() carry the same
-				# ones, for the same reason - five awk programs reading a
-				# document at the vault root, and no way to share a function
-				# across them. Change one, change all five.
+				# readplan(), the --binding-driver readdoc() and --monitoring
+				# carry the same ones, for the same reason - six awk programs
+				# reading a document at the vault root, and no way to share a
+				# function across them. Change one, change all six.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
@@ -2250,11 +2444,12 @@ if [ "$MODE" = "roadmap-table" ]; then
 			#
 			# The fence tracking is the FOURTH copy in this file - --used-in
 			# scan(), --supersession-sweep sections() and --red-team carry the
-			# same six lines and --binding-driver readdoc() carries the fifth,
-			# because each reads a document at the vault root and no one of them
+			# same six lines, and --binding-driver readdoc() and --monitoring
+			# carry the fifth and the sixth, because each reads a document at the
+			# vault root and no one of them
 			# can call a function defined in another awk program. A `#` or a `|`
 			# inside a fenced block is an example rather than anything a reader
-			# can act on. Change one, change all five.
+			# can act on. Change one, change all six.
 			# The read STOPS the moment the answer can no longer change - at the
 			# heading that closes the section, or at the line that ends the first
 			# table in it. SEENRM makes the section unre-enterable and only the
@@ -2615,7 +2810,7 @@ if [ "$MODE" = "binding-driver" ]; then
 			# fenced block is an example rather than an assertion the document
 			# makes, which is also why fenced lines never reach BODY: a fenced
 			# template carrying a condition would otherwise satisfy the check
-			# for a section that renders nothing. Change one, change all five.
+			# for a section that renders nothing. Change one, change all six.
 			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, alldash, hdr, dcol, kcol, intable, wanttable, kk, dv, kv) {
 				if (doc in SCANNED) return
 				SCANNED[doc] = 1
@@ -3014,6 +3209,1006 @@ if [ "$MODE" = "binding-driver" ]; then
 fi
 
 # ----------------------------------------------------------------------------
+# --monitoring - an axis owes an instrument, a cadence and a decision
+#
+# competitor-analysis.md's Monitoring plan section asked which pricing pages,
+# changelogs and job boards to re-check and on what cadence. That is FRESHNESS,
+# and freshness is the same question the per-profile research date and a claim
+# note's `stale_after` already ask: is this still true. None of the three asks
+# which way it is moving, and a direction is the only thing that separates a
+# closing window from an open one. A competitor profiled the day before the
+# profile was used missed a strategic reversal by that vendor six weeks earlier
+# - the single fact that most changed what the competitor meant - because a
+# snapshot cannot see a direction and nothing in the method asked for one.
+#
+# So the section becomes a contract rather than a paragraph: named axes, an
+# instrument per axis, a cadence, and the decision each would change. The last
+# column is the one that keeps this from becoming a watchlist - a signal nobody
+# acts on costs the same to collect as one that matters.
+#
+# It is a mode rather than a check for the reason --used-in, --red-team and
+# --roadmap-table are: it reads a document at the vault root rather than a note
+# in one of the seven directories, which is a different surface. The engagement
+# folder IS the vault, so a sibling report is the established thing to read here
+# and not new architecture.
+#
+# LC_ALL=C for the reason --used-in found the hard way: an axis and a decision
+# are free prose in a table cell, so they carry em dashes and curly quotes, and
+# macOS awk in a UTF-8 locale aborts the record on the first sequence it cannot
+# decode - which would end the scan early and pass a document it never finished
+# reading.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "monitoring" ]; then
+	COMPETITORS="$VAULT/competitor-analysis.md"
+	# A vault with no competitor-analysis.md profiled no competitors, which is
+	# every vault before the competitor dimension runs. Reported by name rather
+	# than passing silently: a mode that printed `clean` over a document it never
+	# found reads as a monitoring plan that was checked. The empty failure file
+	# still goes through the renderer, so --json gets a well-formed document
+	# either way.
+	MONITORING_OK="every monitoring axis names an instrument, a cadence and the decision it would change - $VAULT"
+	if [ ! -f "$COMPETITORS" ]; then
+		MONITORING_OK="no competitor-analysis.md under $VAULT - no competitor set was profiled, so no axis owes an instrument"
+	elif [ "$FOUND_SCHEMA" -lt 2 ]; then
+		# The axes are what version 2 asks the section for. A vault at 1 is held
+		# to exactly the rules it was written under, the same exemption
+		# --roadmap-table and --red-team's roster take, and named rather than
+		# silent so a clean line is never mistaken for a section that was read.
+		MONITORING_OK="competitor-analysis.md at schemaVersion $FOUND_SCHEMA - the monitoring axes are a schemaVersion 2 rule and a vault at 1 is held to the rules it was written under"
+	else
+		LC_ALL=C awk -v out="$FAILURES" '
+			function report(check, id, detail) { print "competitor-analysis.md\t" check "\t" id "\t" detail >> out }
+
+			# The key a heading and a header cell are matched on: trimmed,
+			# whitespace runs collapsed, lowercased. Matching the raw text would
+			# read `## Monitoring Plan` and `## Monitoring  plan` as two
+			# different sections, neither of them the one this mode wants - and a
+			# check that fires on capitalisation is one somebody switches off,
+			# which takes the half that worked with it.
+			function key(s) {
+				sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
+				gsub(/[ \t]+/, " ", s)
+				return tolower(s)
+			}
+
+			# The same trim without the folding, for the message. A failure
+			# naming the axis in the case the document wrote it in is one the
+			# reader can find by eye.
+			function disp(s) {
+				sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# A cell answers the column when it carries a letter or a digit.
+			# Anything else - an em dash, a run of hyphens, a lone ellipsis - is
+			# the shape of a cell somebody filled in to make the row look
+			# complete, and reading it as an answer is what makes this rule
+			# clearable without doing the work. Deliberately NOT a placeholder
+			# word list: a check that has to be taught every spelling of `TBD` is
+			# one that misses the next one, and every spelling of it has no
+			# letter-or-digit test to fail anyway.
+			function answered(s) { return (s ~ /[A-Za-z0-9]/) }
+
+			{
+				line = $0
+				sub(/\r$/, "", line)
+				t = line
+				sub(/^[ \t]+/, "", t)
+
+				# Fenced blocks hold examples, not rows. One of six copies of
+				# those six lines: the --used-in scan(), the
+				# --supersession-sweep sections(), the --red-team roster reader,
+				# the --roadmap-table readplan() and the --binding-driver
+				# readdoc() carry the same ones, for the same reason - six awk
+				# programs reading a document at the vault root, and no way to
+				# share a function across them. Change one, change all six.
+				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+					c = substr(t, 1, 1)
+					n = 0
+					while (substr(t, n + 1, 1) == c) n++
+					if (fc == "") { fc = c; fn = n }
+					else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+					next
+				}
+				if (fc != "") next
+
+				# A heading ends the section as reliably as it starts it, so the
+				# rows read are the ones under this heading and no others - a
+				# `| ... |` row in Threat ranking is not an axis.
+				if (match(t, /^#+[ \t]+/)) {
+					h = substr(t, RLENGTH + 1)
+					sub(/[ \t]*#+[ \t]*$/, "", h)
+					insection = (key(h) == "monitoring plan")
+					if (insection) seen = 1
+					next
+				}
+				if (!insection) next
+
+				if (substr(t, 1, 1) != "|") next
+				row = t
+				sub(/^\|/, "", row)
+				sub(/\|[ \t]*$/, "", row)
+				nc = split(row, cell, "|")
+				if (nc < 2) next
+
+				# The |---| rule is skipped by testing every cell rather than by
+				# counting lines, so a table written with a colon-carrying
+				# alignment row is read the same as one without.
+				allrule = 1
+				for (i = 1; i <= nc; i++)
+					if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { allrule = 0; break }
+				if (allrule) next
+
+				# The FIRST row of the section is the header, and the columns are
+				# located by the names it carries rather than by position - the
+				# rule --roadmap-table applies to its `Item` cell, and for the
+				# same reason: reading a fixed position reports every row of a
+				# correct table as incomplete the moment somebody adds a column.
+				# Each defaults to its template position, so a table with no
+				# recognisable header is still read rather than silently skipped.
+				if (!nhdr) {
+					nhdr = 1
+					icol = 2; ccol = 3; dcol = 4
+					for (i = 1; i <= nc; i++) {
+						hk = key(cell[i])
+						if (hk == "instrument") icol = i
+						else if (hk == "cadence") ccol = i
+						else if (index(hk, "decision") == 1) dcol = i
+					}
+					next
+				}
+
+				ax = disp(cell[1])
+				if (!answered(ax)) next
+				axk = key(ax)
+				if (axk in SEENAX) next
+				SEENAX[axk] = 1
+				AORDER[++na] = axk
+				ASHOW[axk] = ax
+				AINST[axk] = (icol <= nc ? disp(cell[icol]) : "")
+				ACAD[axk] = (ccol <= nc ? disp(cell[ccol]) : "")
+				ADEC[axk] = (dcol <= nc ? disp(cell[dcol]) : "")
+			}
+
+			END {
+				# One check for the absent section and the empty one, because
+				# they take the same fix - write the axes - and the detail says
+				# which of the two it found. Splitting them would be two names
+				# for one edit.
+				if (na == 0) {
+					if (seen)
+						report("monitoring-plan-no-axes", "", "competitor-analysis.md carries a `## Monitoring plan` section with no axis in it. The section it replaces asked which pages to re-check and how often, which is freshness - and freshness is the question the per-profile research date and every claim note`s `stale_after` already ask. Neither of them asks which way a competitor is moving, and a direction is the only thing that separates a closing window from an open one: a profile researched the day before it was used missed a strategic reversal six weeks earlier, because a snapshot cannot see one. Name the axes, an instrument per axis, a cadence, and the decision each would change")
+					else
+						report("monitoring-plan-no-axes", "", "competitor-analysis.md carries no `## Monitoring plan` section at all, so nothing in the corpus says which way any competitor is moving. Every profile in this document is a snapshot dated on the day it was taken, and a snapshot cannot see a direction - a competitor profiled the day before it was used missed a strategic reversal six weeks earlier, which was the single fact that most changed what that competitor meant. Add the section: named axes, an instrument per axis, a cadence, and the decision each would change")
+					exit
+				}
+
+				for (i = 1; i <= na; i++) {
+					axk = AORDER[i]
+					# A colon-list rather than a conjunction, because the same
+					# sentence has to read correctly at one missing column and at
+					# three, and a joiner that changes with the count is one more
+					# thing the two implementations can disagree about.
+					miss = ""
+					if (!answered(AINST[axk])) miss = miss ", instrument"
+					if (!answered(ACAD[axk])) miss = miss ", cadence"
+					if (!answered(ADEC[axk])) miss = miss ", the decision it would change"
+					if (miss == "") continue
+					sub(/^, /, "", miss)
+					report("monitoring-axis-incomplete", ASHOW[axk],
+						"the `" ASHOW[axk] "` axis leaves empty: " miss ". An axis with no instrument is a thing somebody intends to notice, which is not a mechanism; one with no cadence is a re-check with no date, which is the same as no re-check; and one with no decision behind it is a signal nobody acts on, which costs the same to collect as one that matters. A cell carrying no letter or digit - an em dash, a run of hyphens - reads as empty here rather than as an answer, because that is the cheapest way past this rule")
+				}
+			}
+		' "$COMPETITORS"
+	fi
+
+	render_failures "vault-lint monitoring" "$MONITORING_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --deliverable - the artifact stops inheriting the ledger's archaeology
+#
+# Retraction is visible in the vault, and that rule is right: a silently deleted
+# claim comes back two drafts later with its cause of death erased. This is its
+# counterpart one document over. The rendered deliverable is read by somebody who
+# was never in the room, and a note ID or an objection code is a VAULT ADDRESS -
+# it resolves for anyone holding the corpus and resolves to nothing for the
+# audience the document is for. A struck-through line with its reason beside it
+# is a document arguing with its own previous draft. Left unchecked, a finished
+# plan and its model carry well over a hundred pieces of that narrative between
+# them - into the two documents an investor actually reads.
+#
+# IT READS THE RENDERED HTML AND NEVER THE MARKDOWN, and that is the design
+# rather than a convenience. The markdown is the working document and keeps every
+# strikethrough it owes. The HTML is what the outside reader holds, and it is the
+# only one a check can hold to this at all, because the fix is a judgement: a
+# correction reaches the artifact RESTATED FORWARD, as what is true now, and
+# stripping the `~~` mechanically leaves `That multiple was actually...` with no
+# antecedent. No script can judge an antecedent, so that half is a read-back item
+# in the render loop and this mode covers the half that is mechanical.
+#
+# There is no fenced-block scan here for the reason the other six modes have one:
+# a deliverable is prose for an outside reader and does not document its own
+# format. The one document in this corpus that does - red-team.md, which carries
+# its own row template - is not a deliverable and is not read by this mode.
+#
+# LC_ALL=C for --used-in's reason: the prose in a deliverable carries em dashes
+# and curly quotes, and macOS awk in a UTF-8 locale aborts the record on the
+# first sequence it cannot decode, which would end the scan early and pass a
+# document it never finished reading.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "deliverable" ]; then
+	RENDERED="$TMP/rendered"
+	: >"$RENDERED"
+	[ -d "$VAULT/deliverables" ] &&
+		find "$VAULT/deliverables" -type f -name '*.html' | LC_ALL=C sort >"$RENDERED"
+
+	DELIVERABLE_OK="every rendered deliverable carries what is true now and no vault address - $VAULT"
+	if [ ! -s "$RENDERED" ]; then
+		# Named rather than silent, for --red-team's reason: a mode that printed
+		# `clean` over a directory it never found reads as a deliverable that was
+		# checked, and the gate runs BEFORE the first render as well as inside
+		# the render loop - so the empty case is the ordinary one on the first
+		# call and has to say which of the two it is.
+		DELIVERABLE_OK="no deliverables/*.html under $VAULT - nothing has been rendered yet, so no artifact carries anything out"
+	else
+		# One awk per deliverable rather than the whole list as operands. The
+		# operand form would let word splitting break the first vault that lives
+		# under a directory with a space in its name - every other path in this
+		# script is quoted for that reason - and it buys nothing: the relative
+		# path is passed in rather than sliced off FILENAME, and NR is per-file
+		# because the process is.
+		while IFS= read -r doc; do
+			[ -n "$doc" ] || continue
+			# `rel` is the path a reader opens, relative to the vault root, so
+			# every message names deliverables/business-plan.html rather than an
+			# absolute path - which differs per machine, and differs between the
+			# two implementations on the same machine.
+			LC_ALL=C awk -v out="$FAILURES" -v rel="${doc#"$VAULT/"}" '
+				BEGIN {
+					# Eight character classes rather than one with a brace
+					# interval: a `{8}` is an interval expression to some awks and
+					# a literal to others, and which one runs this script is a
+					# property of the user machine - the same caution the anchor
+					# patterns take with `\{`.
+					#
+					# EIGHT is the length vault.md`s generation rule produces, and
+					# requiring it is the whole reason this does not cry wolf.
+					# Validating a note`s own ID accepts any length on purpose;
+					# DETECTING one that leaked into prose is the opposite job, and
+					# the loose form fires on `FACT-CHECKED` and `CLAIM-HANDLING`.
+					AN = "[A-Za-z0-9]"
+					TYPES = "(SOURCE|FACT|CLAIM|ASSUMPTION|QUESTION|DECISION|MILESTONE)"
+					IDRE = TYPES "-" AN AN AN AN AN AN AN AN
+					# The objection ID shape --red-team reads in red-team.md.
+					OBJRE = "R[0-9]+-O[0-9]+"
+					# `<del>`, `<s>` and `<strike>` as OPENING tags, matched on a
+					# lowercased copy of the line so a renderer that emits upper
+					# case is read the same. The delimiter class is what keeps
+					# `<script` and `<span` out: `<s` alone matches both.
+					TAGRE = "<(del|s|strike)([ \t>/]|$)"
+				}
+
+				function report(check, id, detail) { print rel "\t" check "\t" id "\t" detail >> out }
+
+				# One row per address per line, so two copies of one address on one
+				# line are one row and the same address on two pages is two rows.
+				# The unit is the place a reader has to go and restate, which is a
+				# line. Row ORDER out of here is whatever awk hands back;
+				# render_failures sorts the failure file, which is what makes the
+				# JSON deterministic and byte-comparable against the PowerShell
+				# side.
+				function once(check, id, ln,   k) {
+					k = check SUBSEP id SUBSEP ln
+					if (k in SEEN) return 0
+					SEEN[k] = 1
+					return 1
+				}
+
+				# Every match of `re` in `s`, with the alphanumeric-boundary test
+				# the pattern itself cannot carry: awk has no \b, and writing the
+				# boundary into the ERE consumes it, so a second address
+				# immediately after the first would be skipped. A rejected match is
+				# stepped over rather than ending the scan -
+				# `XCLAIM-AS23SD44 CLAIM-BB77KK12` carries one real address and it
+				# is the second one.
+				function scan(s, re, check, ln, what,   rest, tok, before, after, at, end) {
+					rest = s
+					at = 0
+					while (match(rest, re)) {
+						tok = substr(rest, RSTART, RLENGTH)
+						before = (at + RSTART == 1) ? "" : substr(s, at + RSTART - 1, 1)
+						after = substr(rest, RSTART + RLENGTH, 1)
+						# The token goes in the DETAIL as well as the id column,
+						# because human output prints the check and the detail and
+						# nothing else - a message naming no address sends the
+						# reader to a page to find it by eye.
+						if (before !~ /[A-Za-z0-9]/ && after !~ /[A-Za-z0-9]/ && once(check, tok, ln))
+							report(check, tok, "line " ln " carries `" tok "`, " what)
+						end = RSTART + RLENGTH - 1
+						at = at + end
+						rest = substr(rest, end + 1)
+					}
+				}
+
+				{
+					line = $0
+					sub(/\r$/, "", line)
+
+					# Lowercased for the tag test only. The two addresses below are
+					# matched on the original line because a note ID and an
+					# objection code are upper case by construction, which is most
+					# of what keeps this off ordinary prose.
+					if (match(tolower(line), TAGRE) && once("deliverable-strikethrough", "tag", NR))
+						report("deliverable-strikethrough", "line " NR,
+							"line " NR " renders a strikethrough element. Invariant 14 is why the markdown carries one - a retraction that is silently deleted comes back two drafts later with its cause of death erased - and this is that rule inverted in the artifact: the reader of this file was never in the room, so a struck-through line with its reason beside it is a document arguing with its own previous draft. The correction reaches here RESTATED FORWARD, as what is true now. Deleting the `~~` is not the fix - it leaves the sentence after it with no antecedent, which is why this is a step in the render loop rather than a filter")
+
+					if (match(line, /~~[^~]+~~/) && once("deliverable-strikethrough", "tildes", NR))
+						report("deliverable-strikethrough", "line " NR,
+							"line " NR " carries a literal `~~...~~` span, so a markdown strikethrough reached the render and came out as text - this reader sees the tildes. Either way it is the ledger`s correction narrative in the artifact: restate the claim forward as what is true now, and leave the retraction visible in the vault, where invariant 14 wants it")
+
+					scan(line, IDRE, "deliverable-note-id", NR,
+						"which is a note ID. An ID is an ADDRESS into the vault: it resolves for anyone holding the corpus and resolves to nothing for the audience this document is for, who has no ledger to look it up in. vault.md says as much outright - a rendered document shows the title, and nobody ever sees a note ID in a sentence. Name the claim, or drop the citation; the traceability lives in the vault, which is the half that does not ship")
+					scan(line, OBJRE, "deliverable-objection-code", NR,
+						"which is a red-team objection code. That code addresses a row in red-team.md, which this reader does not have, so it reads as a reference to an argument they were not in. If the objection changed the plan, the plan states what it now claims; if it did not, it does not belong here at all")
+				}
+			' "$doc"
+		done <"$RENDERED"
+	fi
+
+	render_failures "vault-lint deliverable" "$DELIVERABLE_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --assumption-rows - the model's inputs against the notes that declare them
+#
+# THIS MODE IS AN INVERSE, AND THE RULE IT INVERTS IS CORRECT.
+# plan-template.md's assumptions section requires that no number appears in a
+# projection that is not a named assumption row. That is load-bearing against
+# fake precision and nothing here weakens it. What it never had is a counterpart
+# asking whether a named assumption is MISSING from the table - so the failure is
+# silent in both directions: the notes lint clean, the table lints clean, and
+# nothing compared them.
+#
+# Observed: two assumptions governing a whole revenue line existed as notes,
+# correctly authored with subjects and confidence, and were never added as rows.
+# The rule intended to enforce rigour then made that revenue line structurally
+# unable to enter the projection; the model filed it as revenue outside its
+# scope, which reads as a modelling decision and was a consequence of the
+# omission; and every downstream verdict inherited a denominator missing a line
+# the roadmap ships.
+#
+# IT IS --roadmap-table ONE ARTIFACT OVER, deliberately, down to the reading
+# rules: the same fold on the section heading, the same row parser, the same
+# only-the-first-table rule, and the same VERBATIM title match. Where one side
+# renders off the other an exact match is a check and anything looser is a
+# similarity test that cries wolf until somebody switches it off.
+#
+# THE ARR TERM DECLARES ITS COMPOSITION, and that is the fourth check. A model
+# may legitimately exclude a revenue line - a metered layer must not be allowed
+# to flatter subscription churn, and a good model refuses to mix them. What it
+# may not do is exclude it silently: the identity a verdict solves is ARR at the
+# target date times the multiple, and target.md's own table establishes that none
+# of the multiple's inputs is ARR, so an excluded line is a term missing from the
+# denominator every corner is solved against. On the engagement this came from
+# the excluded layer was a roadmap item with roughly ten times the revenue per
+# account, the plan said so in its own one-pager, and three separate verdict
+# re-solves each corrected a different term - a rate, a convention, a sample
+# size - inherited the same denominator, and the answer never moved.
+# roadmap-sequencing.md already makes every roadmap item name the assumption it
+# moves; this is the reverse half, and the reverse half is what makes the
+# exclusion arguable by somebody who disagrees with it.
+#
+# GATED ON schemaVersion 3, where `model_input`, `excluded_from_model` and
+# `arr_excludes` were added. A vault at 1 or 2 carries none of them and is told
+# the rule was not applied rather than that its table agrees - the distinction
+# --roadmap-table makes at 1, for the reason a clean line over a question nobody
+# asked is what somebody renders on.
+#
+# LC_ALL=C for the reason --used-in found the hard way: an assumption title and a
+# table cell are both free prose, and macOS awk in a UTF-8 locale aborts the
+# record on the first sequence it cannot decode - which would stop the read
+# partway and report every input after it as absent from a table it never
+# finished.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "assumption-rows" ]; then
+	# The success line is captured off stdout the way --roadmap-table's is,
+	# because what clean means here depends on what there was to compare: a line
+	# saying the table agrees, printed over a vault with no declared inputs and
+	# no document, reads as a model that was checked.
+	AR_OK=$(LC_ALL=C awk -v out="$FAILURES" -v model="$FINMODEL" -v hasmodel="$HAS_FINMODEL" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' '
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+			$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			function trim(s) {
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# A block-list item may carry a `:: label` after the ID it names, so
+			# every edge walk in this file strips it. The fourth copy - graph,
+			# --binding-driver and the checks pass carry the other three, and
+			# each awk program is a separate process that cannot call another
+			# one. Change one, change all four.
+			function target_of(item) {
+				return (index(item, " :: ") > 0) ? substr(item, index(item, " :: ") + 4) : item
+			}
+
+			# The same fold every section-resolving mode in this file carries -
+			# --supersession-sweep sections(), --roadmap-table readplan(),
+			# --binding-driver readdoc() and --claim-drift below. It answers
+			# which heading THIS section is, not whether an anchor resolves, so
+			# it drops every character the slug rule drops without having to
+			# know which those are. Change one, change all of them.
+			function fold(s,   i, c, o) {
+				o = ""
+				for (i = 1; i <= length(s); i++) {
+					c = substr(s, i, 1)
+					if (c >= "a" && c <= "z") { o = o c; continue }
+					if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
+					if (c >= "0" && c <= "9") { o = o c; continue }
+				}
+				return o
+			}
+
+			# The assumption cells of the first table under the assumptions
+			# heading. TRANSCRIBED FROM --roadmap-table readplan() with two
+			# changes and no others, so a diff of the two reads as one parser:
+			# the heading folds to `assumptions` rather than `roadmap`, and the
+			# item column defaults to TWO rather than one.
+			#
+			# THE DEFAULT COLUMN IS THE ONE DIFFERENCE THAT MATTERS. The
+			# template ships `| # | Assumption | Value | Source | Confidence |`,
+			# so column one is the `A-n` row label the plan cites in prose and a
+			# roadmap `moves` field names. Defaulting to it would report `1`,
+			# `2` and `3` as three inputs that escaped the ledger on a table
+			# whose every row resolves. The column whose header folds to
+			# `assumption` still wins where one exists.
+			#
+			# The fence tracking is another copy of the six lines every
+			# document-reading mode in this file carries, for the reason stated
+			# at --used-in scan(): a `#` or a `|` inside a fenced block is an
+			# example rather than anything a reader can act on, and no one awk
+			# program can call a function defined in another. Change one, change
+			# all of them.
+			function readmodel(path,   line, t, c, n, fc, fn, nh, h, ex, level, inas, intable, row, nc, cell, i, alldash, item, col, hdr, body) {
+				fc = ""; fn = 0; nh = 0; level = 0
+				inas = 0; intable = 0; col = 2; hdr = ""; body = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+						c = substr(t, 1, 1)
+						n = 0
+						while (substr(t, n + 1, 1) == c) n++
+						if (fc == "") { fc = c; fn = n }
+						else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+						continue
+					}
+					if (fc != "") continue
+
+					if (match(t, /^#+[ \t]+/)) {
+						nh = 0
+						while (substr(t, nh + 1, 1) == "#") nh++
+						h = substr(t, RLENGTH + 1)
+						sub(/[ \t]*#+[ \t]*$/, "", h)
+						h = trim(h)
+						ex = ""
+						# Braces as bracket expressions rather than escaped, for
+						# the reason scan() states: a backslash-brace is an
+						# interval expression to some awks and a literal to
+						# others, and which one runs this is a property of the
+						# user machine.
+						if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
+							ex = substr(h, RSTART, RLENGTH)
+							sub(/^[{]#/, "", ex)
+							sub(/[}]$/, "", ex)
+							h = trim(substr(h, 1, RSTART - 1))
+						}
+						if (inas && nh <= level) break
+						if (!SEENAS && (fold(ex) == "assumptions" || fold(h) == "assumptions")) {
+							inas = 1; SEENAS = 1; level = nh
+						}
+						continue
+					}
+
+					if (!inas) continue
+					if (substr(t, 1, 1) != "|") {
+						if (intable) break
+						continue
+					}
+					intable = 1
+
+					row = t
+					sub(/^\|/, "", row)
+					sub(/\|[ \t]*$/, "", row)
+					nc = split(row, cell, "|")
+					if (nc < 1) continue
+					alldash = 1
+					for (i = 1; i <= nc; i++)
+						if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { alldash = 0; break }
+					if (alldash) {
+						if (hdr != "") {
+							n = split(hdr, cell, "|")
+							for (i = 1; i <= n; i++)
+								if (fold(cell[i]) == "assumption") { col = i; break }
+						}
+						body = 1
+						continue
+					}
+
+					# Everything above the alignment rule is header and
+					# everything below it is body, kept apart rather than
+					# buffered together and pruned. A table with NO rule is not
+					# a table to any renderer, so its rows stay out of the body
+					# and the section reports as one that lists no inputs.
+					if (body) PEND[++NPEND] = row
+					else hdr = row
+				}
+				close(path)
+				for (i = 1; i <= NPEND; i++) {
+					n = split(PEND[i], cell, "|")
+					item = (col <= n) ? trim(cell[col]) : ""
+					if (item != "") ROW[++NROW] = item
+				}
+			}
+
+			END {
+				# GATED ON schemaVersion 3, branched inside the program the way
+				# every other version gate in this file is, rather than by the
+				# shell deciding whether to run awk at all.
+				if (schema + 0 < 3) {
+					printf("the model table is a schemaVersion 3 rule and this vault is at %s - `model_input`, `excluded_from_model` and `arr_excludes` were added at 3, so a vault before it carries none of them and there is nothing to read a table against - %s\n", schema, vault)
+					exit
+				}
+
+				# FOUR SETS OVER THE NOTES IN ONE WALK, because every one of
+				# them is a question about the note in hand and a second pass
+				# would be the same list read twice. The PowerShell twin builds
+				# the same four in one loop, so a diff of the two reads as one
+				# pass rather than as a structural difference nobody intended.
+				#
+				# TITLE is every assumption title a row may match - not only the
+				# declared inputs - because a row whose note exists and agrees is
+				# not a failure whatever else that note declares. MI is the
+				# declared inputs, in vault order so two runs print the same
+				# list.
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					ty = V[f, "type"]
+					if (ty == "assumption") {
+						if (V[f, "title"] != "") TITLE[V[f, "title"]] = 1
+						if (V[f, "model_input"] != "") MI[++nmi] = f
+					}
+
+					# What the roadmap ships a change to. `moves` names the note
+					# an item moves, which roadmap-sequencing.md already
+					# requires - this is the reverse direction of that edge and
+					# reads nothing new to get it.
+					if (ty == "milestone") {
+						k = f SUBSEP "moves"
+						for (j = 1; j <= LN[k]; j++) MOVED[target_of(LI[k, j])] = V[f, "id"]
+					}
+
+					# What the identity declares it leaves out, collected only
+					# from a verdict note. `arr_excludes` anywhere else is not
+					# a statement about the ARR term, and accepting it there
+					# would let the declaration sit on a note no reader of the
+					# verdict ever opens.
+					if (V[f, "subject"] != "target-verdict" && V[f, "subject"] != "steady-state-ceiling") continue
+					k = f SUBSEP "arr_excludes"
+					for (j = 1; j <= LN[k]; j++) DECLARED[target_of(LI[k, j])] = V[f, "id"]
+				}
+
+				if (hasmodel == "1") readmodel(model)
+
+				# The inputs are in the ledger and nowhere a reader can see
+				# them. Reported ONCE against the document rather than once per
+				# note: the fix is one thing - render the table - and a reader
+				# handed one row per input stops reading.
+				if (nmi > 0 && NROW == 0) {
+					if (hasmodel != "1")
+						report("financial-model.md", "model-table-missing", "",
+							"the vault carries " nmi " assumption note" (nmi == 1 ? "" : "s") " declaring `model_input` and there is no financial-model.md at the vault root. Every one of them is an input the projection is supposed to be built from, so a model that never renders them is a projection whose numbers are buried in formulas - which is the failure the assumptions table exists to prevent, from the other side")
+					else if (!SEENAS)
+						report("financial-model.md", "model-table-missing", "",
+							"the vault carries " nmi " assumption note" (nmi == 1 ? "" : "s") " declaring `model_input` and no heading in financial-model.md answers to `assumptions`. The inputs exist in the ledger and the model has no section that lists them, so a reader cannot tell which numbers the projection stands on. The plan template heading is `## Assumptions (every input lives here - nothing buried in a formula) {#assumptions}`")
+					else
+						report("financial-model.md", "model-table-missing", "",
+							"the assumptions section of financial-model.md lists no rows and the vault carries " nmi " assumption note" (nmi == 1 ? "" : "s") " declaring `model_input`. A table with a heading and no rows reads as a model whose inputs are stated somewhere, and they are stated in the ledger only - so the projection has no visible input list at all")
+					printf("%d declared model input%s and no assumptions table the model renders - %s\n", nmi, (nmi == 1 ? "" : "s"), vault)
+					exit
+				}
+
+				for (i = 1; i <= NROW; i++) {
+					if (ROW[i] in TITLE) { HIT[ROW[i]] = 1; continue }
+					report("financial-model.md", "model-row-no-assumption", "",
+						"row `" ROW[i] "` in the assumptions section matches no `assumption` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing")
+				}
+
+				for (i = 1; i <= nmi; i++) {
+					f = MI[i]
+					ti = V[f, "title"]
+					ex = V[f, "excluded_from_model"]
+					if (ti in HIT) continue
+					# Either clears it, and that is the design. A row means the
+					# input entered the projection; a stated exclusion means
+					# somebody decided it should not and said why. What fails is
+					# neither - an input the ledger holds, the model does not
+					# carry, and nothing records a decision about.
+					if (ex != "") continue
+					report(f, "assumption-not-in-model", V[f, "id"],
+						"`model_input` is `" V[f, "model_input"] "` and `title` is `" ti "`, and no row in the assumptions section of financial-model.md carries it. The note declares itself an input to the projection and the projection has no row for it, so the value cannot enter the model at all - and the line it governs then reads as revenue the model deliberately left out rather than as an input somebody forgot to add. Every verdict downstream inherits a denominator missing it. Render the row with the title verbatim, or state `excluded_from_model` with the reason the model does not carry it")
+				}
+
+				# THE ARR TERM DECLARES ITS COMPOSITION. An exclusion is
+				# legitimate; an undeclared one is the defect. The trigger is
+				# the conjunction - excluded AND on the roadmap - because an
+				# excluded input nothing ships a change to is a line outside the
+				# horizon of the plan itself, and failing that would be a rule about
+				# scope rather than about the identity.
+				for (i = 1; i <= nmi; i++) {
+					f = MI[i]
+					id = V[f, "id"]
+					if (V[f, "excluded_from_model"] == "") continue
+					if (!(id in MOVED)) continue
+					if (id in DECLARED) continue
+					report(f, "excluded-line-on-roadmap", id,
+						"`excluded_from_model` is `" V[f, "excluded_from_model"] "` and " MOVED[id] " on the roadmap moves this note, and no verdict note names it in `arr_excludes`. The roadmap ships a change to a line the model does not carry, so the ARR term every corner of the target is solved against is a subset figure and nothing says which subset. A model may exclude a revenue line - a metered layer must not be allowed to flatter subscription churn - but the exclusion is a term of the identity and belongs where the identity is stated: name this note in `arr_excludes` on the verdict note, or give the model a row for it")
+				}
+
+				if (nmi == 0 && NROW == 0)
+					printf("no declared model inputs and no assumption rows under %s - there is no model on either side, which is every vault before the plan has one\n", vault)
+				else
+					printf("%d assumption row%s against %d declared model input%s, matched verbatim - %s\n",
+						NROW, (NROW == 1 ? "" : "s"), nmi, (nmi == 1 ? "" : "s"), vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint assumption-rows" "$AR_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --claim-drift - a cited section against the hash the note recorded
+#
+# WHAT THIS ADDS TO THE TWO MODES EITHER SIDE OF IT. --used-in asserts a citation
+# RESOLVES and says at length why it never asserts the section carries the claim.
+# --binding-driver asserts one verbatim string generated off a note is present.
+# Neither can answer whether a section still carries what it carried yesterday,
+# and that is a different question from both: it needs no reading of prose for
+# meaning, because the comparison is against the text somebody already read.
+#
+# Observed: a claim was written into a plan section, satisfying invariant 20. A
+# later re-solve rewrote that block. The heading was untouched, so `used_in`
+# still resolved and the gate stayed green while the section no longer said what
+# the note says. It was found by hand, days later - the exact failure invariant 20
+# exists to prevent, occurring AFTER the invariant had been satisfied once, which
+# is the case a one-time check structurally cannot see.
+#
+# WHAT A HASH CAN AND CANNOT SAY. It cannot say the section agrees with the note;
+# that is the read invariant 19 owns. It can say whether the text under the
+# reader's eye then is the text standing there now - so a rewritten section
+# RE-OPENS the claim instead of passing on a `reconciled:` date nothing has
+# re-examined since. That is the same honest limit `reconciled:` itself carries
+# and the same payoff: skipping the re-read becomes something somebody has to
+# state rather than something that happens by default.
+#
+# THE FIELD EXTENDS `reconciled:` RATHER THAN PARALLELING IT. 1.12.0 added that
+# date for supersessions; `reconciled_sections` is its itemisation - the date
+# says a read happened, the entries say what was read and what it looked like. A
+# second date field under another name would be two records of one act, and
+# nothing would keep them in step.
+#
+# THE MESSAGE CARRIES THE CURRENT HASH, which is what makes a read-only tool
+# usable here. There is deliberately no write mode in this script, so the author
+# re-reads the section and pastes one token - and pasting it is the assertion
+# that the read happened, exactly as stamping a date is.
+#
+# WHY A 31-BIT POLYNOMIAL RATHER THAN A REAL DIGEST. This has to be byte-identical
+# in POSIX awk and in Windows PowerShell 5.1 with zero dependencies on either
+# side, and it is detecting an EDIT rather than resisting an adversary - nobody
+# gains anything by forging a section that hashes to its own previous value. A
+# polynomial mod 2^31-1 needs no bitwise operators, which BWK awk does not have,
+# and every intermediate stays exactly representable in a double. The modulus is
+# under 2^31 so `%08x` is safe on every awk rather than only the ones that widen.
+#
+# NORMALISATION IS THREE RULES AND EVERY ONE OF THEM PREVENTS A FALSE POSITIVE.
+# Trailing whitespace is stripped per line, and leading, trailing and repeated
+# blank lines are collapsed: all three are invisible in a rendered document, so a
+# hash that changed on them would re-open every claim in the corpus the first
+# time an editor trimmed a file. Nothing else is touched - a rewrapped paragraph
+# IS an edit to the block, and re-reading it is one paste.
+#
+# LC_ALL=C so the hash is over bytes on every awk. Under a UTF-8 locale macOS awk
+# would abort the record on the first sequence it cannot decode, and the two
+# implementations would then disagree about the hash of any section carrying an
+# em dash - which is most of them.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "claim-drift" ]; then
+	CD_OK=$(LC_ALL=C awk -v root="$VAULT" -v out="$FAILURES" -v pathidx="$PATHIDX" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' '
+			BEGIN {
+				# One byte at a time needs a byte value, and awk has no ord().
+				# Built under LC_ALL=C, where sprintf("%c", i) is byte i rather
+				# than code point i. From 1, because no section text carries a
+				# NUL and awk cannot hold one in a subscript.
+				for (bi = 1; bi < 256; bi++) ORD[sprintf("%c", bi)] = bi
+				while ((getline pl < pathidx) > 0) EXISTS[pl] = 1
+				close(pathidx)
+			}
+
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+			$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			function trim(s) {
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# Another copy of the fold every section-resolving mode carries -
+			# see --assumption-rows. Change one, change all of them.
+			function fold(s,   i, c, o) {
+				o = ""
+				for (i = 1; i <= length(s); i++) {
+					c = substr(s, i, 1)
+					if (c >= "a" && c <= "z") { o = o c; continue }
+					if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
+					if (c >= "0" && c <= "9") { o = o c; continue }
+				}
+				return o
+			}
+
+			# The polynomial itself. 131 is an odd multiplier above the byte
+			# range, 2147483647 is 2^31-1, and the length is mixed in last so
+			# two sections differing only in trailing content the normaliser
+			# dropped still separate. Every intermediate is under 2^38, well
+			# inside the 2^53 an awk double holds exactly, so this is
+			# reproducible arithmetic rather than floating-point luck.
+			function shash(s,   i, h, n) {
+				h = 0
+				n = length(s)
+				for (i = 1; i <= n; i++) h = (h * 131 + ORD[substr(s, i, 1)]) % 2147483647
+				h = (h * 131 + n) % 2147483647
+				return sprintf("%08x", h)
+			}
+
+			# Every heading in one document as fold keys pointing at its
+			# ordinal, and the NORMALISED body of every section beside it. The
+			# body is what gets hashed, so the two are read in one pass - a
+			# second pass would be a second place the section boundary is
+			# decided.
+			#
+			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is the rule
+			# --binding-driver readdoc() uses rather than the
+			# same-depth-or-shallower one --roadmap-table readplan() uses. The unit here is the
+			# prose a citation points at, and a subsection has its own address:
+			# rolling it into its parent would re-open every claim on the parent
+			# heading whenever any subsection was touched, and a claim that
+			# re-opens for a reason its reader cannot see is one whose hash gets
+			# re-stamped without a read.
+			#
+			# THE HEADING LINE IS OUTSIDE THE BODY IT OPENS. A reworded heading
+			# is a dead anchor and --used-in verdict, so hashing it in would
+			# report one failure as two, under a name about reconciliation.
+			#
+			# Fenced lines are CONTENT and only heading detection is suspended
+			# inside them: a `#` in a fence is an example rather than a section
+			# boundary, and dropping a fenced block from the hash would leave a
+			# rewritten example invisible. The six lines are another copy of the
+			# scan every document-reading mode here carries.
+			function sections(doc,   path, line, t, c, n, fc, fn, h, ex, id, cur, k) {
+				path = root "/" doc
+				fc = ""; fn = 0; id = 0; cur = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+						c = substr(t, 1, 1)
+						n = 0
+						while (substr(t, n + 1, 1) == c) n++
+						if (fc == "") { fc = c; fn = n }
+						else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+					} else if (fc == "" && match(t, /^#+[ \t]+/)) {
+						h = substr(t, RLENGTH + 1)
+						sub(/[ \t]*#+[ \t]*$/, "", h)
+						h = trim(h)
+						ex = ""
+						if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
+							ex = substr(h, RSTART, RLENGTH)
+							sub(/^[{]#/, "", ex)
+							sub(/[}]$/, "", ex)
+							h = trim(substr(h, 1, RSTART - 1))
+						}
+						id++
+						# BOTH addresses registered, the same as --used-in
+						# scan(): a vault written before the template carried
+						# attributes cites the slug, and an implementation where
+						# the attribute replaced it would stop resolving those
+						# entries the day somebody pasted a newer template in.
+						# Ambiguity is retired rather than resolved - two
+						# headings folding to one key leave the key answering to
+						# nothing, so a claim citing it is skipped here and stays
+						# whatever --used-in makes of it.
+						if (fold(ex) != "") claim(doc, fold(ex), id)
+						claim(doc, fold(h), id)
+						cur = id
+						continue
+					}
+					if (cur == 0) continue
+
+					# Trailing whitespace off every line, and blank lines
+					# folded: leading and trailing ones dropped, an interior run
+					# collapsed to one. All three are invisible in a rendered
+					# document, so a hash sensitive to them re-opens every claim
+					# in the corpus the first time a file is trimmed.
+					sub(/[ \t]+$/, "", line)
+					k = doc SUBSEP cur
+					if (line == "") { PENDNL[k] = (RAW[k] == "") ? 0 : 1; continue }
+					if (PENDNL[k]) { RAW[k] = RAW[k] "\n"; PENDNL[k] = 0 }
+					RAW[k] = (RAW[k] == "") ? line : RAW[k] "\n" line
+				}
+				close(path)
+			}
+
+			# Register one fold key against one heading, or retire it when a
+			# second heading claims the same key. The third copy of the
+			# --supersession-sweep claim(); --binding-driver carries the second
+			# as claimkey(). Change one, change all three.
+			function claim(doc, k, id,   ak) {
+				if (k == "") return
+				ak = doc SUBSEP k
+				if (ak in ALIAS) {
+					if (ALIAS[ak] != id) ALIAS[ak] = 0
+					return
+				}
+				ALIAS[ak] = id
+			}
+
+			# The document and #anchor of one entry, normalised the way
+			# --used-in, --supersession-sweep and --binding-driver all normalise
+			# it - the leading ./ and any trailing / stripped - so all four modes
+			# group on the same target. Change one, change all four.
+			function docof(entry,   p, d) {
+				p = index(entry, "#")
+				d = (p > 0) ? substr(entry, 1, p - 1) : entry
+				d = trim(d)
+				sub(/^\.\//, "", d)
+				sub(/\/+$/, "", d)
+				return d
+			}
+
+			function ancof(entry,   p) {
+				p = index(entry, "#")
+				return (p > 0) ? substr(entry, p + 1) : ""
+			}
+
+			END {
+				# GATED ON schemaVersion 3. Every claim in every finished corpus
+				# is already cited into a plan, so a rule demanding a recorded
+				# hash from each of them would turn every existing vault red on
+				# the day the plugin updates - which is how a gate stops being
+				# run. vault-migration.md carries the back-fill.
+				if (schema + 0 < 3) {
+					printf("cited-section drift is a schemaVersion 3 rule and this vault is at %s - `reconciled_sections` was added at 3, so no note here records what it read and there is nothing to compare a section against - %s\n", schema, vault)
+					exit
+				}
+
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					ty = V[f, "type"]
+					# Only `claim` and `assumption`, and only where the note is
+					# current. Invariant 20 is about a claim the prose has to
+					# carry; a `fact` reaches the plan as an `[F#]` code that
+					# resolves forward whatever the paragraph says, and a
+					# retracted or superseded note is the strikethrough rule and
+					# the supersession sweep respectively - reporting either
+					# here would send its reader to the wrong fix.
+					if (ty != "claim" && ty != "assumption") continue
+					st = V[f, "status"]
+					if (st != "" && st != "current") continue
+
+					id = V[f, "id"]
+					uk = f SUBSEP "used_in"
+					rk = f SUBSEP "reconciled_sections"
+
+					# What the note records, split once: the target it names and
+					# the hash it recorded for it. Keys carry the note file, so
+					# nothing has to be deleted between notes - `delete array`
+					# without a subscript is an extension some awks have and
+					# POSIX does not, and clearing an array by looping it is a
+					# second walk over the same data.
+					for (j = 1; j <= LN[rk]; j++) {
+						it = LI[rk, j]
+						sp = index(it, " ")
+						tg = (sp == 0) ? it : substr(it, 1, sp - 1)
+						tk = f SUBSEP docof(tg) SUBSEP ancof(tg)
+						SEEN[tk] = 1
+						REC[tk] = (sp == 0) ? "" : trim(substr(it, sp + 1))
+					}
+
+					for (j = 1; j <= LN[uk]; j++) {
+						entry = LI[uk, j]
+						doc = docof(entry)
+						anc = ancof(entry)
+						# A citation with no anchor names a whole document and
+						# there is no section to hash. A missing document or a
+						# dead anchor is --used-in verdict; reporting either
+						# here would be the same failure under a name about
+						# reconciliation.
+						if (doc == "" || anc == "" || !(doc in EXISTS)) continue
+						if (!(doc in SCANNED)) { SCANNED[doc] = 1; sections(doc) }
+						ak = doc SUBSEP fold(anc)
+						if (!((ak in ALIAS) && ALIAS[ak] > 0)) continue
+
+						tk = f SUBSEP doc SUBSEP anc
+						USED[tk] = 1
+						# MEMOISED PER SECTION, NOT PER CITING NOTE. Several
+						# claims legitimately cite one section, and the hash is
+						# a byte-at-a-time walk over its whole body - recomputing
+						# it per citation makes the cost O(citations) where the
+						# answer only has O(sections) worth of distinct values in
+						# it. Keyed the same way RAW is, beside it.
+						bk = doc SUBSEP ALIAS[ak]
+						if (!(bk in HASH)) HASH[bk] = shash(RAW[bk])
+						now = HASH[bk]
+						nchecked++
+						if (!(tk in SEEN))
+							report(f, "section-hash-missing", id,
+								"`used_in` names `" entry "` and `reconciled_sections` records nothing for it. Nothing in the corpus says what that section said when this claim was reconciled against it, so a later rewrite of the block leaves the citation resolving and the claim standing on prose nobody has re-read - which is invariant 20 satisfied once and then quietly undone. Re-read the section and record it: `" entry " " now "`")
+						else if (REC[tk] == "")
+							report(f, "section-hash-missing", id,
+								"`reconciled_sections` names `" entry "` with no hash after it, so the entry records that somebody looked and not what they saw - and a later rewrite of that block is then indistinguishable from no change at all. Record the hash: `" entry " " now "`")
+						else if (REC[tk] != now)
+							report(f, "section-hash-drifted", id,
+								"`reconciled_sections` recorded `" REC[tk] "` for `" entry "` and that section now hashes to `" now "`. The heading is untouched, so `used_in` still resolves and every other check passes while the prose the claim stands on has been rewritten since anybody read it against this note. This is the failure invariant 20 exists to prevent, occurring after the invariant was satisfied once. Re-read the section: if the claim still holds, record `" entry " " now "` and move `reconciled:` to today; if it does not, the claim is what has to change")
+					}
+
+					# BOTH DIRECTIONS, for the reason --red-team checks its
+					# roster both ways: an entry for a section this claim no
+					# longer cites is a hash nothing compares, and it reads as
+					# coverage to anybody counting entries against citations.
+					for (j = 1; j <= LN[rk]; j++) {
+						it = LI[rk, j]
+						sp = index(it, " ")
+						tg = (sp == 0) ? it : substr(it, 1, sp - 1)
+						tk = f SUBSEP docof(tg) SUBSEP ancof(tg)
+						if (tk in USED) continue
+						if (tk in DONE) continue
+						DONE[tk] = 1
+						report(f, "section-hash-unused", id,
+							"`reconciled_sections` names `" tg "` and `used_in` does not. The note records having read a section it no longer says it is cited into, so the entry is a hash nothing will ever compare - and to anybody checking that every citation has one, it reads as covered. Either restore the `used_in` entry or drop this one")
+					}
+				}
+
+				if (nchecked == 0)
+					printf("no current claim or assumption names a resolving document section under %s - there is nothing whose content a rewrite could drop, which is every vault before drafting cites one\n", vault)
+				else
+					printf("%d cited section%s hashed against the value the note recorded - %s\n",
+						nchecked, (nchecked == 1 ? "" : "s"), vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint claim-drift" "$CD_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
 # pass 3 - the checks
 #
 # Reads the record stream plus the parse errors, and emits one failure per line:
@@ -3190,6 +4385,19 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		for (ki = 1; ki <= nkind; ki++) knownkind[kindw[ki]] = 1
 		condkind["policy"] = 1
 		condkind["policy-within-band"] = 1
+
+		# The closed `model_input` word list, on the same terms as driver_kind
+		# above: two words, unquoted, and a third is not a value. Closing it is
+		# what makes --assumption-rows a check rather than a hint - the field is
+		# what says a note is an input to the projection, so an unrecognised
+		# value is a note that declares nothing while reading as declared, and
+		# the row it owes is then never asked for. A typo is indistinguishable
+		# from a deliberate omission, which is the exemption-by-misspelling this
+		# refuses. Read here rather than in --assumption-rows because it needs
+		# nothing but the note, which is what keeps it in the pass that runs on
+		# every bare invocation.
+		nminput = split("revenue cost", minputw, " ")
+		for (ki = 1; ki <= nminput; ki++) knownminput[minputw[ki]] = 1
 
 		nedge = split(edgefields, edgef, " ")
 		rank["L"] = 1; rank["M"] = 2; rank["H"] = 3
@@ -3371,6 +4579,19 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 					if (dk != "" && !(dk in knownkind))
 						report(f, "driver-kind-unknown", id, "`driver_kind` is `" dk "` and the enumeration is closed at `structural`, `policy` and `policy-within-band`. Everything downstream branches on policy or not - a policy-bound verdict owes a stated condition and a structural one does not - so an unrecognised value takes the structural path by default, which is the exemption invariant 18 exists to refuse. A typo is then indistinguishable from a deliberate classification, and the plan reports a decision the founder made as a category floor")
 				}
+
+				# --- the model-input word list is closed --------------------
+				# The trigger is field presence and not the version, for the
+				# reason `target-verdict` needs no version: `model_input` is a
+				# term this release introduces, so no note in any existing
+				# corpus carries it and there is no population an exemption
+				# would protect. The rule that reads a document -
+				# --assumption-rows - is gated on schemaVersion 3 because it
+				# asks the TABLE for something too, and a vault before 3 has no
+				# contract saying its rows are note titles.
+				mi = V[f, "model_input"]
+				if (mi != "" && !(mi in knownminput))
+					report(f, "model-input-unknown", id, "`model_input` is `" mi "` and the enumeration is closed at `revenue` and `cost`. The field is what declares this note an input the projection has to carry a row for, and --assumption-rows reads exactly that - so an unrecognised value is a note that declares nothing while reading as declared, and the row it owes is never asked for. That is the same failure the field exists to fix, reintroduced by a typo: the input stays in the ledger, never enters the model, and every verdict downstream inherits a denominator missing it")
 
 				# --- the type is stated three times and all three agree ----
 				if (ty != "" && !(ty in req))

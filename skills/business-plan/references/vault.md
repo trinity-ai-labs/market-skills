@@ -14,7 +14,7 @@ they may not omit.
 - [The vault is a claim ledger over the prose](#the-vault-is-a-claim-ledger-over-the-prose)
 - [Seven note types, and the seventh is a record rather than a grade](#seven-note-types-and-the-seventh-is-a-record-rather-than-a-grade)
 - [An ID is an address, not a label](#an-id-is-an-address-not-a-label)
-- [Six edges, each stored once on the asserting note](#six-edges-each-stored-once-on-the-asserting-note)
+- [Seven edges, each stored once on the asserting note](#seven-edges-each-stored-once-on-the-asserting-note)
 - [Four format invariants that break silently](#four-format-invariants-that-break-silently)
   - [Block lists survive an Obsidian save; inline flow lists do not](#block-lists-survive-an-obsidian-save-inline-flow-lists-do-not)
   - [Coerce nothing: ban the ambiguous value instead of parsing it](#coerce-nothing-ban-the-ambiguous-value-instead-of-parsing-it)
@@ -159,7 +159,7 @@ only the shape `TYPE-[A-Za-z0-9]+`. A shorter hand-written ID from an early note
 lint failure, because failing an otherwise-valid corpus over a cosmetic length is how a
 useful check gets switched off.
 
-## Six edges, each stored once on the asserting note
+## Seven edges, each stored once on the asserting note
 
 | edge | meaning | written on |
 |---|---|---|
@@ -169,8 +169,16 @@ useful check gets switched off.
 | `validated_by` | this assumption is tested by that validation step | the assumption |
 | `depends_on` | this milestone cannot land until that one has | the later milestone |
 | `moves` | this milestone changes the value that note asserts | the milestone |
+| `arr_excludes` | the ARR term of this verdict's identity does not carry that note's revenue | the verdict |
 
-All six are block lists of IDs.
+All seven are block lists of IDs.
+
+**`arr_excludes` is an edge rather than a prose note on the verdict for one reason: its items are
+note IDs, so a mistyped one has to be a `dangling-edge` failure and not a silent exclusion.** A
+declaration that the identity leaves out a note the vault does not hold is the one form of that
+declaration nobody can catch by reading it, and being an edge is also what makes the excluded line
+reachable from the verdict through `vault-lint.sh graph`. The rule it exists for is
+[target.md](target.md#the-arr-term-declares-its-composition-or-the-exclusion-is-invisible)'s.
 
 **Stored once, on the asserting note, and never mirrored.** There are no backlink fields,
 because a backlink is a second copy of a fact that can drift from the first: edit one side,
@@ -525,6 +533,9 @@ rests_on:                          # required — block list
 used_in:                           # required once the claim is cited in a rendered document
   - "business-plan.md#why-now"     # the heading's own {#anchor}, not the slug of its text
   - "one-pager.md"
+reconciled: "2026-03-20"           # schemaVersion 3 — the date the sections below were read
+reconciled_sections:               # schemaVersion 3 — what was read, and what it looked like
+  - "business-plan.md#why-now 3a243b97"
 scopes:                            # optional — block list
   - CLAIM-BB77KK12
 ---
@@ -581,6 +592,41 @@ renamed document and a renamed section. The entry is written as the reader's own
 `"business-plan.md#competition"`, resolved against the vault root and not against the note's own
 directory. An entry with no `#` is checked for the file alone, which is the shape to use when a
 claim reaches a document whose sections it does not name.
+
+**`reconciled_sections` is what stops a claim being reconciled once and then quietly undone**, and
+it is the half `--used-in` deliberately cannot reach. That mode asserts a citation *resolves*;
+nothing asserted that a section still carries what it carried yesterday. Observed: a claim was
+written into a plan section, satisfying invariant 20; a later re-solve rewrote that block; the
+heading was untouched, so the citation still resolved and the gate stayed green while the section no
+longer said what the note says. It was found by hand, days later — the exact failure invariant 20
+exists to prevent, occurring **after** the invariant had been satisfied once, which is the case a
+one-time check structurally cannot see.
+
+**It is `reconciled:` itemised, not a second field beside it.** The date says a read happened; the
+entries say what was read and what it looked like. One entry per `used_in` target whose `#anchor`
+resolves, written as the entry followed by a space and the eight-hex content hash of that section.
+`vault-lint.sh --claim-drift` recomputes each one and fails three ways: a hash the section no longer
+matches (`section-hash-drifted`, which **re-opens** the claim), a resolving citation with no entry
+(`section-hash-missing`, because a rule cleared by omission is not an exemption), and an entry naming
+a target `used_in` does not (`section-hash-unused`, which reads as coverage to anybody counting
+entries against citations).
+
+**Nobody computes the hash by hand — the failure message carries it.** The lint has no write mode
+by design, so re-reconciling is re-reading the section and pasting the token the failure printed;
+pasting it is the assertion that the read happened, exactly as stamping a date is. The hash is over
+bytes with trailing whitespace and blank-line runs normalised away, because all three are invisible
+in a rendered document and a hash sensitive to them would re-open every claim in the corpus the
+first time an editor trimmed a file.
+
+**What a hash cannot say is that the section AGREES with the note.** That is the read invariant 19
+owns, and no grep can do it — plan prose cites `[S#]` and `[F#]` codes while a claim carries no code
+at all. What this adds is that the read cannot silently expire: a rewrite after the read is visible
+from outside, instead of being a thing the conductor is trusted to notice.
+
+**Both fields are `schemaVersion` 3 rules**, and that is the version's whole purpose here: every
+claim in every finished corpus is already cited into a plan, so a rule demanding a recorded hash
+from each of them would fail every existing vault on the day the plugin updates.
+[vault-migration.md](vault-migration.md) carries the back-fill.
 
 **Write the heading's explicit `{#anchor}`, because that is the half of the heading that does not
 move.** A heading offers two addresses and the mode accepts either: the `{#anchor}` attribute at
@@ -644,6 +690,47 @@ shipping something and watching. An assumption with no validation step is a perm
 unverified belief that nothing will ever revisit, which is the state the field exists to
 prevent.
 
+**Two more fields hang off `model_input`, and they are what connect this note to the
+projection.** An assumption that is an input to the financial model says so, in one of two words,
+and either the model carries a row for it or the note says why not:
+
+```yaml
+model_input: revenue        # revenue | cost — those two words, and a third is not a value
+excluded_from_model: "billed on a separate cycle, so it is modelled in the metered sheet"
+```
+
+**`model_input` declares that the projection has to carry a row for this note**, and
+`vault-lint.sh --assumption-rows` reads that both ways against the assumptions table in
+`financial-model.md`: a declared input with no row fails, and a row matching no `assumption`
+`title` verbatim fails too. The match is the `title`, character for character, the same rule a
+roadmap row is held to against a milestone `title` — [plan-template.md](plan-template.md) states
+it as the contract the table is written under. **The failure it prevents:** two assumptions
+governing a whole revenue line existed as notes, correctly authored with subjects and confidence,
+and were never added as rows — so the rule meant to keep every number traceable made that revenue
+line structurally unable to enter the projection, the model filed it as revenue outside its scope,
+and every verdict downstream inherited a denominator missing a line the roadmap ships. The notes
+lint clean, the table lints clean, and nothing compared them.
+
+**The enumeration is closed at `revenue` and `cost`, unquoted, the same rule `sensitivity` and
+`driver_kind` are held to.** An unrecognised value is a note that declares nothing while reading
+as declared, so the row it owes is never asked for — which is the same failure the field exists to
+fix, reintroduced by a typo. `check` reports it as `model-input-unknown`.
+
+**`excluded_from_model` is the other escape, and it is a reason rather than a flag.** A model may
+legitimately leave a revenue line out — a metered layer must not be allowed to flatter subscription
+churn — and stating why is what turns that from an omission into a decision. It clears the missing
+row on its own. **What it does not clear is the identity**: where a `milestone`'s `moves` names this
+note, the roadmap ships a dated change to a line the model has no row for, and the verdict note has
+to name it in `arr_excludes` as well or the ARR term every corner is solved against is a subset
+figure with nothing saying which subset. That rule and its cost are
+[target.md](target.md#the-arr-term-declares-its-composition-or-the-exclusion-is-invisible)'s.
+
+**Neither field is required, and the trigger is presence rather than `schemaVersion`** — both are
+terms this release introduces, so no note in any existing corpus carries either and there is no
+population an exemption would protect. The mode that reads the *table* is gated on `schemaVersion`
+3, because it asks the document for something too and a corpus written before 3 was under no
+contract that its rows are note titles.
+
 **A value the indexed reference class can speak to is not believed with no evidence, so it is
 not an `assumption`.** Where a **structural** driver has no subject instrument but
 `research/growth-curves.md` indexes it at the month in question, its value is a `claim` resting
@@ -675,7 +762,23 @@ driver_kind: policy           # structural | policy | policy-within-band — tho
 conditional_on: "six hours a week across two channels"   # required when driver_kind is policy or policy-within-band
 evidence_n: "2"               # distinct source notes reached under the binding driver
 evidence_counterparties: "1"  # distinct counterparties among those sources
+arr_excludes:                 # optional block list — the revenue lines the ARR term does not carry
+  - ASSUMPTION-MN66TT21
 ```
+
+**`arr_excludes` is optional and is deliberately NOT one of the five above** — the set-trigger
+below is unchanged, so a note carrying it owes nothing extra and a note without it is complete. It
+is here because it belongs to the verdict rather than to the model, and what it does is make the
+identity's ARR term say what it does not include. An exit identity is `ARR at exit × multiple`, and [the
+multiple's own driver table](target.md#the-multiples-inputs-have-homes-too-and-not-one-of-them-is-arr)
+establishes that none of the multiple's inputs is ARR — so the ARR term is the one place the revenue
+composition enters the identity, and it enters as a single number. The **included** side is already
+enumerated as the rows of the assumptions table, so restating it here would be a second source of
+truth nothing keeps in sync; the excluded side has no other home, and this is it.
+`vault-lint.sh --assumption-rows` fails a line the roadmap ships a change to that the model has no
+row for and no verdict note declares — the exclusion is allowed, the silence is not. **What it
+cannot say** is that the exclusion is *right*: like `reconciled:`, it records that the decision was
+stated, not that it was correct, and stating it is what makes it arguable by somebody who disagrees.
 
 **`binding_driver` names the driver the identity solved for, and it is what gives the two counts a
 scope.** *Distinct sources under the verdict* is most of the corpus; *distinct sources under the
@@ -769,7 +872,7 @@ and never a reading of the prose inside it**, for the same reason `conditional_o
 verbatim: a check that infers a verdict from sentence shape cries wolf, and a check that cries wolf
 gets switched off.
 
-**Six rules stand on these fields, and every one of them fails rather than printing a worklist.**
+**Seven rules stand on these fields, and every one of them fails rather than printing a worklist.**
 Unlike `--supersession-sweep`, a thin tail nobody surfaced is not the corpus working.
 
 | rule | mode | what fires |
@@ -780,6 +883,7 @@ Unlike `--supersession-sweep`, a thin tail nobody surfaced is not the corpus wor
 | the plan's `Kind` column renders off the note | `--binding-driver` | `verdict-kind-mismatch`, both directions — a cell hand-edited to `structural` is otherwise the cheapest way past the row above |
 | the evidence under the binding driver is surfaced | `--binding-driver` | `verdict-thin-evidence` where the closure reaches under three distinct sources, or one counterparty, and either the note's counts are not what the closure holds or the rendered section does not carry the line they generate |
 | the plan's verdict is filed as a note | `--binding-driver` | `verdict-unfiled` — a `business-plan.md` carrying a non-empty section at the `{#target-verdict}` anchor with no `claim` or `assumption` under `subject: target-verdict` behind it |
+| the ARR term declares what it leaves out | `--assumption-rows` | `excluded-line-on-roadmap` — an assumption carrying `excluded_from_model` that a `milestone`'s `moves` names, and that no verdict note lists in `arr_excludes`. Gated on `schemaVersion` 3 |
 
 ### The question note records the gap, not the answer
 
@@ -1096,7 +1200,7 @@ error at all. Refusing without an explicit path costs one flag and removes the e
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "created": "2026-03-14"
 }
 ```
@@ -1104,11 +1208,12 @@ error at all. Refusing without an explicit path costs one flag and removes the e
 `schemaVersion` is a required integer, incremented only on a change that would make an older
 tool misread an existing vault. `created` is optional. The file is JSON, not YAML, so the
 coerce-nothing rule does not apply to it — JSON has unambiguous types. **The current version is
-2**; a new vault is scaffolded at it.
+3**; a new vault is scaffolded at it.
 
-**The tool reads a SET of versions, not one.** `vault-lint.sh` reads both `1` and `2`. A vault at
-1 gets exactly the behaviour it has always had, and a vault at 2 additionally gets the checks
-version 2 added, enumerated in the table below. A vault at 1
+**The tool reads a SET of versions, not one.** `vault-lint.sh` reads `1`, `2` and `3`. A vault at
+1 gets exactly the behaviour it has always had, a vault at 2 additionally gets the checks version 2
+added, and a vault at 3 gets those plus the checks version 3 added — each enumerated in its own
+table below. A vault at 1
 has no `milestones/` directory by construction, so it cannot owe any of the milestone rules; one
 that has grown the directory without moving its version is told so by `type-agreement` rather
 than having its notes read in silence. That set is what makes the version a real extension point rather than a number
@@ -1127,22 +1232,40 @@ not exist when a version-1 corpus was written:
 | `reconciled:` on a supersession | `--supersession-sweep` | a note carrying `supersedes` with no `reconciled:` date, or one earlier than that note's own `created` |
 | the lens roster | `--red-team` | a `red-team.md` carrying no `## Lenses dispatched` roster |
 | the roadmap table renders this set | `--roadmap-table` | a roadmap row whose item cell matches no milestone `title` verbatim, a milestone the table never lists, and milestones with no `business-plan.md` to render them |
+| the monitoring plan names axes | `--monitoring` | a `## Monitoring plan` section carrying prose and no axis table, and a row leaving the instrument, the cadence or the decision it would change empty |
 
-**This table is the only enumeration of the set** — the paragraph above points at it rather than
-restating it, because a version that adds a rule in one release and a second in the next ends up
-with two lists, one of which is quietly short. A short list of what a version costs is worse than
-no list: it reads as complete.
+**What version 3 adds**, on the same terms, and both rules read a field no corpus written before
+this release can carry:
 
-**`--binding-driver` is deliberately not a row in it**, and the omission is the design rather than a
-gap in the list. Its four rules are triggered by a note's `subject`, or by the plan section a verdict
+| rule | mode | what fires |
+|---|---|---|
+| the assumptions table renders the declared inputs | `--assumption-rows` | a declared `model_input` with no row and no `excluded_from_model`, a row matching no `assumption` `title` verbatim, declared inputs with no table to render them, and a line excluded from the model that the roadmap ships a change to and no verdict note lists in `arr_excludes` |
+| a cited section still carries what it carried | `--claim-drift` | a `reconciled_sections` hash the section no longer matches, a resolving citation with no entry recording it, and an entry naming a target `used_in` does not |
+
+**Version 3's cost to an existing corpus is a back-fill and nothing else**, and it is bigger than
+2's: every claim in a finished corpus is already cited into a plan, so moving to 3 means re-reading
+each cited section and recording its hash. That is the read invariants 19 and 20 already require,
+made visible — which is the point, and also the reason the version exists rather than the rule
+firing unconditionally. [vault-migration.md](vault-migration.md) carries the procedure.
+
+**Each of these tables is the only enumeration of its version's set** — the paragraph above points
+at them rather than restating them, because a version that adds a rule in one release and a second
+in the next ends up with two lists, one of which is quietly short. A short list of what a version
+costs is worse than no list: it reads as complete.
+
+**Neither `--binding-driver` nor `--deliverable` is a row in it**, and in both cases the omission is
+the design rather than a gap in the list. `--deliverable` reads `deliverables/*.html`, so its
+trigger is a rendered file rather than a version: a vault that has rendered nothing owes it nothing
+at any version, and a vault that has rendered something owes it at every version, because a note ID
+resolves to nothing for that reader whenever the corpus was written. Its four rules are triggered by a note's `subject`, or by the plan section a verdict
 renders into, never by a version — so a corpus written before those fields existed owes nothing at
 either `1` or `2` and needs no exemption bought with a version — the fields and the argument are
 [above](#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type). A row here
 would assert the opposite, and the lint would then disagree with the schema about which vaults the
 mode applies to, in the direction where the schema reads stricter than the tool.
 
-The last two are checks on a *record of a read* rather than on the read itself, which is the only
-shape a mechanical check over a judgment step can take. The two directions `--red-team` checks
+`--claim-drift` and the last two version-2 rows are checks on a *record of a read* rather than on the
+read itself, which is the only shape a mechanical check over a judgment step can take. The two directions `--red-team` checks
 against an existing roster — a rostered lens with no rows, a row from an unrostered lens — are not
 gated on the version: a roster is a version-2 artifact, so a vault carrying one meant to.
 

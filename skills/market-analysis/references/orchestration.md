@@ -31,7 +31,9 @@ Workflow({ script: <Workflow A below>, args: {
   vaultNotes: "",          // "" when the run has no vault. Otherwise the vault note contract from
                            // SKILL.md, verbatim, with <vault> already expanded to the absolute path.
   mustProfile: ["<competitor the founder/user named>", ...],   // always profiled, regardless of kind
-  playbookCompetitors: "<the Competitive landscape block from dimensions.md, verbatim>",
+  playbookCompetitors: "<dimensions.md's shared preamble + its Competitive landscape block, verbatim>",
+                           // The preamble carries the output skeleton and the gap-entry rules EVERY
+                           // dimension owes; the block on its own hands the agent neither.
   profileCap: 12,          // direct profiled up to this; non-direct up to half of it
   maxCompetitors: 60,
   dryRounds: 2,
@@ -114,13 +116,13 @@ const skipped = roster.filter(c => !toProfile.includes(c) && c.kind !== 'status-
 if (skipped.length) log(`NOT profiled (visible omission, listed in competitors.md): ${skipped.join(', ')}`)
 
 const profiles = await parallel(toProfile.map(c => () =>
-  agent(`${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nApply that playbook's PER-COMPETITOR rules to exactly one: "${c.name}" (${c.kind}; ${c.url || 'find their site'}). Only those — the roster ordering, the capability matrix, the category verdict and the growth band belong to the competitors.md writer, which reads your file. Write the full profile, with its full source table, to ${outDir}/research/profiles/${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md. RETURN only: a <=120-word summary ending with the wedge line.`,
+  agent(`${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nApply that playbook's PER-COMPETITOR rules to exactly one: "${c.name}" (${c.kind}; ${c.url || 'find their site'}). Only those — the roster ordering, the capability matrix, the category verdict and the growth band belong to the competitors.md writer, which reads your file. Write the full profile, with its full source table, to ${outDir}/research/profiles/${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md. RETURN only: a <=180-word summary ending with the wedge line, then one line per adoption candidate in the form "<the change> · policy|structural · <what it costs>" — or the single line "nothing to adopt found, checked ${date}". The playbook owes your FILE both of those sections in full; this return is triage, and the roll-up reads the file.`,
     { label: `profile:${c.name}`, phase: 'Profile', model: 'sonnet', effort: 'medium' })
     .then(p => ({ name: c.name, kind: c.kind, summary: p }))))
 
 // competitors.md writer: assembles the dimension contract file from the profile FILES
 const verdict = await agent(
-  `${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nRead every profile in ${outDir}/research/profiles/ plus this roster (incl. unprofiled + status-quo entries): ${roster.map(c => `${c.name} (${c.kind})`).join(', ')}. Write ${outDir}/research/competitors.md per the playbook's skeleton: alternatives-first ordering (status-quo entries OPEN the file), the jobs x competitors capability matrix keyed to the dossier's jobs, per-competitor CTA/motion, the signal-disciplined next-move calls, and the unprofiled names listed as discovered-not-profiled. If the file already exists, UPDATE it — keep prior source rows with their original Pulled dates. End the file with an explicit Category verdict section and the observed growth band. Then return the verdict JSON: does the competitive set confirm the dossier's category boundary? revisedBoundary = the boundary as it should now read (unchanged if confirms).`,
+  `${CTX}\n\nCompetitive-landscape playbook:\n${playbookCompetitors}\n\nRead every profile in ${outDir}/research/profiles/ plus this roster (incl. unprofiled + status-quo entries): ${roster.map(c => `${c.name} (${c.kind})`).join(', ')}. Write ${outDir}/research/competitors.md per the playbook's skeleton: alternatives-first ordering (status-quo entries OPEN the file), the jobs x competitors capability matrix keyed to the dossier's jobs, per-competitor CTA/motion, the signal-disciplined next-move calls, and the unprofiled names listed as discovered-not-profiled. If the file already exists, UPDATE it — keep prior source rows with their original Pulled dates. End the file with an explicit Category verdict section, the adoption-candidate roll-up, and the observed growth band. Then return the verdict JSON: does the competitive set confirm the dossier's category boundary? revisedBoundary = the boundary as it should now read (unchanged if confirms).`,
   { label: 'competitors:verdict', phase: 'Profile', model: 'opus', effort: 'high', schema: VERDICT_SCHEMA })
 
 return {
@@ -142,7 +144,8 @@ unchanged.
 ## Workflow B — Research + Verify + Critique
 
 Args: everything from A plus `boundary` (post-verdict), `dimensions`, `playbooks`, `prior`,
-`verifyCap`, and `profiledSummary` (compact roster + wedge lines from A's return).
+`verifyCap`, and `profiledSummary` (compact roster + wedge lines + adoption candidates from A's
+return).
 
 **The dimension list is data — a new dimension needs a playbook, not a code change.** `dimensions`
 is passed in and mapped, and the only hard requirements the script enforces are that `sizing` is
@@ -153,7 +156,7 @@ enters as `"growth-curves"` with its block from `dimensions.md` and nothing here
 consumes the profiled set AND their dated traction points. The ordering half is honoured by
 construction: B runs only after A's conductor checkpoint, so the profiles exist on disk before any
 B agent starts. The evidence half was not — `profiledSummary` is a roster of names, kinds and
-≤120-word wedge lines, and the dated points are not in it. A curve-fitting agent handed only that
+≤180-word summaries, and the dated points are not in it. A curve-fitting agent handed only that
 roster re-searches every company's traction from scratch and fits a series the observed growth band
 was never derived from: two files disagreeing about the same company, with nothing in either
 saying which is right. So B's shared context now points every dimension agent at the profile files
@@ -164,7 +167,10 @@ themselves, and says not to re-derive what A already sourced.
 //   ("unit-economics" whenever the dossier has Cost structure signals)
 //   ("growth-curves" reads A's profiles off disk — see the CTX note below, not profiledSummary)
 // NEVER include "competitors" — Workflow A owns it. Must include "sizing".
-// playbooks: { <dimension>: "<verbatim block from dimensions.md>" } — one entry per dimension.
+// playbooks: { <dimension>: "<dimensions.md's shared preamble + that dimension's block, verbatim>" }
+//   — one entry per dimension. The preamble is half of every playbook: it holds the output skeleton
+//   the brief below tells the agent to follow and the gap-entry rules every dimension owes, so an
+//   entry carrying only the `##` block omits rules the file states and nothing delivers.
 // prior: { <dimension>: "<existing research/<d>.md content>" | null } — re-run merge context.
 export const meta = {
   name: 'market-analysis-research',

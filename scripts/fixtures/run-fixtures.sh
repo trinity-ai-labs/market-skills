@@ -56,9 +56,42 @@
 #      carrying none of the fields - and none of them is gated on schemaVersion.
 #  14. A vault whose every byte is CRLF still fires the three checks that need a
 #      vocabulary term to compare against, and leaks no carriage return into
-#      what it prints. This is the input class the other eighteen fixtures never
-#      carried, which is why a vocabulary pass that dropped every term on a CRLF
-#      file went unnoticed by all of them.
+#      what it prints. This is the input class no other fixture carried, which is
+#      why a vocabulary pass that dropped every term on a CRLF file went
+#      unnoticed by all of them. Item 17 below is the same shape one character
+#      over, and a count is not written out here because it moves every release.
+#  15. --monitoring holds competitor-analysis.md's monitoring plan to named axes
+#      with an instrument, a cadence and the decision each would change: it fails
+#      an absent section, a section carrying prose and no axis table, and a row
+#      that leaves a column empty - including an em-dash cell, which is the half a
+#      list of placeholder words would get wrong. Each has its silent side beside
+#      it: a complete axis, a table outside the section, a vault that profiled no
+#      competitors, and the same document at schemaVersion 1.
+#  16. --deliverable reads the RENDERED deliverables/*.html and fails on a
+#      strikethrough span, a note ID and a red-team objection code - the vault
+#      addresses that resolve to nothing for the reader the document is for. The
+#      silent side is a clean file in the same directory carrying every near miss
+#      a looser rule fires on: FACT-CHECKED, an address with an alphanumeric
+#      character on either boundary, a lowercase anchor slug, and <span>/<script>.
+#  17. A zero-width space is a byte in every comparison that reads a document.
+#      Parity was green over four copies of one fence scan while three compared
+#      under PowerShell's culture rules, which report a ZWSP-carrying heading
+#      EQUAL to one without - so this suite pins the behaviour each implementation
+#      must have and scripts/parity/parity.mjs diffs the two over the same vault.
+#  18. --assumption-rows reads the model's assumptions table against the notes
+#      that declare themselves inputs to it, both directions, and its two escapes
+#      each clear it on their own: a rendered row, or a stated exclusion reason.
+#      The identity rule beside them fails a revenue line excluded from the model
+#      while the roadmap ships a change to it, and clears when the verdict note
+#      declares the exclusion in `arr_excludes`.
+#  19. --claim-drift re-opens a claim whose cited section has been rewritten since
+#      the note recorded reading it, reports a citation with no recorded hash and
+#      an entry naming a section the note no longer cites, clears on a re-record,
+#      and ignores the whitespace a renderer ignores while still moving on a real
+#      edit.
+#      Both modes are gated on schemaVersion 3 and both are asserted SILENT at 1
+#      and at 2, because every corpus that exists is at one of those and carries
+#      none of the fields either mode reads.
 
 set -u
 
@@ -91,7 +124,7 @@ driver-kind-unknown verdict-fields-incomplete"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift graph"
 
 PASS=0
 FAIL=0
@@ -119,6 +152,18 @@ no() {
 run_status() {
 	"$LINT" ${2:+"$2"} --vault "$1" >/dev/null 2>&1
 	printf '%s\n' "$?"
+}
+
+# strip_cr - drop every carriage return from a stream. .gitattributes leaves
+# *.md unpinned on purpose (see the comment there), so a fixture note checks
+# out CRLF on a POSIX box with core.autocrlf=true exactly as it does on
+# Windows - and a line read straight out of one, whether captured from awk or
+# piped through it for a rewrite, carries a trailing \r that a literal-string
+# comparison against an LF value never has. Four more slices land assertion
+# blocks in this file this release; route any new line-vs-literal comparison
+# through this helper instead of adding a fourth local `tr -d '\r'`.
+strip_cr() {
+	tr -d '\r'
 }
 
 printf 'run-fixtures: %s\n\n' "$LINT"
@@ -251,7 +296,11 @@ PAIRS=$(printf '%s\n%s\n%s\n%s\n%s\n' "$VJSON" "$UJSON" "$RTJSON" "$RMJSON" "$BD
 (cd "$HERE/violations" && find . -name '*.md' | LC_ALL=C sort) >"$PAIRS_FILE.notes"
 while read -r note; do
 	rel=${note#./}
-	decl=$(awk '/^Violates: / { sub(/^Violates: /, ""); print; exit }' "$HERE/violations/$rel")
+	# strip_cr: awk's sub() only touches the matched "Violates: " prefix, so a
+	# CRLF note hands back "unknown-subject\r" - and tr ',' '\n' | tr -d ' '
+	# below does not remove a carriage return, so the per-file grep -q
+	# "^$rel $want\$" a few lines down never matches.
+	decl=$(awk '/^Violates: / { sub(/^Violates: /, ""); print; exit }' "$HERE/violations/$rel" | strip_cr)
 	[ -n "$decl" ] || continue
 	printf '%s\n' "$decl" | tr ',' '\n' | tr -d ' ' | grep -v '^$' >"$PAIRS_FILE.decl"
 	while read -r want; do
@@ -273,7 +322,10 @@ printf '%s\n' "$PAIRS" >"$PAIRS_FILE"
 while read -r rel chk; do
 	[ -n "${rel:-}" ] || continue
 	case "$rel" in _vocab.yml) continue ;; esac
-	decl=$(awk '/^Violates: / { sub(/^Violates: /, ""); print; exit }' "$HERE/violations/$rel" 2>/dev/null)
+	# strip_cr: same CRLF-note reason as the forward check above - without it
+	# "$chk" never matches the trailing-\r "$decl" and every fired check reads
+	# as fired-without-declaring.
+	decl=$(awk '/^Violates: / { sub(/^Violates: /, ""); print; exit }' "$HERE/violations/$rel" 2>/dev/null | strip_cr)
 	case " $(printf '%s' "$decl" | tr ',' ' ') " in
 	*" $chk "*) ;;
 	*) no "$rel fired $chk without declaring it" ;;
@@ -378,8 +430,12 @@ printf '\nexplicit anchors\n'
 REWORD="$PAIRS_FILE.reword"
 rm -rf "$REWORD"
 cp -R "$HERE/clean" "$REWORD"
-awk '{ if ($0 == "## Competition & moat {#competition}") print "## Why the moat holds {#competition}"; else print }' \
-	"$HERE/clean/business-plan.md" >"$REWORD/business-plan.md"
+# strip_cr feeds awk rather than filtering its output: on a CRLF checkout $0
+# carries a trailing \r that the string-equality test never has, so the
+# rewrite has to see clean input BEFORE the comparison runs, not after.
+strip_cr <"$HERE/clean/business-plan.md" |
+	awk '{ if ($0 == "## Competition & moat {#competition}") print "## Why the moat holds {#competition}"; else print }' \
+		>"$REWORD/business-plan.md"
 
 if grep -q '^## Why the moat holds {#competition}$' "$REWORD/business-plan.md"; then
 	ok "the reworded copy carries the new heading text"
@@ -666,6 +722,217 @@ RT_AT1=$(run_status "$AT_1" --red-team)
 [ "$RT_AT1" = "0" ] && ok "the same document with no roster passes at schemaVersion 1" ||
 	no "a missing roster must not fail at schemaVersion 1 (got $RT_AT1)"
 
+# --- 2i. the monitoring axes, and the version they apply at -------------------
+# The mode reads competitor-analysis.md, so none of the note-level machinery
+# above sees it - every assertion about it is written out here. Three shapes,
+# each with the silent side beside it: an absent section, a section with no axis
+# in it, and a table whose rows are incomplete but not all of them.
+printf '\nmonitoring axes\n'
+
+MON_GAP=$("$LINT" --monitoring --vault "$HERE/monitoring-gap" 2>&1)
+MON_GAP_STATUS=$?
+[ "$MON_GAP_STATUS" = "1" ] && ok "a competitor-analysis.md with no monitoring section fails --monitoring" ||
+	no "an absent monitoring section should exit 1 (got $MON_GAP_STATUS)"
+case "$MON_GAP" in
+*'no `## Monitoring plan` section at all'*) ok "the absent section is named as absent rather than as empty" ;;
+*) no "--monitoring did not distinguish an absent section from an empty one (got: $MON_GAP)" ;;
+esac
+# The Threat ranking table in that same document is pipe rows with free prose in
+# the first cell. Read as axes it would report two more failures, so the count is
+# the assertion that the section boundary holds.
+MON_GAP_J=$("$LINT" --monitoring --vault "$HERE/monitoring-gap" --json 2>/dev/null)
+case "$MON_GAP_J" in
+*'"failure_count": 1'*) ok "a table outside the monitoring section is not read as an axis" ;;
+*) no "--monitoring read a table outside its own section (got: $MON_GAP_J)" ;;
+esac
+
+# The same document one version down. Firing at 2 is the check; staying silent at
+# 1 is what keeps every corpus with a competitor analysis in it from going red the
+# day the skill updates.
+MON_AT_1="$PAIRS_FILE.mon-1"
+rm -rf "$MON_AT_1"
+cp -R "$HERE/monitoring-gap" "$MON_AT_1"
+printf '{\n  "schemaVersion": 1,\n  "created": "2026-07-27"\n}\n' >"$MON_AT_1/.vault/config.json"
+# Captured once and sliced for both halves: the lint is deterministic for a given
+# vault, so a separate run_status call over this one costs a second full parse and
+# buys nothing - the same reason the CRLF block further down gives.
+MON_AT1_OUT=$("$LINT" --monitoring --vault "$MON_AT_1" 2>&1)
+MON_AT1_STATUS=$?
+[ "$MON_AT1_STATUS" = "0" ] && ok "the same document at schemaVersion 1 does not owe axes" ||
+	no "schemaVersion 1 must not owe monitoring axes (got $MON_AT1_STATUS)"
+case "$MON_AT1_OUT" in
+*'schemaVersion 2 rule and a vault at 1'*) ok "at 1 the mode says it did not ask, rather than reporting clean" ;;
+*) no "at 1 --monitoring reported an empty verdict instead of saying it did not ask (got: $MON_AT1_OUT)" ;;
+esac
+
+# A section that gained the heading and no table is the shape an existing corpus
+# is in: the wording it replaces asked which pages to re-check and how often.
+# Appended to a copy rather than kept as a fourth fixture, for the reason the
+# schemaVersion twin above is a copy.
+MON_PROSE="$PAIRS_FILE.mon-prose"
+rm -rf "$MON_PROSE"
+cp -R "$HERE/monitoring-gap" "$MON_PROSE"
+{
+	printf '\n## Monitoring plan\n\n'
+	printf 'Re-check the two pricing pages and the changelog monthly. Every profile\n'
+	printf 'above carries its research date as signal freshness.\n'
+} >>"$MON_PROSE/competitor-analysis.md"
+MON_PROSE_OUT=$("$LINT" --monitoring --vault "$MON_PROSE" 2>&1)
+MON_PROSE_STATUS=$?
+[ "$MON_PROSE_STATUS" = "1" ] && ok "a monitoring section with prose and no axis table fails" ||
+	no "a prose-only monitoring section should exit 1 (got $MON_PROSE_STATUS)"
+case "$MON_PROSE_OUT" in
+*'section with no axis in it'*) ok "the empty section is named as empty rather than as absent" ;;
+*) no "--monitoring reported a present-but-empty section as absent (got: $MON_PROSE_OUT)" ;;
+esac
+
+MON_THIN=$("$LINT" --monitoring --vault "$HERE/monitoring-thin" 2>&1)
+MON_THIN_STATUS=$?
+[ "$MON_THIN_STATUS" = "1" ] && ok "an axis missing a column fails --monitoring" ||
+	no "an incomplete axis should exit 1 (got $MON_THIN_STATUS)"
+case "$MON_THIN" in
+*'axis leaves empty: instrument'*) ok "an axis with no instrument is reported, and the column is named" ;;
+*) no "the axis with no instrument was not reported (got: $MON_THIN)" ;;
+esac
+# The em-dash cell. This is the half a placeholder word list would get wrong, and
+# the whole reason the test is letter-or-digit.
+case "$MON_THIN" in
+*'axis leaves empty: the decision it would change'*) ok "an em dash in the decision column reads as empty, not as an answer" ;;
+*) no "an em-dash decision cell was accepted as an answer (got: $MON_THIN)" ;;
+esac
+# The silent side, and the count is what asserts it: the complete axis and the
+# Threat ranking table above it are both in this document, and neither may fire.
+MON_THIN_J=$("$LINT" --monitoring --vault "$HERE/monitoring-thin" --json 2>/dev/null)
+case "$MON_THIN_J" in
+*'"failure_count": 2'*) ok "a complete axis stays silent, and so does the table above the section" ;;
+*) no "--monitoring failure_count is not 2 - a complete axis fired, or an incomplete one did not (got: $MON_THIN_J)" ;;
+esac
+
+# A vault that profiled no competitors owes nothing, at either version. Failing
+# it would fail every corpus before the competitor dimension runs.
+MON_NONE=$("$LINT" --monitoring --vault "$HERE/dead-citation" 2>&1)
+MON_NONE_STATUS=$?
+[ "$MON_NONE_STATUS" = "0" ] && ok "a vault with no competitor-analysis.md passes --monitoring" ||
+	no "a vault with no competitor-analysis.md should pass (got $MON_NONE_STATUS)"
+case "$MON_NONE" in
+*"no competitor-analysis.md"*) ok "the absent document is named rather than reported clean" ;;
+*) no "--monitoring did not say the document was absent (got: $MON_NONE)" ;;
+esac
+
+# --- 2j. what the rendered deliverable carries out of the vault ---------------
+# The mode reads deliverables/*.html, which is the artifact an outside reader
+# holds and the only one a fixture can assert - the render itself is a model
+# action. Both directions on one vault: business-plan.html leaks and
+# one-pager.html is clean, in the same directory.
+printf '\ndeliverable\n'
+
+# Captured once and sliced every way below. --json changes how the verdict is
+# rendered and never what it is, so the exit code comes off this same run.
+DELJ=$("$LINT" --deliverable --vault "$HERE/deliverable-leak" --json 2>/dev/null)
+DEL_STATUS=$?
+[ "$DEL_STATUS" = "1" ] && ok "a deliverable carrying vault archaeology fails --deliverable" ||
+	no "a leaking deliverable should exit 1 (got $DEL_STATUS)"
+
+for want in deliverable-strikethrough deliverable-note-id deliverable-objection-code; do
+	case "$DELJ" in
+	*"\"check\": \"$want\""*) ok "--deliverable fires $want" ;;
+	*) no "--deliverable never fired $want" ;;
+	esac
+done
+
+# A rendered <del> element and a literal ~~...~~ span are the same failure by two
+# routes - the markdown strikethrough rendered, or it did not - and an uppercase
+# tag is the same as a lowercase one.
+case "$DELJ" in
+*'"id": "line 15"'*) ok "a rendered <del> element is reported, by line" ;;
+*) no "the <del> element on line 15 was not reported (got: $DELJ)" ;;
+esac
+case "$DELJ" in
+*'"id": "line 18"'*) ok "an uppercase <S> tag is read the same as a lowercase one" ;;
+*) no "the uppercase tag on line 18 was not reported (got: $DELJ)" ;;
+esac
+case "$DELJ" in
+*'"id": "line 21"'*) ok "a literal ~~...~~ span that reached the render is reported" ;;
+*) no "the literal tilde span on line 21 was not reported (got: $DELJ)" ;;
+esac
+
+# Two addresses on one line are two rows, because the unit is the place a reader
+# has to go and restate.
+case "$DELJ" in
+*'"id": "SOURCE-K92MZ1QA"'*) ok "the first of two addresses on one line is reported" ;;
+*) no "SOURCE-K92MZ1QA was not reported" ;;
+esac
+case "$DELJ" in
+*'"id": "MILESTONE-PJ40XR63"'*) ok "the second of two addresses on one line is reported too" ;;
+*) no "MILESTONE-PJ40XR63 was not reported" ;;
+esac
+
+# THE SILENT SIDE, and it is most of what makes this mode usable. one-pager.html
+# carries FACT-CHECKED (seven characters, so not the eight a generated ID has),
+# an address with an alphanumeric character on either boundary, a lowercase
+# anchor slug, and <span>/<strong>/<script> - every one of which a looser rule
+# fires on. The count is the assertion; a named file would pass while another
+# over-fired.
+case "$DELJ" in
+*'"failure_count": 7'*) ok "the clean deliverable in the same directory fires nothing" ;;
+*) no "--deliverable failure_count is not 7 - the clean file fired, or a leak did not (got: $DELJ)" ;;
+esac
+case "$DELJ" in
+*one-pager*) no "--deliverable reported against the clean one-pager.html" ;;
+*) ok "no failure lands on one-pager.html, so the report is per file" ;;
+esac
+
+# A vault before Phase 5 has rendered nothing, and the gate runs before the first
+# render as well as inside the render loop - so the empty case is the ordinary one
+# on the first call and has to say which of the two it is.
+DEL_NONE=$("$LINT" --deliverable --vault "$HERE/clean" 2>&1)
+DEL_NONE_STATUS=$?
+[ "$DEL_NONE_STATUS" = "0" ] && ok "a vault with no deliverables/ passes --deliverable" ||
+	no "a vault with nothing rendered should pass (got $DEL_NONE_STATUS)"
+case "$DEL_NONE" in
+*"no deliverables/*.html"*) ok "nothing-rendered-yet is named rather than reported clean" ;;
+*) no "--deliverable did not say nothing had been rendered (got: $DEL_NONE)" ;;
+esac
+
+# --- 2k. a zero-width space is a byte, in every comparison that reads a doc ----
+# The input class no fixture carried, which is why parity was green over four
+# copies of one fence scan while three of them compared under PowerShell's
+# culture rules. A culture-aware comparison reports `lenses<U+200B> dispatched`
+# EQUAL to `lenses dispatched` and awk does not, so the two implementations read
+# different documents - and "no demonstrated impact" was a fact about the corpus
+# rather than about the code.
+#
+# This suite runs ONE implementation, so what it asserts is the behaviour each
+# must have; scripts/parity/parity.mjs diffs the two --json documents over this
+# same fixture, and the pair of them is the assertion. Both green means both
+# implementations answer this vault identically and correctly.
+printf '\nzero-width space\n'
+
+ZW_RT=$("$LINT" --red-team --vault "$HERE/fence-zwsp" 2>&1)
+ZW_RT_STATUS=$?
+[ "$ZW_RT_STATUS" = "1" ] && ok "a zero-width space in the roster heading leaves the roster unread" ||
+	no "a ZWSP roster heading must not resolve to the roster (got $ZW_RT_STATUS)"
+case "$ZW_RT" in
+*red-team-no-roster*) ok "the heading a culture-aware comparison would have matched is reported absent" ;;
+*) no "--red-team matched a heading carrying a zero-width space (got: $ZW_RT)" ;;
+esac
+
+# The fence half. The fenced row template inside the monitoring section carries a
+# zero-width space in both its markers, and its row would read as an axis naming
+# nothing if the scan folded that character away - so the count is what asserts
+# the fence opened and closed on bytes.
+ZW_MON_J=$("$LINT" --monitoring --vault "$HERE/fence-zwsp" --json 2>/dev/null)
+case "$ZW_MON_J" in
+*'"failure_count": 1'*) ok "a fence whose markers carry a zero-width space still closes" ;;
+*) no "the fenced template inside the monitoring section was read as an axis (got: $ZW_MON_J)" ;;
+esac
+# And the axis whose own NAME carries one is matched on bytes like any other, so
+# it answers its three columns and stays silent.
+case "$ZW_MON_J" in
+*'incumbent'*) no "the complete axis carrying a zero-width space in its name fired" ;;
+*) ok "an axis name carrying a zero-width space is read as itself" ;;
+esac
+
 # --- 3. JSON is well-formed enough to slice ---------------------------------
 printf '\njson\n'
 for v in clean violations; do
@@ -732,7 +999,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -1158,11 +1425,15 @@ esac
 EMPTY_UF="$PAIRS_FILE.empty-verdict"
 rm -rf "$EMPTY_UF"
 cp -R "$HERE/verdict-unfiled" "$EMPTY_UF"
-awk 'BEGIN { drop = 0 }
-	/^## Target & verdict \{#target-verdict\}$/ { print; drop = 1; next }
-	/^## / { drop = 0 }
-	drop { next }
-	{ print }' "$HERE/verdict-unfiled/business-plan.md" >"$EMPTY_UF/business-plan.md"
+# strip_cr, same reason as the reword rewrite above: the anchored pattern
+# below needs $0 with no trailing \r or it never matches on a CRLF checkout,
+# so the whole file drops through unchanged and "Reach binds" survives.
+strip_cr <"$HERE/verdict-unfiled/business-plan.md" |
+	awk 'BEGIN { drop = 0 }
+		/^## Target & verdict \{#target-verdict\}$/ { print; drop = 1; next }
+		/^## / { drop = 0 }
+		drop { next }
+		{ print }' >"$EMPTY_UF/business-plan.md"
 
 if grep -q '^## Target & verdict {#target-verdict}$' "$EMPTY_UF/business-plan.md" &&
 	! grep -q 'Reach binds' "$EMPTY_UF/business-plan.md"; then
@@ -1438,6 +1709,321 @@ esac
 CRLF_CR_COUNT=$(printf '%s' "$CRLF_GRAPH" | tr -cd '\r' | wc -c | tr -d ' ')
 [ "$CRLF_CR_COUNT" = "0" ] && ok "no carriage return reaches the output of a CRLF vault" ||
 	no "$CRLF_CR_COUNT carriage return(s) leaked into the output of a CRLF vault"
+
+# --- 18. the model's inputs against the notes that declare them --------------
+# --assumption-rows is the inverse of a rule that was correct and had no
+# counterpart, so the assertions below have to cover the inverse in BOTH
+# directions and both of its escapes. The escapes are the half that decides
+# whether the rule is usable: an input with a row and an input with a stated
+# exclusion are both fine, and a check that failed either would fail every model
+# that legitimately leaves a line out.
+printf '\nmodel inputs\n'
+
+AR_MRM=$("$LINT" --assumption-rows --vault "$HERE/model-row-missing" --json 2>/dev/null)
+AR_MRM_STATUS=$?
+[ "$AR_MRM_STATUS" = "1" ] && ok "a declared model input with no row and no exclusion fails" ||
+	no "model-row-missing should exit 1 (got $AR_MRM_STATUS)"
+
+# The count is the assertion with teeth. The sibling note in that vault IS
+# rendered as a row, so a rule that reported every declared input would fire
+# twice here and still clear a census looking only for the check name.
+case "$AR_MRM" in
+*'"failure_count": 1'*) ok "the input the table does render is not reported" ;;
+*) no "--assumption-rows did not report exactly one input over model-row-missing (got: $AR_MRM)" ;;
+esac
+case "$AR_MRM" in
+*'"check": "assumption-not-in-model"'*ASSUMPTION-MR22BB02*) ok "the failure lands on the note the table has no row for" ;;
+*) no "assumption-not-in-model did not report ASSUMPTION-MR22BB02 (got: $AR_MRM)" ;;
+esac
+
+# ESCAPE ONE - the row. Asserted on a copy with the row appended, the way the
+# rewording and section-stripping assertions above build the corpus they need.
+# strip_cr on the read, because the anchored grep guard below reads the rewritten
+# copy and a CRLF checkout would otherwise leave it comparing a line with a
+# trailing carriage return against a literal that has none.
+AR_ROW="$PAIRS_FILE.model-row-added"
+rm -rf "$AR_ROW"
+cp -R "$HERE/model-row-missing" "$AR_ROW"
+strip_cr <"$HERE/model-row-missing/financial-model.md" |
+	awk '{ print }
+		/^\| A-1 \|/ { print "| A-2 | Metered overage is billed on the same invoice as the seats | one invoice | [S2] | L |" }' >"$AR_ROW/financial-model.md"
+if grep -q '^| A-2 | Metered overage is billed on the same invoice as the seats |' "$AR_ROW/financial-model.md"; then
+	ok "the copy with the row appended carries it"
+else
+	no "the row-appending rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+AR_ROW_STATUS=$(run_status "$AR_ROW" --assumption-rows)
+[ "$AR_ROW_STATUS" = "0" ] && ok "adding the row clears assumption-not-in-model" ||
+	no "a rendered row must clear the rule (got $AR_ROW_STATUS)"
+
+# ESCAPE TWO - the stated exclusion. Both escapes are asserted because the rule
+# is a disjunction: testing only the row would pass an implementation that had
+# dropped `excluded_from_model` entirely, and every model that correctly leaves a
+# line out would then be red with no way to say so.
+AR_EXC="$PAIRS_FILE.model-row-excluded"
+rm -rf "$AR_EXC"
+cp -R "$HERE/model-row-missing" "$AR_EXC"
+strip_cr <"$HERE/model-row-missing/assumptions/ASSUMPTION-MR22BB02.md" |
+	awk '{ print }
+		/^model_input: revenue$/ { print "excluded_from_model: \"billed on a separate cycle, so it is modelled in the metered sheet rather than here\"" }' >"$AR_EXC/assumptions/ASSUMPTION-MR22BB02.md"
+if grep -q '^excluded_from_model: ' "$AR_EXC/assumptions/ASSUMPTION-MR22BB02.md"; then
+	ok "the copy with the exclusion reason carries it"
+else
+	no "the exclusion-adding rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+AR_EXC_STATUS=$(run_status "$AR_EXC" --assumption-rows)
+[ "$AR_EXC_STATUS" = "0" ] && ok "stating the exclusion reason clears assumption-not-in-model" ||
+	no "a stated exclusion must clear the rule (got $AR_EXC_STATUS)"
+
+# THE REVERSE DIRECTION, one vault over. Without it the rule above is cleared by
+# writing a row nothing in the ledger stands behind, which is the dodge
+# --red-team checks its roster both ways to close. Two of that vault's three rows
+# match their notes verbatim, so the count is what says only the planted one is
+# reported - and its second table sits outside the assumptions section, which is
+# what asserts that only the FIRST table under that heading is read.
+AR_MER=$("$LINT" --assumption-rows --vault "$HERE/model-extra-row" --json 2>/dev/null)
+AR_MER_STATUS=$?
+[ "$AR_MER_STATUS" = "1" ] && ok "a model row matching no assumption note fails" ||
+	no "model-extra-row should exit 1 (got $AR_MER_STATUS)"
+case "$AR_MER" in
+*'"failure_count": 1'*) ok "the two rows that match their notes verbatim are not reported" ;;
+*) no "--assumption-rows did not report exactly one row over model-extra-row (got: $AR_MER)" ;;
+esac
+case "$AR_MER" in
+*'"check": "model-row-no-assumption"'*'Referral traffic converts at the paid-channel rate'*)
+	ok "the failure quotes the row that escaped the ledger" ;;
+*) no "model-row-no-assumption did not name the planted row (got: $AR_MER)" ;;
+esac
+
+# THE IDENTITY DECLARES ITS COMPOSITION, and this is the highest-cost defect in
+# the release. The excluded line is on the roadmap, so the ARR term every corner
+# of the target is solved against is a subset figure - and the count is what says
+# the sibling input the model DOES carry is silent, and that the stated exclusion
+# has already cleared assumption-not-in-model on the same note.
+AR_EOR=$("$LINT" --assumption-rows --vault "$HERE/excluded-on-roadmap" --json 2>/dev/null)
+AR_EOR_STATUS=$?
+[ "$AR_EOR_STATUS" = "1" ] && ok "a revenue line excluded from the model and shipped on the roadmap fails" ||
+	no "excluded-on-roadmap should exit 1 (got $AR_EOR_STATUS)"
+case "$AR_EOR" in
+*'"failure_count": 1'*) ok "the stated exclusion clears the row rule and only the identity rule fires" ;;
+*) no "--assumption-rows did not report exactly one failure over excluded-on-roadmap (got: $AR_EOR)" ;;
+esac
+case "$AR_EOR" in
+*'"check": "excluded-line-on-roadmap"'*MILESTONE-EX33CC03*)
+	ok "the failure names the roadmap item that ships the excluded line" ;;
+*) no "excluded-line-on-roadmap did not name the milestone (got: $AR_EOR)" ;;
+esac
+
+# And declaring it at the identity clears it, which is the whole point: an
+# exclusion is legitimate and an undeclared one is the defect. Asserted on a copy
+# with `arr_excludes` added to the verdict note - without this half the rule reads
+# as banning the exclusion outright, which is a rule about modelling rather than
+# about the identity and one a good model would have to break.
+AR_DECL="$PAIRS_FILE.arr-declared"
+rm -rf "$AR_DECL"
+cp -R "$HERE/excluded-on-roadmap" "$AR_DECL"
+strip_cr <"$HERE/excluded-on-roadmap/claims/CLAIM-EX44DD04.md" |
+	awk '{ print }
+		/^evidence_counterparties: "1"$/ { print "arr_excludes:"; print "  - ASSUMPTION-EX22BB02" }' >"$AR_DECL/claims/CLAIM-EX44DD04.md"
+if grep -q '^arr_excludes:$' "$AR_DECL/claims/CLAIM-EX44DD04.md"; then
+	ok "the copy with arr_excludes on the verdict note carries it"
+else
+	no "the arr_excludes rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+AR_DECL_STATUS=$(run_status "$AR_DECL" --assumption-rows)
+[ "$AR_DECL_STATUS" = "0" ] && ok "naming the line in arr_excludes at the identity clears it" ||
+	no "a declared exclusion must clear the rule (got $AR_DECL_STATUS)"
+
+# THE REGRESSION THIS MODE MUST NOT CAUSE, and it is the most important assertion
+# in this section. Every corpus that exists is at schemaVersion 1 or 2 and
+# carries none of the three fields this mode reads, so a rule that fired
+# unconditionally would turn every finished vault red on the day the plugin
+# updates - which is how a gate stops being run. Both versions, and both are told
+# the rule was not applied rather than that their table agrees.
+AR_S1=$("$LINT" --assumption-rows --vault "$HERE/clean" 2>&1)
+AR_S1_STATUS=$?
+[ "$AR_S1_STATUS" = "0" ] && ok "a schemaVersion 1 vault carrying none of the new fields passes" ||
+	no "schemaVersion 1 must not owe a model table (got $AR_S1_STATUS: $AR_S1)"
+case "$AR_S1" in
+*'schemaVersion 3 rule and this vault is at 1'*) ok "at 1 the mode says it did not ask, rather than reporting agreement" ;;
+*) no "at 1 --assumption-rows reported a clean table instead of saying it did not ask (got: $AR_S1)" ;;
+esac
+AR_S2=$("$LINT" --assumption-rows --vault "$HERE/schema-2" 2>&1)
+AR_S2_STATUS=$?
+[ "$AR_S2_STATUS" = "0" ] && ok "a schemaVersion 2 vault carrying none of the new fields passes" ||
+	no "schemaVersion 2 must not owe a model table (got $AR_S2_STATUS: $AR_S2)"
+
+# And the silent side at 3: a vault with no declared inputs and no table owes
+# nothing, which is every corpus between the stamp and the first model row.
+AR_NONE=$("$LINT" --assumption-rows --vault "$HERE/claim-drift" 2>&1)
+AR_NONE_STATUS=$?
+[ "$AR_NONE_STATUS" = "0" ] && ok "a vault at 3 with no declared inputs and no table passes" ||
+	no "a vault with no model on either side should pass (got $AR_NONE_STATUS: $AR_NONE)"
+case "$AR_NONE" in
+*'no declared model inputs and no assumption rows'*) ok "the absent model is named rather than reported clean" ;;
+*) no "--assumption-rows did not say there was no model (got: $AR_NONE)" ;;
+esac
+
+# The closed word list, in `check` rather than here because it reads nothing but
+# the note. A third word is a note that declares nothing while reading as
+# declared, so the row it owes is never asked for - the same failure the field
+# exists to fix, reintroduced by a typo.
+AR_WORD="$PAIRS_FILE.model-input-word"
+rm -rf "$AR_WORD"
+cp -R "$HERE/model-row-missing" "$AR_WORD"
+strip_cr <"$HERE/model-row-missing/assumptions/ASSUMPTION-MR11AA01.md" |
+	awk '{ sub(/^model_input: revenue$/, "model_input: turnover"); print }' >"$AR_WORD/assumptions/ASSUMPTION-MR11AA01.md"
+if grep -q '^model_input: turnover$' "$AR_WORD/assumptions/ASSUMPTION-MR11AA01.md"; then
+	ok "the copy with a fourth model_input word carries it"
+else
+	no "the model_input rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+AR_WORD_OUT=$("$LINT" --vault "$AR_WORD" --json 2>/dev/null)
+case "$AR_WORD_OUT" in
+*'"check": "model-input-unknown"'*turnover*) ok "a fourth model_input word is reported by name" ;;
+*) no "model-input-unknown did not fire on an unrecognised value (got: $AR_WORD_OUT)" ;;
+esac
+
+# --- 19. a rewritten section re-opens the claim that cited it ----------------
+# --claim-drift is the half --used-in deliberately leaves out, and the case it
+# exists for is a claim that was reconciled ONCE and then quietly undone: the
+# heading is untouched, so the citation still resolves and every other check
+# passes while the prose the claim stands on has been rewritten. Each of its three
+# codes gets a note in one vault, and one note in that vault records the correct
+# hash - so the failure COUNT is what says the mode is not simply re-opening
+# everything.
+printf '\ncited-section drift\n'
+
+CD_OUT=$("$LINT" --claim-drift --vault "$HERE/claim-drift" --json 2>/dev/null)
+CD_STATUS=$?
+[ "$CD_STATUS" = "1" ] && ok "--claim-drift exits 1 when a cited section has moved" ||
+	no "claim-drift should exit 1 (got $CD_STATUS)"
+case "$CD_OUT" in
+*'"failure_count": 3'*) ok "the claim whose recorded hash still matches is not reported" ;;
+*) no "--claim-drift did not report exactly three failures over claim-drift (got: $CD_OUT)" ;;
+esac
+case "$CD_OUT" in
+*'"check": "section-hash-drifted"'*CLAIM-CD11AA01*) ok "a recorded hash the section no longer matches re-opens the claim" ;;
+*) no "section-hash-drifted did not report CLAIM-CD11AA01 (got: $CD_OUT)" ;;
+esac
+
+# The message carries the CURRENT hash, and that is what makes a read-only tool
+# usable: there is no write mode in this script, so re-reconciling is re-reading
+# the section and pasting one token. A failure that named the mismatch without
+# the value to paste would send its reader to compute a hash by hand.
+case "$CD_OUT" in
+*'now hashes to `3a243b97`'*) ok "the failure carries the hash to paste after the re-read" ;;
+*) no "section-hash-drifted did not name the current hash (got: $CD_OUT)" ;;
+esac
+
+# The omission side. Without it the whole rule is cleared by leaving the field
+# off, and a dodge available by omission is not an exemption.
+case "$CD_OUT" in
+*'"check": "section-hash-missing"'*CLAIM-CD33CC03*) ok "a resolving citation with no recorded hash is reported" ;;
+*) no "section-hash-missing did not report CLAIM-CD33CC03 (got: $CD_OUT)" ;;
+esac
+
+# And the other direction, for the reason --red-team checks its roster both ways:
+# an entry for a section the note no longer cites is a hash nothing compares, and
+# to anybody counting entries against citations it reads as covered.
+case "$CD_OUT" in
+*'"check": "section-hash-unused"'*CLAIM-CD44DD04*) ok "an entry naming a section used_in does not is reported" ;;
+*) no "section-hash-unused did not report CLAIM-CD44DD04 (got: $CD_OUT)" ;;
+esac
+
+# RE-RECONCILING CLEARS IT. Asserted on a copy where the stale hash is replaced
+# with the current one - which is exactly what an author does after re-reading the
+# block - because a mode that re-opened a claim no correction could close would be
+# a red nobody can clear and therefore one nobody reads.
+CD_FIX="$PAIRS_FILE.claim-reconciled"
+rm -rf "$CD_FIX"
+cp -R "$HERE/claim-drift" "$CD_FIX"
+strip_cr <"$HERE/claim-drift/claims/CLAIM-CD11AA01.md" |
+	awk '{ sub(/#why-now 00000000/, "#why-now 3a243b97"); print }' >"$CD_FIX/claims/CLAIM-CD11AA01.md"
+if grep -q '#why-now 3a243b97' "$CD_FIX/claims/CLAIM-CD11AA01.md"; then
+	ok "the re-reconciled copy records the current hash"
+else
+	no "the re-reconcile rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+CD_FIX_OUT=$("$LINT" --claim-drift --vault "$CD_FIX" --json 2>/dev/null)
+case "$CD_FIX_OUT" in
+*'"failure_count": 2'*) ok "recording the current hash clears section-hash-drifted" ;;
+*) no "re-reconciling must clear the drift and leave the other two (got: $CD_FIX_OUT)" ;;
+esac
+case "$CD_FIX_OUT" in
+*section-hash-drifted*) no "the re-reconciled claim is still reported as drifted" ;;
+*) ok "no drift is reported once the recorded hash matches" ;;
+esac
+
+# THE HASH IS OVER BYTES AND IGNORES WHAT A RENDERER IGNORES. Trailing whitespace
+# and a doubled blank line are invisible in a rendered document, so a hash
+# sensitive to either would re-open every claim in the corpus the first time an
+# editor trimmed a file - and a red that fires on whitespace is one whose fix
+# becomes re-stamping the hash without reading anything.
+CD_WS="$PAIRS_FILE.claim-whitespace"
+rm -rf "$CD_WS"
+cp -R "$HERE/claim-drift" "$CD_WS"
+strip_cr <"$HERE/claim-drift/business-plan.md" |
+	awk '/^Seats, billed monthly/ { print $0 "   "; print ""; next } { print }' >"$CD_WS/business-plan.md"
+if grep -q 'Seats, billed monthly, with a metered layer above them\.   $' "$CD_WS/business-plan.md"; then
+	ok "the whitespace copy carries the trailing spaces and the extra blank line"
+else
+	no "the whitespace rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+CD_WS_OUT=$("$LINT" --claim-drift --vault "$CD_WS" --json 2>/dev/null)
+case "$CD_WS_OUT" in
+*CLAIM-CD22BB02*) no "trailing whitespace re-opened a claim - the hash is sensitive to what a renderer drops" ;;
+*) ok "trailing whitespace and a doubled blank line leave the hash unchanged" ;;
+esac
+
+# And a real edit to the prose DOES move it, which is the other half: a
+# normaliser that dropped too much would pass this fixture and the mode would
+# assert nothing at all.
+CD_ED="$PAIRS_FILE.claim-edited"
+rm -rf "$CD_ED"
+cp -R "$HERE/claim-drift" "$CD_ED"
+strip_cr <"$HERE/claim-drift/business-plan.md" |
+	awk '{ sub(/^Seats, billed monthly, with a metered layer above them\.$/, "Seats, billed annually, with no metered layer above them."); print }' >"$CD_ED/business-plan.md"
+if grep -q '^Seats, billed annually, with no metered layer above them\.$' "$CD_ED/business-plan.md"; then
+	ok "the edited copy carries the rewritten sentence"
+else
+	no "the prose rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+CD_ED_OUT=$("$LINT" --claim-drift --vault "$CD_ED" --json 2>/dev/null)
+case "$CD_ED_OUT" in
+*'"check": "section-hash-drifted"'*CLAIM-CD22BB02*) ok "a rewritten sentence re-opens the claim that cited that section" ;;
+*) no "an edited section did not re-open its claim (got: $CD_ED_OUT)" ;;
+esac
+
+# THE REGRESSION THIS MODE MUST NOT CAUSE, and the single most important
+# assertion in this section: every claim in every finished corpus is already
+# cited into a plan, so a rule demanding a recorded hash from each of them fires
+# on every existing vault the moment a user upgrades. Both versions, and both are
+# told the rule was not applied.
+CD_S1=$("$LINT" --claim-drift --vault "$HERE/clean" 2>&1)
+CD_S1_STATUS=$?
+[ "$CD_S1_STATUS" = "0" ] && ok "a schemaVersion 1 vault carrying none of the new fields passes" ||
+	no "schemaVersion 1 must not owe a recorded section hash (got $CD_S1_STATUS: $CD_S1)"
+case "$CD_S1" in
+*'schemaVersion 3 rule and this vault is at 1'*) ok "at 1 the mode says it did not ask, rather than reporting agreement" ;;
+*) no "at 1 --claim-drift reported clean instead of saying it did not ask (got: $CD_S1)" ;;
+esac
+CD_S2=$(run_status "$HERE/schema-2" --claim-drift)
+[ "$CD_S2" = "0" ] && ok "a schemaVersion 2 vault carrying none of the new fields passes" ||
+	no "schemaVersion 2 must not owe a recorded section hash (got $CD_S2)"
+
+# The silent side at 3: a vault whose notes cite no resolving section owes
+# nothing, which is every corpus before drafting cites one. A dead anchor is
+# --used-in verdict and is deliberately not reported twice here.
+CD_NONE=$("$LINT" --claim-drift --vault "$HERE/model-row-missing" 2>&1)
+CD_NONE_STATUS=$?
+[ "$CD_NONE_STATUS" = "0" ] && ok "a vault at 3 whose notes cite no section passes" ||
+	no "a vault with nothing cited should pass (got $CD_NONE_STATUS: $CD_NONE)"
+case "$CD_NONE" in
+*'no current claim or assumption names a resolving document section'*)
+	ok "the absent citation is named rather than reported clean" ;;
+*) no "--claim-drift did not say there was nothing cited (got: $CD_NONE)" ;;
+esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
