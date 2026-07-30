@@ -205,15 +205,28 @@ _Analyzed: <date>_
 
 ## Profiles
 ### <Competitor> (direct | indirect | adjacent)
-<what it does · pricing · disclosed traction points — dated, every citable point found (two is
-the bare minimum below which no rate can be derived, never the target quantity), each with its
-source (or "no disclosed traction, checked <date>" if none — absence recorded, never omitted) ·
-funding · their positioning claim · most likely next move · **wedge line: what they don't cover
-and why** · **what they do better, and what adopting it would cost**: the thing itself as an
-observable, judged against the dossier's jobs (a step their onboarding removes that this product
-still requires, a default that prevents a class of ticket), with its source and pull date · what
-adopting it would move · the moves it takes · the resource it spends · policy or structural for THIS
-founder — or "nothing to adopt found, checked <date>", absence recorded, never omitted>
+
+**Durable — properties of the company, and the half the actor corpus holds.** Every line carries the
+date it was pulled, because that date is what the corpus sets a shelf life from.
+<identity: name, canonical URL, founding date · what it does, in the company's own one paragraph ·
+pricing model, tier names and actual price points · pricing-page CTA verbatim and the motion the
+stated rule maps it to · positioning claim in their own words · funding rounds and investors ·
+corporate events — acquisition, shutdown, pivot, rename — each dated · disclosed traction points —
+dated, every citable point found (two is the bare minimum below which no rate can be derived, never
+the target quantity), each with its source (or "no disclosed traction, checked <date>" if none —
+absence recorded, never omitted) · where the comparable-growth pass covered this company, the
+mechanism record it produced — durable for the same reason a dated funding round is>
+
+**Engagement-keyed — judgements about THIS subject against THIS dossier's jobs, and none of it
+leaves the vault.**
+<the bucket on the heading above (direct | indirect | adjacent), with the rule applied, picked per
+the dossier's target segment · most likely next move, which is a prediction rather than an
+observation · **wedge line: what they don't cover and why** · **what they do better, and what
+adopting it would cost**: the thing itself as an observable, judged against the dossier's jobs (a
+step their onboarding removes that this product still requires, a default that prevents a class of
+ticket), with its source and pull date · what adopting it would move · the moves it takes · the
+resource it spends · policy or structural for THIS founder — or "nothing to adopt found, checked
+<date>", absence recorded, never omitted>
 <...one block per competitor...>
 
 ## Observed growth band
@@ -263,6 +276,15 @@ column is what keeps this from growing a watchlist instead of a trigger.
 A cell carrying no letter or digit — an em dash, a run of hyphens — reads as empty to the lint,
 because that is the cheapest way past this rule.>
 ```
+
+**Each profile is written in two labelled halves, and the split is a privacy boundary rather than a
+layout preference.** The durable half is public fact about the company, so it is what an engagement
+seeds from [the actor corpus](../actors/README.md) instead of re-discovering, and what a founder can
+offer back. Every field in the engagement half is keyed to this dossier's jobs or its target segment,
+and the adoption candidate is the one that leaks hardest: it states what the subject was **behind
+on**. Written as one undifferentiated block the two halves get contributed together, and the second
+is the one that should never have left the vault — the corpus README carries that rule and the
+failure each part of it prevents.
 
 ## `sources.md`
 

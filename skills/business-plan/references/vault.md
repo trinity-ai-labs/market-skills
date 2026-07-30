@@ -27,6 +27,7 @@ they may not omit.
   - [The claim note is the only type that carries a subject](#the-claim-note-is-the-only-type-that-carries-a-subject)
   - [The assumption note is what you would believe with no evidence](#the-assumption-note-is-what-you-would-believe-with-no-evidence)
   - [A target verdict is a claim carrying five more fields, not an eighth note type](#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)
+  - [An actor record is source and fact notes with four more fields, not an eighth note type](#an-actor-record-is-source-and-fact-notes-with-four-more-fields-not-an-eighth-note-type)
   - [The question note records the gap, not the answer](#the-question-note-records-the-gap-not-the-answer)
   - [The decision note keeps the rejected options and the reopen trigger](#the-decision-note-keeps-the-rejected-options-and-the-reopen-trigger)
   - [The milestone note carries a position, a cost, and the assumption it moves](#the-milestone-note-carries-a-position-a-cost-and-the-assumption-it-moves)
@@ -885,6 +886,159 @@ Unlike `--supersession-sweep`, a thin tail nobody surfaced is not the corpus wor
 | the plan's verdict is filed as a note | `--binding-driver` | `verdict-unfiled` — a `business-plan.md` carrying a non-empty section at the `{#target-verdict}` anchor with no `claim` or `assumption` under `subject: target-verdict` behind it |
 | the ARR term declares what it leaves out | `--assumption-rows` | `excluded-line-on-roadmap` — an assumption carrying `excluded_from_model` that a `milestone`'s `moves` names, and that no verdict note lists in `arr_excludes`. Gated on `schemaVersion` 3 |
 
+### An actor record is source and fact notes with four more fields, not an eighth note type
+
+An **actor** is a company an engagement has already profiled, held as a persistent entity: its
+founding date, funding rounds, dated traction points, pricing model, positioning claim and corporate
+events are true regardless of who is asking, so re-discovering them costs tokens and returns the same
+answer. The corpus that holds them ships with the `market-analysis` skill at
+[`actors/`](../../market-analysis/actors/README.md), which is where the rule about **what may be in a
+record** lives. This section is the note schema: a record is a set of `source` and `fact` notes and
+nothing else, carrying four fields the base `fact` schema above does not.
+
+```yaml
+actor: "example-ledger"      # required on every note in the record — the corpus directory it came from
+field_class: pricing         # required on a fact — one of the nine words below, unquoted
+pulled: "2026-07-20"         # required on a fact — the date THIS value was read
+stale_after: "2026-10-20"    # required on a fact — quoted; an ISO date, or the word permanent, also quoted
+```
+
+**`actor` is the trigger, and what it makes owed depends on the type** — the set rule the target
+verdict's five fields are held to one section up, for the same reason. On a `fact` it owes
+`field_class`, `pulled` and `stale_after` as a set: a note carrying `actor` and no `stale_after` reads
+as a corpus fact to every consumer while carrying nothing that could ever flag it for re-checking, and
+a partial set reads complete to every tool while the missing field is the one that would have dated
+it. On a `source` it owes `pulled`, which
+[the base schema](#the-source-note-keeps-the-quote-that-outlives-the-url) already requires, so a
+source owes nothing new — the quote is what a source is for, and a quote does not go stale. `check`
+reports a missing member as `actor-fields-incomplete`.
+
+**It is not an eighth type, and the two existing ones already assert exactly what a record asserts.**
+A pricing page is material that exists and says this, verbatim — a `source`. A price point read off
+it is a value stated directly by that source — a `fact`. The ceiling rule's first test is that an
+author must have no pair to stall between, and here there is not even a near-miss: nothing about an
+actor is a new *grade* of assertion, only a new *provenance*. No new edge is needed either, because
+`rests_on` already carries a fact to the source that states it. Four fields on two existing types is
+the whole extension.
+
+**No `claim` may appear in a record, and that is the privacy seam made mechanical.** Every output a
+dossier recomputes per engagement is a judgement about *this* subject against *this* dossier's jobs,
+so every one of them would have to be a `claim` —
+[the corpus README](../../market-analysis/actors/README.md) enumerates them and argues each, and is
+the only place that list lives. What matters here is that the seam is checkable rather than trusted,
+and it is checkable on **two** surfaces: in this repo, the corpus holds no `CLAIM-*` file, which is a
+grep over filenames; inside a vault, a note carrying `actor` whose `type` is neither `source` nor
+`fact` is `actor-type-not-shippable`. **Both directions are needed, for `--red-team`'s reason** — with
+only the repo-side grep, the cheapest way past the seam is to author the judgement as an actor note
+directly in the vault, where no filename in this repo can see it.
+
+**`field_class` says which row of the rot table the value sits in, and the enumeration is closed at
+nine words**, unquoted, the rule `sensitivity`, `driver_kind`, `date_confidence` and `model_input`
+are held to. It is what sets `stale_after`, so an unrecognised value is a fact whose shelf life
+nobody can derive while it reads as classified — `check` reports `field-class-unknown`.
+
+| `field_class` | one note holds | `stale_after` |
+|---|---|---|
+| `identity` | the name, the canonical URL, or the founding date | `"permanent"` |
+| `description` | the company's own one-paragraph account of what it does | `pulled` + 12 months |
+| `funding` | one round: its date, stage, amount and named investors | `"permanent"` |
+| `corporate-event` | one dated event — acquisition, shutdown, pivot, rename | `"permanent"` |
+| `traction` | one dated point — ARR, users, downloads | `"permanent"` |
+| `mechanism` | one element of how it reached its first revenue threshold | `"permanent"` |
+| `pricing` | the model, one tier name, or one price point | `pulled` + 3 months |
+| `cta` | the pricing-page CTA verbatim, and the motion it maps to | `pulled` + 6 months |
+| `positioning` | the positioning claim in the company's own words | `pulled` + 6 months |
+
+**`description` and `positioning` are the one confusable pair, and the line between them is what the
+sentence does, not who wrote it.** Both are the company's own words. `description` says *what the
+product does*; `positioning` says *who it beats and why it is the right choice* — so an about-page
+paragraph is `description` where it states the job and `positioning` where it makes a comparative
+claim, and a paragraph doing both is two notes. **The failure this prevents is silent**, which is why
+the pair earns a test the way `fact` versus `claim` does: `field-class-unknown` fires only on a tenth
+word and never on the wrong one of the nine, so a positioning claim filed as `description` takes
+twelve months of shelf life instead of six and sits stale for the extra half-year with nothing able to
+report it.
+
+**One note holds one of these, because one assertion per note is already the invariant.** A funding
+history is one note per round and a traction series is one note per point — which is what makes the
+series append-only: a re-verification that finds two newer points writes two new notes and touches
+neither of the old ones, since a dated point that was true stays true. What rots is never the point
+but the sentence *this is the current level*, and that sentence is a `claim` in the engagement
+resting on the series, carrying its own `stale_after` like any other.
+
+**`cta` carries the motion because the derivation is a written rule over a verbatim observation, not
+an analyst's read.** "Get started" beside transparent tiers maps to product-led; "Talk to sales"
+alone maps to sales-led; the note's body names which rule it applied, exactly as the competitive
+playbook already requires of a bucket. Where a CTA does not fall cleanly under that rule the note
+carries the CTA alone and the motion stays in the engagement, because a mapping made by judgement is
+a `claim` and no `claim` ships.
+
+**`stale_after: "permanent"` is the positive record that no clock governs this value**, and it is
+quoted for a reason easy to miss: quoted, it splits out of `awk -F'"'` exactly as an ISO date does,
+and it sorts *after* every ISO date, so the [one-liner below](#the-queries-this-schema-exists-to-make-trivial)
+and the lint's own comparison both read it as not-stale with no special case anywhere. An **omitted**
+field would read as *no re-check owed* rather than *no re-check date*, and a note whose staleness
+nothing can evaluate is the one that outlives its company. This is `date_confidence: none` one type
+over, for the identical reason.
+
+**Nothing on a clock retires an `identity` note; a `corporate-event` does.** A company that renamed
+or moved its domain is not a fact that expired, because no date tells you it happened — the
+re-verification that finds it writes the event note and supersedes the identity note it replaces.
+That is why the permanent classes are permanent rather than carrying the longest window somebody
+could defend: a distant date is a re-check nobody will do, and on the page it reads as a re-check
+that was scheduled.
+
+**A rotting class may not claim permanence.** `description`, `pricing`, `cta` or `positioning`
+stamped `"permanent"` is the cheapest way past every rule here, so `check` reports
+`stale-after-not-permanent`. It also reports `stale-after-before-pulled` where `stale_after` is not
+strictly later than `pulled`, because a transposed date makes a fact that was fresh when it was
+written arrive already expired. **What neither check does is verify the day count against the table**,
+and that is deliberate: computing `pulled` + 3 months means a calendar in POSIX awk and a second one
+in Windows PowerShell 5.1 with zero dependencies on either side, and two calendars that disagree by a
+day is a parity failure on every fixture carrying a date. The window is an authoring rule; what the
+lint holds is the sentinel against the class, which is a word comparison.
+
+**An actor fact rides `stale_after`, and `--claim-drift` is not involved.** The two answer different
+questions — *is this figure old* against *did the thing I cited change* — and a shipped fact needs
+only the first. Three reasons, of which the first alone settles it:
+
+- **`--claim-drift` reads `current` `claim` and `assumption` notes only.** A record contains neither,
+  by the seam above, so the mode cannot reach one.
+- **What it compares is a hash of a vault-relative document section**, recorded in
+  `reconciled_sections`. What an actor fact was read off is a third party's web page: not in the
+  vault, not openable by a read-only tool, and not hashable without a network the lint does not have.
+  There is nothing for the mode to hash.
+- **A shipped fact has no `used_in`**, because it is in the corpus precisely while nothing has cited
+  it — and `reconciled_sections` is one entry per resolving `used_in` target. The field would be owed
+  over an empty set.
+
+The other side of that seam is where `--claim-drift` does apply: **the moment an engagement cites an
+actor fact, the note carrying the citation is a `claim` in that engagement's vault**, and it owes
+`used_in`, `reconciled:` and `reconciled_sections` exactly like every other claim. Two mechanisms
+over two populations, and no third — three staleness rules in one lint leaves no reader able to hold
+all three, so the next author picks whichever one they happened to read.
+
+**What clears a stale actor fact is a re-fetch, and a re-fetch is a supersession.** `check` reports
+`stale-actor-fact` on a record fact past its `stale_after` whose status is not `superseded` or
+`retracted` — the same shape as `stale-claim` above, and deliberately no gentler, since flipping to
+`needs_review` does not clear that one either. The fix is one fetch against a URL the record already
+carries, and the new value lands as a fact note that `supersedes` the old one under the standing
+two-edit rule. **That is what makes the corpus safe to ship at all:** a stale corpus costs a fetch
+and never a wrong number, whereas a shipped figure arriving pre-cited reads as more authoritative
+than one the run fetched itself, which is the failure the citation discipline exists to prevent. How
+a record enters a vault and supersedes on re-verification is [vault-migration.md](vault-migration.md)'s.
+
+**All six rules apply at `schemaVersion` 4, and the version is spent rather than riding field
+presence.** The target verdict's fields need no version because a vault that never ran the newer
+skill cannot carry them. `actor` differs in the one way that matters: **a record is a directory in a
+public repo, so a user can copy one into a vault by hand with no skill involved.** Field presence is
+therefore not evidence that the vault opted in, and without the version the tool would enforce six
+rules against a `.vault/config.json` asserting it is held to version-1 rules — the one guarantee the
+field makes. A second property points the same way: `stale-actor-fact` is the only rule in this
+schema that fires on **nothing having changed**, since a corpus seeded a year ago goes red because a
+date passed, and that is a cost a user takes on deliberately. A vault below 4 exits 0 and its run
+says the actor rules were not applied, rather than reporting agreement over fields it never read.
+
 ### The question note records the gap, not the answer
 
 ```yaml
@@ -1200,7 +1354,7 @@ error at all. Refusing without an explicit path costs one flag and removes the e
 
 ```json
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "created": "2026-03-14"
 }
 ```
@@ -1208,12 +1362,11 @@ error at all. Refusing without an explicit path costs one flag and removes the e
 `schemaVersion` is a required integer, incremented only on a change that would make an older
 tool misread an existing vault. `created` is optional. The file is JSON, not YAML, so the
 coerce-nothing rule does not apply to it — JSON has unambiguous types. **The current version is
-3**; a new vault is scaffolded at it.
+4**; a new vault is scaffolded at it.
 
-**The tool reads a SET of versions, not one.** `vault-lint.sh` reads `1`, `2` and `3`. A vault at
-1 gets exactly the behaviour it has always had, a vault at 2 additionally gets the checks version 2
-added, and a vault at 3 gets those plus the checks version 3 added — each enumerated in its own
-table below. A vault at 1
+**The tool reads a SET of versions, not one.** `vault-lint.sh` reads `1`, `2`, `3` and `4`. A vault at
+1 gets exactly the behaviour it has always had, and each later version additionally gets the checks
+that version added — each enumerated in its own table below. A vault at 1
 has no `milestones/` directory by construction, so it cannot owe any of the milestone rules; one
 that has grown the directory without moving its version is told so by `type-agreement` rather
 than having its notes read in silence. That set is what makes the version a real extension point rather than a number
@@ -1247,6 +1400,26 @@ this release can carry:
 each cited section and recording its hash. That is the read invariants 19 and 20 already require,
 made visible — which is the point, and also the reason the version exists rather than the rule
 firing unconditionally. [vault-migration.md](vault-migration.md) carries the procedure.
+
+**What version 4 adds**, six rules over fields that appear only on a note copied in from the actor
+corpus, every one argued in full
+[above](#an-actor-record-is-source-and-fact-notes-with-four-more-fields-not-an-eighth-note-type):
+
+| rule | mode | what fires |
+|---|---|---|
+| the actor fields are a set | `check` | `actor-fields-incomplete` on a `fact` carrying `actor` and missing `field_class`, `pulled` or `stale_after` |
+| only a source or a fact may carry `actor` | `check` | `actor-type-not-shippable` on a note carrying `actor` whose `type` is neither — the vault-side half of the privacy seam |
+| `field_class` is one of nine words | `check` | `field-class-unknown` on a tenth |
+| a rotting class does not claim permanence | `check` | `stale-after-not-permanent` on a `description`, `pricing`, `cta` or `positioning` fact stamped `"permanent"` |
+| a shelf life outlasts the pull | `check` | `stale-after-before-pulled` where `stale_after` is not strictly later than `pulled` |
+| a stale actor fact is never cited | `check` | `stale-actor-fact` on a record fact past its `stale_after` whose status is not `superseded` or `retracted` |
+
+**Version 4's cost to an existing corpus is zero, and its cost to a seeded one is the fetch
+`stale-actor-fact` already names.** No note written before this release carries `actor`, so a vault
+that has never seeded an actor owes nothing at 4 — which is why the version is safe to scaffold new
+vaults at. What it does buy is the one rule that fires as the calendar advances: a corpus seeded and
+left alone goes red when a `pricing` fact crosses its quarter. Moving to 4 is the decision to take
+that on.
 
 **Each of these tables is the only enumeration of its version's set** — the paragraph above points
 at them rather than restating them, because a version that adds a rule in one release and a second
@@ -1311,6 +1484,11 @@ grep -rl '^status: unverified' "$VAULT_PATH"
 # Every claim whose stale_after has already passed. Quoted ISO dates sort as
 # strings, so this needs no date parsing — one of the things coercing nothing buys.
 grep -rH '^stale_after:' "$VAULT_PATH/claims" | awk -F'"' -v today="$(date +%F)" '$2 < today'
+
+# Every actor fact due a re-fetch — the claims query above, one directory over.
+# `permanent` sorts after every ISO date under -F'"' (see the schema note above),
+# so it drops out of this with no special case.
+grep -rH '^stale_after:' "$VAULT_PATH/facts" | awk -F'"' -v today="$(date +%F)" '$2 < today'
 
 # Inline flow lists, which should never exist.
 grep -rnE '^[a-z_]+: \[' "$VAULT_PATH"
