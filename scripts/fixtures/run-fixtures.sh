@@ -92,6 +92,19 @@
 #      Both modes are gated on schemaVersion 3 and both are asserted SILENT at 1
 #      and at 2, because every corpus that exists is at one of those and carries
 #      none of the fields either mode reads.
+#  20. The six actor-record rules fire out of `check` rather than out of a mode of
+#      their own, one note each, over a schemaVersion 4 corpus: a record fact past
+#      its stale_after, a partial field set on a fact, a tenth field_class word, a
+#      rotting class stamped permanent, a stale_after not strictly later than
+#      pulled, and a judgement authored as an actor note inside the vault. Each has
+#      its silent side asserted beside it - a source carrying `actor` and only
+#      `pulled`, which is the type-scoping half, and one fact carrying a complete
+#      set with the permanent sentinel on a class that legitimately holds it - and
+#      re-fetching clears the stale one, because a red no correction can close is
+#      one nobody reads. All six are gated on schemaVersion 4 and asserted SILENT
+#      at 3, both over a corpus carrying none of the fields and over the very
+#      corpus that is red at 4, and the run SAYS the rule was not applied rather
+#      than reporting agreement over fields it never read.
 
 set -u
 
@@ -2057,6 +2070,200 @@ case "$CD_NONE" in
 	ok "the absent citation is named rather than reported clean" ;;
 *) no "--claim-drift did not say there was nothing cited (got: $CD_NONE)" ;;
 esac
+
+# --- 20. a stale actor fact cited without a re-fetch is a lint failure -------
+# The six rules an actor record adds are `check` rules rather than a mode of their
+# own: each reads nothing but the note, which is what keeps them in the pass that
+# runs on every bare invocation. So the corpus is asserted through the bare run,
+# one note per code, and the SILENT sides sit in the same vault - a fixture that
+# only ever proved a rule fires would pass an implementation that fires on
+# everything.
+printf '\nactor records\n'
+
+AC_OUT=$("$LINT" --vault "$HERE/actor-stale" --json 2>/dev/null)
+AC_STATUS=$?
+[ "$AC_STATUS" = "1" ] && ok "a schemaVersion 4 record with a stale fact exits 1" ||
+	no "actor-stale should exit 1 (got $AC_STATUS)"
+
+# The count is what says the two silent-side notes are silent and that no note
+# tripped a second code. Six notes, six codes, one each.
+case "$AC_OUT" in
+*'"failure_count": 6'*) ok "six actor codes fire over six notes and nothing else does" ;;
+*) no "check did not report exactly six failures over actor-stale (got: $AC_OUT)" ;;
+esac
+
+# THE LOAD-BEARING ONE. A complete, well-formed fact whose date went by, with
+# status still `current` - the only rule here that fires on nothing having changed.
+case "$AC_OUT" in
+*'"check": "stale-actor-fact"'*FACT-AC22BB02*)
+	ok "a record fact past its stale_after fails" ;;
+*) no "stale-actor-fact did not report FACT-AC22BB02 (got: $AC_OUT)" ;;
+esac
+
+# And the message carries both dates, for the reason section-hash-drifted carries
+# the current hash: the reader is deciding whether to spend a fetch, and a failure
+# that named neither the shelf life nor today would send them to work it out.
+case "$AC_OUT" in
+*'stale_after is 2026-04-20 and today is '*) ok "the failure names the shelf life it is past" ;;
+*) no "stale-actor-fact did not name stale_after and today (got: $AC_OUT)" ;;
+esac
+
+# `needs_review` is deliberately not a clearance, the same as stale-claim: the fix
+# is a fetch, so a status flip that re-checks nothing must not go green.
+AC_REVIEW="$PAIRS_FILE.actor-needs-review"
+rm -rf "$AC_REVIEW"
+cp -R "$HERE/actor-stale" "$AC_REVIEW"
+strip_cr <"$HERE/actor-stale/facts/FACT-AC22BB02.md" |
+	awk '{ sub(/^status: current$/, "status: needs_review"); print }' >"$AC_REVIEW/facts/FACT-AC22BB02.md"
+if grep -q '^status: needs_review$' "$AC_REVIEW/facts/FACT-AC22BB02.md"; then
+	ok "the needs_review copy carries the flipped status"
+else
+	no "the status rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+AC_REVIEW_OUT=$("$LINT" --vault "$AC_REVIEW" --json 2>/dev/null)
+case "$AC_REVIEW_OUT" in
+*'"check": "stale-actor-fact"'*FACT-AC22BB02*)
+	ok "flipping to needs_review does not clear a stale fact" ;;
+*) no "needs_review cleared stale-actor-fact - the fix is a fetch (got: $AC_REVIEW_OUT)" ;;
+esac
+
+# RE-FETCHING CLEARS IT, and this is the half without which the rule is a red
+# nobody can close. A fresher `pulled` and a `stale_after` beyond it is exactly
+# what one fetch against the URL the record already carries produces.
+AC_FETCH="$PAIRS_FILE.actor-refetched"
+rm -rf "$AC_FETCH"
+cp -R "$HERE/actor-stale" "$AC_FETCH"
+strip_cr <"$HERE/actor-stale/facts/FACT-AC22BB02.md" |
+	awk '{ sub(/^pulled: "2026-01-20"$/, "pulled: \"2026-07-20\"")
+		sub(/^stale_after: "2026-04-20"$/, "stale_after: \"2099-12-31\"")
+		print }' >"$AC_FETCH/facts/FACT-AC22BB02.md"
+if grep -q '^stale_after: "2099-12-31"$' "$AC_FETCH/facts/FACT-AC22BB02.md"; then
+	ok "the re-fetched copy carries the fresher pulled and stale_after"
+else
+	no "the re-fetch rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+AC_FETCH_OUT=$("$LINT" --vault "$AC_FETCH" --json 2>/dev/null)
+case "$AC_FETCH_OUT" in
+*stale-actor-fact*) no "the re-fetched fact is still reported as stale (got: $AC_FETCH_OUT)" ;;
+*) ok "a fresher pulled and stale_after clears stale-actor-fact" ;;
+esac
+case "$AC_FETCH_OUT" in
+*'"failure_count": 5'*) ok "re-fetching clears exactly the one code and leaves the other five" ;;
+*) no "the re-fetch changed more than the stale code (got: $AC_FETCH_OUT)" ;;
+esac
+
+# THE TYPE-SCOPING ASSERTION, and it is the one Slice A caught itself getting
+# wrong. `actor` is the trigger and what it makes owed depends on the type: a
+# `fact` owes `field_class`, `pulled` and `stale_after` as a set, while a `source`
+# owes only `pulled`, which the base schema already requires. A rule triggered by
+# any one of the four would owe `field_class` on a source, which has no class to
+# state - so both directions are asserted, the partial fact and the bare source.
+case "$AC_OUT" in
+*'"check": "actor-fields-incomplete"'*FACT-AC33CC03*'not `stale_after`'*)
+	ok "a fact carrying actor and a partial field set fails, naming the member it owes" ;;
+*) no "actor-fields-incomplete did not report FACT-AC33CC03 (got: $AC_OUT)" ;;
+esac
+case "$AC_OUT" in
+*SOURCE-AC11AA01*)
+	no "a source carrying actor and only pulled was reported - it owes nothing new (got: $AC_OUT)" ;;
+*) ok "a source carrying actor and only pulled owes nothing new and passes" ;;
+esac
+
+# The closed enumeration, on model-input-unknown's terms: the class is what SETS
+# the shelf life, so a tenth word is a fact whose window nobody can derive while
+# it reads as classified.
+case "$AC_OUT" in
+*'"check": "field-class-unknown"'*valuation*)
+	ok "a tenth field_class word is reported by name" ;;
+*) no "field-class-unknown did not report the unrecognised value (got: $AC_OUT)" ;;
+esac
+
+# The nine are read off one list rather than written into the message, so a tenth
+# admitted to the enumeration cannot leave the message naming nine. Asserted on the
+# last two, which is where a hand-written list loses its final entry.
+case "$AC_OUT" in
+*'`cta` and `positioning`'*) ok "the failure enumerates the nine words it closed on" ;;
+*) no "field-class-unknown did not enumerate the closed word list (got: $AC_OUT)" ;;
+esac
+
+# A rotting class stamped permanent is the cheapest way past every other rule
+# here, and nothing else would notice: the note is complete and its dates agree.
+case "$AC_OUT" in
+*'"check": "stale-after-not-permanent"'*FACT-AC55EE05*)
+	ok "a cta fact stamped permanent fails" ;;
+*) no "stale-after-not-permanent did not report FACT-AC55EE05 (got: $AC_OUT)" ;;
+esac
+
+# THE SILENT SIDE OF THE SENTINEL, without which the rule reads as banning
+# `permanent` outright - and a corpus would then have no way to record that no
+# clock governs a value. `permanent` sorts after every ISO date, so the same note
+# also proves neither date comparison needs a special case for it.
+case "$AC_OUT" in
+*FACT-AC77GG07*)
+	no "a complete identity fact stamped permanent was reported (got: $AC_OUT)" ;;
+*) ok "permanent on a permanent class fires nothing, and never reads as stale" ;;
+esac
+
+# The boundary is NOT strictly later, so equal dates fail: a rule written with `<`
+# instead of `<=` passes a fact whose shelf life expired the moment it was read.
+case "$AC_OUT" in
+*'"check": "stale-after-before-pulled"'*FACT-AC66FF06*)
+	ok "a stale_after equal to pulled fails - the boundary is strictly later" ;;
+*) no "stale-after-before-pulled did not report FACT-AC66FF06 (got: $AC_OUT)" ;;
+esac
+
+# THE PRIVACY SEAM, and the half no grep over this repo can reach. The repo-side
+# check is a grep for a CLAIM-* file under the corpus directory; the cheapest way
+# past it is to author the judgement as an actor note directly inside a vault.
+case "$AC_OUT" in
+*'"check": "actor-type-not-shippable"'*CLAIM-AC88HH08*)
+	ok "a claim carrying actor fails - a record is source and fact notes only" ;;
+*) no "actor-type-not-shippable did not report CLAIM-AC88HH08 (got: $AC_OUT)" ;;
+esac
+
+# THE REGRESSION THESE RULES MUST NOT CAUSE, and the single most important
+# assertion in this section. Every corpus that exists is at schemaVersion 1, 2 or
+# 3, and a rule that fired unconditionally would turn every finished vault red on
+# the day the plugin updates - which is how a gate stops being run. Two vaults,
+# because the two halves are different claims: one carrying NONE of the new fields,
+# which is every existing corpus, and the very corpus that is red at 4, which is
+# the stronger half - a record can be copied into a vault by hand, so the version
+# and not field presence is what says the vault opted in.
+AC_S3="$PAIRS_FILE.actor-clean-at-3"
+rm -rf "$AC_S3"
+cp -R "$HERE/clean" "$AC_S3"
+printf '{\n  "schemaVersion": 3,\n  "created": "2026-03-14"\n}\n' >"$AC_S3/.vault/config.json"
+AC_S3_OUT=$("$LINT" --vault "$AC_S3" 2>&1)
+AC_S3_STATUS=$?
+[ "$AC_S3_STATUS" = "0" ] && ok "a schemaVersion 3 vault carrying none of the new fields passes" ||
+	no "schemaVersion 3 must not owe the actor fields (got $AC_S3_STATUS: $AC_S3_OUT)"
+case "$AC_S3_OUT" in
+*'schemaVersion 4 rule and this vault is at 3'*)
+	ok "at 3 the run says the actor rules were not applied, rather than reporting agreement" ;;
+*) no "at 3 check reported clean instead of saying it did not ask (got: $AC_S3_OUT)" ;;
+esac
+
+AC_DOWN="$PAIRS_FILE.actor-stale-at-3"
+rm -rf "$AC_DOWN"
+cp -R "$HERE/actor-stale" "$AC_DOWN"
+printf '{\n  "schemaVersion": 3,\n  "created": "2026-07-29"\n}\n' >"$AC_DOWN/.vault/config.json"
+AC_DOWN_OUT=$("$LINT" --vault "$AC_DOWN" 2>&1)
+AC_DOWN_STATUS=$?
+[ "$AC_DOWN_STATUS" = "0" ] && ok "the same six-failure corpus stamped 3 passes, and the version is what gates it" ||
+	no "actor-stale stamped 3 must pass (got $AC_DOWN_STATUS: $AC_DOWN_OUT)"
+case "$AC_DOWN_OUT" in
+*'schemaVersion 4 rule and this vault is at 3'*)
+	ok "at 3 the run says so over a corpus that carries every field it did not read" ;;
+*) no "at 3 the actor corpus reported clean instead of saying it did not ask (got: $AC_DOWN_OUT)" ;;
+esac
+
+# The other half of widening the supported set - that a version from the FUTURE
+# is still refused - is NOT re-asserted here. `refusals` above already runs the
+# bare mode over future-schema and requires exit 2, which is the same binary over
+# the same vault answering the same question, so a second invocation would cost a
+# process to prove nothing the suite does not already prove. If SUPPORTED_SCHEMA
+# is ever widened past what the tool can actually read, that assertion is what
+# goes red.
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

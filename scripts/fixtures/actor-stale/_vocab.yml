@@ -1,0 +1,20 @@
+# Fixture vocabulary, trimmed to the one subject this vault takes a position on.
+# It exists so `check` has something to resolve a subject against - a vault with
+# no _vocab.yml is a missing-vocabulary failure, and that failure would sit in
+# this vault's output beside the six actor rules it is built to trigger, hiding a
+# regression in any one of them behind a count that was never six.
+#
+# Every term is `required: false` on purpose: a required subject with no claim
+# under it is a coverage-gap, and this corpus is a seeded actor record rather
+# than an engagement, so it takes no position on anything a plan owes.
+
+terms:
+
+  price-anchor:
+    definition: The price point the plan recommends, per unit and cadence. What the product
+      charges. What the segment demonstrably pays is a separate position.
+    aliases:
+      - price
+      - pricing
+      - price-point
+    required: false
