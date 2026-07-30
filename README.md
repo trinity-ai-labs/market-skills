@@ -11,9 +11,9 @@ Two agent skills that take a product to market, packaged as one plugin. Both are
   verification of every load-bearing number. Each competitor comes back twice: where they leave
   the market open, and what they already do better than you, priced as something you could adopt.
   Comparable companies come back the same way — how fast they grew, and how they actually got
-  their first paying customers. It closes with a monitoring plan that says which way each axis is
-  moving rather than which pages to re-check: the instrument that reads each axis, the cadence, and
-  the decision it would change.
+  their first paying customers. The analysis closes with a monitoring plan that says which way each
+  axis is moving rather than which pages to re-check: the instrument that reads each axis, the
+  cadence, and the decision it would change.
 - **`business-plan`** — the conductor that grills the founder, runs `market-analysis` as its
   research engine, and produces the plan artifact the founder's track actually needs
   (investor memo / bootstrap operating plan / lender classic) plus a one-pager, a bottom-up
