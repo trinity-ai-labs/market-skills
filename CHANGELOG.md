@@ -13,9 +13,9 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   no source, a citation that does not resolve, a cell that disagrees with its note — and a
   method that only inspects what got written cannot see the assumption that never became a row,
   the competitor strength nobody wrote down, or the section a rewrite quietly emptied. This is
-  the same shape as the seven defects behind 1.10.0 and the one behind 1.12.0, and it is the
-  third release in a row where the fix was a *counterpart* to a rule already on the page rather
-  than a new idea. So the entries below are grouped by which absence they made visible, and the
+  the same shape as the seven defects behind 1.10.0 and the one behind 1.12.0 — the third time
+  the fix has been a *counterpart* to a rule already on the page rather than a new idea. So the
+  entries below are grouped by which absence they made visible, and the
   release adds no rule whose failure mode is *something incorrect was stated*.
 - **The deliverable stops inheriting the ledger's archaeology — `vault-lint.sh --deliverable`
   reads the rendered `deliverables/*.html` and fails on a strikethrough span, a note ID or a
@@ -49,7 +49,7 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   either a row matched on its `title` **verbatim** or an `excluded_from_model` reason;
   `model-row-no-assumption` runs the table the other way, because otherwise the cheapest way
   past the first check is a row nothing in the ledger stands behind; and `model-table-missing`
-  covers notes that declare inputs a table renders none of. **The fourth check belongs to the
+  covers notes that declare inputs a table renders none of. **The remaining check belongs to the
   identity rather than to the table, and it is `roadmap-sequencing.md`'s Rule 1 run backwards**:
   that rule says every roadmap item names the assumption it moves, and `excluded-line-on-roadmap`
   reads the same edge from the other end — an assumption carrying `excluded_from_model` that a
@@ -198,8 +198,9 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   one inside a fence whose row would read as an axis if the scan folded that character away, so
   the fence half has an observable consequence too rather than only a comment. Reverted, the
   PowerShell side answers `"ok": true` where the shell answers `"ok": false` over the same vault.
-  The roadmap pair is the genuinely unreachable one — already folded to ASCII alphanumerics —
-  and was converted anyway, so the rule is a property of the file rather than a judgement
+  The roadmap pair — the heading fold and the `Item` header cell — is the genuinely unreachable
+  one, already folded to ASCII alphanumerics before any comparison happens, and it was converted
+  anyway, so the rule is a property of the file rather than a judgement
   re-made per site; re-making it per site is what left three copies of one scan behind.
 - **The release then turned the same question on its own new rules, and five of them did not
   fire.** A release whose entire subject is correct rules that never run is the worst possible
