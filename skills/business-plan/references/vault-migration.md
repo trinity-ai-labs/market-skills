@@ -31,6 +31,7 @@ which of their rules bite differently when you are writing three hundred notes i
 - [Finish with vault-lint, and know which failures legitimately survive](#finish-with-vault-lint-and-know-which-failures-legitimately-survive)
 - [Stamp schemaVersion 2 last, after the vault can already pass at 2](#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2)
 - [Then 3, and what 3 asks for is a hash per cited section](#then-3-and-what-3-asks-for-is-a-hash-per-cited-section)
+- [Then 4, which asks nothing of a corpus that has never seeded an actor](#then-4-which-asks-nothing-of-a-corpus-that-has-never-seeded-an-actor)
 
 ## The extraction manifest is already written — it is the plan's citations
 
@@ -813,13 +814,15 @@ migration was ever for.
 
 ## Stamp schemaVersion 2 last, after the vault can already pass at 2
 
-`vault-lint.sh` reads `schemaVersion` 1, 2 and 3. A vault at 1 is held to exactly the rules it
+`vault-lint.sh` reads `schemaVersion` 1, 2, 3 and 4. A vault at 1 is held to exactly the rules it
 was written under, so **nothing about upgrading the skill obliges you to upgrade a vault** — an
 existing corpus keeps working untouched, which is the property the version set exists to buy.
 Move to 2 when you want the checks version 2 added; the list of what those are is in
 [vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand). Move to 3 after that and
 never in the same pass — [the section below](#then-3-and-what-3-asks-for-is-a-hash-per-cited-section)
-says what 3 asks for and why its worklist is one row per citation rather than one per supersession.
+says what 3 asks for and why its worklist is one row per citation rather than one per supersession —
+and [4 after 3](#then-4-which-asks-nothing-of-a-corpus-that-has-never-seeded-an-actor) on the same
+terms.
 
 **What 2 asks of an existing corpus is stage 5, plus a back-fill on anything it already
 superseded or already red-teamed.** The milestone half fires only on notes in `milestones/` — a
@@ -936,7 +939,72 @@ against a section stays green after somebody rewrites that section — the headi
 the claim. That is invariant 20 holding past the first time it was satisfied, which is the only place
 it was ever failing.
 
-**Migrations stay forward-only.** There is no 2→1 path and no 3→2 path, for the reason
+## Then 4, which asks nothing of a corpus that has never seeded an actor
+
+`schemaVersion` 4 gates the six rules that read the fields a note copied in from the actor corpus
+carries; they are in [vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand)'s
+version-4 table. **A vault at 3 keeps working untouched**, on the terms every rung below it states:
+where a check reads a field the vault's version does not have, the run says the rule **was not
+applied** rather than reporting that your notes agree. Moving up stays opt-in and forward-only, and a
+vault that never moves is not a vault falling behind — it is one held to what it was written under.
+
+**One rung per pass, and the reason is the escape hatch.** Every rung's step 3 is *revert the number,
+the vault is still correct at the version it had*. Stamp two rungs at once and that escape is gone —
+reverting one leaves the vault claiming the other — and the worklist in front of you mixes rows
+belonging to two versions, so which version a failure came from becomes a thing you work out rather
+than read.
+
+**What 4 asks depends on whether the vault holds a seeded record, and for most vaults the answer is
+nothing** — [vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand) says why, and the
+consequence here is that the upgrade is the stamp by itself. Where it does cost something, the cost is
+one of two shapes and they are not alike:
+
+- **A record copied in by hand owes the authoring rules.** The corpus is a directory in a public
+  repo, so a user can copy a record into a vault with no skill involved — which is why the version is
+  spent here at all rather than riding field presence. `actor-fields-incomplete`,
+  `field-class-unknown`, `stale-after-not-permanent`, `stale-after-before-pulled` and
+  `actor-type-not-shippable` all fire on that copy, and each is one field to fix in the note in front
+  of you.
+- **`stale-actor-fact` is the only rule at any rung that fires because a date passed.** A record
+  seeded a year ago goes red at 4 with nothing in the vault having changed, and what clears it is a
+  fetch rather than an edit — the whole point of the rule, since a stale corpus then costs a fetch
+  and never a wrong number. Moving to 4 is the decision to take that fetch on.
+
+The order is the one every rung uses, for the same reason: **do the work, then stamp.**
+
+1. **Edit `schemaVersion` to 4 in the working tree and do not commit it.** The version-4 checks fire
+   only at 4, so this is how you find out what the upgrade owes; an uncommitted number is a question,
+   not an assertion. This is also why a migration
+   [scaffolds at 1](#six-stages-in-this-order-because-each-one-makes-the-next-cheaper) rather than at
+   whatever the current version is: the ladder is 1 at scaffold, then 2, then 3, then 4, with the
+   stamp as the last edit at every rung, and a number stamped up front is a claim made before a
+   single note exists to back it.
+2. **Run the gate and read the failures as the worklist.**
+
+   ```sh
+   vault-lint.sh --release-gate --vault "$VAULT_PATH"
+   ```
+
+   Everything beyond the two that legitimately survive any finished migration (`coverage-gap`,
+   `orphan-source`) is upgrade work. On a vault with no seeded record there is nothing here at all,
+   and that is the expected result rather than a sign the checks did not run — the version-4 rules
+   read fields only an actor note carries.
+3. **Fix the corpus, never the number.** If the worklist is bigger than the session, revert the `4`
+   and leave the vault at 3, for the reason the 2 upgrade gives: a vault committed at 4 mid-upgrade
+   holds the render gate red for reasons that have nothing to do with the render, and the next person
+   cannot tell an upgrade in progress from a corpus that broke. Reverting is cleaner at this rung than
+   at either one below it, because every rule 4 adds reads a field only an actor note carries — so
+   nothing else in the corpus is left half-migrated by the retreat.
+4. **Commit the stamp together with the fixes, as the last edit**, for the reason both rungs above
+   give: one commit in which the vault both claims 4 and passes at 4 means no commit in the history
+   records a version the corpus could not back up.
+
+**What moving to 4 buys is that a seeded figure cannot ship unexamined.** At 3 a record copied into a
+vault is a set of notes like any other, and a `pricing` fact read eighteen months ago cites exactly as
+confidently as one fetched this morning — which is worse than an uncited figure, because it arrives
+pre-cited and reads as the more authoritative of the two. At 4 the date is what says so out loud.
+
+**Migrations stay forward-only.** There is no 2→1 path, no 3→2 path and no 4→3 path, for the reason
 [vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand) gives: writing one means
 holding every field the newer schema added in a shape the older one can carry, which is a second
 schema maintained forever.
