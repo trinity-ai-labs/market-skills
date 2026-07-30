@@ -2,6 +2,36 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.14.1
+
+- **The one `--deliverable` exemption a reader depends on is now asserted by name, and the gate's
+  own count in `AGENTS.md` names the right ten.** 1.14.0 added `--deliverable` to keep vault
+  addresses out of a rendered artifact, and `[S#]`/`[F#]` citation codes are deliberately exempt —
+  they are the reader's own source trace and are the reason a figure in a shipped PDF can be
+  followed back to where it came from. That exemption was a property of how the address pattern is
+  BUILT — a type prefix plus the eight generated characters an ID carries — and nothing asserted
+  it. So widening that pattern later, to drop the length anchor or match a bare type letter, would
+  have started stripping the citation trace out of the one document that carries any, with every
+  assertion in the suite still green: the exact shape `AGENTS.md` warns about, where a check that
+  stopped firing reads identically to one that passed. `deliverable-leak`'s clean deliverable now
+  cites two figures at point of use and the suite asserts the exemption **by code**, matched on the
+  bare token rather than the bracketed form — a bracketed test would pass over precisely the
+  widening the assertion exists to catch, because the widened pattern reports the bare token — with
+  a presence guard beside it so an edit that drops the codes cannot leave the exemption passing
+  over a file with nothing left to be exempt. Verified by widening the pattern until both rows go
+  red, which is the only way to know an assertion works. In the same pass, `AGENTS.md`'s shipped-flag
+  sentence said `--release-gate` runs "all ten of those" directly after enumerating ten flags — but
+  the gate's ten are the bare `check` plus **nine**, so the referent silently swapped `check` out
+  for `--unverified`, whose gate column in `MODE_TABLE` is `-`. The count matching in both readings
+  is what kept it looking correct, three lines above that same file's warning that an enumeration
+  which has gone stale reads exactly like one that is complete. It now points at the paragraph that
+  already enumerates the gate's parts rather than carrying a second copy to go stale on its own.
+- **Nothing a user invokes changed.** Both edits are contributor-facing — a fixture, its assertions,
+  and a contributor doc — and CI's exempt regex correctly did not demand a version for either. The
+  version moves anyway, because a fix that sits on `main` under no released version is a fix nobody
+  can point at: the suite that guards a shipped mode is part of what makes the mode trustworthy, and
+  "installable" is the only unit of that anyone outside this repo can see.
+
 ## 1.14.0
 
 - **Every defect in this release is a rule that exists, is correct, and does not fire — or a
