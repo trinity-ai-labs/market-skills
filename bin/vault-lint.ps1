@@ -4214,6 +4214,52 @@ function Invoke-ModeCheck {
 	$knownminput = New-Object 'System.Collections.Generic.HashSet[string]'
 	foreach ($kw in (Split-CheckWords 'revenue cost')) { [void]$knownminput.Add($kw) }
 
+	# --- the actor record, at schemaVersion 4 -------------------------------
+	# The closed `field_class` word list, on the same terms as driver_kind and
+	# model_input above: nine words, unquoted, and a tenth is not a value. The
+	# class is what SETS the shelf life, so an unrecognised value is a fact whose
+	# window nobody can derive while it reads as classified. The rendered list is
+	# built here rather than written into the message, so the enumeration is
+	# stated once and the message cannot go on naming nine words after a tenth is
+	# admitted. Ordinal by construction - a HashSet[string] with no comparer uses
+	# EqualityComparer<string>.Default, which is ordinal, so a ZWSP in a
+	# field_class value is a byte here exactly as it is in awk's `in`.
+	$fclassw = Split-CheckWords 'identity description funding corporate-event traction mechanism pricing cta positioning'
+	$knownfclass = New-Object 'System.Collections.Generic.HashSet[string]'
+	$fclist = ''
+	for ($ki = 0; $ki -lt $fclassw.Count; $ki++) {
+		[void]$knownfclass.Add($fclassw[$ki])
+		if ($ki -ne 0) {
+			if ($ki -eq ($fclassw.Count - 1)) { $fclist = $fclist + ' and ' } else { $fclist = $fclist + ', ' }
+		}
+		$fclist = $fclist + '`' + $fclassw[$ki] + '`'
+	}
+
+	# The four classes whose value rots. `"permanent"` on one of them is the
+	# cheapest way past every rule here - the note stops coming up for
+	# re-checking while still reading as a dated, classified fact - so it is
+	# refused by name rather than left to the window nobody computes.
+	$rotting = New-Object 'System.Collections.Generic.HashSet[string]'
+	foreach ($kw in (Split-CheckWords 'description pricing cta positioning')) { [void]$rotting.Add($kw) }
+
+	# What a `fact` in a record owes on top of the base schema, as a SET - the
+	# rule the five target-verdict fields are held to, TYPE-SCOPED. `actor` is
+	# the trigger; what it makes owed depends on the type. A `source` owes only
+	# `pulled`, which the base schema already requires, so it owes nothing new: a
+	# rule triggered by any one of the four would owe `field_class` on a source,
+	# which has no class to state.
+	$actorf = Split-CheckWords 'field_class pulled stale_after'
+
+	# Reached from the actor check rather than from required-field, and kept apart
+	# from $why because two of these three keys already sit there answering the
+	# question for a claim and a source. What `stale_after` costs a claim cited
+	# into a plan and what it costs a shipped corpus fact are different sentences,
+	# and folding them would make one of the two messages wrong.
+	$awhy = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+	$awhy['field_class'] = 'the fact sits in none of the nine rows of the rot table, so the window that sets its shelf life cannot be derived and no re-check is ever scheduled'
+	$awhy['pulled'] = 'there is no record of when this value was read, so a price pulled two years ago is indistinguishable from one pulled this morning - and `stale_after` has nothing to be checked against'
+	$awhy['stale_after'] = 'the fact carries no re-check date at all, which reads as no re-check OWED rather than as none scheduled - and the note that outlives its company is exactly this one'
+
 	# EDGE_FIELDS comes from the shared region and is deliberately wider than
 	# vault.md's seven edges. Consumed, never redeclared: two copies would let
 	# `graph` and `check` disagree about which fields exist.
@@ -4467,6 +4513,125 @@ function Invoke-ModeCheck {
 			$mi = Get-CheckValue $f 'model_input'
 			if ($mi.Length -ne 0 -and -not $knownminput.Contains($mi)) {
 				Add-CheckFailure $f 'model-input-unknown' $id ('`model_input` is `' + $mi + '` and the enumeration is closed at `revenue` and `cost`. The field is what declares this note an input the projection has to carry a row for, and --assumption-rows reads exactly that - so an unrecognised value is a note that declares nothing while reading as declared, and the row it owes is never asked for. That is the same failure the field exists to fix, reintroduced by a typo: the input stays in the ledger, never enters the model, and every verdict downstream inherits a denominator missing it')
+			}
+
+			# --- an actor record is source and fact notes with ---------
+			# --- four more fields --------------------------------------
+			# GATED ON schemaVersion 4, and the version is spent rather than
+			# riding field presence for a reason the verdict fields did not
+			# have: a record is a directory in a PUBLIC repo, so a user can copy
+			# one into a vault by hand with no skill involved. Field presence is
+			# therefore not evidence that the vault opted in, and without the
+			# version these rules would run against a config asserting it is
+			# read under version-1 rules - the one guarantee the field makes. A
+			# second property points the same way: stale-actor-fact is the only
+			# rule here that fires on NOTHING having changed, since a corpus
+			# seeded a year ago goes red because a date passed, and that is a
+			# cost a user takes on deliberately.
+			#
+			# All six read nothing but the note, which is what keeps them in the
+			# pass that runs on every bare invocation.
+			# Read BEHIND the version gate rather than in front of it, so this
+			# matches awk's `schema + 0 >= 4 && V[f, "actor"] != ""`, which
+			# short-circuits and never looks the field up on a vault below 4.
+			# Every corpus that exists is at 1, 2 or 3, so a lookup in front of
+			# the gate is one per note in every vault in the world, for a rule
+			# that cannot fire there.
+			$ac = ''
+			if ($SCHEMA_N -ge 4) { $ac = Get-CheckValue $f 'actor' }
+			if ($ac.Length -ne 0) {
+				$fc = Get-CheckValue $f 'field_class'
+
+				# THE PRIVACY SEAM, MADE MECHANICAL INSIDE A VAULT. Every output
+				# a dossier recomputes per engagement - the bucket, the wedge
+				# line, the capability-matrix cells, the threat rank, the
+				# adoption candidate - is a judgement about this subject against
+				# the jobs this dossier decomposed, so each one would have to be
+				# a `claim`, and no `claim` may appear in a record. The
+				# repo-side half of that is a grep over the corpus filenames;
+				# this is the half it cannot reach, because the cheapest way
+				# past the seam is to author the judgement as an actor note
+				# directly in a vault, where no filename in the repo can see it.
+				if ($ty -cne 'source' -and $ty -cne 'fact') {
+					$tywhere = 'a `' + $ty + '` note'
+					if ($ty.Length -eq 0) { $tywhere = 'a note with no type' }
+					Add-CheckFailure $f 'actor-type-not-shippable' $id ('carries `actor: ' + $ac + '` on ' + $tywhere + ', and a record is `source` and `fact` notes only. Every output a dossier recomputes per engagement is a judgement about this subject against the jobs this dossier decomposed, so each one would have to be a `claim` - which is what makes the seam checkable rather than trusted. A grep over the corpus filenames cannot see a judgement authored as an actor note inside a vault, so this is the half that catches the bucket, the wedge line, the matrix rows and the adoption candidate shipping out with the fact')
+				}
+
+				# A tenth word, on model-input-unknown's terms, and triggered by
+				# the FIELD rather than by the type for the same reason: an
+				# unrecognised class is unrecognised wherever it is written. It
+				# fires on a tenth word and never on the WRONG one of the nine,
+				# and that is deliberate: a positioning claim filed as
+				# `description` takes twelve months of shelf life instead of six
+				# and sits stale for the extra half-year with nothing able to
+				# report it, while a check that inferred the class from the
+				# sentence would cry wolf and get switched off.
+				if ($fc.Length -ne 0 -and -not $knownfclass.Contains($fc)) {
+					Add-CheckFailure $f 'field-class-unknown' $id ('`field_class` is `' + $fc + '` and the enumeration is closed at ' + $fclist + '. The class is what sets `stale_after`, so an unrecognised value is a fact whose shelf life nobody can derive while it reads as classified - and a typo is then indistinguishable from a class this corpus does not have')
+				}
+
+				# THE FOUR FACT-SCOPED RULES, under one type test. Everything
+				# above this line is owed by any note in a record and everything
+				# below it only by a `fact` - which is the whole of the type
+				# scoping, in one place rather than spread across two tests with
+				# a third rule wedged between them. The order rules are reported
+				# in cannot reach the output: Render-Failures sorts the whole
+				# failure list before anything prints.
+				if ($ty -ceq 'fact') {
+					# The set rule the verdict fields are held to one section
+					# up, TYPE-SCOPED. A note carrying `actor` and missing a
+					# member reads as a corpus fact to every consumer while
+					# carrying nothing that could ever flag it for re-checking,
+					# and a partial set reads COMPLETE to every tool while the
+					# missing field is the one that would have dated it.
+					foreach ($bf in $actorf) {
+						if (Test-CheckPresent $f $bf) { continue }
+						Add-CheckFailure $f 'actor-fields-incomplete' $id ('carries `actor: ' + $ac + '` and not `' + $bf + '`. On a `fact` the three fields `field_class`, `pulled` and `stale_after` are owed as a set; a `source` owes only `pulled`, which the base schema already requires, so a source owes nothing new. Without `' + $bf + '`, ' + $awhy[$bf])
+					}
+
+					$sa = Get-CheckValue $f 'stale_after'
+					$pu = Get-CheckValue $f 'pulled'
+					$astatus = Get-CheckValue $f 'status'
+
+					# A rotting class may not claim permanence. Nothing else
+					# here would notice: the note is complete, its dates are
+					# consistent, and it simply never comes up again.
+					if ($sa -ceq 'permanent' -and $rotting.Contains($fc)) {
+						Add-CheckFailure $f 'stale-after-not-permanent' $id ('`field_class` is `' + $fc + '` and `stale_after` is `permanent`. `permanent` is the positive record that no clock governs a value, and it is correct on `identity`, `funding`, `corporate-event`, `traction` and `mechanism` - a dated point that was true stays true. A `' + $fc + '` value rots on a window, so stamping it permanent is the cheapest way past every rule here: the note stops coming up for re-checking while still reading as a dated, classified fact')
+					}
+
+					# CompareOrdinal, never -lt/-le on strings: those take the
+					# culture path, which folds combining sequences and reads a
+					# zero-width space as nothing, so a date carrying one would
+					# compare EQUAL to one without and the rule would silently
+					# pass. `permanent` needs no special case in either
+					# comparison - quoted, it splits out exactly as an ISO date
+					# does and sorts AFTER every one of them under ordinal
+					# bytes, so it is neither at-or-before `pulled` nor before
+					# today.
+					if ($sa.Length -ne 0 -and $pu.Length -ne 0 -and
+						[string]::CompareOrdinal($sa, $pu) -le 0) {
+						Add-CheckFailure $f 'stale-after-before-pulled' $id ('`stale_after` is ' + $sa + ' and `pulled` is ' + $pu + ', so the shelf life is not strictly later than the read. A transposed pair of dates makes a fact that was fresh when it was written arrive already expired, and the fix is a re-read of the note rather than a re-fetch of the page')
+					}
+
+					# WHAT CLEARS THIS IS A RE-FETCH, AND A RE-FETCH IS A
+					# SUPERSESSION - the same shape as stale-claim below and
+					# deliberately no gentler, since flipping to `needs_review`
+					# does not clear that one either. This is the rule the whole
+					# corpus rests on: a stale fact is never cited, it is
+					# re-fetched and only then used, so a stale corpus costs one
+					# fetch against a URL the record already carries and never a
+					# wrong number. Without it a shipped figure arrives
+					# PRE-CITED and reads as more authoritative than one the run
+					# fetched itself, which is the failure the citation
+					# discipline exists to prevent.
+					if ($sa.Length -ne 0 -and
+						[string]::CompareOrdinal($sa, $script:TODAY) -lt 0 -and
+						$astatus -cne 'superseded' -and $astatus -cne 'retracted') {
+						Add-CheckFailure $f 'stale-actor-fact' $id ('stale_after is ' + $sa + ' and today is ' + $script:TODAY + ', with status still `' + $astatus + '`. A record fact past its shelf life is never cited - it is re-fetched, and only then used - so the fix is one fetch against the URL `rests_on` already names, landing as a new fact note that `supersedes` this one. Left as is, the value ships PRE-CITED out of the corpus and reads as more authoritative than one this run fetched itself, which is the failure the citation discipline exists to prevent')
+					}
+				}
 			}
 
 			# --- the type is stated three times and all three agree ----
@@ -4769,7 +4934,19 @@ function Invoke-ModeCheck {
 		$SKIPPED = $SKIPPED + $row.Part
 	}
 
-	exit (Render-Failures 'vault-lint' ('note-level checks passed - ' + $script:VAULT + '. Not opened: ' + $SKIPPED + ' - --release-gate asks all of them.'))
+	# THE GRACEFUL-DEGRADATION HALF, said out loud rather than left as a silence.
+	# The six actor rules are gated on schemaVersion 4, so a vault below it exits
+	# 0 over fields nothing ever read - and a success line that stops there
+	# reports AGREEMENT over a rule that was never applied. That is the property
+	# version 3's two modes established when they went in, and it is what protects
+	# every corpus that exists on the day the plugin updates: the run says what it
+	# did not ask.
+	$ACTOR_SKIPPED = ''
+	if ($SCHEMA_N -lt 4) {
+		$ACTOR_SKIPPED = ' The actor rules are a schemaVersion 4 rule and this vault is at ' + $script:FOUND_SCHEMA + ' - a record can be copied into a vault by hand, so field presence is not evidence the vault opted in, and nothing was asked here about the actor fields.'
+	}
+
+	exit (Render-Failures 'vault-lint' ('note-level checks passed - ' + $script:VAULT + '. Not opened: ' + $SKIPPED + ' - --release-gate asks all of them.' + $ACTOR_SKIPPED))
 }
 
 # ============================================================================
