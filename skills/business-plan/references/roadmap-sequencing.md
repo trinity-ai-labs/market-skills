@@ -200,6 +200,32 @@ the order maximising 12-month cumulative can be the order that arrives at the sa
 decelerating, and Rule 3's permutation table will rank it first unless its column is measured at
 the sale month rather than at a fixed twelve.
 
+## Rule 8 — an adoption candidate is the other legitimate source of an item, admitted or refused
+
+Rules 1–7 assume an item comes from the founder's own intent. `competitor-analysis.md`'s
+`## Adoption candidates` section is the other source — what the profiled set already does better
+than this product — and each candidate there is written as the fields a `milestone` note is
+authored from: the change as a title, what it moves, the resource it spends, and the evidence it
+rests on. So a candidate reaches Rule 1 with its middle column already filled, and nothing above is
+relaxed to admit it. What differs is **provenance, and it belongs in the note's `rests_on`**: an
+ordinary item rests on what the founder intends to make true, and this one on evidence a competitor
+already paid to learn. A reader who cannot tell the two apart reads a demonstrated item at the same
+strength as an intended one.
+
+**Every candidate is adopted and dated, or refused with the reason on the record.** A candidate
+that is neither is the failure this route exists to close: it leaves the roll-up that produced it
+reading as a list nobody disagreed with, while the cheapest move available to a founder — copy the
+part that already works, from a company that has already paid to learn it — never reaches the plan.
+Refusing one costs a sentence. Dropping one costs nothing and is invisible, which is why this rule
+is stated as a disjunction with no third branch.
+
+**A candidate that moves no assumption is maintenance, and saying so IS the refusal.** Rule 1's bar
+applies to it unchanged, and the producer is required to name what a candidate moves even where the
+answer is nothing — precisely so this refusal can be written rather than inferred. So
+*"maintenance, moves nothing"* on the record is a complete answer while an omission is not: the two
+are indistinguishable one document later, and the second is what lets a candidate be refused on a
+technicality nobody recorded.
+
 ## What lands in the vault
 
 One `milestone` note per roadmap item, before the table is written. The table is a rendering of
@@ -208,6 +234,10 @@ first is what stops the two from being two hand-maintained lists that drift, and
 `vault-lint.sh --roadmap-table` is what makes that a check rather than an instruction. The generated
 `research/timeline.md` is the other rendering: state at M0, the sequence with what each item
 unlocks, and the chains a proposal has to walk to reach the month it would land in.
+
+An item adopted from the research names the competitor evidence it came from in `rests_on`
+(Rule 8), which is the only place the distinction survives: the table renders `moves`, `resource`
+and `sequence` and has no column for where the item came from.
 
 ## What lands in the plan
 
