@@ -786,6 +786,20 @@ skips the question the error existed to ask.
   their competitor, its two dated traction points and its stage. Without it a run passes every
   other check on this list and Phase 3's implied-growth test then points at a section that was
   never produced — a check that silently does nothing is worse than one that was never written.
+- `competitor-analysis.md` carries its `## Adoption candidates` section, rolled up from the
+  profiles, **and every profile that carried no adopt section is named there as missing it.** Each
+  candidate arrives as the fields a `milestone` note is authored from, which is what lets Phase 3's
+  roadmap step adopt and date it or refuse it with the reason on the record
+  ([references/roadmap-sequencing.md](references/roadmap-sequencing.md#rule-8--an-adoption-candidate-is-the-other-legitimate-source-of-an-item-admitted-or-refused)).
+  Without the roll-up the profiles found what to copy and the plan never sees it: the run passes
+  every other check on this list while the cheapest move available to a founder — copy the part
+  that already works, from a company that has already paid to learn it — never reaches the roadmap.
+  The named-as-missing half is what stops the roll-up from clearing this line while being short for
+  the wrong reason, since a category with little worth copying and a set of profiles nobody asked
+  read identically here and only the second is worth re-running. The first line's "all contract
+  files exist" cannot do the work — it is satisfied by `competitor-analysis.md` existing, and a
+  document existing says nothing about whether anything in it points at what this product is
+  behind on.
 - `competitor-analysis.md` carries its `## Monitoring plan`, and **every axis names an instrument,
   a cadence and the decision it would change.** Those three columns are what the render gate's
   `--monitoring` fails an axis for leaving empty, and this checkpoint is the last one at which
@@ -806,6 +820,18 @@ skips the question the error existed to ask.
   still passes. An origin left unnamed makes two series incomparable while they sit on one axis
   looking comparable, and an exclusion left off the list reads as a comparable nobody found rather
   than one whose origin could not be dated.
+- That same `## Comparable growth curves` section carries the **mechanism record** beside the
+  indexed series — per comparable, how it got from zero to its first $1M: the launch motion, the
+  first channel that produced PAYING customers, what the founder did personally that did not scale,
+  what compounded, and what was tried and abandoned. A `"rates only, no origin account found"`
+  line against a comparable is a **pass** on this check: it is the record doing its job, and
+  silence is the failure. Without the record Phase 3's `## Growth engine` section has only
+  category-general rules to write from, and the plan's acquisition assumptions read as evidenced
+  when they were designed
+  ([references/growth-engine.md](references/growth-engine.md#the-first-channel-is-cited-from-the-mechanism-record-never-chosen-out-of-the-rules-above)
+  carries that rule and the failure behind it). This checkpoint is also the last one whose context
+  is live: the bucket this product sits in is the one the indexed set is emptiest in, so a mechanism
+  nobody hunted here is one nobody can hunt by Phase 5.
 - **Where the settled target is an exit**, `market-analysis.md` additionally carries its `## Exit
   comparables & implied multiple` section: the disclosed acquisitions in the category, each indexed
   to the acquired company's growth slope at the moment of sale, the multiple each one implies, and
