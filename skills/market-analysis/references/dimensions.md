@@ -79,6 +79,42 @@ The wedge-finder, the category-boundary falsifier, and the adoption-finder. For 
 the deliverable is not a feature list — it's an account of where they leave the market open, and
 of what they have already got right that this product has not.
 
+**Read the actor corpus before sweeping, because discovery is the expensive half and verification is
+one fetch.** Companies an engagement has already profiled are held as records at
+[`actors/`](../actors/README.md), whose directory listing is the roster. A run that re-derives a company
+a record already covers pays the expensive half twice and gets the same answer back.
+
+**An unexpired fact is used as it stands; an expired one is re-fetched and only then used.** Which
+facts expire and when is the record's own rule — [`actors/README.md`](../actors/README.md) states what
+may be in a record and points at the note schema setting each field class's shelf life. Read the age
+off the record rather than judging it by eye: a figure arriving pre-cited reads as more authoritative
+than one this run fetched itself, which is the failure the citation contract exists to prevent.
+
+**Only the durable half comes from a record; every engagement-keyed output is recomputed here.**
+[`actors/README.md`](../actors/README.md) enumerates which is which and is the only place that list
+lives — this playbook does not restate it, because that seam is the privacy seam as well as the reuse
+seam, and a second copy of it drifts into a leak rather than into an untidiness. A record is what you
+need not re-derive, never the extent of what a profile owes: one assembled from a record alone reads
+complete while missing every section on that list, because the sections it dropped are the ones no
+third-party source could have supplied.
+
+**The roster is the floor the sweep starts from, never the target it stops at.** Every discovery lens
+runs in full, every engagement, whether the corpus returned nine records or none. This is the trap the
+dated-traction floor below already had to be re-worded out of — a floor phrased as a quantity gets read
+as the quantity — and a roster arrives in worse shape than a quantity does, because it is already
+shaped like the deliverable. So a sweep seeded with nine records that finds fourteen more reports
+twenty-three, and one that finds nothing new says so with its instruments named, exactly as any other
+gap entry does. Two failures sit behind this. Without the full sweep the corpus ossifies around
+whoever mattered when it was written and a new entrant is structurally never found. And coverage is
+uneven by construction, so an empty roster is a statement about who has contributed a record — never
+evidence that a category is empty.
+
+**A verified point goes back to the corpus only when the founder asks for it, and it goes back as a
+pull request.** Where this run re-verified a figure a record holds, or profiled a company no record
+covers, the durable half of that work is offerable back; nothing in the run writes to the corpus
+itself. An automatic path publishes which companies a private engagement examined, which is why
+[`actors/README.md`](../actors/README.md) makes it manual and carries the mechanism.
+
 Hunt:
 - **True alternatives first, competitors second** (Dunford): the list opens with at least one
   non-product alternative — status quo / spreadsheet / manual process / build-internally —
@@ -175,8 +211,9 @@ Hunt:
   it as a curve invites extrapolating one averaged rate flat across a horizon, the same
   unmodelled-line error the business-plan skill's projection guard exists to catch.
 
-Sources: competitor pricing pages + changelogs + docs (primary), funding databases and press,
-founder interviews/podcasts, G2/Capterra reviews (for weaknesses users actually complain about
+Sources: the actor corpus at [`actors/`](../actors/README.md) first — already-verified durable fact,
+never re-derived while unexpired — then competitor pricing pages + changelogs + docs (primary),
+funding databases and press, founder interviews/podcasts, G2/Capterra reviews (for weaknesses users actually complain about
 AND invoice-level real-price signals), HN/Reddit launch threads, job boards, Wayback Machine
 pricing-page diffs (restructuring direction).
 
