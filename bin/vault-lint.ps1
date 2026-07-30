@@ -197,6 +197,188 @@ function Get-RelativeSlashPath {
 }
 
 # ----------------------------------------------------------------------------
+# the one markdown table reader
+#
+# --roadmap-table and --assumption-rows read the same shape out of two
+# documents: the item cells of the FIRST table under a named heading. They were
+# two functions, and the second one's comment claimed it was the first one "with
+# two changes and no others" - a claim nothing in this file could hold, because
+# the two spelled identical rules through different constructs
+# (`StartsWith('|', Ordinal)` in one against `[int]$t[0] -ne 124` in the other,
+# `$hdr -cne ''` against `$hdr.Length -ne 0`). scripts/parity/parity.mjs diffs
+# .sh against .ps1 and never one reader against its own twin, and no fixture
+# puts both readers over the same table - so a fence rule, an alignment-row test
+# or a heading-depth bound fixed in one and not the other shipped silently, and
+# the mode that missed the fix went on printing green over every fixture written
+# before it. There is one reader now, so there is nothing left to diverge:
+# everything that genuinely differed between the two is a parameter below.
+#
+# ONLY THE FIRST TABLE IS READ. A section legitimately carries a second one -
+# roadmap-sequencing.md Rule 3 puts its permutation comparison under the roadmap
+# heading, and that table's first column is an ORDER rather than an item - so
+# reading every table would report each of those rows as an item that escaped
+# the ledger. The read STOPS the moment the answer can no longer change: at the
+# heading that closes the section, or at the line that ends the first table in
+# it.
+#
+# NO COMPARISON AGAINST DOCUMENT TEXT IS CULTURE-AWARE. `-ceq` on a string and
+# `-eq`/`-ge` on a [char] both take PowerShell's culture path, which folds a
+# combining sequence onto its precomposed form and reports a heading carrying a
+# zero-width space EQUAL to one without - and these two documents are founder
+# prose carrying both, while bin/vault-lint.sh compares bytes in awk. So every
+# comparison here is ordinal and every character test is a code point. The
+# `fence-zwsp` fixture is what fails when one of them goes back to culture, and
+# `$hdr.Length -ne 0` is why: `$hdr -cne ''` reports a header row holding
+# nothing but a zero-width space EMPTY, and the item column is then never read
+# off it.
+# ----------------------------------------------------------------------------
+
+# Strips to [a-z0-9], lowercasing letters, so any spelling the slug rule
+# resolves to the wanted heading folds onto it here too without this function
+# having to know which characters that rule drops. Code points rather than
+# `-ge`/`-le` on [char], because awk's `c >= "a" && c <= "z"` is a byte range
+# and a [char] comparison is not guaranteed to be one.
+#
+# --supersession-sweep, --binding-driver and --claim-drift each carry their own
+# copy of this fold under the mode-local seam those stubs were built to; this is
+# the shared one, for the two modes that share the reader below.
+function ConvertTo-TableFold {
+	param([string]$Text)
+	$sb = New-Object System.Text.StringBuilder
+	for ($i = 0; $i -lt $Text.Length; $i++) {
+		$cc = [int]$Text[$i]
+		if ($cc -ge 97 -and $cc -le 122) { [void]$sb.Append([char]$cc); continue }
+		if ($cc -ge 65 -and $cc -le 90) { [void]$sb.Append([char]($cc + 32)); continue }
+		if ($cc -ge 48 -and $cc -le 57) { [void]$sb.Append([char]$cc); continue }
+	}
+	return $sb.ToString()
+}
+
+# The item cells of the FIRST table under $Heading, plus whether that heading was
+# ever seen - which the caller needs to tell "the document has no such section"
+# apart from "the section is there and lists nothing".
+#
+# THE THREE PARAMETERS ARE THE WHOLE DIFFERENCE between the two modes:
+#   -Heading        the folded heading the read opens on: `roadmap`, `assumptions`
+#   -ItemHeader     the folded header cell that names the item column: `item`,
+#                   `assumption`
+#   -DefaultColumn  the 1-based column read when no header cell folds to
+#                   -ItemHeader. THIS IS THE ONE THAT BITES. The roadmap's Rule 1
+#                   table has no ordinal ahead of its item, so column one is
+#                   right there; the assumptions template ships
+#                   `| # | Assumption | Value | Source | Confidence |`, where
+#                   column one is the `A-n` row label the plan cites in prose and
+#                   a roadmap `moves` field names - defaulting to it would report
+#                   `1`, `2` and `3` as three inputs that escaped the ledger on a
+#                   table whose every row resolves.
+#
+# THE HEADER ROW IS READ FOR NOTHING BUT WHICH COLUMN HOLDS THE ITEM, and the row
+# directly above the alignment rule is that header: the rule is what separates
+# header from body, because counting instead would take the header as an item on
+# a table written with two header lines and the first real item as a header on a
+# table written with none. A table with NO alignment rule is not a table to any
+# renderer - it renders as the literal pipes a reader sees - so its rows stay out
+# of the body and the section reports as one that lists nothing.
+#
+# The section ends at the next heading of the same depth or shallower, so a
+# subsection under it is still part of it.
+#
+# The fence tracking is one of six copies in this file, one per mode that reads a
+# document at the vault root, and the row parser is one of two - --binding-driver
+# readdoc() reads the corner verdict table under the same rules. Collapsing the
+# two table readers into this one function removed one copy of each; the rest
+# stay, so change one and change all of them.
+function Read-FirstItemTable {
+	param([string]$Path, [string]$Heading, [string]$ItemHeader, [int]$DefaultColumn)
+
+	$fc = ''
+	$fn = 0
+	$seenHeading = $false
+	$level = 0
+	$inSection = $false
+	$inTable = $false
+	$col = $DefaultColumn
+	$hdr = ''
+	$inBody = $false
+	$pending = New-Object 'System.Collections.Generic.List[string]'
+	$items = New-Object 'System.Collections.Generic.List[string]'
+
+	foreach ($rawLine in (Read-TextLines $Path)) {
+		$line = Remove-TrailingCr $rawLine
+		$t = $line.TrimStart($script:SPACE_TAB)
+
+		# `$fc` stays a string because it carries awk's `fc = ""` sentinel; the
+		# fence character it holds is compared as a code point.
+		if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
+			$fenceChar = [int]$t[0]
+			$n = 0
+			while ($n -lt $t.Length -and [int]$t[$n] -eq $fenceChar) { $n++ }
+			if ($fc.Length -eq 0) { $fc = [string][char]$fenceChar; $fn = $n }
+			elseif ([int]$fc[0] -eq $fenceChar -and $n -ge $fn) { $fc = ''; $fn = 0 }
+			continue
+		}
+		if ($fc.Length -ne 0) { continue }
+
+		$headingMatch = [regex]::Match($t, '\A(#+)[ \t]+')
+		if ($headingMatch.Success) {
+			$nh = $headingMatch.Groups[1].Length
+			$h = $t.Substring($headingMatch.Length)
+			$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
+			$h = $h.Trim($script:SPACE_TAB)
+			$explicitAnchor = ''
+			$anchorMatch = [regex]::Match($h, '[{]#[A-Za-z0-9_-]+[}]\z')
+			if ($anchorMatch.Success) {
+				$explicitAnchor = $anchorMatch.Value -creplace '\A[{]#', ''
+				$explicitAnchor = $explicitAnchor -creplace '[}]\z', ''
+				$h = $h.Substring(0, $anchorMatch.Index).Trim($script:SPACE_TAB)
+			}
+			if ($inSection -and $nh -le $level) { break }
+			if (-not $seenHeading -and ([string]::Equals((ConvertTo-TableFold $explicitAnchor), $Heading, [System.StringComparison]::Ordinal) -or [string]::Equals((ConvertTo-TableFold $h), $Heading, [System.StringComparison]::Ordinal))) {
+				$inSection = $true; $seenHeading = $true; $level = $nh
+			}
+			continue
+		}
+
+		if (-not $inSection) { continue }
+		if (-not $t.StartsWith('|', [System.StringComparison]::Ordinal)) {
+			if ($inTable) { break }
+			continue
+		}
+		$inTable = $true
+
+		$row = $t -creplace '\A\|', ''
+		$row = $row -creplace '\|[ \t]*\z', ''
+		$cells = $row -split '\|'
+		if ($cells.Count -lt 1) { continue }
+		$allDash = $true
+		foreach ($cell in $cells) {
+			if (-not [regex]::IsMatch($cell, '\A[ \t]*:?-+:?[ \t]*\z')) { $allDash = $false; break }
+		}
+		if ($allDash) {
+			if ($hdr.Length -ne 0) {
+				$hdrCells = $hdr -split '\|'
+				for ($i = 0; $i -lt $hdrCells.Count; $i++) {
+					if ([string]::Equals((ConvertTo-TableFold $hdrCells[$i]), $ItemHeader, [System.StringComparison]::Ordinal)) { $col = $i + 1; break }
+				}
+			}
+			$inBody = $true
+			continue
+		}
+
+		if ($inBody) { [void]$pending.Add($row) } else { $hdr = $row }
+	}
+
+	foreach ($p in $pending) {
+		$cells = $p -split '\|'
+		$item = ''
+		if ($col -le $cells.Count) { $item = $cells[$col - 1].Trim($script:SPACE_TAB) }
+		if ($item.Length -ne 0) { [void]$items.Add($item) }
+	}
+
+	return [pscustomobject]@{ Rows = $items; SeenHeading = $seenHeading }
+}
+
+# ----------------------------------------------------------------------------
 # usage and refusals
 #
 # Transcribed verbatim from bin/vault-lint.sh's usage() heredoc, except for the
@@ -1959,145 +2141,11 @@ function Invoke-ModeRedTeam {
 # roadmap heading, and stays silent at schemaVersion 1.
 # ----------------------------------------------------------------------------
 function Invoke-ModeRoadmapTable {
-	# Local copies only - not shared with any other stub. bin/vault-lint.sh
-	# :1369 names this fenced-block scan as one of six deliberate
-	# copies, one per mode that reads a document at the vault root; hoisting
-	# either helper below out from under this stub for another mode to reuse
-	# is the cross-slice edit the seam exists to prevent.
-
-	# The second copy of the --supersession-sweep fold(): strips to
-	# [a-z0-9], lowercasing letters, so any spelling the slug rule resolves
-	# to `roadmap` folds onto it here too without this function having to
-	# know which characters that rule drops. --binding-driver carries the
-	# third copy, for the verdict heading.
-	function ConvertTo-RoadmapFold {
-		param([string]$Text)
-		$sb = New-Object System.Text.StringBuilder
-		for ($i = 0; $i -lt $Text.Length; $i++) {
-			$c = $Text[$i]
-			if ($c -ge [char]'a' -and $c -le [char]'z') { [void]$sb.Append($c); continue }
-			if ($c -ge [char]'A' -and $c -le [char]'Z') { [void]$sb.Append([char]([int]$c + 32)); continue }
-			if ($c -ge [char]'0' -and $c -le [char]'9') { [void]$sb.Append($c); continue }
-		}
-		return $sb.ToString()
-	}
-
-	# The item cells of the FIRST table under the roadmap heading. One of two
-	# copies of this row parser - --binding-driver readdoc() reads the
-	# corner verdict table under the same rules: strip the outer pipes,
-	# split on `|`, spot the all-dashes alignment rule, read the header row
-	# for which column holds the item, treat a table with no rule as no
-	# table at all. Change one, change both.
-	#
-	# Only the first table is read (AGENTS.md:303) - the section legitimately
-	# carries a second one, the permutation comparison of
-	# roadmap-sequencing.md Rule 3, whose first column is an ORDER rather
-	# than an item, and reading it would report every one of its rows as an
-	# item that escaped the ledger. The read stops the moment the answer can
-	# no longer change: at the heading that closes the section, or at the
-	# line that ends the first table in it.
-	function Read-PlanRoadmapTable {
-		param([string]$Path)
-
-		$fc = ''
-		$fn = 0
-		$seenHeading = $false
-		$level = 0
-		$inRoadmap = $false
-		$inTable = $false
-		$col = 1
-		$hdr = ''
-		$inBody = $false
-		$pending = New-Object 'System.Collections.Generic.List[string]'
-		$items = New-Object 'System.Collections.Generic.List[string]'
-
-		foreach ($rawLine in (Read-TextLines $Path)) {
-			$line = Remove-TrailingCr $rawLine
-			$t = $line.TrimStart($SPACE_TAB)
-
-			# NO COMPARISON IN THE FENCE SCAN IS CULTURE-AWARE, the rule
-			# bin/vault-lint.ps1's --binding-driver copy states and three sibling
-			# copies of this scan did not apply. `-ceq` on a string and `-eq` on a
-			# [char] both take PowerShell's culture path, which folds a combining
-			# sequence onto its precomposed form and ignores a zero-width space -
-			# and a document read by this mode is founder prose carrying both,
-			# while bin/vault-lint.sh compares bytes in awk. `$fc` stays a string
-			# because it carries awk's `fc = ""` sentinel; the fence character it
-			# holds is compared as a code point.
-			if ($t.StartsWith('```', [System.StringComparison]::Ordinal) -or $t.StartsWith('~~~', [System.StringComparison]::Ordinal)) {
-				$fenceChar = [int]$t[0]
-				$n = 0
-				while ($n -lt $t.Length -and [int]$t[$n] -eq $fenceChar) { $n++ }
-				if ($fc.Length -eq 0) { $fc = [string][char]$fenceChar; $fn = $n }
-				elseif ([int]$fc[0] -eq $fenceChar -and $n -ge $fn) { $fc = ''; $fn = 0 }
-				continue
-			}
-			if ($fc.Length -ne 0) { continue }
-
-			$headingMatch = [regex]::Match($t, '\A(#+)[ \t]+')
-			if ($headingMatch.Success) {
-				$nh = $headingMatch.Groups[1].Length
-				$h = $t.Substring($headingMatch.Length)
-				$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
-				$h = $h.Trim($SPACE_TAB)
-				$explicitAnchor = ''
-				$anchorMatch = [regex]::Match($h, '[{]#[A-Za-z0-9_-]+[}]\z')
-				if ($anchorMatch.Success) {
-					$explicitAnchor = $anchorMatch.Value -creplace '\A[{]#', ''
-					$explicitAnchor = $explicitAnchor -creplace '[}]\z', ''
-					$h = $h.Substring(0, $anchorMatch.Index).Trim($SPACE_TAB)
-				}
-				if ($inRoadmap -and $nh -le $level) { break }
-				# Ordinal like every other comparison that reads this document.
-				# ConvertTo-RoadmapFold has already dropped everything outside
-				# [a-z0-9], so no culture folding is reachable through these two -
-				# they are converted so the rule is a property of the file rather
-				# than a judgement re-made per site, which is what left three
-				# copies of the fence scan unconverted.
-				if (-not $seenHeading -and ([string]::Equals((ConvertTo-RoadmapFold $explicitAnchor), 'roadmap', [System.StringComparison]::Ordinal) -or [string]::Equals((ConvertTo-RoadmapFold $h), 'roadmap', [System.StringComparison]::Ordinal))) {
-					$inRoadmap = $true; $seenHeading = $true; $level = $nh
-				}
-				continue
-			}
-
-			if (-not $inRoadmap) { continue }
-			if (-not $t.StartsWith('|', [System.StringComparison]::Ordinal)) {
-				if ($inTable) { break }
-				continue
-			}
-			$inTable = $true
-
-			$row = $t -creplace '\A\|', ''
-			$row = $row -creplace '\|[ \t]*\z', ''
-			$cells = $row -split '\|'
-			if ($cells.Count -lt 1) { continue }
-			$allDash = $true
-			foreach ($cell in $cells) {
-				if (-not [regex]::IsMatch($cell, '\A[ \t]*:?-+:?[ \t]*\z')) { $allDash = $false; break }
-			}
-			if ($allDash) {
-				if ($hdr -cne '') {
-					$hdrCells = $hdr -split '\|'
-					for ($i = 0; $i -lt $hdrCells.Count; $i++) {
-						if ([string]::Equals((ConvertTo-RoadmapFold $hdrCells[$i]), 'item', [System.StringComparison]::Ordinal)) { $col = $i + 1; break }
-					}
-				}
-				$inBody = $true
-				continue
-			}
-
-			if ($inBody) { [void]$pending.Add($row) } else { $hdr = $row }
-		}
-
-		foreach ($p in $pending) {
-			$cells = $p -split '\|'
-			$item = ''
-			if ($col -le $cells.Count) { $item = $cells[$col - 1].Trim($SPACE_TAB) }
-			if ($item.Length -ne 0) { [void]$items.Add($item) }
-		}
-
-		return [pscustomobject]@{ Rows = $items; SeenHeading = $seenHeading }
-	}
+	# The table itself is read by the shared Read-FirstItemTable, which
+	# --assumption-rows also calls - it was two functions and one of them
+	# claimed to be a transcription of the other, so the difference between
+	# the two modes is now three arguments rather than a claim. The failure
+	# helpers below stay local to this stub: they name this mode's checks.
 
 	function Add-RoadmapFailure {
 		param([string]$File, [string]$Check, [string]$Id, [string]$Detail)
@@ -2153,7 +2201,7 @@ function Invoke-ModeRoadmapTable {
 	$planRows = New-Object 'System.Collections.Generic.List[string]'
 	$seenRoadmapHeading = $false
 	if ($HAS_PLAN -eq 1) {
-		$plan = Read-PlanRoadmapTable $PLAN
+		$plan = Read-FirstItemTable -Path $PLAN -Heading 'roadmap' -ItemHeader 'item' -DefaultColumn 1
 		$planRows = $plan.Rows
 		$seenRoadmapHeading = $plan.SeenHeading
 	}
@@ -2416,12 +2464,12 @@ function Invoke-ModeBindingDriver {
 	# so a document cited by four notes is opened once.
 	#
 	# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is looser than the
-	# rule --roadmap-table readplan() uses (next heading of the same depth or
+	# rule the shared Read-FirstItemTable uses (next heading of the same depth or
 	# shallower). Nothing in plan-template.md puts a subsection under the verdict
 	# anchor, so the two agree today; if one is ever added, the phrase a reader
 	# sees inside that subsection is outside the body this reads and the
-	# condition check would cry wolf. That is the trigger to adopt readplan()
-	# depth rule here.
+	# condition check would cry wolf. That is the trigger to adopt
+	# Read-FirstItemTable depth rule here.
 	#
 	# THE CORNER TABLE IS IDENTIFIED BY ITS HEADER rather than by being the first
 	# table in the section, which is tighter than --roadmap-table needs and for a
@@ -2435,18 +2483,20 @@ function Invoke-ModeBindingDriver {
 	# skipped, so a document quoting its own format below the real table cannot
 	# double-count.
 	#
-	# THE ROW PARSER IS THE SECOND COPY of the one in --roadmap-table readplan():
+	# THE ROW PARSER IS THE SECOND COPY of the one in Read-FirstItemTable:
 	# strip the outer pipes, split on `|`, spot the all-dashes alignment rule,
 	# treat everything above it as header and read the header for which column
 	# matters. Both carry the rule that a table with NO alignment rule is not a
 	# table to any renderer, so its rows are not rows. Change one, change both.
 	#
 	# The fence tracking is the FIFTH copy in the shell - --used-in scan(),
-	# --supersession-sweep sections(), --red-team and --roadmap-table readplan()
-	# carry the same six lines, because each reads a document at the vault root.
-	# THIS COPY STAYS LOCAL TO THIS BODY: the other four belong to other mode
-	# bodies, and hoisting one out is the cross-slice edit the stub seam exists
-	# to prevent. A `#` or a `|` inside a fenced block is an example rather than
+	# --supersession-sweep sections(), --red-team and the shared
+	# Read-FirstItemTable carry the same six lines, because each reads a document
+	# at the vault root. THIS COPY STAYS LOCAL TO THIS BODY: the other three mode
+	# bodies keep their own, and hoisting one out is the cross-slice edit the stub
+	# seam exists to prevent. The table reader is the exception and states why at
+	# its own definition: two copies of it existed and one claimed to be a
+	# transcription of the other. A `#` or a `|` inside a fenced block is an example rather than
 	# an assertion the document makes, which is also why fenced lines never reach
 	# BODY: a fenced template carrying a condition would otherwise satisfy the
 	# check for a section that renders nothing. Change one, change all six.
@@ -3255,17 +3305,20 @@ function Invoke-ModeDeliverable {
 # 11. --assumption-rows - the model's inputs against the notes that declare them
 #
 # Ports the --assumption-rows body of bin/vault-lint.sh. It is --roadmap-table
-# one artifact over, deliberately, so this body is that one's twin with two
-# changes: the section heading folds to `assumptions` rather than `roadmap`, and
-# the item column defaults to TWO rather than one, because the template ships
-# `| # | Assumption | ... |` and column one is the `A-n` row label the plan cites
-# in prose. Every failure string is transcribed character for character from the
-# awk program.
+# one artifact over, so it reads its table with the same shared
+# Read-FirstItemTable that mode calls, on three arguments: the heading folds to
+# `assumptions` rather than `roadmap`, the item column's header cell to
+# `assumption` rather than `item`, and the item column defaults to TWO rather
+# than one, because the template ships `| # | Assumption | ... |` and column one
+# is the `A-n` row label the plan cites in prose. Every failure string is
+# transcribed character for character from the awk program.
 #
-# THE HELPERS BELOW ARE LOCAL TO THIS BODY, the same rule Invoke-ModeRoadmapTable
-# states: a helper two modes want is a helper two slices are both editing, and
-# hoisting one into the shared region is the cross-slice edit the stub seam
-# exists to prevent.
+# THE FAILURE HELPERS BELOW ARE LOCAL TO THIS BODY, the same rule
+# Invoke-ModeRoadmapTable states - they name this mode's checks. The table reader
+# is the one thing that is not: two copies of it existed under that rule, the
+# second declaring itself a transcription of the first, and nothing in this file
+# could hold the claim. One reader with parameters is a guarantee; two functions a
+# comment says match are a hazard.
 # ----------------------------------------------------------------------------
 function Invoke-ModeAssumptionRows {
 	$SUB = [string][char]28
@@ -3282,22 +3335,6 @@ function Invoke-ModeAssumptionRows {
 		return [string]::Equals($A, $B, [System.StringComparison]::Ordinal)
 	}
 
-	# The fold every section-resolving mode in this file carries. Compared as
-	# code points rather than with `-ge`/`-le` on [char]: PowerShell routes a
-	# char comparison through the same culture-aware path `-ceq` uses, and awk's
-	# `c >= "a" && c <= "z"` is a byte range.
-	function ConvertTo-ModelFold {
-		param([string]$Text)
-		$sb = New-Object System.Text.StringBuilder
-		for ($i = 0; $i -lt $Text.Length; $i++) {
-			$cc = [int]$Text[$i]
-			if ($cc -ge 97 -and $cc -le 122) { [void]$sb.Append([char]$cc); continue }
-			if ($cc -ge 65 -and $cc -le 90) { [void]$sb.Append([char]($cc + 32)); continue }
-			if ($cc -ge 48 -and $cc -le 57) { [void]$sb.Append([char]$cc); continue }
-		}
-		return $sb.ToString()
-	}
-
 	# awk's target_of(): a block-list item may carry a `:: label` after the ID it
 	# names, and every edge walk in the shell strips it.
 	function Get-ModelTargetOf {
@@ -3305,103 +3342,6 @@ function Invoke-ModeAssumptionRows {
 		$p = $Item.IndexOf(' :: ', [System.StringComparison]::Ordinal)
 		if ($p -ge 0) { return $Item.Substring($p + 4) }
 		return $Item
-	}
-
-	# The assumption cells of the FIRST table under the assumptions heading.
-	# Transcribed from Read-PlanRoadmapTable with the two changes named above and
-	# no others, so a diff of the two reads as one parser.
-	#
-	# Every comparison against document text is ordinal - Test-ModelEqual - for the
-	# reason stated at that helper: `-ceq` on a string and `-eq` on a [char] both
-	# take PowerShell's culture path, which folds a combining sequence onto its
-	# precomposed form and ignores a zero-width space, and a document read by this
-	# mode is founder prose carrying both, while the shell compares bytes in awk.
-	function Read-ModelAssumptionsTable {
-		param([string]$Path)
-
-		$fc = ''
-		$fn = 0
-		$seenHeading = $false
-		$level = 0
-		$inAssumptions = $false
-		$inTable = $false
-		$col = 2
-		$hdr = ''
-		$inBody = $false
-		$pending = New-Object 'System.Collections.Generic.List[string]'
-		$items = New-Object 'System.Collections.Generic.List[string]'
-
-		foreach ($rawLine in (Read-TextLines $Path)) {
-			$line = Remove-TrailingCr $rawLine
-			$t = $line.TrimStart($SPACE_TAB)
-
-			if ($t.Length -ge 3 -and ((Test-ModelEqual ($t.Substring(0, 3)) '```') -or (Test-ModelEqual ($t.Substring(0, 3)) '~~~'))) {
-				$c = [int]$t[0]
-				$n = 0
-				while ($n -lt $t.Length -and [int]$t[$n] -eq $c) { $n++ }
-				if ($fc.Length -eq 0) { $fc = [string][char]$c; $fn = $n }
-				elseif ((Test-ModelEqual $fc ([string][char]$c)) -and $n -ge $fn) { $fc = ''; $fn = 0 }
-				continue
-			}
-			if ($fc.Length -ne 0) { continue }
-
-			$headingMatch = [regex]::Match($t, '\A(#+)[ \t]+')
-			if ($headingMatch.Success) {
-				$nh = $headingMatch.Groups[1].Length
-				$h = $t.Substring($headingMatch.Length)
-				$h = $h -creplace '[ \t]*#+[ \t]*\z', ''
-				$h = $h.Trim($SPACE_TAB)
-				$explicitAnchor = ''
-				$anchorMatch = [regex]::Match($h, '[{]#[A-Za-z0-9_-]+[}]\z')
-				if ($anchorMatch.Success) {
-					$explicitAnchor = $anchorMatch.Value -creplace '\A[{]#', ''
-					$explicitAnchor = $explicitAnchor -creplace '[}]\z', ''
-					$h = $h.Substring(0, $anchorMatch.Index).Trim($SPACE_TAB)
-				}
-				if ($inAssumptions -and $nh -le $level) { break }
-				if (-not $seenHeading -and ((Test-ModelEqual (ConvertTo-ModelFold $explicitAnchor) 'assumptions') -or (Test-ModelEqual (ConvertTo-ModelFold $h) 'assumptions'))) {
-					$inAssumptions = $true; $seenHeading = $true; $level = $nh
-				}
-				continue
-			}
-
-			if (-not $inAssumptions) { continue }
-			if ($t.Length -eq 0 -or [int]$t[0] -ne 124) {
-				if ($inTable) { break }
-				continue
-			}
-			$inTable = $true
-
-			$row = $t -creplace '\A\|', ''
-			$row = $row -creplace '\|[ \t]*\z', ''
-			$cells = $row -split '\|'
-			if ($cells.Count -lt 1) { continue }
-			$allDash = $true
-			foreach ($cell in $cells) {
-				if (-not [regex]::IsMatch($cell, '\A[ \t]*:?-+:?[ \t]*\z')) { $allDash = $false; break }
-			}
-			if ($allDash) {
-				if ($hdr.Length -ne 0) {
-					$hdrCells = $hdr -split '\|'
-					for ($i = 0; $i -lt $hdrCells.Count; $i++) {
-						if (Test-ModelEqual (ConvertTo-ModelFold $hdrCells[$i]) 'assumption') { $col = $i + 1; break }
-					}
-				}
-				$inBody = $true
-				continue
-			}
-
-			if ($inBody) { [void]$pending.Add($row) } else { $hdr = $row }
-		}
-
-		foreach ($p in $pending) {
-			$cells = $p -split '\|'
-			$item = ''
-			if ($col -le $cells.Count) { $item = $cells[$col - 1].Trim($SPACE_TAB) }
-			if ($item.Length -ne 0) { [void]$items.Add($item) }
-		}
-
-		return [pscustomobject]@{ Rows = $items; SeenHeading = $seenHeading }
 	}
 
 	function Add-ModelFailure {
@@ -3505,7 +3445,7 @@ function Invoke-ModeAssumptionRows {
 	$modelRows = New-Object 'System.Collections.Generic.List[string]'
 	$seenAssumptionsHeading = $false
 	if ($HAS_FINMODEL -eq 1) {
-		$read = Read-ModelAssumptionsTable $FINMODEL
+		$read = Read-FirstItemTable -Path $FINMODEL -Heading 'assumptions' -ItemHeader 'assumption' -DefaultColumn 2
 		$modelRows = $read.Rows
 		$seenAssumptionsHeading = $read.SeenHeading
 	}
@@ -3602,7 +3542,7 @@ function Invoke-ModeClaimDrift {
 	}
 
 	# The fold every section-resolving mode in this file carries. Code points
-	# rather than [char] comparison, for the reason ConvertTo-ModelFold states.
+	# rather than [char] comparison, for the reason ConvertTo-TableFold states.
 	function ConvertTo-DriftFold {
 		param([string]$Text)
 		$sb = New-Object System.Text.StringBuilder
