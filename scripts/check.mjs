@@ -38,12 +38,20 @@
 //      citation surface a `used_in` entry names. On a LIVE heading in this repo it
 //      would silently change that heading's own slug, repointing every Contents
 //      link check 9 validates
-//  11. `bin/vault-lint.sh`'s two transcribed table parsers still read as one —
-//      `readmodel()` says it is `readplan()` with two changes and no others, and
-//      until this check that claim was a comment nothing enforced
 //
-// Checks 6-11 each fail when their own source pattern matches NOTHING, because a
+// Checks 6-10 each fail when their own source pattern matches NOTHING, because a
 // check that quietly stops matching prints the same green as a check that passed.
+//
+// THERE IS NO CHECK 11 ANY MORE, and its absence is a decision. It held
+// `bin/vault-lint.sh`'s `readmodel()` to its own comment's claim that it was
+// `readplan()` with two declared changes and no others — an exact byte comparison
+// after a substitution list. Both implementations now read every such table with
+// ONE parameterised reader (`readtable()` in the shell, `Read-FirstItemTable` in
+// PowerShell), so there is no second parser for a check to compare against. A
+// check whose subject no longer exists is worse than no check: its extraction
+// finds nothing and it either reports "ran on nothing" forever or silently starts
+// matching something else. Do not restore it — restore the second parser it was
+// written for, and you have restored the drift hazard it only ever mitigated.
 
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -52,7 +60,6 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILLS_DIR = join(ROOT, 'skills');
-const VAULT_LINT_SH = join(ROOT, 'bin', 'vault-lint.sh');
 const JSON_OUT = process.argv.includes('--json');
 
 const failures = [];
@@ -438,101 +445,6 @@ async function checkAnchorsResolve() {
   }
 }
 
-/**
- * Check 11 — `readmodel()` is still `readplan()` with the two changes it claims.
- *
- * `--assumption-rows` was written as `--roadmap-table` one artifact over, and its
- * row parser says so in the file: "TRANSCRIBED FROM --roadmap-table readplan()
- * with two changes and no others, so a diff of the two reads as one parser."
- * Nothing mechanical held them to it. `parity.mjs` compares `.sh` against `.ps1`
- * and never one reader against its own twin, so a fix applied to one — a fence
- * rule, an alignment-row test, a heading-depth bound — could land in the roadmap
- * parser and not the assumptions one, and the mode that missed it would keep
- * printing green over every fixture written before the fix.
- *
- * The comparison is EXACT rather than a threshold, which is what keeps it from
- * crying wolf. Comments and blank lines are dropped, the two functions' declared
- * differences are substituted below, and what remains must match byte for byte —
- * so a reworded comment is free, and any new divergence in the code fails with
- * the diff in the message. A line-count threshold would have to be loose enough
- * to absorb the comment drift already between them, which is loose enough to
- * absorb a dropped line of parsing.
- *
- * The substitution list IS the specification of "two changes and no others": a
- * legitimate third difference is added here, in the same PR, where a reviewer
- * reads it — which is the conversation the comment alone could not force.
- *
- * What this does NOT cover, stated so its absence is a decision rather than an
- * oversight: `bin/vault-lint.ps1`'s twins, `Read-PlanRoadmapTable` and
- * `Read-ModelAssumptionsTable`, carry the same transcription claim and cannot be
- * compared this way — they express the same rules through different constructs
- * (`$t.StartsWith('|', Ordinal)` against `[int]$t[0] -ne 124`, `$hdr -cne ''`
- * against `$hdr.Length -ne 0`), so the substitution list that made them match
- * would be large enough to absorb a real divergence and would be exactly the
- * fragile guard this check is written to avoid being. The shell half is still
- * worth holding: AGENTS.md rule 3 means no parser edit lands on one side alone,
- * so a divergence introduced in both files fails here and gets asked about in
- * both.
- */
-async function checkTranscribedParsersAgree() {
-  if (!existsSync(VAULT_LINT_SH)) {
-    fail(VAULT_LINT_SH, 'wiring', 'missing — check 11 ran on nothing');
-    return;
-  }
-  const text = await readText(VAULT_LINT_SH);
-
-  // The functions sit inside a single-quoted awk program at three tabs of
-  // indentation, so the closing brace at that same indentation ends the body.
-  const extract = (name) => {
-    const m = text.match(new RegExp(`\\n\\t\\t\\tfunction ${name}\\(path,[\\s\\S]*?\\n\\t\\t\\t\\}\\n`));
-    return m ? m[0] : null;
-  };
-  const plan = extract('readplan');
-  const model = extract('readmodel');
-  if (plan === null || model === null) {
-    const which = [plan === null && 'readplan()', model === null && 'readmodel()'].filter(Boolean).join(' and ');
-    fail(VAULT_LINT_SH, 'wiring', `${which} no longer matches this check's extraction — check 11 ran on nothing, and the two table parsers are unheld again`);
-    return;
-  }
-
-  const code = (body) =>
-    body
-      .split('\n')
-      .map((l) => l.replace(/\s+$/, ''))
-      .filter((l) => l.trim() !== '' && !l.trim().startsWith('#'));
-
-  // The two declared changes, spelled out. `readmodel()` is rewritten INTO
-  // `readplan()` rather than the other way round, so the reported diff reads
-  // against the original.
-  const asPlan = code(model).map((l) =>
-    l
-      .replace(/\breadmodel\b/g, 'readplan')
-      .replace(/\binas\b/g, 'inrm')
-      .replace(/\bSEENAS\b/g, 'SEENRM')
-      // Change 1 — the heading this parser looks for.
-      .replace(/"assumptions"/g, '"roadmap"')
-      .replace(/"assumption"/g, '"item"')
-      // Change 2 — the item column defaults to TWO, because the assumptions
-      // template ships the `A-n` label in column one.
-      .replace(/\bcol = 2\b/g, 'col = 1'),
-  );
-  const asIs = code(plan);
-
-  const drift = [];
-  for (let i = 0; i < Math.max(asIs.length, asPlan.length); i++) {
-    if (asIs[i] === asPlan[i]) continue;
-    drift.push(`readplan: ${asIs[i] ?? '(end of function)'}  ||  readmodel: ${asPlan[i] ?? '(end of function)'}`);
-    if (drift.length === 3) break;
-  }
-  if (drift.length > 0) {
-    fail(
-      VAULT_LINT_SH,
-      'wiring',
-      `readmodel() and readplan() have diverged beyond the two changes readmodel()'s own comment declares — one row parser now reads a table the other would read differently, and no fixture catches that because each mode is only ever run over its own document. Reconcile them, or add the third difference to check 11's substitution list so it is reviewed:\n      ${drift.join('\n      ')}`,
-    );
-  }
-}
-
 async function main() {
   if (!existsSync(SKILLS_DIR)) {
     fail(SKILLS_DIR, 'structure', 'no skills/ directory');
@@ -587,7 +499,6 @@ async function main() {
   await checkDimensionsAreRegistered();
   await checkCitedHeadingsExist();
   await checkAnchorsResolve();
-  await checkTranscribedParsersAgree();
 
   report();
 }
@@ -596,7 +507,7 @@ function report() {
   if (JSON_OUT) {
     console.log(JSON.stringify({ ok: failures.length === 0, failures }, null, 2));
   } else if (failures.length === 0) {
-    console.log('check: ok — skills well-formed, every reference resolves, the transcribed table parsers agree');
+    console.log('check: ok — skills well-formed, every reference resolves');
   } else {
     console.error(`check: ${failures.length} failure${failures.length === 1 ? '' : 's'}\n`);
     for (const f of failures) console.error(`  ${f.file}\n    [${f.rule}] ${f.detail}`);
