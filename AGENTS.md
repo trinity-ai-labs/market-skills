@@ -18,6 +18,24 @@ method and tools only, never user data.** Scripts are stateless: they take a pat
 operate on it. That separation is what lets the skills be public while the work stays
 private, and lets a user upgrade the skills without touching their corpus.
 
+**The one exception is shipped reference data, and its argument lives where the data does.**
+`skills/market-analysis/actors/` ships a corpus of public company fact inside a skill — the first
+thing in this repo to do so — and it argues itself under
+[actors/README.md](skills/market-analysis/actors/README.md#this-directory-is-the-one-place-shipped-state-lives-inside-a-skill).
+Read that before shipping anything beside it: this paragraph draws the boundary, that page makes the
+case, and the boundary is narrower than the sentence above can distinguish. **User data — a founder's
+corpus, their figures, their roadmap — still never enters this repo, and that half is absolute.** What
+the exception admits is public fact about third parties, identical for every install, versioned with
+the plugin, and authored as a pull request — **guarded by a run never writing to the corpus:**
+contribution is a pull request a person opens. Anything failing one of those — written by a run,
+derived from an engagement, or differing between two installs — is user data wearing the exception's
+name, and this rule applies to it whole.
+
+Stating the boundary rather than leaving it to be inferred is the *Writing skills* rule below applied
+to this file: an exception nobody wrote down leaves the next contributor two bad readings, that the
+rule is dead because the repo visibly breaks it, or that it forbids something the repo ships. Both
+end with the rule ignored.
+
 **3. `bin/` is shipped and assumes only the platform's own shell — POSIX `sh` on macOS
 and Linux, Windows PowerShell 5.1 on Windows; `scripts/` is the repo gate and may
 assume Node.** The split is a directory, not a convention to remember. Everything under
