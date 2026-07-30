@@ -4,6 +4,13 @@ One block per dimension: what the research agent hunts, which sources to prefer,
 return shape. Paste the relevant block into each research agent's brief along with the dossier,
 the category boundary, the citation contract, and the output file path.
 
+**A dimension's playbook is this shared preamble PLUS its own block, and both get pasted.** The
+skeleton below and the gap-entry rules under it apply to every dimension, so they live here once
+instead of nine times — but a brief carrying only the `##` block hands its agent a rule set the
+file states and the agent never sees. That failure is invisible from either end: the preamble reads
+correct, the block reads correct, and the agent writes a file missing a section neither of them told
+it about. `orchestration.md` names the composition in the arg it passes; keep the two in step.
+
 **Every dimension tests the value hypotheses.** The dossier's VH list rides in every brief, and
 each agent reports what its dimension says about them: customers — is the pain real and acute
 for the named segment (voice-of-customer evidence)? competitors — is the differentiated value

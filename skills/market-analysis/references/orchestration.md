@@ -31,7 +31,9 @@ Workflow({ script: <Workflow A below>, args: {
   vaultNotes: "",          // "" when the run has no vault. Otherwise the vault note contract from
                            // SKILL.md, verbatim, with <vault> already expanded to the absolute path.
   mustProfile: ["<competitor the founder/user named>", ...],   // always profiled, regardless of kind
-  playbookCompetitors: "<the Competitive landscape block from dimensions.md, verbatim>",
+  playbookCompetitors: "<dimensions.md's shared preamble + its Competitive landscape block, verbatim>",
+                           // The preamble carries the output skeleton and the gap-entry rules EVERY
+                           // dimension owes; the block on its own hands the agent neither.
   profileCap: 12,          // direct profiled up to this; non-direct up to half of it
   maxCompetitors: 60,
   dryRounds: 2,
@@ -164,7 +166,10 @@ themselves, and says not to re-derive what A already sourced.
 //   ("unit-economics" whenever the dossier has Cost structure signals)
 //   ("growth-curves" reads A's profiles off disk — see the CTX note below, not profiledSummary)
 // NEVER include "competitors" — Workflow A owns it. Must include "sizing".
-// playbooks: { <dimension>: "<verbatim block from dimensions.md>" } — one entry per dimension.
+// playbooks: { <dimension>: "<dimensions.md's shared preamble + that dimension's block, verbatim>" }
+//   — one entry per dimension. The preamble is half of every playbook: it holds the output skeleton
+//   the brief below tells the agent to follow and the gap-entry rules every dimension owes, so an
+//   entry carrying only the `##` block omits rules the file states and nothing delivers.
 // prior: { <dimension>: "<existing research/<d>.md content>" | null } — re-run merge context.
 export const meta = {
   name: 'market-analysis-research',
