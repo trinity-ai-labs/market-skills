@@ -13,6 +13,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # WHICH PLATFORMS THIS DIFF CAN SAY ANYTHING NEW ABOUT. The matrix below is
+  # load-bearing for bin/ and pure spend for everything else, and the two are
+  # not close in price: a macOS runner bills at 10x a Linux one and Windows at
+  # 2x, so a markdown-only PR fanning out to all three pays roughly 13x a Linux
+  # minute to re-run a Node link checker that cannot behave differently on any
+  # of them. `check.mjs` is Node and platform-independent; the fixtures suite
+  # and the parity gate only report something new when the scripts they drive
+  # have moved.
+  #
+  # So the matrix narrows to Linux unless the diff touches a path whose
+  # behaviour is platform-dependent: bin/ (the shipped shell and PowerShell
+  # pair), scripts/ (the suites and the fixture corpora they read, including the
+  # CRLF-pinned one), and .github/ (this file - a workflow change must be proved
+  # on every runner it configures).
+  #
+  # EVERY UNCERTAIN CASE WIDENS RATHER THAN NARROWS. A push to main is what
+  # actually ships and always runs the full matrix; a base commit that cannot be
+  # resolved, or a diff that reads empty, takes the full matrix too. The failure
+  # this shape prevents is the expensive one: a narrowing bug that silently
+  # stops proving macOS, which looks identical to a green run.
+  scope:
+    name: which platforms this diff needs
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.pick.outputs.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          full='["ubuntu-latest","macos-latest","windows-latest"]'
+          widen() { echo "os=$full" >>"$GITHUB_OUTPUT"; echo "full matrix - $1"; exit 0; }
+          [ "$EVENT" = "pull_request" ] || widen "not a pull request, so this is the merge that ships"
+          git rev-parse --verify "$BASE" >/dev/null 2>&1 || widen "base commit $BASE is unresolvable"
+          changed="$(git diff --name-only "$BASE" HEAD || true)"
+          [ -n "$changed" ] || widen "read no changed paths"
+          if printf '%s\n' "$changed" | grep -qE '^(bin/|scripts/|\.github/)'; then
+            widen "a platform-dependent path changed"
+          fi
+          echo 'os=["ubuntu-latest"]' >>"$GITHUB_OUTPUT"
+          echo "linux only - no bin/, scripts/ or .github/ path in this diff:"
+          printf '%s\n' "$changed" | sed 's/^/  /'
+
   # One runner, one checkout. The whole suite is well under two seconds of real
   # work, so a job per check would spend two minutes of runner time on spin-up
   # and cloning to answer in one. `if: always()` on every step after the first
@@ -30,10 +76,11 @@ jobs:
   # history and the manifest, and a second OS proves nothing there.
   checks:
     name: gate, shipped tooling, public-repo hygiene
+    needs: scope
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: ${{ fromJSON(needs.scope.outputs.os) }}
     runs-on: ${{ matrix.os }}
     # bash is already the default on ubuntu/macos runners; stating it here is
     # what makes windows-latest use Git for Windows' Git Bash too, instead of
