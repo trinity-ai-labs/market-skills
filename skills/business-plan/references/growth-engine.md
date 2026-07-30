@@ -90,6 +90,39 @@ direct edits.
   voice profile with review; AI never speaks AS the founder unreviewed, and never fabricates
   build-in-public progress.
 
+## The first channel is cited from the mechanism record, never chosen out of the rules above
+
+Every rule above this one is category-general: what survives a search engine, which creative
+shapes hold, what cadence a solo founder can sustain. **Not one of them says what got a company
+of this size its first paying customers in THIS category.** A `## Growth engine` section written
+from those rules alone therefore designs a funnel rather than learning one, and the plan's
+acquisition assumptions — trials per month, the growth rate, and the channel behind them — are
+only ever checked against each other. The inconsistency surfaces when a red team multiplies the
+three together, and by then every available fix is another guess.
+
+**So the section cites the mechanism record wherever one exists.** `market-analysis.md`'s
+`## Comparable growth curves` carries it, per comparable: the launch motion, the first channel
+that produced PAYING customers, what the founder did personally that did not scale, what
+compounded, and what was tried and abandoned. Two established readings govern how it may be cited,
+and both are pointers rather than second copies:
+
+- It is a **claim, not a fact**, cited with its confidence tag intact — the terms
+  [plan-template.md](plan-template.md)'s `## Go-to-market` already sets for the strategy record one
+  section above this one.
+- Each entry is filtered **policy or structural for THIS founder**, per
+  [target.md](target.md#a-structural-driver-may-be-sourced-from-the-reference-class-a-policy-driver-may-only-be-checked-by-it).
+  Applied here, that split decides what a mechanism may be *used for* rather than merely how it is
+  labelled: a mechanism entry corroborates the motion the GTM gates already chose and can never
+  select one.
+
+**Where the record says `"rates only, no origin account found"` for the comparables in this
+product's bucket, the section says the assumption is assumed rather than learned.** That line is
+the record working, not a hole in it — the lowest ARR bucket is where almost nobody publishes a
+dated series, which is both where a mechanism is the only evidence available and where the subject
+usually sits. What fails is a designed funnel presented as an evidenced one: a section that reads
+as learned when nothing was learned spends the credibility of every figure beside it, and the
+reader who notices has no way to tell which of the others were sourced.
+
 ## The weekly loop (goes in the plan, sized to grilled hours)
 
 ```
