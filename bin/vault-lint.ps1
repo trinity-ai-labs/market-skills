@@ -4887,7 +4887,18 @@ if (-not (Test-Path -LiteralPath $CONFIG -PathType Leaf)) {
 # from the FUTURE stays refused, which is the whole reason the field exists: an
 # older tool half-reading a newer vault reports a clean bill of health over
 # every field it never saw.
-$SUPPORTED_SCHEMA = '1 2 3'
+#
+# 4 joins the set for the actor record - `actor`, `field_class`, `pulled` and
+# `stale_after` on the source and fact notes a shipped record is made of. It is
+# spent for a reason the other versions were not: a record is a directory in a
+# PUBLIC repo, so a user can copy one into a vault by hand with no skill
+# involved, and field presence is therefore not evidence that the vault opted
+# in. Without the version the tool would hold six rules against a config
+# asserting it is read under version-1 rules, which is the one guarantee the
+# field makes. Widening the set is also what stops a freshly scaffolded vault
+# being refused outright: the scaffold stamps 4, so a tool reading only 1-3
+# refuses the corpus it just created.
+$SUPPORTED_SCHEMA = '1 2 3 4'
 $FOUND_SCHEMA = ''
 foreach ($line in (Read-TextLines $CONFIG)) {
 	$m = [regex]::Match($line, '"schemaVersion"[ \t]*:[ \t]*[0-9]+')

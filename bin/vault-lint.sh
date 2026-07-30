@@ -629,7 +629,18 @@ CONFIG="$VAULT/.vault/config.json"
 # recorded hash from every claim already cited into a plan, which is every claim
 # in every finished corpus. A version is exactly what that exemption costs, and
 # vault-migration.md carries the 2 -> 3 back-fill.
-SUPPORTED_SCHEMA="1 2 3"
+#
+# 4 joins the set for the actor record - `actor`, `field_class`, `pulled` and
+# `stale_after` on the source and fact notes a shipped record is made of. It is
+# spent for a reason the other versions were not: a record is a directory in a
+# PUBLIC repo, so a user can copy one into a vault by hand with no skill
+# involved, and field presence is therefore not evidence that the vault opted
+# in. Without the version the tool would hold six rules against a config
+# asserting it is read under version-1 rules, which is the one guarantee the
+# field makes. Widening the set is also what stops a freshly scaffolded vault
+# being refused outright: the scaffold stamps 4, so a tool reading only 1-3
+# refuses the corpus it just created.
+SUPPORTED_SCHEMA="1 2 3 4"
 FOUND_SCHEMA=$(awk '
 	match($0, /"schemaVersion"[ \t]*:[ \t]*[0-9]+/) {
 		s = substr($0, RSTART, RLENGTH)
