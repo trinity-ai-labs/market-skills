@@ -157,12 +157,12 @@ The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` and
 `bin/vault-lint.ps1` rather than to the repo: it asserts that every check the lint claims
 to make still fires, against corpora built to trigger each one, and `VAULT_LINT` points it
 at whichever implementation you're testing — `VAULT_LINT=bin/vault-lint.ps1 sh
-scripts/fixtures/run-fixtures.sh` runs the same 336 assertions against the PowerShell side.
+scripts/fixtures/run-fixtures.sh` runs the same 357 assertions against the PowerShell side.
 A check that stops firing and a check that was deleted look identical from the outside,
 which is why the assertion has to be written down rather than eyeballed.
 
 The parity gate is the third half: `node scripts/parity/parity.mjs` runs both scripts
-across 13 modes × 27 fixture vaults and fails on any byte-level disagreement between their
+across 13 modes × 28 fixture vaults and fails on any byte-level disagreement between their
 output — key order, an escaped character, row order, a path separator. The fixtures suite
 proves each script still does what it claims; the parity gate proves the two scripts still
 agree with each other — a check that stops firing in only *one* implementation is invisible
@@ -324,8 +324,8 @@ carries a `MODES` census asserting that every mode has a block in `usage()` — 
 table cannot absorb, since a help paragraph is hand-written at a shared anchor and a mode that
 loses its block still works.
 
-**`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2 3`) and refuses anything else.** A vault at
-1 is held to exactly the rules it was written under; 2 and 3 are where a check that an existing
+**`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2 3 4`) and refuses anything else.** A vault at
+1 is held to exactly the rules it was written under; 2, 3 and 4 are where a check that an existing
 corpus could not owe goes, and the found version is passed into every awk program that needs it as
 `schema` so a new check can gate on it. Three rules sit behind 2:
 the sweep's `reconciled:` verdict, `--red-team`'s demand for a roster in a
@@ -333,7 +333,15 @@ the sweep's `reconciled:` verdict, `--red-team`'s demand for a roster in a
 no `milestones/` directory to render. Two whole MODES sit behind 3 — `--assumption-rows` and
 `--claim-drift` — because both read fields no corpus written before them carries, and
 `--claim-drift`'s would otherwise be owed by every claim in every finished corpus at once, which
-is the one shape of upgrade that reddens a whole population on the day the plugin updates. Refusing a version from the future stays the point of the field: an
+is the one shape of upgrade that reddens a whole population on the day the plugin updates. **Six
+`check` rules sit behind 4 — the actor record's — and they are the case where the version is spent
+on rules that could have ridden field presence instead, so the reason has to be written down.** A
+record is a directory in a public repo, so a user can copy one into a vault by hand with no skill
+involved; field presence is therefore not evidence that the vault opted in, and without the version
+the tool would enforce six rules against a `.vault/config.json` asserting it is held to version-1
+rules. `stale-actor-fact` is also the only rule in the set that fires on **nothing having changed**,
+since a corpus seeded a year ago goes red because a date passed — a cost a user takes on
+deliberately rather than one an upgrade imposes. Refusing a version from the future stays the point of the field: an
 older tool half-reading a newer vault reports a clean bill of health over every field it never
 saw. Adding a check that fires unconditionally on every existing corpus is the thing this
 mechanism exists to make unnecessary.
