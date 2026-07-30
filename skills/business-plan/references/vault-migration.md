@@ -92,10 +92,23 @@ the state this whole document exists to prevent.
 
 ## Six stages, in this order, because each one makes the next cheaper
 
-Scaffold the vault first — the tree, `.vault/config.json` with `"schemaVersion": 2`, and
+Scaffold the vault first — the tree, `.vault/config.json` with `"schemaVersion": 1`, and
 `_vocab.yml` copied from [vocabulary.yml](vocabulary.yml)
-([layout](vault.md#layout-one-directory-per-type-one-file-per-note)). The lint refuses a
-directory without a config, and it says so plainly:
+([layout](vault.md#layout-one-directory-per-type-one-file-per-note)).
+
+**`1`, and not the version Phase 0 scaffolds a *new* vault at.** Every version above 1 asks for a
+field a prose corpus does not carry, and the number is a claim about the corpus rather than a
+label on it — so a migration that scaffolds at 2 or 3 has stamped a claim it cannot back up before
+a single note exists. That is what
+[the stamping section](#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2) below
+exists to prevent, and pre-stamping breaks it in three places at once: its first step is to edit
+the number *uncommitted*, which is a no-op against a number already committed; its worklist is the
+gate's failures at the new version, which here fire over a corpus nothing has migrated yet; and
+its escape — revert the number and leave the vault at 1, correct at 1 and still rendering — has
+nothing to revert to. Stages 1 to 4 run at 1, stage 5 runs only for a corpus going to 2, and the
+stamp is the last edit of all.
+
+The lint refuses a directory without a config, and it says so plainly:
 
 ```
 vault-lint.sh: not a vault - no .vault/config.json under /some/path. Refusing rather than

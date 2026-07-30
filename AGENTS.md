@@ -95,6 +95,23 @@ playbook is registered everywhere it gets dispatched from, and that a cited `## 
 resolves to one a template writes. Each of those fails when its own pattern matches
 nothing, because a check that stops matching prints the same green as one that passed.
 
+**One of its checks reads `bin/vault-lint.sh` rather than `skills/`**, so a parser edit
+there answers to `check.mjs` as well as to the two suites below: `--assumption-rows`'
+`readmodel()` says in the file that it is `--roadmap-table`'s `readplan()` with two
+changes and no others, and the check holds it to exactly that — comments and blank lines
+dropped, the two declared changes substituted, the remainder compared byte for byte.
+`parity.mjs` cannot cover this: it diffs `.sh` against `.ps1` and never one reader
+against its own twin, so a fix applied to one parser and not the other stays invisible —
+each mode is only ever run over its own document, so no fixture puts the two parsers over
+the same table. The comparison is exact rather than a line-count threshold on purpose: a
+threshold loose enough to absorb the comment drift already between the two is loose enough
+to absorb a dropped line of parsing. **A legitimate third difference is added to that
+substitution list, in the PR that introduces it** — the list is what "two changes and no
+others" means now that something reads it. The PowerShell twins,
+`Read-PlanRoadmapTable` and `Read-ModelAssumptionsTable`, carry the same claim and are
+deliberately not covered: they express the same rules through different constructs, so the
+substitution list that made them match would be large enough to hide a real divergence.
+
 **A `{#anchor}` attribute goes only on a heading inside a fenced block, and the gate
 enforces it.** Those fenced headings are `plan-template.md`'s templates, where the
 attribute is the address a claim note's `used_in` names in the *user's* plan document.

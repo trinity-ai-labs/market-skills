@@ -398,14 +398,21 @@ name wins; for an idea with no name, do NOT write any file — settling the name
 grill turn). Look inside `~/Documents/go-to-market/<slug>/` (and `ls` the parent for an existing
 folder naming the same product). A market analysis already there is prior work: **reuse** if
 the dossier still matches reality and `_Analyzed:` is under ~90 days old in a fast-moving
-category (AI tooling, consumer apps) or ~12 months otherwise; between those, run the
-competitor-analysis Monitoring plan re-check (pricing pages, changelogs) as a partial refresh
-and note it in Coverage; past them, or if the product's stage/boundary moved, plan a full
-refresh.
+category (AI tooling, consumer apps) or ~12 months otherwise; between those, work
+`competitor-analysis.md`'s `## Monitoring plan` axis by axis as a partial refresh — each axis's
+instrument read, and the decision that axis says would flip stated as flipped or not — and note
+it in Coverage; past them, or if the product's stage/boundary moved, plan a full refresh.
+
+**A partial refresh re-reads the axes, never the pages.** A pass over pricing pages and
+changelogs answers *is this still true*, which is the question the `_Analyzed:` date beside it has
+already answered and which every claim note's `stale_after` asks again — so it returns *still
+accurate* over a vendor whose direction reversed a month ago, and a direction is the only thing
+separating a closing window from an open one. Only an axis carries one, which is why this branch
+reads the axes and their decisions rather than re-checking the pages those axes are read from.
 
 **Scaffold the vault before anything writes.** The vault path IS the slug directory — never a
 `vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with
-`"schemaVersion": 2` — the current version, so every check the schema carries applies to this
+`"schemaVersion": 3` — the current version, so every check the schema carries applies to this
 vault from its first note — and copy [references/vocabulary.yml](references/vocabulary.yml) to
 `<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
 vocabulary it was written under after the skill ships new terms. The copy carries the shipped
@@ -779,6 +786,17 @@ skips the question the error existed to ask.
   their competitor, its two dated traction points and its stage. Without it a run passes every
   other check on this list and Phase 3's implied-growth test then points at a section that was
   never produced — a check that silently does nothing is worse than one that was never written.
+- `competitor-analysis.md` carries its `## Monitoring plan`, and **every axis names an instrument,
+  a cadence and the decision it would change.** Those three columns are what the render gate's
+  `--monitoring` fails an axis for leaving empty, and this checkpoint is the last one at which
+  filling one in costs a sentence: the researcher who knows which direction a profile was pointed
+  is here now and gone by Phase 5, and an axis invented at the render is a watchlist entry rather
+  than a trigger. Every profile in that document is a snapshot dated on the day it was taken, and
+  a snapshot cannot see a direction — one researched the day before it was used missed a strategic
+  reversal by that vendor six weeks earlier, the single fact that most changed what the competitor
+  meant. The first line's "all contract files exist" cannot do this work: it is satisfied by the
+  document existing, and a document existing says nothing about whether anything in it watches a
+  direction rather than a page.
 - `research/growth-curves.md` exists, and `market-analysis.md` carries its `## Comparable growth
   curves` section: the series indexed to months since origin, each company's origin event named,
   and the companies held out of the indexed overlay listed rather than dropped. The band says how
@@ -1288,6 +1306,15 @@ three milestones, and where everything landed. Invite pushback on the specific b
 ## Quality bars — non-negotiable
 
 - Every market fact traces to `sources.md` or the founder brief; confidence tags survive import.
+- `competitor-analysis.md`'s `## Monitoring plan` watches axes rather than pages: every axis names
+  the direction being watched, the instrument read to answer it, a cadence, and the decision that
+  flips if the answer changes — and `vault-lint.sh --monitoring` fails a row leaving any of the
+  three empty. Every profile carries the date it was researched and every claim its `stale_after`,
+  so the corpus asks *is this still true* twice over and nothing in it asks *which way is this
+  moving* — and a direction is the only thing separating a closing window from an open one. A
+  profile researched the day before it was used missed a strategic reversal by that vendor six
+  weeks earlier: the single fact that most changed what the competitor meant, and a re-check of
+  pricing pages could not have seen it, because a snapshot cannot see a direction.
 - Wherever the plan or the red team reasons from a count to a cause, the metric states what else
   produces that number, and a metric introduced after the conclusion it supports is named as one.
   Unexcluded, the alternative explanation ships as the evidenced part of the argument — and a
@@ -1320,6 +1347,14 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Every claim cited in a rendered document carries `used_in`, and every `used_in` target carries
   the claim — a claim whose named section does not say what the note says is still open,
   whenever it was minted. Every `required: true` subject has a claim under it or a stated gap.
+- Every cited section's content hash is recorded in the claim's `reconciled_sections` as it was
+  read, and `vault-lint.sh --claim-drift` re-opens the claim when the section no longer matches.
+  The bar above is satisfied once, at drafting; this is the only thing that keeps it satisfied
+  afterwards. A later re-solve rewrites the block and leaves the heading alone, so `--used-in`
+  still resolves and the gate stays green over a section that has stopped saying what the note
+  says — found by hand days later, or not at all, by which point the one reader with no way to
+  check it has acted on it. A `schemaVersion` 3 rule, so a vault at 1 or 2 is told the rule was
+  not applied rather than that its documents agree.
 - The steady-state ceiling is computed and stated, not implied by a 12-month curve, with every
   input in the identity labelled `structural` or `policy` — and a policy-bound ceiling stated as
   the ceiling of that configuration, with one changed policy value beside it.
@@ -1407,6 +1442,14 @@ three milestones, and where everything landed. Invite pushback on the specific b
 - Where the target is an exit, the red team met the acquirer's question: a *named* buyer, the hole
   it patches, and the bidder count. An unnamed acquirer is not a driver value, and a lens that
   accepts "someone would want this" grants the driver the verdict was most sensitive to.
+- Every rendered deliverable reaches its reader carrying no vault address, and
+  `vault-lint.sh --deliverable` reads `deliverables/*.html` and fails on a strikethrough span, a
+  note ID or an objection code. Invariant 14 keeps retraction visible in the plan, which is right
+  for the working document and wrong for this one: a note ID and an objection code are addresses
+  into a corpus that reader does not hold, and a struck-through line with its reason beside it is
+  a document arguing with its own previous draft. The route out is Phase 5's restate-forward step
+  and never a strip filter — deleting a `~~…~~` span leaves the sentence after it correcting an
+  antecedent the reader can no longer see.
 - Rendered deliverables verified page-by-page.
 
 ## Common failure modes
