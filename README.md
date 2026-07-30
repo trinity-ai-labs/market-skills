@@ -8,7 +8,11 @@ Two agent skills that take a product to market, packaged as one plugin. Both are
   channels, moats — plus two archaeology passes over repo sources: infra-cost (derive COGS from
   the actual stack, project cost vs revenue at scale) and instrumentation (what the product
   already records, and which number in the analysis it could settle) — with adversarial
-  verification of every load-bearing number. Each competitor comes back twice: where they leave
+  verification of every load-bearing number. Competitor discovery starts from
+  [the actor corpus](#the-actor-corpus-companies-already-profiled-never-re-discovered-from-zero) —
+  companies a previous engagement already profiled, shipped with the plugin — and the finder sweep
+  then runs every one of its own lenses regardless, so the corpus is a floor on what gets found and
+  never a ceiling. Each competitor comes back twice: where they leave
   the market open, and what they already do better than you, priced as something you could adopt.
   Comparable companies come back the same way — how fast they grew, and how they actually got
   their first paying customers. The analysis closes with a monitoring plan that says which way each
@@ -177,6 +181,69 @@ verbatim, and never a copy of your users' data.
 
 ---
 
+## The actor corpus: companies already profiled, never re-discovered from zero
+
+An **actor** is a company held as a persistent entity rather than re-derived per engagement. Its
+founding date, funding rounds, dated traction points, pricing model, positioning claim and corporate
+events are true regardless of who is asking, so a run that discovers them from zero pays the
+expensive half of the research twice and gets the same answer back. Discovery is where the tokens go
+— a multi-modal sweep to learn the company exists at all, then its pricing page, then its funding
+history, then its traction disclosures. Verification is one fetch against a URL a record already
+carries.
+
+The corpus ships inside the plugin at `skills/market-analysis/actors/`, one directory per company,
+and each record is a set of the same `source` and `fact` notes the vault already uses — so seeding a
+record into your vault is a file copy, and `vault-lint` holds it to rules on exactly the terms it
+holds everything else. **This is the first thing this repo ships as data rather than as method**, and
+three properties of it are the ones your trust in a shipped figure should rest on. Each is a checked
+rule, not a promise kept by discipline.
+
+**It fails closed on staleness, so a stale corpus costs a fetch and never a wrong number.** Every
+shipped fact carries the date it was read and the date it expires, set by its field class — a price
+point rots in three months, a pricing-page CTA and a positioning claim in six, the company's own
+description in twelve, while a dated funding round, a dated traction point and a corporate event
+never rot because they were true on their date and stay true. A fact past its expiry is **not
+cited**: it is a lint failure until the value is re-fetched, and the re-fetch lands as a new note
+superseding the old one. Without that rule the corpus would be a liability rather than a saving,
+because a figure that arrives **pre-cited** reads as more authoritative than one the run fetched
+itself — which is the exact failure the citation discipline exists to prevent. A class that rots is
+also barred from claiming permanence, since stamping a price point *permanent* would otherwise be the
+cheapest way past every rule here.
+
+**The roster is a floor for discovery and never a substitute for it.** The finder sweep runs every
+engagement with every one of its lenses, whether the corpus returned nine records for your category
+or none, and its budget bounds only what the sweep itself adds. Without that the corpus ossifies
+around whoever mattered when it was written and a new entrant is structurally never found. Coverage
+is uneven by construction — every record is there because somebody profiled that company and chose
+to contribute it, and no sweep keeps the corpus representative of any market — so an empty roster
+tells you nobody has contributed a record in your category, never that the category is empty. **At
+this release the corpus holds a format example and nothing else** — what ships is the mechanism, not a
+harvested roster, because *which* companies a corpus contains is engagement signal even when every
+fact in it is public. The corpus states that bias in its own README rather than leaving you in an
+uncovered category to work it out.
+
+**Nothing engagement-derived is in it.** What ships is public company fact. What stays in your vault
+is every judgement about *your* product: the competitor's bucket (direct, indirect, adjacent), the
+wedge line, the capability-matrix cells, the threat rank — and the **adoption candidate**, which is
+the subtle one and the one a contributor would be most tempted to ship. An adoption candidate says
+what this competitor does better and what adopting it would cost, and it leaks harder than the wedge
+line does: a wedge says what a *competitor* fails to cover, while an adoption candidate says **what
+the subject was behind on** — a fact about your product wearing a competitor's name. All of those are
+inferences rather than observations, so each could only be a `claim` note, and a record may hold no
+`claim` at all. That makes the seam checkable from both sides rather than trusted: no `CLAIM-*` file
+exists in the corpus, and inside a vault a note carrying an actor whose type is neither `source` nor
+`fact` fails the lint.
+
+Contribution back is a **pull request a person opens**, only when you ask for it. Nothing in a run
+writes to the corpus. An automatic path would publish which companies a private engagement examined,
+and an opt-in prompt leaks the same thing on the first yes; manual has no leakage surface and costs
+one instruction in the playbook. The full rules — what may be in a record, and what may not — are
+[`skills/market-analysis/actors/README.md`](skills/market-analysis/actors/README.md), with the note
+schema itself in
+[`vault.md`](skills/business-plan/references/vault.md#an-actor-record-is-source-and-fact-notes-with-four-more-fields-not-an-eighth-note-type).
+
+---
+
 ## On disk
 
 `~/Documents/go-to-market/<product-slug>/` **is** the vault — there is no `vault/` subdirectory.
@@ -185,7 +252,7 @@ lives inside it:
 
 ```
 ~/Documents/go-to-market/<product-slug>/
-├── .vault/config.json       # schemaVersion — currently 3; a directory without it is not a vault
+├── .vault/config.json       # schemaVersion — currently 4; a directory without it is not a vault
 ├── _vocab.yml               # controlled subject vocabulary
 ├── sources/ facts/ claims/ assumptions/ questions/ decisions/ milestones/ # one file per note
 ├── research/                # all prose — market-analysis dimensions, product-dossier.md,
@@ -209,10 +276,13 @@ It's also what makes a corpus **portable**: copy the slug directory and every ci
 `rests_on` edge, and every research file travels with it.
 
 **A vault created under an earlier version keeps working, and that is a promise rather than an
-accident.** `.vault/config.json` carries a `schemaVersion`; a new vault is created at **3**, and a
-vault at 1 or 2 is held to exactly the rules it was written under — where a check reads a field
-that version does not have, it reports that the rule was not applied rather than that your
-documents agree. Moving a vault up is opt-in, one version at a time, and forward-only; what each
+accident.** `.vault/config.json` carries a `schemaVersion`; a new vault is created at **4**, and a
+vault at 1, 2 or 3 is held to exactly the rules it was written under — where a check reads a field
+that version does not have, it reports that the rule was **not applied** rather than that your
+documents agree. That is the difference that matters, and it is why each version is spent rather
+than saved: a vault built before this release carries no actor record, so the actor rules say they
+did not run instead of returning a clean bill of health over fields nothing ever read. Moving a
+vault up is opt-in, one version at a time, and forward-only; what each
 step asks for is in
 [`vault-migration.md`](skills/business-plan/references/vault-migration.md), and until you take it
 nothing you already have changes.
@@ -237,6 +307,20 @@ near-miss subject terms, duplicate sources, retracted notes still cited, and —
 `schemaVersion: 2` — a roadmap whose order contradicts itself, either a prerequisite scheduled
 after the item that needs it or two items competing for one constrained resource while the plan
 asserts they run side by side.
+
+**On a vault at `schemaVersion: 4` it also holds a seeded
+[actor record](#the-actor-corpus-companies-already-profiled-never-re-discovered-from-zero) to six
+further rules**, all of them here in the bare check rather than in a mode of their own. The one the
+feature rests on fails a record fact cited past its expiry, so a stale figure is re-fetched rather
+than shipped. The other five each close a route around that one rather than restating it: a fact
+carrying an actor and missing its class, its pull date or its expiry (a partial set reads complete to
+every tool while the missing member is the one that would have dated it); a class outside the nine
+the schema names (an unrecognised class is a shelf life nobody can derive, while the note still reads
+as classified); a rotting class stamped permanent; an expiry not strictly later than its pull date (a
+transposed pair arrives already expired); and a note carrying an actor whose type is neither `source`
+nor `fact`, which is the vault-side half of the privacy seam — with only a check over the shipped
+corpus, the cheapest way past that seam is to write the judgement straight into a vault, where
+nothing in the corpus can see it.
 
 **Nine further modes leave the note directories and read the documents**, because the disagreement
 worth catching before a render is between the ledger and the document somebody is about to hand
@@ -479,6 +563,8 @@ go install.
 └── skills/
     ├── market-analysis/
     │   ├── SKILL.md           # the conductor: phases, run modes, quality bars
+    │   ├── actors/            # SHIPPED DATA — the actor corpus, one directory per company;
+    │   │                      #   public company fact only, never written to by a run
     │   └── references/        # dimensions · templates · orchestration · rendering
     └── business-plan/
         ├── SKILL.md           # grill → dispatch → draft → red team → render
