@@ -35,6 +35,9 @@ they may not omit.
 - [Contradiction is a subject collision, not an edge](#contradiction-is-a-subject-collision-not-an-edge)
 - [Status moves in one direction and never silently](#status-moves-in-one-direction-and-never-silently)
 - [Layout: one directory per type, one file per note](#layout-one-directory-per-type-one-file-per-note)
+- [Seeding copies a record in, so the copy inherits the drift every copied file has](#seeding-copies-a-record-in-so-the-copy-inherits-the-drift-every-copied-file-has)
+- [A re-verified fact supersedes the copy, and reaches the plan through the claim that cited it](#a-re-verified-fact-supersedes-the-copy-and-reaches-the-plan-through-the-claim-that-cited-it)
+- [A dated point is appended and never superseded, because a replaced point is a lost year](#a-dated-point-is-appended-and-never-superseded-because-a-replaced-point-is-a-lost-year)
 - [Locate the vault explicitly and never search upward](#locate-the-vault-explicitly-and-never-search-upward)
 - [schemaVersion refuses what it does not understand](#schemaversion-refuses-what-it-does-not-understand)
 - [The queries this schema exists to make trivial](#the-queries-this-schema-exists-to-make-trivial)
@@ -1333,6 +1336,129 @@ frontmatter, where both Obsidian and grep can see it.
 **The vault lives in the user's own directory and never in this repo.** The skills are
 public; a corpus of claims about someone's business is not. Nothing in this repository
 scaffolds, contains, or ships a vault — the tools take a path and operate on it.
+
+## Seeding copies a record in, so the copy inherits the drift every copied file has
+
+A record enters a vault as a **file copy** — the corpus is
+[a directory of notes precisely so that seeding never has to transform one](../../market-analysis/actors/README.md#a-record-is-a-directory-of-notes-so-seeding-is-a-copy-and-never-a-transform),
+so the record's `SOURCE-*` files land in `sources/`, its `FACT-*` files in `facts/`, and the IDs come
+across unchanged. What may be in a record, and which directories a seeding step skips, are that same
+README's; *when* a record is seeded is the competitive-landscape playbook's. This section is what the
+vault owes once the copy is in it.
+
+**Seed the record whole.** A `fact` copied without the `source` it `rests_on` is a `dangling-edge`
+the moment the lint runs, and the half-seeded record that produces it reads like a finished one in a
+file listing: the fact carries its value, its `field_class` and its shelf life, and the only thing
+missing is the quote that makes it a fact rather than an assertion.
+
+**A copy is the mechanism `_vocab.yml` already is, and it inherits the same cost.** The vault's copy
+freezes at the moment it was seeded while the corpus goes on being contributed to, so the two diverge
+with nothing inside the vault able to see it — the same trade the vocabulary copy makes, for the same
+payoff: a vault stays checkable against what it was written under, so a contribution made after the
+fact cannot retroactively move a figure a plan already cites.
+[The vocabulary's version of it](#the-claim-note-is-the-only-type-that-carries-a-subject) carries the
+argument and the reconciliation in full, and what follows is that reconciliation one directory over
+rather than a second scheme.
+
+**The divergence no clock can report is the one where nothing expired.** `stale_after` dates the
+rotting classes, so a `pricing` or `cta` copy announces itself when its quarter or half-year passes,
+and [what retires a permanent class is an event rather than a date](#an-actor-record-is-source-and-fact-notes-with-four-more-fields-not-an-eighth-note-type).
+The vault-side consequence is the part worth writing down: that event is observed by whoever
+contributed it, in a directory the lint never opens, so a vault that seeded an `identity` note last
+year goes on holding a name and a URL the corpus already knows are wrong — indefinitely, and with
+every check green. That is what the reconciliation exists for, and why it has to be a report rather
+than a lint rule.
+
+**So the reconciliation is the vocabulary delta's shape, read over note IDs instead of terms.**
+Compare the record notes the vault holds against the corpus directory they were seeded from, and
+report the ones the corpus no longer carries as `current`, naming the corpus note that replaced each.
+It is owed by whichever phase seeds a record, because that is the point at which both sides are
+already open. Two properties carry over from the vocabulary report and neither is optional: it is
+**advisory and does not stop the run** — a vault written against an earlier reading is valid and only
+unreviewed, and erroring on it would red every seeded vault on the day somebody contributes a fresher
+fact — and it **names the notes** rather than reporting that the record has moved on, because a delta
+that names nothing hands its reader a re-read they cannot size, and a task nobody can size is a task
+nobody starts.
+
+**Resolving one is a re-seed, and a re-seed never overwrites a note the vault already holds.** Copy
+in what the corpus has gained. Because the IDs came across unchanged, the corpus's own supersession
+edge resolves inside the vault: the arriving note names in its `supersedes` the ID this vault is
+already holding, so the only local edit is the second one the standing rule requires anyway, flipping
+the superseded note's `status`. Overwriting the file instead leaves one ID asserting a value it never
+asserted before with the note that recorded the old one gone — every `rests_on` still resolves, the
+lint still passes, and a plan section standing on it through a claim now rests on a figure nobody can
+date.
+
+## A re-verified fact supersedes the copy, and reaches the plan through the claim that cited it
+
+A seeded note is superseded from either of two directions: the corpus gained a newer note and a
+re-seed brought it in, or the engagement re-fetched the value itself because `stale-actor-fact` named
+it. The second is the common one, and the fix that rule names is
+[one fetch against a URL the record already carries](#an-actor-record-is-source-and-fact-notes-with-four-more-fields-not-an-eighth-note-type).
+Both land the same way, which is the whole reason for reaching for the standing rule rather than a
+second one: a new `fact` note carrying `supersedes` and `supersedes_reason`, plus the flip of the old
+note's `status` to `superseded`. There is no back-pointer on the superseded note to maintain, because
+there are no backlink fields anywhere in this schema.
+
+**The superseding note owes `reconciled:` over a worklist that is empty, and that is the trap.** At
+`schemaVersion` 2 a note carrying `supersedes` with no `reconciled:` date fails
+`--supersession-sweep`, and a seeded fact is no exception to it. What is exceptional is that the
+sweep prints **no row** for that supersession: it unions the `used_in` targets behind the superseded
+notes, and an actor fact carries no `used_in` — the schema's own boundary, not an omission. So the
+silence means *this note reached no document directly* and never *nothing has to be re-read*. Read as
+the second, the date gets stamped over a plan section nobody opened, which is the one thing
+`reconciled:` is supposed to make impossible.
+
+**The document is one edge further out.** A seeded fact reaches a plan only through a `claim` that
+`rests_on` it, and it is the claim that carries `used_in` — so the sections a re-verification puts in
+doubt are found by the reverse-`rests_on` grep this schema has always used, and the mechanism that
+raises them is `needs_review` propagating along `rests_on`. `--claim-drift` does not answer this and
+cannot: it re-opens a claim whose *cited section* changed, and here the section is untouched while
+the figure under it moved. The two run in opposite directions over the same claim, which is why
+neither stands in for the other — a check that works by re-hashing the section reports agreement over
+a number that has changed.
+
+**Where the claim no longer holds, the claim is superseded too**, and the replacement rests on the
+new fact and records its own `reconciled_sections` for each resolving `used_in`. That is the ordinary
+claim procedure [above](#the-claim-note-is-the-only-type-that-carries-a-subject) with nothing added
+for actor provenance, which is the point: the corpus contributes notes, not a second lifecycle.
+
+**What never happens is an edit in place, and the shared ID is what makes that worse here than
+elsewhere.** The two-edit rule already forbids it. What a seeded note adds is that its ID is not this
+vault's: the corpus ships it, and every other engagement that seeded that record holds it under the
+same address. Editing the value underneath a copied ID makes one address mean two different figures
+across vaults, and it breaks the only path a contribution can take back — a pull request offering a
+re-verified value names the ID the corpus ships, and the corpus can evaluate that offer only against
+a note whose history is intact. An in-place edit is the one form of this mistake whose damage leaves
+the vault that made it.
+
+## A dated point is appended and never superseded, because a replaced point is a lost year
+
+The series is append-only, and
+[the schema states that as a consequence of one note per dated point](#an-actor-record-is-source-and-fact-notes-with-four-more-fields-not-an-eighth-note-type).
+What the lifecycle adds is the edit that rule forbids, the one edit it still allows, and what the
+forbidden one costs.
+
+**`supersedes` on a dated point is legitimate for exactly one reason: the point itself was wrong.** A
+misread figure, or the company restating the period, with `supersedes_reason` saying which. A
+supersession whose reason amounts to *there is a newer figure* is the failure this rule exists to
+prevent, and it is the natural mistake to make, because every other rotting value in the vault is
+corrected exactly that way.
+
+**A replaced point is a lost year, and nothing reports the loss.** The note that remains reads
+correct, the lint passes, and the series simply starts later than it used to. A comparable's curve is
+worth its shape over time — which is exactly what the discarded points carried, and exactly what
+nobody thinks they need today — so this is the single property that compounds: each engagement that
+appends rather than replaces leaves the reference class longer than it found it. The loss is also
+unrecoverable in a way a stale price is not. A price is one fetch away; a traction figure a company
+disclosed four years ago is often disclosed nowhere any more, so a point that was overwritten cannot
+be fetched back at all.
+
+**Appending fires no propagation, which is what makes the level claim's own clock load-bearing.**
+Appending a point flips no note's status, so the `rests_on` propagation the previous section relies on
+runs on nothing here — nothing went `superseded`. The only thing that reports a lengthened series to
+the claim standing on it is that claim's own `stale_after`, which the schema already requires of it.
+When the level is re-taken, it is re-taken as a supersession resting on the series at its new length.
 
 ## Locate the vault explicitly and never search upward
 
