@@ -2,6 +2,49 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.14.2
+
+- **`--roadmap-table` and `--assumption-rows` read their table with one parser per
+  implementation, so there is nothing left for a fix to land in half of.** `--assumption-rows`
+  shipped in 1.14.0 as `--roadmap-table` one artifact over, which left each implementation
+  carrying two near-identical markdown table readers — `readplan()`/`readmodel()` in the shell,
+  `Read-PlanRoadmapTable`/`Read-ModelAssumptionsTable` in PowerShell — the second of each pair
+  declaring in a comment that it was the first "with two changes and no others". `parity.mjs`
+  cannot hold that claim: it diffs `.sh` against `.ps1` and never one reader against its own twin,
+  and each mode only ever runs over its own document, so no fixture puts the two readers over the
+  same table. A fence rule, an alignment-row test or a heading-depth bound fixed in one and not the
+  other would ship silently, and the mode that missed the fix would keep printing green over every
+  fixture written before it. Each side is now ONE parameterised reader — `readtable(path, wanthead,
+  wantitem, defcol)` in the shell, `Read-FirstItemTable` in PowerShell — taking the three things
+  that actually differed: the heading the read opens on, the header cell that names the item column,
+  and the column to use when no header cell names it. Two functions a comment says match are a
+  hazard; one function with parameters is a guarantee. The shell reader carries its own `trim()` and
+  `fold()`, because the collapse left it as their only caller in both modes and two exact copies of
+  each with nothing else reading them is the same duplication one helper down.
+- **The unheld half had already drifted, which is the reason this is a patch and not a tidy-up.**
+  `check.mjs` check 11 held the shell pair to its comment by exact byte comparison after a declared
+  substitution list, and the two shell readers were in fact identical past the three parameters. The
+  PowerShell pair was covered by nothing, and its two readers had diverged: the roadmap reader
+  tested an empty header row with `-cne ''`, which takes PowerShell's culture path and reports a row
+  holding nothing but a zero-width space EMPTY — so the item column was never read off such a row —
+  while the assumptions reader used `.Length` and read it, the way the shell's byte comparison does.
+  Its fold also compared `[char]` ranges rather than code points, against the file's own rule that
+  no comparison over document text goes through culture. The collapsed reader takes the hardened
+  form of both, so the PowerShell side now agrees with the shell on an input no fixture carries.
+- **Check 11 is deleted, because its subject no longer exists.** A check that two parsers still
+  match is a weaker guarantee than there being one parser, and once the second one is gone the
+  check's extraction finds nothing: it would either report "ran on nothing" forever or silently
+  start matching something else. `AGENTS.md` now states the rule that replaces it — add a parameter,
+  do not add a second reader and a check that they agree. Its stale count of the fixture suite's
+  assertions is corrected in the same pass.
+- **No user-visible behaviour changes.** This is a refactor and was verified as one: `--roadmap-table
+  --json` and `--assumption-rows --json` were captured from both implementations over all 27 fixture
+  vaults before and after, and every byte of stdout, stderr and every exit code is identical. Both
+  fixture suites report 336 passed / 0 failed, unmoved in either direction, and the parity gate is
+  13/13 modes with 0 allowlisted. The version moves because `bin/` is not exempt from CI's bump
+  guard, and because a drift hazard removed from a shipped executable under no released version is
+  one nobody outside this repo can point at.
+
 ## 1.14.1
 
 - **The one `--deliverable` exemption a reader depends on is now asserted by name, and the gate's

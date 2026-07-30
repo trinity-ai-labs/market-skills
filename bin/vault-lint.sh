@@ -1914,6 +1914,205 @@ render_failures() {
 }
 
 # ----------------------------------------------------------------------------
+# the one markdown table reader
+#
+# --roadmap-table and --assumption-rows read the same shape out of two
+# documents: the item cells of the FIRST table under a named heading. They were
+# two awk functions, readplan() and readmodel(), and readmodel()'s comment
+# claimed to be readplan() "with two changes and no others" - a claim only an
+# external check could hold, because awk has no way to share a function between
+# two programs and this file had no way to share the SOURCE of one. This
+# variable is that way: awk takes one program text, and two adjacent shell words
+# concatenate into one argument, so `"$TABLE_READER_AWK"'...'` hands awk the
+# reader followed by the mode's own program. The two modes now run the same
+# bytes, which is a guarantee where a comment was a hazard: a fence rule, an
+# alignment-row test or a heading-depth bound fixed in one reader and not the
+# other used to ship silently - parity.mjs diffs .sh against .ps1 and never one
+# reader against its own twin, and no fixture puts both readers over the same
+# table.
+#
+# IT CARRIES ITS OWN trim() AND fold(), so a program gets the reader by
+# concatenating this one variable and owes it nothing. They live here rather than
+# in the host because the reader is now their ONLY caller in both modes - leaving
+# them behind would have been two exact copies of each with nothing else reading
+# them, which is the duplication this collapse exists to remove, one helper down.
+# The cost is that a host program must NOT define trim() or fold() itself: awk
+# rejects a duplicate function definition, and it rejects it at startup with the
+# line number, so a third caller that already has its own finds out immediately
+# rather than by printing a wrong answer.
+#
+# WHY THIS TECHNIQUE IS NOT APPLIED TO THE OTHER DUPLICATED HELPERS in this file.
+# The fenced-block scan, target_of(), and the remaining trim()/fold() copies
+# could all be shared the same way - concatenation is a general mechanism, and
+# the "no awk program can call a function defined in another" those comments
+# state is about calling, not about sharing source. They stay duplicated because
+# nothing claims they correspond: each was written independently and no comment
+# asserts one is a transcription of another, so there is no unheld claim to fail.
+# The table readers were the one pair that made that claim, which is why they are
+# the one pair collapsed. Reach for this variable when a helper starts asserting
+# that it matches another - not merely because it resembles one.
+#
+# THE FOUR ARGUMENTS ARE THE WHOLE DIFFERENCE between the two callers:
+#   path      the document to read
+#   wanthead  the folded heading the read opens on: `roadmap`, `assumptions`
+#   wantitem  the folded header cell that names the item column: `item`,
+#             `assumption`
+#   defcol    the column read when no header cell folds to wantitem. THIS IS THE
+#             ONE THAT BITES. The roadmap's Rule 1 table puts its item in column
+#             one, so one is right there; the assumptions template ships
+#             `| # | Assumption | Value | Source | Confidence |`, where column one
+#             is the `A-n` row label the plan cites in prose and a roadmap
+#             `moves` field names - defaulting to it would report `1`, `2` and `3`
+#             as three inputs that escaped the ledger on a table whose every row
+#             resolves.
+#
+# It writes three globals the caller reads: SEEN (the heading was found at all,
+# which is what tells "no such section" apart from "the section lists nothing"),
+# and ROW[1..NROW] (the item cells). PEND is its own scratch.
+#
+# ONE CALL PER awk PROCESS. Those globals are never reset on entry, so a second
+# call would read the first call's rows back out as its own. Both callers invoke
+# it once, in their own awk process, which is what makes that safe; a mode that
+# ever wants two tables resets SEEN, NROW and NPEND itself before the second call.
+#
+# THE HEADER ROW IS READ FOR NOTHING BUT WHICH COLUMN HOLDS THE ITEM, and the row
+# directly above the alignment rule is that header. The rule is what separates
+# header from body: counting instead would take the header as an item on a table
+# written with two header lines, and the first real item as a header on a table
+# written with none. A table with NO rule is not a table to any renderer - it
+# renders as the literal pipes a reader sees - so its rows stay out of the body
+# and the section reports as one that lists nothing.
+#
+# ONLY THE FIRST TABLE IS READ. A section legitimately carries a second one -
+# roadmap-sequencing.md Rule 3 puts its permutation comparison under the roadmap
+# heading, and that table's first column is an ORDER rather than an item - so
+# reading every table would report each of those rows as an item that escaped the
+# ledger. That is exactly the crying wolf this check was scoped out for once
+# already.
+#
+# The section ends at the next heading of the same depth or shallower, so a
+# subsection under it is still part of it.
+#
+# The read STOPS the moment the answer can no longer change - at the heading that
+# closes the section, or at the line that ends the first table in it. SEEN makes
+# the section unre-enterable and only the first table is read, so every line
+# after either point is parsed and discarded. On a document written to the
+# template that is the whole back half of it, on every call, including the ones
+# folded into every --release-gate run.
+#
+# The fence tracking is the FOURTH copy in this file - --used-in scan(),
+# --supersession-sweep sections() and --red-team carry the same six lines, and
+# --binding-driver readdoc() and --monitoring carry the fifth and the sixth,
+# because each reads a document at the vault root. Collapsing the two table
+# readers into this one removed the seventh; the rest stay, so change one and
+# change all six. A `#` or a `|` inside a fenced block is an example rather than
+# anything a reader can act on.
+# ----------------------------------------------------------------------------
+
+TABLE_READER_AWK='
+			function trim(s) {
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# The fold every section-resolving mode in this file carries - it
+			# answers which heading THIS section is, not whether an anchor
+			# resolves, so it drops every character the slug rule drops without
+			# having to know which those are. --supersession-sweep sections(),
+			# --binding-driver readdoc() and --claim-drift carry the other three
+			# copies. Change one, change all four.
+			function fold(s,   i, c, o) {
+				o = ""
+				for (i = 1; i <= length(s); i++) {
+					c = substr(s, i, 1)
+					if (c >= "a" && c <= "z") { o = o c; continue }
+					if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
+					if (c >= "0" && c <= "9") { o = o c; continue }
+				}
+				return o
+			}
+
+			function readtable(path, wanthead, wantitem, defcol,   line, t, c, n, fc, fn, nh, h, ex, level, insect, intable, row, nc, cell, i, alldash, item, col, hdr, body) {
+				fc = ""; fn = 0; nh = 0; level = 0
+				insect = 0; intable = 0; col = defcol; hdr = ""; body = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
+						c = substr(t, 1, 1)
+						n = 0
+						while (substr(t, n + 1, 1) == c) n++
+						if (fc == "") { fc = c; fn = n }
+						else if (c == fc && n >= fn) { fc = ""; fn = 0 }
+						continue
+					}
+					if (fc != "") continue
+
+					if (match(t, /^#+[ \t]+/)) {
+						nh = 0
+						while (substr(t, nh + 1, 1) == "#") nh++
+						h = substr(t, RLENGTH + 1)
+						sub(/[ \t]*#+[ \t]*$/, "", h)
+						h = trim(h)
+						ex = ""
+						# Braces as bracket expressions rather than escaped, for
+						# the reason scan() states: a backslash-brace is an
+						# interval expression to some awks and a literal to
+						# others, and which one runs this is a property of the
+						# user machine.
+						if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
+							ex = substr(h, RSTART, RLENGTH)
+							sub(/^[{]#/, "", ex)
+							sub(/[}]$/, "", ex)
+							h = trim(substr(h, 1, RSTART - 1))
+						}
+						if (insect && nh <= level) break
+						if (!SEEN && (fold(ex) == wanthead || fold(h) == wanthead)) {
+							insect = 1; SEEN = 1; level = nh
+						}
+						continue
+					}
+
+					if (!insect) continue
+					if (substr(t, 1, 1) != "|") {
+						if (intable) break
+						continue
+					}
+					intable = 1
+
+					row = t
+					sub(/^\|/, "", row)
+					sub(/\|[ \t]*$/, "", row)
+					nc = split(row, cell, "|")
+					if (nc < 1) continue
+					alldash = 1
+					for (i = 1; i <= nc; i++)
+						if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { alldash = 0; break }
+					if (alldash) {
+						if (hdr != "") {
+							n = split(hdr, cell, "|")
+							for (i = 1; i <= n; i++)
+								if (fold(cell[i]) == wantitem) { col = i; break }
+						}
+						body = 1
+						continue
+					}
+
+					if (body) PEND[++NPEND] = row
+					else hdr = row
+				}
+				close(path)
+				for (i = 1; i <= NPEND; i++) {
+					n = split(PEND[i], cell, "|")
+					item = (col <= n) ? trim(cell[col]) : ""
+					if (item != "") ROW[++NROW] = item
+				}
+			}
+'
+
+# ----------------------------------------------------------------------------
 # --used-in - every used_in target resolves
 #
 # Two checks, named apart because they want different fixes. `used-in-missing-file`
@@ -2031,7 +2230,7 @@ if [ "$MODE" = "used-in" ]; then
 		#
 		# THAT FENCE BLOCK IS ONE OF SIX COPIES in this file. The
 		# --supersession-sweep sections(), the --red-team row reader, the
-		# --roadmap-table readplan(), the --binding-driver readdoc() and
+		# shared readtable(), the --binding-driver readdoc() and
 		# --monitoring carry the same six lines, because all six read a document
 		# at the vault root and no one of them can call a function defined in
 		# another awk program. Change one, change all six.
@@ -2220,8 +2419,8 @@ if [ "$MODE" = "red-team" ]; then
 				# close its parent early.
 				#
 				# One of six copies of those six lines: the --used-in scan(),
-				# the --supersession-sweep sections(), the --roadmap-table
-				# readplan(), the --binding-driver readdoc() and --monitoring
+				# the --supersession-sweep sections(), the shared
+				# readtable(), the --binding-driver readdoc() and --monitoring
 				# carry the same ones, for the same reason - six awk programs
 				# reading a document at the vault root, and no way to share a
 				# function across them. Change one, change all six.
@@ -2374,175 +2573,17 @@ if [ "$MODE" = "roadmap-table" ]; then
 	# bare run success line already had once. Failures go to $FAILURES through
 	# report() like every other mode, so stdout carries this line and nothing
 	# else.
-	ROADMAP_OK=$(LC_ALL=C awk -v out="$FAILURES" -v plan="$PLAN" -v hasplan="$HAS_PLAN" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' '
+	#
+	# $TABLE_READER_AWK is prepended to the program rather than transcribed into
+	# it: --assumption-rows reads the same table shape one artifact over, and the
+	# two adjacent shell words below concatenate into the single program text awk
+	# takes. It brings readtable() and the trim() and fold() that reader calls, so
+	# this program must not define either itself - awk rejects a duplicate.
+	ROADMAP_OK=$(LC_ALL=C awk -v out="$FAILURES" -v plan="$PLAN" -v hasplan="$HAS_PLAN" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' "$TABLE_READER_AWK"'
 			$1 == "N" { files[++nf] = $2; next }
 			$1 == "S" { V[$2, $3] = $4; next }
 
 			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
-
-			function trim(s) {
-				sub(/^[ \t]+/, "", s)
-				sub(/[ \t]+$/, "", s)
-				return s
-			}
-
-			# The second copy of the --supersession-sweep fold, and it answers
-			# the same question: which heading is THIS section, rather than
-			# whether an anchor resolves. Every character the slug rule drops is
-			# dropped here too, so any spelling that rule resolves to the roadmap
-			# heading folds onto it without this program having to know which
-			# characters those are. --binding-driver carries the third copy, for
-			# the verdict heading. Change one, change all three.
-			function fold(s,   i, c, o) {
-				o = ""
-				for (i = 1; i <= length(s); i++) {
-					c = substr(s, i, 1)
-					if (c >= "a" && c <= "z") { o = o c; continue }
-					if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
-					if (c >= "0" && c <= "9") { o = o c; continue }
-				}
-				return o
-			}
-
-			# The item cells of the first table under the roadmap heading.
-			#
-			# THE ROW PARSER IS ONE OF TWO COPIES: --binding-driver readdoc()
-			# reads the corner verdict table under the same rules - strip the
-			# outer pipes, split on `|`, spot the all-dashes alignment rule, read
-			# the header for which column matters, and treat a table with no rule
-			# as no table. Change one, change both.
-			#
-			# THE HEADER ROW AND THE |---| RULE ARE BOTH DROPPED, and they are
-			# dropped by one test rather than by counting lines. A row whose
-			# every cell is dashes with optional colons is the alignment rule,
-			# and in a GFM table everything ABOVE that rule is the header - so
-			# seeing it discards whatever was buffered, and what survives to the
-			# end is the body. Counting instead would take the header as an item
-			# on a table written with two header lines, and would take the first
-			# real item as a header on a table written with none.
-			#
-			# THE HEADER ALSO SAYS WHICH COLUMN THE ITEM IS IN, and reading it
-			# is what keeps a numbered table from failing every row it has. Both
-			# worked tables in roadmap-sequencing.md head their item column
-			# `Item`, and the generated research/timeline.md puts an ordinal in
-			# column one ahead of it - so a rule that always took the first cell
-			# would report `1`, `2` and `3` as three items that escaped the
-			# ledger on a table whose every row resolves. The column whose
-			# header folds to `item` wins; with no such header, column one does,
-			# which is the shape the Rule 1 table is written in.
-			#
-			# ONLY THE FIRST TABLE IS READ. The section legitimately carries a
-			# second one - roadmap-sequencing.md Rule 3 puts the permutation
-			# comparison in the plan, and its first column is an ORDER rather
-			# than an item - so reading every table here would report each of
-			# those rows as an item that escaped the ledger. That is exactly the
-			# crying wolf this check was scoped out for once already.
-			#
-			# The section ends at the next heading of the same depth or
-			# shallower, so a subsection under the roadmap heading is still part
-			# of it.
-			#
-			# The fence tracking is the FOURTH copy in this file - --used-in
-			# scan(), --supersession-sweep sections() and --red-team carry the
-			# same six lines, and --binding-driver readdoc() and --monitoring
-			# carry the fifth and the sixth, because each reads a document at the
-			# vault root and no one of them
-			# can call a function defined in another awk program. A `#` or a `|`
-			# inside a fenced block is an example rather than anything a reader
-			# can act on. Change one, change all six.
-			# The read STOPS the moment the answer can no longer change - at the
-			# heading that closes the section, or at the line that ends the first
-			# table in it. SEENRM makes the section unre-enterable and only the
-			# first table is read, so every line after either point is parsed and
-			# discarded. On a plan written to the template that is the whole back
-			# half of the document, on every call, including the one folded into
-			# every --release-gate run.
-			function readplan(path,   line, t, c, n, fc, fn, nh, h, ex, level, inrm, intable, row, nc, cell, i, alldash, item, col, hdr, body) {
-				fc = ""; fn = 0; nh = 0; level = 0
-				inrm = 0; intable = 0; col = 1; hdr = ""; body = 0
-				while ((getline line < path) > 0) {
-					sub(/\r$/, "", line)
-					t = line
-					sub(/^[ \t]+/, "", t)
-					if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
-						c = substr(t, 1, 1)
-						n = 0
-						while (substr(t, n + 1, 1) == c) n++
-						if (fc == "") { fc = c; fn = n }
-						else if (c == fc && n >= fn) { fc = ""; fn = 0 }
-						continue
-					}
-					if (fc != "") continue
-
-					if (match(t, /^#+[ \t]+/)) {
-						nh = 0
-						while (substr(t, nh + 1, 1) == "#") nh++
-						h = substr(t, RLENGTH + 1)
-						sub(/[ \t]*#+[ \t]*$/, "", h)
-						h = trim(h)
-						ex = ""
-						# Braces as bracket expressions rather than escaped, for
-						# the reason scan() states: a backslash-brace is an
-						# interval expression to some awks and a literal to
-						# others, and which one runs this is a property of the
-						# user machine.
-						if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
-							ex = substr(h, RSTART, RLENGTH)
-							sub(/^[{]#/, "", ex)
-							sub(/[}]$/, "", ex)
-							h = trim(substr(h, 1, RSTART - 1))
-						}
-						if (inrm && nh <= level) break
-						if (!SEENRM && (fold(ex) == "roadmap" || fold(h) == "roadmap")) {
-							inrm = 1; SEENRM = 1; level = nh
-						}
-						continue
-					}
-
-					if (!inrm) continue
-					if (substr(t, 1, 1) != "|") {
-						if (intable) break
-						continue
-					}
-					intable = 1
-
-					row = t
-					sub(/^\|/, "", row)
-					sub(/\|[ \t]*$/, "", row)
-					nc = split(row, cell, "|")
-					if (nc < 1) continue
-					alldash = 1
-					for (i = 1; i <= nc; i++)
-						if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { alldash = 0; break }
-					if (alldash) {
-						# The row directly above the rule is the header, and it
-						# is read for nothing but which column holds the item.
-						if (hdr != "") {
-							n = split(hdr, cell, "|")
-							for (i = 1; i <= n; i++)
-								if (fold(cell[i]) == "item") { col = i; break }
-						}
-						body = 1
-						continue
-					}
-
-					# Everything above the rule is header, everything below it
-					# is body, and the two are kept apart rather than buffered
-					# together and pruned. A table with NO rule is not a table
-					# to any renderer - it renders as the literal pipes a reader
-					# sees - so its rows stay out of the body and the section
-					# reports as one that lists no items, which is what the
-					# reader is actually looking at.
-					if (body) PEND[++NPEND] = row
-					else hdr = row
-				}
-				close(path)
-				for (i = 1; i <= NPEND; i++) {
-					n = split(PEND[i], cell, "|")
-					item = (col <= n) ? trim(cell[col]) : ""
-					if (item != "") ROW[++NROW] = item
-				}
-			}
 
 			END {
 				# GATED ON schemaVersion 2, branched inside the program the way
@@ -2570,7 +2611,11 @@ if [ "$MODE" = "roadmap-table" ]; then
 					if (V[f, "title"] != "") HAS[V[f, "title"]] = 1
 				}
 
-				if (hasplan == "1") readplan(plan)
+				# The shared reader, on the four arguments that make this
+				# read the roadmap one: the roadmap heading, the `Item`
+				# header cell, and column one, which is the shape the Rule 1
+				# table is written in. It sets SEEN and ROW[1..NROW].
+				if (hasplan == "1") readtable(plan, "roadmap", "item", 1)
 
 				# The roadmap is in the ledger and nowhere a reader can see it.
 				# Reported ONCE against the document rather than once per
@@ -2580,7 +2625,7 @@ if [ "$MODE" = "roadmap-table" ]; then
 					if (hasplan != "1")
 						report("business-plan.md", "roadmap-table-missing", "",
 							"the vault carries " nm " milestone note" (nm == 1 ? "" : "s") " and there is no business-plan.md at the vault root. The roadmap is in the ledger and nowhere a reader can see it: every item is a dated change to an assumption row, so a plan that never renders them hands its reader a curve whose steps have no stated cause")
-					else if (!SEENRM)
+					else if (!SEEN)
 						report("business-plan.md", "roadmap-table-missing", "",
 							"the vault carries " nm " milestone note" (nm == 1 ? "" : "s") " and no heading in business-plan.md answers to `roadmap`. The items exist in the ledger and the plan has no section that shows them, so the curve has steps the reader cannot see and no place to go and ask what moved them. The plan template heading is `## Milestones & roadmap {#roadmap}`, which is also what every milestone `used_in` names")
 					else
@@ -2775,12 +2820,12 @@ if [ "$MODE" = "binding-driver" ]; then
 			# is opened once.
 			#
 			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is looser
-			# than the rule --roadmap-table readplan() uses (next heading of the
+			# than the rule the shared readtable() uses (next heading of the
 			# same depth or shallower). Nothing in plan-template.md puts a
 			# subsection under the verdict anchor, so the two agree today; if
 			# one is ever added, the phrase a reader sees inside that subsection
 			# is outside the body this reads and the condition check would cry
-			# wolf. That is the trigger to adopt readplan() depth rule here.
+			# wolf. That is the trigger to adopt readtable() depth rule here.
 			#
 			# THE CORNER TABLE IS IDENTIFIED BY ITS HEADER rather than by being
 			# the first table in the section, which is tighter than
@@ -2795,8 +2840,8 @@ if [ "$MODE" = "binding-driver" ]; then
 			# is read and any later one is skipped, so a document quoting its
 			# own format below the real table cannot double-count.
 			#
-			# THE ROW PARSER IS THE SECOND COPY of the one in --roadmap-table
-			# readplan(): strip the outer pipes, split on `|`, spot the
+			# THE ROW PARSER IS THE SECOND COPY of the one in the shared
+			# readtable(): strip the outer pipes, split on `|`, spot the
 			# all-dashes alignment rule, treat everything above it as header and
 			# read the header for which column matters. Both carry the rule that
 			# a table with NO alignment rule is not a table to any renderer, so
@@ -2804,7 +2849,7 @@ if [ "$MODE" = "binding-driver" ]; then
 			#
 			# The fence tracking is the FIFTH copy in this file - --used-in
 			# scan(), --supersession-sweep sections(), --red-team and
-			# --roadmap-table readplan() carry the same six lines, because each
+			# the shared readtable() carry the same six lines, because each
 			# reads a document at the vault root and no one of them can call a
 			# function defined in another awk program. A `#` or a `|` inside a
 			# fenced block is an example rather than an assertion the document
@@ -3299,7 +3344,7 @@ if [ "$MODE" = "monitoring" ]; then
 				# Fenced blocks hold examples, not rows. One of six copies of
 				# those six lines: the --used-in scan(), the
 				# --supersession-sweep sections(), the --red-team roster reader,
-				# the --roadmap-table readplan() and the --binding-driver
+				# the shared readtable() and the --binding-driver
 				# readdoc() carry the same ones, for the same reason - six awk
 				# programs reading a document at the vault root, and no way to
 				# share a function across them. Change one, change all six.
@@ -3621,18 +3666,18 @@ if [ "$MODE" = "assumption-rows" ]; then
 	# because what clean means here depends on what there was to compare: a line
 	# saying the table agrees, printed over a vault with no declared inputs and
 	# no document, reads as a model that was checked.
-	AR_OK=$(LC_ALL=C awk -v out="$FAILURES" -v model="$FINMODEL" -v hasmodel="$HAS_FINMODEL" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' '
+	#
+	# $TABLE_READER_AWK is prepended the way --roadmap-table prepends it: this
+	# mode reads the same table shape one artifact over, and the two adjacent
+	# shell words concatenate into the single program text awk takes. It brings
+	# readtable() and the trim() and fold() that reader calls, so this program
+	# must not define either itself - awk rejects a duplicate.
+	AR_OK=$(LC_ALL=C awk -v out="$FAILURES" -v model="$FINMODEL" -v hasmodel="$HAS_FINMODEL" -v vault="$VAULT" -v schema="$FOUND_SCHEMA" -F '\t' "$TABLE_READER_AWK"'
 			$1 == "N" { files[++nf] = $2; next }
 			$1 == "S" { V[$2, $3] = $4; next }
 			$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
 
 			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
-
-			function trim(s) {
-				sub(/^[ \t]+/, "", s)
-				sub(/[ \t]+$/, "", s)
-				return s
-			}
 
 			# A block-list item may carry a `:: label` after the ID it names, so
 			# every edge walk in this file strips it. The fourth copy - graph,
@@ -3641,126 +3686,6 @@ if [ "$MODE" = "assumption-rows" ]; then
 			# one. Change one, change all four.
 			function target_of(item) {
 				return (index(item, " :: ") > 0) ? substr(item, index(item, " :: ") + 4) : item
-			}
-
-			# The same fold every section-resolving mode in this file carries -
-			# --supersession-sweep sections(), --roadmap-table readplan(),
-			# --binding-driver readdoc() and --claim-drift below. It answers
-			# which heading THIS section is, not whether an anchor resolves, so
-			# it drops every character the slug rule drops without having to
-			# know which those are. Change one, change all of them.
-			function fold(s,   i, c, o) {
-				o = ""
-				for (i = 1; i <= length(s); i++) {
-					c = substr(s, i, 1)
-					if (c >= "a" && c <= "z") { o = o c; continue }
-					if (c >= "A" && c <= "Z") { o = o tolower(c); continue }
-					if (c >= "0" && c <= "9") { o = o c; continue }
-				}
-				return o
-			}
-
-			# The assumption cells of the first table under the assumptions
-			# heading. TRANSCRIBED FROM --roadmap-table readplan() with two
-			# changes and no others, so a diff of the two reads as one parser:
-			# the heading folds to `assumptions` rather than `roadmap`, and the
-			# item column defaults to TWO rather than one.
-			#
-			# THE DEFAULT COLUMN IS THE ONE DIFFERENCE THAT MATTERS. The
-			# template ships `| # | Assumption | Value | Source | Confidence |`,
-			# so column one is the `A-n` row label the plan cites in prose and a
-			# roadmap `moves` field names. Defaulting to it would report `1`,
-			# `2` and `3` as three inputs that escaped the ledger on a table
-			# whose every row resolves. The column whose header folds to
-			# `assumption` still wins where one exists.
-			#
-			# The fence tracking is another copy of the six lines every
-			# document-reading mode in this file carries, for the reason stated
-			# at --used-in scan(): a `#` or a `|` inside a fenced block is an
-			# example rather than anything a reader can act on, and no one awk
-			# program can call a function defined in another. Change one, change
-			# all of them.
-			function readmodel(path,   line, t, c, n, fc, fn, nh, h, ex, level, inas, intable, row, nc, cell, i, alldash, item, col, hdr, body) {
-				fc = ""; fn = 0; nh = 0; level = 0
-				inas = 0; intable = 0; col = 2; hdr = ""; body = 0
-				while ((getline line < path) > 0) {
-					sub(/\r$/, "", line)
-					t = line
-					sub(/^[ \t]+/, "", t)
-					if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
-						c = substr(t, 1, 1)
-						n = 0
-						while (substr(t, n + 1, 1) == c) n++
-						if (fc == "") { fc = c; fn = n }
-						else if (c == fc && n >= fn) { fc = ""; fn = 0 }
-						continue
-					}
-					if (fc != "") continue
-
-					if (match(t, /^#+[ \t]+/)) {
-						nh = 0
-						while (substr(t, nh + 1, 1) == "#") nh++
-						h = substr(t, RLENGTH + 1)
-						sub(/[ \t]*#+[ \t]*$/, "", h)
-						h = trim(h)
-						ex = ""
-						# Braces as bracket expressions rather than escaped, for
-						# the reason scan() states: a backslash-brace is an
-						# interval expression to some awks and a literal to
-						# others, and which one runs this is a property of the
-						# user machine.
-						if (match(h, /[{]#[A-Za-z0-9_-]+[}]$/)) {
-							ex = substr(h, RSTART, RLENGTH)
-							sub(/^[{]#/, "", ex)
-							sub(/[}]$/, "", ex)
-							h = trim(substr(h, 1, RSTART - 1))
-						}
-						if (inas && nh <= level) break
-						if (!SEENAS && (fold(ex) == "assumptions" || fold(h) == "assumptions")) {
-							inas = 1; SEENAS = 1; level = nh
-						}
-						continue
-					}
-
-					if (!inas) continue
-					if (substr(t, 1, 1) != "|") {
-						if (intable) break
-						continue
-					}
-					intable = 1
-
-					row = t
-					sub(/^\|/, "", row)
-					sub(/\|[ \t]*$/, "", row)
-					nc = split(row, cell, "|")
-					if (nc < 1) continue
-					alldash = 1
-					for (i = 1; i <= nc; i++)
-						if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { alldash = 0; break }
-					if (alldash) {
-						if (hdr != "") {
-							n = split(hdr, cell, "|")
-							for (i = 1; i <= n; i++)
-								if (fold(cell[i]) == "assumption") { col = i; break }
-						}
-						body = 1
-						continue
-					}
-
-					# Everything above the alignment rule is header and
-					# everything below it is body, kept apart rather than
-					# buffered together and pruned. A table with NO rule is not
-					# a table to any renderer, so its rows stay out of the body
-					# and the section reports as one that lists no inputs.
-					if (body) PEND[++NPEND] = row
-					else hdr = row
-				}
-				close(path)
-				for (i = 1; i <= NPEND; i++) {
-					n = split(PEND[i], cell, "|")
-					item = (col <= n) ? trim(cell[col]) : ""
-					if (item != "") ROW[++NROW] = item
-				}
 			}
 
 			END {
@@ -3810,7 +3735,12 @@ if [ "$MODE" = "assumption-rows" ]; then
 					for (j = 1; j <= LN[k]; j++) DECLARED[target_of(LI[k, j])] = V[f, "id"]
 				}
 
-				if (hasmodel == "1") readmodel(model)
+				# The shared reader, on the four arguments that make this read
+				# the assumptions one: the assumptions heading, the
+				# `Assumption` header cell, and column TWO, because the
+				# template ships the `A-n` label in column one. It sets SEEN
+				# and ROW[1..NROW].
+				if (hasmodel == "1") readtable(model, "assumptions", "assumption", 2)
 
 				# The inputs are in the ledger and nowhere a reader can see
 				# them. Reported ONCE against the document rather than once per
@@ -3820,7 +3750,7 @@ if [ "$MODE" = "assumption-rows" ]; then
 					if (hasmodel != "1")
 						report("financial-model.md", "model-table-missing", "",
 							"the vault carries " nmi " assumption note" (nmi == 1 ? "" : "s") " declaring `model_input` and there is no financial-model.md at the vault root. Every one of them is an input the projection is supposed to be built from, so a model that never renders them is a projection whose numbers are buried in formulas - which is the failure the assumptions table exists to prevent, from the other side")
-					else if (!SEENAS)
+					else if (!SEEN)
 						report("financial-model.md", "model-table-missing", "",
 							"the vault carries " nmi " assumption note" (nmi == 1 ? "" : "s") " declaring `model_input` and no heading in financial-model.md answers to `assumptions`. The inputs exist in the ledger and the model has no section that lists them, so a reader cannot tell which numbers the projection stands on. The plan template heading is `## Assumptions (every input lives here - nothing buried in a formula) {#assumptions}`")
 					else
@@ -3995,7 +3925,7 @@ if [ "$MODE" = "claim-drift" ]; then
 			#
 			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is the rule
 			# --binding-driver readdoc() uses rather than the
-			# same-depth-or-shallower one --roadmap-table readplan() uses. The unit here is the
+			# same-depth-or-shallower one the shared readtable() uses. The unit here is the
 			# prose a citation points at, and a subsection has its own address:
 			# rolling it into its parent would re-open every claim on the parent
 			# heading whenever any subsection was touched, and a claim that
