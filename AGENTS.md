@@ -254,8 +254,10 @@ cadence and the decision each would change, `--deliverable` for whether the rend
 `deliverables/*.html` carries a vault address out to a reader who has no vault,
 `--assumption-rows` for whether the model's assumptions table and the notes that
 declare themselves inputs to it are the same set, `--claim-drift` for whether a cited section
-still carries what it carried when the claim recorded reading it, `--release-gate` for all
-ten of those run as one call, and
+still carries what it carried when the claim recorded reading it, `--release-gate` for the ten
+parts the composite paragraph below enumerates run as one call — not ten of these, since
+`--unverified` is not a gate part and the bare `check` is not in this list, which is the
+enumeration trap sitting inside the sentence that warns about it — and
 `graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it, in both
 scripts** — an enumeration that has gone stale reads exactly like one that is complete.
