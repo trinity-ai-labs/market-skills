@@ -870,9 +870,9 @@ esac
 # THE SILENT SIDE, and it is most of what makes this mode usable. one-pager.html
 # carries FACT-CHECKED (seven characters, so not the eight a generated ID has),
 # an address with an alphanumeric character on either boundary, a lowercase
-# anchor slug, and <span>/<strong>/<script> - every one of which a looser rule
-# fires on. The count is the assertion; a named file would pass while another
-# over-fired.
+# anchor slug, <span>/<strong>/<script>, and the two citation codes the block
+# below is about - every one of which a looser rule fires on. The count is the
+# assertion; a named file would pass while another over-fired.
 case "$DELJ" in
 *'"failure_count": 7'*) ok "the clean deliverable in the same directory fires nothing" ;;
 *) no "--deliverable failure_count is not 7 - the clean file fired, or a leak did not (got: $DELJ)" ;;
@@ -881,6 +881,39 @@ case "$DELJ" in
 *one-pager*) no "--deliverable reported against the clean one-pager.html" ;;
 *) ok "no failure lands on one-pager.html, so the report is per file" ;;
 esac
+
+# THE ONE EXEMPTION A READER ACTUALLY DEPENDS ON, named rather than left to be
+# read off the count above. `[S#]` and `[F#]` are the plan's own source trace -
+# the hop from a figure to the table it came from - and the one piece of
+# provenance that is SUPPOSED to reach the artifact, so a mode built to strip
+# vault archaeology has to let them through. They survive because of how the
+# address pattern is CONSTRUCTED - a type prefix plus EIGHT generated characters,
+# which a bracketed letter and a number is not - and not because anything
+# carves them out, which is the whole hazard: widen that pattern later (drop the
+# eight-character anchor, match a bare type letter) and the mode starts stripping
+# the citation trace out of every deliverable it reads. The failure_count above
+# would move, but it names no cause and reads as an over-fire anywhere in the
+# directory; these two rows name the codes, so the red says what broke.
+#
+# Both halves are asserted, and the presence half is not ceremony: without it a
+# later edit that drops the codes from one-pager.html leaves the exemption
+# assertion passing over a file with nothing to be exempt, which is a check that
+# has stopped firing and looks exactly like one that fires and finds nothing.
+DEL_TRACE_FILE="$HERE/deliverable-leak/deliverables/one-pager.html"
+for code in S12 F3; do
+	if grep -q "\[$code\]" "$DEL_TRACE_FILE"; then
+		ok "one-pager.html carries the [$code] citation code the exemption is about"
+	else
+		no "one-pager.html no longer carries [$code], so the exemption assertion below reads nothing"
+	fi
+	# The bare token, not the bracketed form: a widened pattern reports the
+	# characters it matched, so a `*"[$code]"*` test would go green over the
+	# exact widening this block exists to catch.
+	case "$DELJ" in
+	*"$code"*) no "--deliverable reported $code - a [S#]/[F#] code is the reader's source trace, not a vault address, and stripping it takes the traceability out of the one document that carries any" ;;
+	*) ok "the [$code] citation code is exempt, so the reader's source trace survives the render" ;;
+	esac
+done
 
 # A vault before Phase 5 has rendered nothing, and the gate runs before the first
 # render as well as inside the render loop - so the empty case is the ordinary one
