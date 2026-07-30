@@ -2,6 +2,141 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.15.0
+
+- **This is the first release that ships data alongside method, and the seam that makes that
+  safe is the privacy seam — an actor record is `source` and `fact` notes at `schemaVersion` 4,
+  with no eighth note type and no eighth edge.** An **actor** is a company an engagement has
+  already profiled, held as a persistent entity under
+  `skills/market-analysis/actors/`: its founding date, funding rounds, dated traction points,
+  pricing model, positioning claim and corporate events are true regardless of who is asking, so
+  a run that re-derives them pays the expensive half of the research twice and gets the same
+  answer back. Discovery is where the tokens go — a multi-modal sweep to learn the company exists
+  at all, then its pricing page, then its funding history; verification is one fetch against a URL
+  the record already carries. The extension that makes a record checkable is four fields on two
+  types that already exist: a pricing page is material that says this, verbatim, which is a
+  `source`, and a price read off it is a value stated directly by that source, which is a `fact` —
+  nothing about an actor is a new *grade* of assertion, only a new *provenance*, so a new type
+  would have handed authors a pair to stall between for no gain. **`actor` is the trigger, and
+  what it makes owed is type-scoped**: on a `fact` it owes `field_class`, `pulled` and
+  `stale_after` as a set, because a note that reads as a corpus fact to every consumer while
+  carrying nothing that could flag it for re-checking is the one that outlives its company, and a
+  partial set reads complete while the missing member is the one that would have dated it; on a
+  `source` it owes only `pulled`, which the base schema already required, since the quote is what
+  a source is for and a quote does not go stale. `field_class` is closed at **nine words** —
+  `identity`, `description`, `funding`, `corporate-event`, `traction`, `mechanism`, `pricing`,
+  `cta`, `positioning` — each carrying the shelf life its rot class implies rather than the
+  longest window somebody could defend: a distant date is a re-check nobody will do and reads on
+  the page as a re-check that was scheduled, so the classes that no clock governs say
+  `"permanent"` outright and a renamed company is retired by a dated `corporate-event` instead.
+  What ships is public company fact; what stays in the engagement vault is the judgement about the
+  subject — and that seam is what makes shipping a corpus consistent with `AGENTS.md` rule 1's ban
+  on engagement specifics.
+- **The roster is a floor for discovery and never a substitute for it, and the discovery bug that
+  claim closed arrived through the budget rather than through anyone's reading.** Workflow A's
+  finder sweep is now *seeded* with the records inside the dossier's category boundary and still
+  runs every one of its own lenses, every engagement — without that the corpus ossifies around
+  whoever mattered when it was written and a new entrant is structurally never found. The
+  dry-round test needed nothing, because `fresh` is already filtered against `seen`, so a seeded
+  name is never fresh and can never make an empty round look productive. `maxCompetitors` was the
+  half that did: it was compared against `seen.size`, so a corpus large enough to fill the cap
+  would have entered the sweep loop **zero times** — no lens, no round, not even a log line saying
+  the sweep had been skipped — which is a roster silently becoming a substitute for discovery by
+  way of the budget instead of by way of the reading. It now bounds the sweep's own additions,
+  which is the only reading under which a corpus cannot buy the sweep out of running. The
+  complementary bound is deliberately absent: **nothing caps `held`**, because a record's profile
+  is verification against URLs it already carries rather than discovery, and dropping a company
+  the corpus already covers is the roster read as a *ceiling* — the opposite error, one budget
+  over. `profileCap` therefore goes on bounding what the sweep found, which is what stops a
+  growing corpus from crowding a newly discovered entrant out of the profiled set, and the
+  conductor's boundary filter plus a log line naming the held count are what keep an unfiltered
+  seed visible instead of arriving as a profile dispatch per company in a corpus this category
+  never shared.
+- **The corpus fails closed on staleness, which is the property the whole feature rests on — six
+  `check` rules, and no new mode.** `stale-actor-fact` is the load-bearing one: a record fact past
+  its `stale_after` whose status is not `superseded` or `retracted` fails the lint, on the same
+  terms as `stale-claim` and deliberately no gentler, since flipping to `needs_review` does not
+  clear that one either. What clears it is a re-fetch, and a re-fetch is a supersession. **That is
+  what makes the corpus safe to ship at all**: a stale corpus costs a fetch and never a wrong
+  number, whereas a figure that arrives *pre-cited* reads as more authoritative than one the run
+  fetched itself, which is precisely the failure the citation discipline exists to prevent. The
+  other five each close a way past that rule rather than restating it.
+  `actor-fields-incomplete` fires on a `fact` carrying `actor` and missing `field_class`, `pulled`
+  or `stale_after` — the set rule, because a partial set is unreportable afterwards.
+  `actor-type-not-shippable` fires on a note carrying `actor` whose `type` is neither `source` nor
+  `fact`, which is the vault-side half of the privacy seam: with only a grep over this repo's
+  filenames, the cheapest way past the seam is to author the judgement as an actor note directly
+  in a vault, where no filename here can see it. `field-class-unknown` fires on a tenth word,
+  because an unrecognised class is a fact whose shelf life nobody can derive while it still reads
+  as classified. `stale-after-not-permanent` fires on a `description`, `pricing`, `cta` or
+  `positioning` fact stamped `"permanent"` — the single cheapest way past every rule here.
+  `stale-after-before-pulled` fires where `stale_after` is not strictly later than `pulled`,
+  because a transposed pair makes a fact that was fresh when it was written arrive already
+  expired. What the lint deliberately does **not** do is verify the day count against the class
+  table: that means a calendar in POSIX awk and a second one in PowerShell 5.1 with zero
+  dependencies on either side, and two calendars disagreeing by one day is a parity failure on
+  every fixture carrying a date. The window is an authoring rule; the sentinel against the class
+  is a word comparison, and that is what a script can hold. An actor fact rides `stale_after` and
+  `--claim-drift` is not involved — the two answer *is this figure old* against *did the thing I
+  cited change*, and a record contains no `claim` for that mode to reach, no vault-relative
+  section to hash, and no `used_in` to hash it over. Three staleness mechanisms in one lint leaves
+  no reader able to hold all three, so the next author picks whichever one they happened to read.
+- **The lifecycle is copy, supersede, append — and the third of those is what compounds a corpus
+  instead of rebuilding it.** Seeding a record into a vault is a **file copy** into `sources/` and
+  `facts/`, one file per note named exactly the ID plus `.md`, so nothing has to be parsed, split
+  or renamed; a record bundled as one file per actor would have to invent each destination filename
+  from the note's `id:` field, and a transform that goes wrong silently produces a note whose
+  filename and `id` disagree — the exact mismatch the type-stated-three-times rule exists to catch,
+  introduced by the tool meant to respect it. Copying inherits `_vocab.yml`'s known drift problem
+  rather than dodging it, and the seeding rules say so and point at the reconciliation path 1.12.0's
+  `reconciled:` and 1.14.0's `reconciled_sections` already ship, instead of designing a second one.
+  Re-verification **supersedes** under the standing two-edit rule: the new value lands as a fact
+  note naming the old one in `supersedes`, so the history stays diffable and the old figure keeps
+  its date. And a dated traction point is **append-only** — one note per point, so a re-verification
+  that finds two newer points writes two new notes and touches neither of the old ones, because a
+  dated point that was true stays true. What rots is never the point but the sentence *this is the
+  current level*, which is a `claim` in the engagement carrying its own `stale_after` like any
+  other. That is the property that turns this into the growth-curve reference class over time
+  rather than a corpus rebuilt from scratch on every refresh.
+- **`AGENTS.md` rule 2 gained its first exception, and it is stated rather than left to be
+  inferred.** Rule 2 has said since the first release that state lives outside the skill and this
+  repo holds method and tools only — `skills/market-analysis/actors/` is the first thing to ship
+  data inside a skill, so the rule now carries the carve-out in writing and the corpus argues its
+  own case where the data lives. **User data still never enters this repo, and that half is
+  absolute**: a founder's corpus, their figures, their roadmap. What the exception admits is public
+  fact about third parties, identical for every install, versioned with the plugin, authored as a
+  pull request, and guarded by the property that keeps the exception from widening — **a run never
+  writes there.** Anything failing one of those tests is user data wearing the exception's name.
+  Worth a bullet of its own because it is the first time that rule has moved: an exception nobody
+  wrote down leaves the next contributor two bad readings — that the rule is dead because the repo
+  visibly breaks it, or that it forbids something the repo ships — and both end with the rule
+  ignored.
+- **What ships is the mechanism, not a corpus, and contribution is manual on purpose.** The seed is
+  a single record under `_example/`, on an IANA-reserved domain, chosen to demonstrate the format
+  and not harvested from any engagement — a leading underscore marks format documentation that
+  nothing seeding or enumerating actors ever copies, so a fabricated company cannot arrive in a real
+  vault where every downstream consumer would read it as a profiled competitor. That answers the
+  scope question by construction: there is no engagement-derived category bias at first release if
+  nothing engagement-derived ships, and *which* companies a corpus contains is engagement signal
+  even when every fact in it is public. Contribution back is a pull request a person opens, only
+  when the founder asks — an automatic path publishes which companies a private engagement
+  examined, and an opt-in prompt leaks the same thing on the first yes, so manual is the only shape
+  with no leakage surface and it costs one instruction in the playbook. The corpus states its own
+  coverage bias where the data lives, because there is no sweep keeping it representative of any
+  market: a run that finds no record in its category has learned that nobody has contributed one
+  yet, not that the category is empty, and its own finder sweep is what answers the real question.
+- **Verification.** The fixture suite goes **336 → 357 assertions** over **27 → 28** corpora, the
+  new one firing each of the six rules and asserting the silent side beside it — a check that stops
+  firing and a check that was deleted look identical from the outside. The parity gate stays
+  **13 modes, 0 allowlisted**, because every rule this release adds lands inside the bare `check`
+  rather than as a mode. `vault-lint` now reads a `schemaVersion` set of `1 2 3 4`; a vault at 1, 2
+  or 3 exits 0 and is told the actor rules were **not applied** rather than that its documents
+  agree. The version is spent here rather than riding field presence for a reason specific to this
+  feature: a record is a directory in a public repo, so a user can copy one into a vault by hand
+  with no skill involved, which makes field presence no evidence that the vault opted in — and
+  `stale-actor-fact` is the only rule in the schema that fires on **nothing having changed**, since
+  a corpus seeded a year ago goes red because a date passed.
+
 ## 1.14.2
 
 - **`--roadmap-table` and `--assumption-rows` read their table with one parser per
