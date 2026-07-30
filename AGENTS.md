@@ -95,22 +95,37 @@ playbook is registered everywhere it gets dispatched from, and that a cited `## 
 resolves to one a template writes. Each of those fails when its own pattern matches
 nothing, because a check that stops matching prints the same green as one that passed.
 
-**One of its checks reads `bin/vault-lint.sh` rather than `skills/`**, so a parser edit
-there answers to `check.mjs` as well as to the two suites below: `--assumption-rows`'
-`readmodel()` says in the file that it is `--roadmap-table`'s `readplan()` with two
-changes and no others, and the check holds it to exactly that — comments and blank lines
-dropped, the two declared changes substituted, the remainder compared byte for byte.
-`parity.mjs` cannot cover this: it diffs `.sh` against `.ps1` and never one reader
-against its own twin, so a fix applied to one parser and not the other stays invisible —
-each mode is only ever run over its own document, so no fixture puts the two parsers over
-the same table. The comparison is exact rather than a line-count threshold on purpose: a
-threshold loose enough to absorb the comment drift already between the two is loose enough
-to absorb a dropped line of parsing. **A legitimate third difference is added to that
-substitution list, in the PR that introduces it** — the list is what "two changes and no
-others" means now that something reads it. The PowerShell twins,
-`Read-PlanRoadmapTable` and `Read-ModelAssumptionsTable`, carry the same claim and are
-deliberately not covered: they express the same rules through different constructs, so the
-substitution list that made them match would be large enough to hide a real divergence.
+**`--roadmap-table` and `--assumption-rows` read their table with ONE parser per
+implementation, and that is the guarantee — there is no check that two parsers agree,
+because there is only one.** `--assumption-rows` was written as `--roadmap-table` one
+artifact over, so each implementation carried two near-identical markdown table readers,
+the second declaring in a comment that it was the first "with two changes and no others."
+`parity.mjs` cannot hold that: it diffs `.sh` against `.ps1` and never one reader against
+its own twin, and each mode is only ever run over its own document, so no fixture puts the
+two readers over the same table. A fence rule, an alignment-row test or a heading-depth
+bound fixed in one and not the other shipped silently, and the mode that missed the fix
+went on printing green over every fixture written before it. `check.mjs` used to hold the
+shell half to its comment by exact byte comparison after a declared substitution list;
+the PowerShell half was unheld and had already drifted — its roadmap reader tested an
+empty header row with `-cne ''`, which reports a row holding nothing but a zero-width
+space EMPTY, where its assumptions reader used `.Length`. Both halves are now collapsed
+onto a single parameterised reader — `readtable(path, wanthead, wantitem, defcol)` in the
+shell, `Read-FirstItemTable` in PowerShell — and that check is gone with the second parser
+it was written for. **Do not reintroduce a second reader and a check that they match. Add
+a parameter.** The parameters are the heading the read opens on, the header cell that
+names the item column, and the column to use when no header cell names it.
+
+**That rule is about a claim, not about resemblance, and it does not generalise to the
+other duplicated helpers in either script.** Both files carry several — a fenced-block
+scan once per mode that reads a document, `fold()`, `trim()`, `target_of()` — and the
+shell now has the mechanism to share any of them, since `TABLE_READER_AWK` shows that awk
+program *source* travels in a shell variable even though awk cannot call across programs.
+They stay duplicated on purpose: each was written independently and none asserts that it
+matches another, so there is nothing unheld to fail. What made the table readers different
+is that one of each pair said in the file that it *was* the other. Collapse a duplicate
+when it starts making that claim; leave it alone when it merely looks like a sibling. The
+copies that remain say so where they are, and say how many there are, so an edit to one
+can find the rest.
 
 **A `{#anchor}` attribute goes only on a heading inside a fenced block, and the gate
 enforces it.** Those fenced headings are `plan-template.md`'s templates, where the
