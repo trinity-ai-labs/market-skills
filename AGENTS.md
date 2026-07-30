@@ -139,7 +139,7 @@ The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` and
 `bin/vault-lint.ps1` rather than to the repo: it asserts that every check the lint claims
 to make still fires, against corpora built to trigger each one, and `VAULT_LINT` points it
 at whichever implementation you're testing — `VAULT_LINT=bin/vault-lint.ps1 sh
-scripts/fixtures/run-fixtures.sh` runs the same 332 assertions against the PowerShell side.
+scripts/fixtures/run-fixtures.sh` runs the same 336 assertions against the PowerShell side.
 A check that stops firing and a check that was deleted look identical from the outside,
 which is why the assertion has to be written down rather than eyeballed.
 
