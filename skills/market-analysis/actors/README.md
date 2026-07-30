@@ -8,7 +8,7 @@ company exists at all, then its pricing page, then its funding history, then its
 disclosures. Verification is one fetch against a URL a record already carries.
 
 This file is the rule about **what may be in a record**. The note schema — the fields, the field
-classes, the shelf lives and the five checks that read them — is
+classes, the shelf lives and the six checks that read them — is
 [the vault schema](../../business-plan/references/vault.md#an-actor-record-is-source-and-fact-notes-with-four-more-fields-not-an-eighth-note-type),
 which is authoritative for everything this file does not decide.
 
