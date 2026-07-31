@@ -2,6 +2,51 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.15.0
+
+- **The method has been telling authors to file a claim the lint was built to reject.**
+  `target.md` states outright that the reference class "is not a term in any identity, and it is
+  the input every structural driver's value rests on" — it sets conversion, the band retention
+  sits in, and the exit multiple at once, one level beneath the arithmetic — and then requires it
+  be **named in the readout, classified `structural`, homed to `research/growth-curves.md`, and
+  put through the flip test**. That is driver discipline, and driver discipline means a note. But
+  `_vocab.yml` carried no term for it, so `subject: reference-class` resolved to nothing: not a
+  near-miss with a suggested key, since nothing in the file normalises within five characters of
+  it, but an **unknown-subject ERROR with no suggestion**. This is the inverse of the failure the
+  vocabulary usually guards — not a rule that quietly stopped firing, but one firing correctly
+  against the note the method instructs you to write. The author's cheapest way out was the
+  documented wrong one: pick whichever near-enough term the lint would accept. `category-growth`
+  and `category` are aliases of `market-growth` and `category-boundary`, so that is where the
+  comparable set went, and there it could never collide with anything.
+- **`reference-class` and `exit-multiple` are added, and four base definitions are amended —
+  `vocabulary_version` 3 → **4**, with an entry per amendment.** Adding a term is not an amendment
+  and does not move the stamp; what moves it is that four existing definitions no longer say what
+  the method now asks a claim under them to assert. `revenue-forecast` was *the number the
+  projection produces* and is now the number **and the trajectory that reaches it**, since the
+  shape check against the indexed set landed with nothing recording that a bare horizon figure had
+  stopped satisfying the subject — a claim carrying a number and no shape passes the level check
+  on its average while asserting a curve no comparable has ever had. `primary-channel` was a
+  reachability argument and now cites the mechanism record where one exists, or says the channel is
+  **assumed rather than learned** where the record found no origin account. `category-boundary` and
+  `market-growth` get the boundary against `reference-class` declared from their side, on the
+  precedent 1.7.0 set when `value-delivered` was added and `alternative-cost` was amended to name
+  the line: the new term is only half the fix, because the claims already mis-filed are reachable
+  only through the term that collected them. Each entry carries the `must_assert` test that decides,
+  per claim, whether it is superseded or re-filed.
+- **`vault-migration.md` said `steady-state-ceiling` was "the one amendment that has actually
+  shipped", and it had been wrong since 1.7.0** — which shipped two more. Left alone it was about
+  to be wrong by six. The paragraph is a worked example and now says so, and says the log is the
+  scope: reading a count out of prose beside the file instead of out of the file is how a
+  reconciliation misses every entry added after that prose was written, which is the same
+  stale-enumeration failure the amendment log exists to prevent one level up.
+- **No behaviour change to either lint, and no schema rung.** `vault-lint.sh` and
+  `vault-lint.ps1` are untouched: they read the vault's own `_vocab.yml` and never the shipped
+  file, so nothing here reaches an existing corpus until its owner adopts the amendment through
+  Phase 0's advisory and the reconciliation path `vault-migration.md` already carries. A vault
+  scaffolded before this release keeps the superseded wording, reports the delta as four log
+  entries rather than as "definitions differ", and stays valid at whatever `schemaVersion` it was
+  written under.
+
 ## 1.14.2
 
 - **`--roadmap-table` and `--assumption-rows` read their table with one parser per

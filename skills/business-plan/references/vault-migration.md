@@ -602,10 +602,12 @@ sentence then reads as though its author wrote it under wording they never saw, 
 that the ground moved — the only thing that explains why a plan said one thing in March and
 another in July — is gone.
 
-Worked on the one amendment that has actually shipped, `steady-state-ceiling`, amended at
+Worked on the first amendment that shipped, `steady-state-ceiling`, amended at
 `vocabulary_version` 2 from *the equilibrium the business converges on* to a ceiling belonging to
-the modelled **configuration**, with every input labelled `structural` or `policy`. A claim filed
-under the old framing:
+the modelled **configuration**, with every input labelled `structural` or `policy`. It is the
+worked example rather than the whole list — the log is the scope, and reading a count out of this
+paragraph instead of out of the file is how a reconciliation misses the entries added after it was
+written. A claim filed under the old framing:
 
 ```yaml
 id: CLAIM-PM71QD05

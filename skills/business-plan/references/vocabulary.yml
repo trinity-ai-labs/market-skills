@@ -282,7 +282,7 @@
 # asserts what the amended subject asserts is SUPERSEDED under the standing two-edit rule, never
 # re-filed in place under wording its author never saw.
 
-vocabulary_version: 3
+vocabulary_version: 4
 
 amendments:
   - term: steady-state-ceiling
@@ -334,6 +334,73 @@ amendments:
       the divisor of the steady-state identity, so an improvement claim resting on nothing moves
       the ceiling further than any other input in the model, and it arrives flattering the thing
       the founder built, which is what makes it easy to write and hard to challenge.
+
+  - term: revenue-forecast
+    amended_at: 4
+    shipped_in: "1.15.0"
+    was: Base-case revenue at the plan's horizon, built bottom-up from the channel and pricing
+      chain. The number the projection produces.
+    now: The same build, carried as a curve rather than an endpoint — the number AND the
+      trajectory that reaches it, with the implied monthly rate placed against the observed
+      growth band and the implied shape placed against the indexed comparable set at matching
+      months since origin.
+    must_assert: A trajectory, not a horizon figure. A claim carrying a number and no shape is
+      superseded rather than re-filed, because the level check it was written under passes a
+      projection that sits inside the band on its average and still asserts a shape no comparable
+      has ever had — flat where every comparable decayed, or holding one rate across the horizon
+      where every comparable's rate fell after its first year. Averaging is what hides it — one
+      rate stated for the whole horizon understates the early months and overstates the late ones
+      at once, and lands inside the band on both counts. Where the indexed set was too thin to fit
+      a shape, the claim says the shape check could not run rather than falling back to the level
+      check while reading as though both ran.
+
+  - term: primary-channel
+    amended_at: 4
+    shipped_in: "1.15.0"
+    was: The one channel the plan commits to first, and why it is reachable for a new entrant at
+      this stage.
+    now: The same commitment, cited from the mechanism record where one exists — the channel that
+      produced PAYING customers for a comparable in this product's ARR bucket — and labelled
+      assumed rather than learned where the record found no origin account.
+    must_assert: Either a citation to a comparable's origin account or the words that the channel
+      is assumed. A claim reasoned entirely out of category-general rules — what survives a search
+      engine, which creative shapes hold, what cadence a solo founder sustains — asserts a
+      designed funnel, and under `now` a designed funnel presented as an evidenced one is the
+      failure rather than the claim. It is re-filed with the label rather than superseded, since
+      the channel choice itself may still be right; what changes is that the plan stops spending
+      the credibility of every figure beside it. A `"rates only, no origin account found"` record
+      satisfies this — silence in the record is the record working, and the missing half is the
+      label, not the citation.
+
+  - term: category-boundary
+    amended_at: 4
+    shipped_in: "1.15.0"
+    was: Which category the product competes in, and therefore which set of alternatives the buyer
+      compares it against.
+    now: The same buyer-side boundary, with the line against reference-class declared from this
+      side as well. This term names what the BUYER weighs; which companies the PLAN measures its
+      own trajectory against is reference-class.
+    must_assert: A set of alternatives a buyer chooses between. A claim filed here that instead
+      names the companies this plan is benchmarked against — a comparable set, an observed growth
+      band, an indexed series — is re-filed under reference-class rather than left to stand. It
+      was filed here because until now no term accepted it, and `category` is the alias that
+      collected it. Left here it makes the comparable set look like a consequence of the category
+      verdict, so a repricing that should re-open which companies are comparable reads as a
+      question about positioning instead.
+
+  - term: market-growth
+    amended_at: 4
+    shipped_in: "1.15.0"
+    was: Whether the market is compounding, flat or shrinking, and the driver behind it.
+    now: The same property of the category's own size over time, with the line against
+      reference-class declared from this side as well. A rate measured off a comparable COMPANY's
+      series belongs to that term, not this one.
+    must_assert: A rate about the category, sourced as one. A claim under this subject whose rate
+      was read off a comparable's dated points — or off the observed growth band's endpoints — is
+      re-filed under reference-class. `category-growth` is this term's alias and is what collected
+      them. The two are not interchangeable in the direction that matters — a category can be flat
+      while the companies inside it compound, so a comparable's rate filed here reports the market
+      as growing on evidence that says nothing about the market at all.
 
 # ---------------------------------------------------------------------------------------
 # 8. The terms
@@ -412,8 +479,13 @@ terms:
 
   market-growth:
     definition: Whether the market is compounding, flat or shrinking, and the driver
-      behind it. Not required, because a plan can be sound against a flat market it has
-      correctly sized, and an unsourced growth rate is worse than none.
+      behind it. A property of the CATEGORY's own size over time. Distinct from
+      reference-class, which holds how fast the comparable COMPANIES grew and at what
+      months since their own origins — a category can be flat while the companies inside it
+      compound, and a rate filed here that was measured off a comparable's series is a
+      reference-class claim wearing this subject's name. Not required, because a plan can be
+      sound against a flat market it has correctly sized, and an unsourced growth rate is
+      worse than none.
     aliases:
       - growth-rate
       - market-trajectory
@@ -450,15 +522,40 @@ terms:
 
   category-boundary:
     definition: Which category the product competes in, and therefore which set of
-      alternatives the buyer compares it against. Every sizing figure and every competitor
+      alternatives the BUYER compares it against. Every sizing figure and every competitor
       classification assumes an answer to this, which is why it is a position and not a
-      label.
+      label. Distinct from reference-class, which names the companies the PLAN measures its
+      own trajectory against — the two sets overlap and are chosen by different tests, since
+      a buyer's substitute may have grown nothing like this product will and a valid
+      comparable may be a company this buyer would never evaluate.
     aliases:
       - category
       - market-category
       - category-definition
       - category-verdict
     required: true
+
+  reference-class:
+    definition: Which companies this plan's trajectory is measured against, the origin event
+      each series is indexed to, and the ARR bucket each rate was measured in. The position
+      one level beneath the arithmetic — it sets conversion, the band retention sits in, and
+      the exit multiple at once, so it takes the discipline a driver takes — named in the
+      readout, classified structural, homed to research/growth-curves.md, and put through the
+      flip test. A claim here names the companies and the exclusions, never a bare rate; the
+      category's own size over time is market-growth, and the set of alternatives the buyer
+      weighs is category-boundary. Where the class was inferred from the subject's own price
+      point, packaging or delivery shape, the claim says what it was inferred from — the class
+      still describes the category and stays structural, but the choice that put the subject
+      inside it is a policy input the founder can change tomorrow. Not required, because a
+      plan that states no target computes no verdict and has no structural driver to source,
+      and a required row there produces a comparable set assembled to close a coverage gap.
+    aliases:
+      - comparable-set
+      - comparables
+      - growth-band
+      - observed-growth-band
+      - indexed-set
+    required: false
 
   competitive-gap:
     definition: What the competitive set structurally does not cover, and why they leave
@@ -596,7 +693,13 @@ terms:
   primary-channel:
     definition: The one channel the plan commits to first, and why it is reachable for a
       new entrant at this stage. Ranked alternatives are claims under this same subject,
-      which is what makes two incompatible first channels collide.
+      which is what makes two incompatible first channels collide. Where the mechanism record
+      in research/growth-curves.md carries an origin account for this product's bucket, the
+      claim cites it — the channel that produced PAYING customers for a comparable — and where
+      the record says no origin account was found, the claim says the channel is assumed
+      rather than learned. A first channel reasoned out of category-general rules alone is a
+      designed funnel, and labelling it as learned spends the credibility of every figure
+      beside it.
     aliases:
       - channel
       - acquisition-channel
@@ -707,8 +810,12 @@ terms:
 
   revenue-forecast:
     definition: Base-case revenue at the plan's horizon, built bottom-up from the channel
-      and pricing chain. The number the projection produces, not the ceiling it is heading
-      toward.
+      and pricing chain, carried as a CURVE rather than an endpoint. The claim asserts the
+      number and the trajectory that reaches it — the implied monthly rate placed against the
+      observed growth band, and the implied shape placed against the indexed comparable set at
+      matching months since origin. An excursion in either, in either direction, names the
+      difference defending it. Not the ceiling it is heading toward, which is
+      steady-state-ceiling.
     aliases:
       - revenue-projection
       - base-case-revenue
@@ -763,6 +870,25 @@ terms:
       - target-reachability
       - goal-verdict
       - stated-target
+    required: false
+
+  exit-multiple:
+    definition: The multiple an exit-shaped target is solved at, and the four inputs its band's
+      ends trace to — the growth slope at the month of sale, strategic necessity to a NAMED
+      acquirer, scarcity and how buildable the asset is, and the bidder count. None of those is
+      ARR, which is why this is a subject and not a property of revenue-forecast. A claim here
+      names the acquirer and counts the buyers; an unnamed acquirer is a blank the identity
+      accepts without complaint, and one interested party is a price floor rather than a price.
+      Distinct from target-verdict, which is the pass or fail this multiple is one input to, and
+      from capital-path, which is how the business funds itself rather than how it is sold. Not
+      required, because most plans are not engineered backwards from an exit, and a required row
+      there produces a category average wearing a reference class's name.
+    aliases:
+      - multiple
+      - exit-valuation
+      - acquisition-multiple
+      - arr-multiple
+      - comparable-exits
     required: false
 
   runway:
