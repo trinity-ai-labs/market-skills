@@ -359,7 +359,20 @@ The `Assumption` cell IS the note's `title`, copied verbatim, and every row is a
 the same rule a roadmap row is held to against a milestone `title` — a table rendered off the
 notes matches by construction, so a mismatch means the row was written by hand. The `#` column
 stays the `A-n` label the prose and a milestone's `moves` field cite; nothing mechanical reads
-it.>
+it.
+
+EVERY NOTE BEHIND A ROW HERE DECLARES `model_input`, one of the two words `revenue` or
+`cost`, or declares `excluded_from_model` with the reason. Writing the note and the row is
+only half the contract: `--assumption-rows` reads it BOTH ways, and the direction that
+catches a missing row — a declared input the table never rendered — can only fire on notes
+that declared themselves. A corpus where no note carries the field is one where that half
+silently checks nothing, and its success line still reports the rows it did match, so the
+gate reads green over exactly the gap it exists to find. That is not hypothetical: it is
+how a whole revenue line stayed out of a projection while every note behind it lint-clean,
+which [vault.md](vault.md#the-assumption-note-is-what-you-would-believe-with-no-evidence)
+records as the largest miss on file. `sensitivity` and `validated_by` are owed on the same note and
+for the same reason — a row whose note carries neither is a number nothing will ever
+revisit.>
 
 ## Revenue build (bottom-up ONLY) {#revenue-build}
 <channel → spend → CAC → new customers/mo → conversion → price → revenue, as a visible chain.
