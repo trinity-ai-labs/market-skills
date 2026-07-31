@@ -2,6 +2,37 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.16.0
+
+- **`model_input` has been defined in the schema and asked for by nothing, so the half of
+  `--assumption-rows` that catches a MISSING row has never once fired.** `vault.md` documents the
+  field, states that a declared input obliges the projection to carry a row, and names the failure
+  it prevents — a whole revenue line that existed as correctly authored notes, never became rows,
+  and was filed as revenue outside the model, so every verdict downstream inherited a denominator
+  missing it. That is recorded as the largest miss on file. But `plan-template.md`'s assumptions
+  block and `SKILL.md`'s Phase 3 drafting bullet — the two places that actually produce assumption
+  notes — never mentioned the field at all. `AGENTS.md` states the rule this breaks: **prose in a
+  reference file is not a producer.** It produces something only when a phase performs it or a
+  brief interpolates it, and neither did.
+- **The consequence, measured on a real engagement rather than argued:** a finished 401-note
+  corpus with a complete financial model reports `21 assumption rows against 0 declared model
+  inputs`. Twenty-one rows matched, zero inputs declared — so the direction that fails a declared
+  input with no row had nothing to range over and passed vacuously. **And the success line still
+  reports the rows it did match**, which is what makes this worse than a silent no-op: the gate
+  prints a green count over exactly the gap it exists to find, and the count is real, so nothing
+  in the output suggests half the check stood down. A reader sees a number and infers coverage.
+- **Both producers now carry it.** The template's assumptions block and Phase 3's assumption-first
+  bullet each state that every note behind a row declares `model_input` — `revenue` or `cost` — or
+  declares `excluded_from_model` with the reason, and each says why: the missing-row direction
+  fires only on notes that declared themselves. The template restates the `sensitivity` and
+  `validated_by` obligation in the same breath, because a row whose note carries neither is a
+  number nothing will ever revisit, and that is the same defect one field over.
+- **No lint change, and that is the point.** `vault-lint.sh` and `vault-lint.ps1` already
+  implement both directions correctly and are untouched, so there is no parity or fixture
+  exposure. What was broken was never the check — it was that nothing in the method ever produced
+  the input the check reads. A rule that exists, is implemented, is documented in the schema
+  reference, and is wired into no producer is indistinguishable from a rule nobody wrote.
+
 ## 1.15.0
 
 - **The method has been telling authors to file a claim the lint was built to reject.**

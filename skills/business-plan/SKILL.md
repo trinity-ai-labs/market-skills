@@ -961,7 +961,14 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   table (source: analysis, founder, or explicit guess), the revenue build is bottom-up, and
   base/downside/upside scenarios move the assumptions — not the conclusions. Fake precision is
   the failure mode; visible formulas are the fix. Every explicit-guess row is an `assumption`
-  note with a `sensitivity`, which is what orders the validation queue. **Every input to the
+  note with a `sensitivity`, which is what orders the validation queue. **Every one of those
+  notes declares `model_input` — `revenue` or `cost` — or declares `excluded_from_model` with
+  the reason.** `--assumption-rows` reads the table both ways, and the direction that catches a
+  missing row fires only on notes that declared themselves, so a corpus where nothing carries
+  the field has that half checking nothing while its success line still reports the rows it did
+  match. The gate then reads green over the exact gap it exists to find — which is how a whole
+  revenue line stayed out of a projection with every note behind it lint-clean, the failure
+  invariant 16's third clause and [references/vault.md](references/vault.md) both name. **Every input to the
   revenue build then takes the both-directions test, whichever way the value points**: each
   names the driver behind it in the direction it sits, and a low one with none is unmodelled,
   not conservative — it takes a driver or a home before anything is solved with it. The two
