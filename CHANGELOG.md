@@ -2,7 +2,7 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
-## 1.16.0
+## 1.15.0
 
 - **The method has been telling authors to file a claim the lint was built to reject.**
   `target.md` states outright that the reference class "is not a term in any identity, and it is

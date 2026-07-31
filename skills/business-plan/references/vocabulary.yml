@@ -337,7 +337,7 @@ amendments:
 
   - term: revenue-forecast
     amended_at: 4
-    shipped_in: "1.16.0"
+    shipped_in: "1.15.0"
     was: Base-case revenue at the plan's horizon, built bottom-up from the channel and pricing
       chain. The number the projection produces.
     now: The same build, carried as a curve rather than an endpoint — the number AND the
@@ -356,7 +356,7 @@ amendments:
 
   - term: primary-channel
     amended_at: 4
-    shipped_in: "1.16.0"
+    shipped_in: "1.15.0"
     was: The one channel the plan commits to first, and why it is reachable for a new entrant at
       this stage.
     now: The same commitment, cited from the mechanism record where one exists — the channel that
@@ -374,7 +374,7 @@ amendments:
 
   - term: category-boundary
     amended_at: 4
-    shipped_in: "1.16.0"
+    shipped_in: "1.15.0"
     was: Which category the product competes in, and therefore which set of alternatives the buyer
       compares it against.
     now: The same buyer-side boundary, with the line against reference-class declared from this
@@ -390,7 +390,7 @@ amendments:
 
   - term: market-growth
     amended_at: 4
-    shipped_in: "1.16.0"
+    shipped_in: "1.15.0"
     was: Whether the market is compounding, flat or shrinking, and the driver behind it.
     now: The same property of the category's own size over time, with the line against
       reference-class declared from this side as well. A rate measured off a comparable COMPANY's
