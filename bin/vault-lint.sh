@@ -3774,6 +3774,13 @@ fi
 # renders off the other an exact match is a check and anything looser is a
 # similarity test that cries wolf until somebody switches it off.
 #
+# THE TITLE IS THE KEY AND THE STATUS IS PART OF THE ANSWER. Matching a row
+# against every assumption title regardless of `status` made a live row backed
+# only by a `superseded` note match cleanly and print as `matched verbatim` -
+# observed on a live model, green for days. A retired note is not a match: the
+# title says the row was rendered off some note, and only the status says the
+# ledger still stands behind it.
+#
 # THE ARR TERM DECLARES ITS COMPOSITION, and that is the fourth check. A model
 # may legitimately exclude a revenue line - a metered layer must not be allowed
 # to flatter subscription churn, and a good model refuses to mix them. What it
@@ -3849,11 +3856,27 @@ if [ "$MODE" = "assumption-rows" ]; then
 				# not a failure whatever else that note declares. MI is the
 				# declared inputs, in vault order so two runs print the same
 				# list.
+				#
+				# A SUPERSEDED OR RETRACTED NOTE IS NOT A MATCH, and DEAD holds
+				# it separately rather than beside the live titles. The title
+				# key alone says the row was rendered off SOME note; it does not
+				# say the ledger still stands behind it, and a row whose only
+				# match has been retired is a live input resting on a value
+				# nobody is obliged to maintain. Observed: a live row in the
+				# assumptions table was backed only by a superseded note, and
+				# the gate read `matched verbatim` over it for days. A title
+				# carried by both a live note and a retired one still matches
+				# live, because the row loop reads TITLE first.
 				for (i = 1; i <= nf; i++) {
 					f = files[i]
 					ty = V[f, "type"]
-					if (ty == "assumption") {
-						if (V[f, "title"] != "") TITLE[V[f, "title"]] = 1
+						if (ty == "assumption") {
+						ti = V[f, "title"]
+						st = V[f, "status"]
+						if (ti != "") {
+							if (st != "superseded" && st != "retracted") TITLE[ti] = 1
+							else if (!(ti in DEAD)) { DEAD[ti] = V[f, "id"]; DEADST[ti] = st }
+						}
 						if (V[f, "model_input"] != "") MI[++nmi] = f
 					}
 
@@ -3903,6 +3926,17 @@ if [ "$MODE" = "assumption-rows" ]; then
 
 				for (i = 1; i <= NROW; i++) {
 					if (ROW[i] in TITLE) { HIT[ROW[i]] = 1; continue }
+					# A RETIRED MATCH IS ONE SITUATION AND GETS ONE FAILURE. HIT
+					# is set here too, so the note-side rule below stays exactly
+					# as it was: the row IS rendered, and reporting the same pair
+					# again as an input the table has no row for would send its
+					# reader to a second, wrong repair.
+					if (ROW[i] in DEAD) {
+						HIT[ROW[i]] = 1
+						report("financial-model.md", "model-row-dead-assumption", DEAD[ROW[i]],
+							"row `" ROW[i] "` in the assumptions section matches " DEAD[ROW[i]] " and that note is `status: " DEADST[ROW[i]] "`, with no `current` assumption carrying the title. The row is live in the model and the only thing standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one, or re-file the assumption as `current` if it was retired in error")
+						continue
+					}
 					report("financial-model.md", "model-row-no-assumption", "",
 						"row `" ROW[i] "` in the assumptions section matches no `assumption` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing")
 				}

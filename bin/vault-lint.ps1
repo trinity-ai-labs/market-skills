@@ -3522,7 +3522,19 @@ function Invoke-ModeAssumptionRows {
 	# Three sets over the notes, in one walk. TITLE is every assumption title a
 	# row may match - not only the declared inputs - because a row whose note
 	# exists and agrees is not a failure whatever else that note declares.
+	#
+	# A SUPERSEDED OR RETRACTED NOTE IS NOT A MATCH, and $dead holds it
+	# separately rather than beside the live titles. The title key alone says the
+	# row was rendered off SOME note; only the status says the ledger still
+	# stands behind it, and a row whose only match has been retired is a live
+	# input resting on a value nobody is obliged to maintain. Observed: a live
+	# row in the assumptions table was backed only by a superseded note, and this
+	# mode read `matched verbatim` over it for days. A title carried by both a
+	# live note and a retired one still matches live, because the row loop reads
+	# $titles first.
 	$titles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$dead = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$deadStatus = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
 	$inputs = New-Object 'System.Collections.Generic.List[psobject]'
 	$declared = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 	$moved = New-Object 'System.Collections.Generic.Dictionary[string,string]'
@@ -3530,7 +3542,15 @@ function Invoke-ModeAssumptionRows {
 		$ty = Get-ModelNoteValue $f 'type'
 		$title = Get-ModelNoteValue $f 'title'
 		if (Test-ModelEqual $ty 'assumption') {
-			if ($title.Length -ne 0) { [void]$titles.Add($title) }
+			if ($title.Length -ne 0) {
+				$st = Get-ModelNoteValue $f 'status'
+				if (-not (Test-ModelEqual $st 'superseded') -and -not (Test-ModelEqual $st 'retracted')) {
+					[void]$titles.Add($title)
+				} elseif (-not $dead.ContainsKey($title)) {
+					$dead[$title] = Get-ModelNoteValue $f 'id'
+					$deadStatus[$title] = $st
+				}
+			}
 			# Read once and carried on the record: the guard and the field are the
 			# same lookup, and asking twice is the loop-invariant recompute this
 			# walk exists to do once.
@@ -3602,6 +3622,15 @@ function Invoke-ModeAssumptionRows {
 	$hitTitles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
 	foreach ($row in $modelRows) {
 		if ($titles.Contains($row)) { [void]$hitTitles.Add($row); continue }
+		# A RETIRED MATCH IS ONE SITUATION AND GETS ONE FAILURE. $hitTitles is
+		# set here too, so the note-side rule below stays exactly as it was: the
+		# row IS rendered, and reporting the same pair again as an input the
+		# table has no row for would send its reader to a second, wrong repair.
+		if ($dead.ContainsKey($row)) {
+			[void]$hitTitles.Add($row)
+			Add-ModelFailure 'financial-model.md' 'model-row-dead-assumption' $dead[$row] ('row `' + $row + '` in the assumptions section matches ' + $dead[$row] + ' and that note is `status: ' + $deadStatus[$row] + '`, with no `current` assumption carrying the title. The row is live in the model and the only thing standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one, or re-file the assumption as `current` if it was retired in error')
+			continue
+		}
 		Add-ModelFailure 'financial-model.md' 'model-row-no-assumption' '' ('row `' + $row + '` in the assumptions section matches no `assumption` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing')
 	}
 

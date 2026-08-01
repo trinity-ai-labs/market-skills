@@ -100,6 +100,12 @@
 #      and neither check is gated on schemaVersion - asserted both ways, on a
 #      vault that writes no `superseded_by` and on the same broken edges stamped
 #      back down to 1.
+#  21. --assumption-rows reads a row's match against the note's `status`. A live
+#      row whose only title match is `superseded` or `retracted` is its own
+#      failure rather than a match, the sibling row backed by a `current` note
+#      stays silent, the same pair is never reported twice under two codes, and
+#      re-filing the note as `current` clears it.
+
 set -u
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -2177,6 +2183,76 @@ HE_AT1_STATUS=$?
 case "$HE_AT1_OUT" in
 *'"broken_edge_count": 2'*) ok "neither new check is gated on the version" ;;
 *) no "the count changed at schemaVersion 1 (got: $HE_AT1_OUT)" ;;
+esac
+
+# --- 21. a live model row backed only by a retired note -----------------------
+# `--assumption-rows` matched a row against every assumption title regardless of
+# `status`, so a live row whose only match was `superseded` matched cleanly and
+# the mode printed `matched verbatim` over it. Observed as exactly that: a live
+# row in the assumptions table backed only by a superseded note, green for days.
+# One of the three rows in this vault is backed by a `current` note, so the count
+# is what says the status is read rather than the whole table flagged.
+printf '\nretired notes behind live model rows\n'
+
+MRS=$("$LINT" --assumption-rows --vault "$HERE/model-row-superseded" --json 2>/dev/null)
+MRS_STATUS=$?
+[ "$MRS_STATUS" = "1" ] && ok "a live row backed only by a retired note fails" ||
+	no "model-row-superseded should exit 1 (got $MRS_STATUS)"
+case "$MRS" in
+*'"failure_count": 2'*) ok "the row whose note is current is not reported" ;;
+*) no "--assumption-rows did not report exactly two rows over model-row-superseded (got: $MRS)" ;;
+esac
+
+# BOTH RETIRED STATUSES. A check reading only `superseded` would leave a
+# withdrawn assumption backing a live row, which is the same defect under the
+# other word the schema allows - and the message has to name the status, because
+# re-file and point-at-the-successor are different repairs.
+# One case per status, each anchored inside its own row. Written as one glob,
+# `status: superseded` matches the FIRST failure and the second note ID then
+# matches anywhere after it - so the word `retracted` is never asserted at all,
+# and hardcoding `superseded` into the message would still pass.
+case "$MRS" in
+*'"id": "ASSUMPTION-MS22BB02"'*'status: superseded'*)
+	ok "a superseded note behind a live row is reported with its status" ;;
+*) no "model-row-dead-assumption did not name the superseded note status (got: $MRS)" ;;
+esac
+case "$MRS" in
+*'"id": "ASSUMPTION-MS33CC03"'*'status: retracted'*)
+	ok "a retracted note behind a live row is reported with its status" ;;
+*) no "model-row-dead-assumption did not name the retracted note status (got: $MRS)" ;;
+esac
+case "$MRS" in
+*'"check": "model-row-no-assumption"'*)
+	no "a retired match was reported as a row matching nothing - the two repairs differ" ;;
+*) ok "a retired match is not reported as a row matching no note at all" ;;
+esac
+
+# ONE SITUATION, ONE FAILURE. Both retired notes declare `model_input`, so a
+# reading that left the row unmatched would report them AGAIN as inputs the table
+# has no row for - sending the reader to a second, wrong repair.
+case "$MRS" in
+*'"check": "assumption-not-in-model"'*)
+	no "the retired note was reported twice, as a dead row and as an input with no row" ;;
+*) ok "the rendered row keeps assumption-not-in-model silent on the same note" ;;
+esac
+
+# THE PASSING COUNTERPART. Re-filing the note as current clears its row, which is
+# one of the two repairs the message names - without this the rule reads as
+# banning a title that ever belonged to a retired note.
+MRS_FIX="$PAIRS_FILE.model-row-refiled"
+rm -rf "$MRS_FIX"
+cp -R "$HERE/model-row-superseded" "$MRS_FIX"
+strip_cr <"$HERE/model-row-superseded/assumptions/ASSUMPTION-MS22BB02.md" |
+	awk '{ sub(/^status: superseded$/, "status: current"); print }' >"$MRS_FIX/assumptions/ASSUMPTION-MS22BB02.md"
+if grep -q '^status: current$' "$MRS_FIX/assumptions/ASSUMPTION-MS22BB02.md"; then
+	ok "the copy with the note re-filed as current carries it"
+else
+	no "the status rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+MRS_FIX_OUT=$("$LINT" --assumption-rows --vault "$MRS_FIX" --json 2>/dev/null)
+case "$MRS_FIX_OUT" in
+*'"failure_count": 1'*) ok "re-filing the note as current clears its row" ;;
+*) no "a current note must clear model-row-dead-assumption (got: $MRS_FIX_OUT)" ;;
 esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
