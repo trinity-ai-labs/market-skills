@@ -747,11 +747,23 @@ vault-lint.sh - read-only checks over a claim vault.
       specifically, because `model_input` is a field a promoted claim does not
       carry.
 
-      assumption-not-in-model: a note carrying `model_input` whose title is no
-      row in the table and which carries no `excluded_from_model` reason. The
-      trigger is the FIELD, not the version - `model_input` is a term this
-      release introduces, so no existing note carries it and no exemption has
-      to be bought for one.
+      assumption-not-in-model: a LIVE note carrying `model_input` whose title
+      is no row in the table and which carries no `excluded_from_model`
+      reason. The trigger is the FIELD, not the version - `model_input` is a
+      term this release introduces, so no existing note carries it and no
+      exemption has to be bought for one.
+
+      A RETIRED NOTE OWES NEITHER A ROW NOR AN EXCLUSION, the same live
+      predicate the row side reads. Demanding one of a `superseded` or
+      `retracted` note cannot be satisfied: the escapes are to render the dead
+      title as a row - undoing the repair the row side just asked for - or to
+      write `excluded_from_model` onto a corpse, which records a decision
+      about a live revenue line on a note nobody will open. The failure calls
+      it "an input the ledger holds", and a note the ledger has retired is not
+      one. excluded-line-on-roadmap reads the same narrowed set, so a retired
+      note a `milestone` still `moves` is silent here too - that is a roadmap
+      pointing at a dead note, a different repair this mode should not be
+      giving.
 
       model-row-no-assumption: a row matching no `assumption` or `claim` note
       title at all. The reverse direction, and it is what stops the rule above
@@ -3724,29 +3736,38 @@ function Invoke-ModeAssumptionRows {
 		$title = Get-ModelNoteValue $f 'title'
 		$isAssumption = Test-ModelEqual $ty 'assumption'
 		if ($isAssumption -or (Test-ModelEqual $ty 'claim')) {
+			$st = Get-ModelNoteValue $f 'status'
+			$live = (-not (Test-ModelEqual $st 'superseded')) -and (-not (Test-ModelEqual $st 'retracted'))
 			if ($title.Length -ne 0) {
-				$st = Get-ModelNoteValue $f 'status'
-				if (-not (Test-ModelEqual $st 'superseded') -and -not (Test-ModelEqual $st 'retracted')) {
+				if ($live) {
 					[void]$titles.Add($title)
 				} elseif (-not $dead.ContainsKey($title)) {
 					$dead[$title] = Get-ModelNoteValue $f 'id'
 					$deadStatus[$title] = $st
 				}
 			}
-		}
-		if ($isAssumption) {
-			# Read once and carried on the record: the guard and the field are the
-			# same lookup, and asking twice is the loop-invariant recompute this
-			# walk exists to do once.
-			$declaredKind = Get-ModelNoteValue $f 'model_input'
-			if ($declaredKind.Length -ne 0) {
-				[void]$inputs.Add([pscustomobject]@{
-					File     = $f
-					Title    = $title
-					Id       = (Get-ModelNoteValue $f 'id')
-					Kind     = $declaredKind
-					Excluded = (Get-ModelNoteValue $f 'excluded_from_model')
-				})
+			# THE SAME LIVE PREDICATE, and $inputs reads it for the reason
+			# $titles does. A retired note declaring `model_input` owes no row:
+			# the only ways to satisfy the demand are to render the dead title as
+			# a row - undoing the repair the row side just asked for - or to write
+			# `excluded_from_model` onto a corpse, which records a decision about
+			# a live revenue line on a note nobody will open. "an input the ledger
+			# holds" is what the failure says, and a note the ledger has retired
+			# is not one.
+			if ($isAssumption -and $live) {
+				# Read once and carried on the record: the guard and the field are
+				# the same lookup, and asking twice is the loop-invariant recompute
+				# this walk exists to do once.
+				$declaredKind = Get-ModelNoteValue $f 'model_input'
+				if ($declaredKind.Length -ne 0) {
+					[void]$inputs.Add([pscustomobject]@{
+						File     = $f
+						Title    = $title
+						Id       = (Get-ModelNoteValue $f 'id')
+						Kind     = $declaredKind
+						Excluded = (Get-ModelNoteValue $f 'excluded_from_model')
+					})
+				}
 			}
 		}
 
@@ -3796,7 +3817,7 @@ function Invoke-ModeAssumptionRows {
 		} else {
 			Add-ModelFailure 'financial-model.md' 'model-table-missing' '' ('the assumptions section of financial-model.md lists no rows and the vault carries ' + $nmi + ' assumption note' + $plural + ' declaring `model_input`. A table with a heading and no rows reads as a model whose inputs are stated somewhere, and they are stated in the ledger only - so the projection has no visible input list at all')
 		}
-		$okLine = [string]$nmi + ' declared model input' + $plural + ' and no assumptions table the model renders - ' + $VAULT
+		$okLine = [string]$nmi + ' live declared model input' + $plural + ' and no assumptions table the model renders - ' + $VAULT
 		exit (Render-Failures 'vault-lint assumption-rows' $okLine)
 	}
 
@@ -3807,9 +3828,14 @@ function Invoke-ModeAssumptionRows {
 	foreach ($row in $modelRows) {
 		if ($titles.Contains($row)) { [void]$hitTitles.Add($row); continue }
 		# A RETIRED MATCH IS ONE SITUATION AND GETS ONE FAILURE. $hitTitles is
-		# set here too, so the note-side rule below stays exactly as it was: the
-		# row IS rendered, and reporting the same pair again as an input the
-		# table has no row for would send its reader to a second, wrong repair.
+		# set here too, so the same pair is never also reported as an input the
+		# table has no row for - a second, wrong repair. SINCE $inputs WENT
+		# LIVE-ONLY THIS MARKING CANNOT BE THE THING THAT CLEARS IT: an $inputs
+		# member is a live assumption, so its title is in $titles and a matching
+		# row takes the branch above. It stays because the invariant is the row
+		# loop's to hold, not the note predicate's - widen $inputs again and this
+		# line is the only thing standing between one situation and two failures
+		# pointing at different repairs.
 		if ($dead.ContainsKey($row)) {
 			[void]$hitTitles.Add($row)
 			Add-ModelFailure 'financial-model.md' 'model-row-dead-assumption' $dead[$row] ('row `' + $row + '` in the assumptions section matches ' + $dead[$row] + ' and that note is `status: ' + $deadStatus[$row] + '`, with no live `assumption` or `claim` note carrying the title. The row is live in the model and everything standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one - a title promoted to a `claim` backs the row exactly as an assumption does, both being notes that assert a value, and what disqualifies either is `superseded` or `retracted` - or re-file this note as `current` if it was retired in error')
@@ -3851,7 +3877,7 @@ function Invoke-ModeAssumptionRows {
 		# and the table never renders - reported a matched count over a set it
 		# never had. A reader has to be able to tell that half agreeing from that
 		# half not running.
-		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' against no declared model inputs - ' + $VAULT + '. Not checked: whether a declared input reached the table, because no `assumption` note carries `model_input`.'
+		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' against no declared model inputs - ' + $VAULT + '. Not checked: whether a declared input reached the table, because no live `assumption` note carries `model_input`.'
 	} else {
 		# TWO COUNTS, NOT TWO SIDES OF ONE. `against` read as a comparison
 		# between two sets that have to agree, and they do not: a row backed by
@@ -3861,7 +3887,7 @@ function Invoke-ModeAssumptionRows {
 		# implying an equality whose absence would then read as a miscount.
 		$miPlural = 's'
 		if ($nmi -eq 1) { $miPlural = '' }
-		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' each backed by a live `assumption` or `claim` note, and ' + [string]$nmi + ' declared model input' + $miPlural + ' each rendered as a row or excluded with a reason, matched verbatim - ' + $VAULT
+		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' each backed by a live `assumption` or `claim` note, and ' + [string]$nmi + ' live declared model input' + $miPlural + ' each rendered as a row or excluded with a reason, matched verbatim - ' + $VAULT
 	}
 
 	exit (Render-Failures 'vault-lint assumption-rows' $okLine)

@@ -502,10 +502,29 @@ produces: a structural driver with no subject instrument belongs in the indexed 
 degraded to an assumption, so filing a sourced figure as unevidenced is the defect, and correcting it
 retires the assumption and mints a `claim` carrying the same title. The failure then said the row's
 only match was `superseded` with no `current` assumption carrying the title — both halves true, the
-conclusion false, and the corpus it fired on had done exactly what the method says. **Only the row →
-note direction widened.** `assumption-not-in-model` keys on `model_input`, a field a promoted claim
-does not carry, so the note → row direction reads the set it always read; that asymmetry is the
-design, not an oversight. **And the success line stopped reading as a comparison** — a row backed by a
+conclusion false, and the corpus it fired on had done exactly what the method says. **The note → row
+direction did not widen to claims**, and that asymmetry is deliberate: `assumption-not-in-model` keys
+on `model_input`, a field a promoted claim does not carry, so a claim never becomes a declared input.
+
+**The note side had the SAME defect one field over, and it is the third in this release.**
+`assumption-not-in-model` walked every assumption carrying `model_input` without reading `status`, so
+a `superseded` or `retracted` note still owed a row or an `excluded_from_model` reason — and neither
+escape is satisfiable on a retired note: rendering the dead title as a row undoes the repair the row
+side asks for, and writing `excluded_from_model` records a decision about a live revenue line on a
+corpse. Found end to end, in the order that makes it obvious: the row side flagged a dead-backed row,
+re-titling it to the live claim cleared that, and this half instantly demanded a row for the note the
+repair had pointed away from. **`MI` / `$inputs` now take the same live predicate `TITLE` does.**
+The consequence worth stating is that **`excluded-line-on-roadmap` reads that same narrowed set** —
+so a retired assumption a `milestone` still `moves` is silent. Where a live successor exists it
+carries the obligation; where the note was retracted outright, the real defect is a roadmap pointing
+at a dead note, which `check`'s `dangling-edge` does not cover (it fires on an ID no note carries,
+never on a retired target) and nothing else reports. Giving the wrong repair confidently was worse
+than the gap, and the gap is now written down rather than papered over. **One line survives the
+narrowing on purpose**: the row loop still marks `HIT` on a retired match even though an `MI` member
+is by construction live and therefore always hits via `TITLE` — widen the predicate again and that
+marking is the only thing between one situation and two failures pointing at different repairs.
+
+**And the success line stopped reading as a comparison** — a row backed by a
 `claim` is not a declared model input and a declared input cleared by `excluded_from_model` is not a
 row, so the two counts legitimately differ and a line setting one *against* the other sends its reader
 looking for a row nothing owed. **Its fourth check is the identity's, not the

@@ -428,10 +428,14 @@ enter the projection at all; it was then filed as "revenue outside this model", 
 modelling decision and was a consequence of the omission. Every verdict downstream inherited a
 denominator missing a line the roadmap ships.
 
-So an `assumption` note that declares itself a model input — `model_input: revenue` or `cost` — owes
-either a row in the assumptions table, matched on its `title` **verbatim**, or an
+So a **live** `assumption` note that declares itself a model input — `model_input: revenue` or
+`cost` — owes either a row in the assumptions table, matched on its `title` **verbatim**, or an
 `excluded_from_model` reason saying why the model does not carry it. Either clears the rule; neither
-is the failure. It reads the reverse direction too, because otherwise the cheapest way past the
+is the failure. **A retired note owes neither**, and that is the same live predicate read from the
+note side: demanding a row of a `superseded` or `retracted` note cannot be satisfied, because the
+only escapes are to render the dead title as a row — undoing the repair the other direction asks
+for — or to write `excluded_from_model` onto a corpse, recording a decision about a live revenue
+line on a note nobody will open. It reads the reverse direction too, because otherwise the cheapest way past the
 first check is a row nothing in the ledger stands behind. **The reverse direction reads `status`
 as well as the title:** a live row whose every matching note is `superseded` or `retracted` is its
 own failure, naming the note it found and the status it carries. The title match says the row was

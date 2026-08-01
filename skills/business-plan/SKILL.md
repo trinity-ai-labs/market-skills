@@ -128,7 +128,8 @@ and is never restated here.
     `--assumption-rows` is in the gate because it is the only inverse the assumptions table has:
     the rule that every number in a projection is a named row is checked by reading the model, and
     whether a named assumption is MISSING from the table can only be checked against the notes. It
-    fails a declared model input with no row and no stated exclusion, a row matching no note
+    fails a live declared model input with no row and no stated exclusion — a retired one owes
+    neither, since both escapes are unsatisfiable on a note the ledger has already retired — a row matching no note
     `title`, a row whose every `title` match is a note the ledger has retired, and a revenue
     line the roadmap ships that the model does not carry and the identity
     does not declare. **A live `claim` backs a row exactly as a live `assumption` does** — both

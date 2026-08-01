@@ -720,8 +720,9 @@ excluded_from_model: "billed on a separate cycle, so it is modelled in the meter
 
 **`model_input` declares that the projection has to carry a row for this note**, and
 `vault-lint.sh --assumption-rows` reads that both ways against the assumptions table in
-`financial-model.md`: a declared input with no row fails, and a row matching no note `title`
-verbatim fails too. The match is the `title`, character for character, the same rule a
+`financial-model.md`: a **live** declared input with no row fails, and a row matching no note
+`title` verbatim fails too. A `superseded` or `retracted` note owes no row and no exclusion — the
+same live predicate, read from the note side. The match is the `title`, character for character, the same rule a
 roadmap row is held to against a milestone `title` — [plan-template.md](plan-template.md) states
 it as the contract the table is written under.
 

@@ -411,11 +411,23 @@ vault-lint.sh - read-only checks over a claim vault.
       specifically, because `model_input` is a field a promoted claim does not
       carry.
 
-      assumption-not-in-model: a note carrying `model_input` whose title is no
-      row in the table and which carries no `excluded_from_model` reason. The
-      trigger is the FIELD, not the version - `model_input` is a term this
-      release introduces, so no existing note carries it and no exemption has
-      to be bought for one.
+      assumption-not-in-model: a LIVE note carrying `model_input` whose title
+      is no row in the table and which carries no `excluded_from_model`
+      reason. The trigger is the FIELD, not the version - `model_input` is a
+      term this release introduces, so no existing note carries it and no
+      exemption has to be bought for one.
+
+      A RETIRED NOTE OWES NEITHER A ROW NOR AN EXCLUSION, the same live
+      predicate the row side reads. Demanding one of a `superseded` or
+      `retracted` note cannot be satisfied: the escapes are to render the dead
+      title as a row - undoing the repair the row side just asked for - or to
+      write `excluded_from_model` onto a corpse, which records a decision
+      about a live revenue line on a note nobody will open. The failure calls
+      it "an input the ledger holds", and a note the ledger has retired is not
+      one. excluded-line-on-roadmap reads the same narrowed set, so a retired
+      note a `milestone` still `moves` is silent here too - that is a roadmap
+      pointing at a dead note, a different repair this mode should not be
+      giving.
 
       model-row-no-assumption: a row matching no `assumption` or `claim` note
       title at all. The reverse direction, and it is what stops the rule above
@@ -4049,12 +4061,25 @@ if [ "$MODE" = "assumption-rows" ]; then
 					if (isa || ty == "claim") {
 						ti = V[f, "title"]
 						st = V[f, "status"]
+						live = (st != "superseded" && st != "retracted")
 						if (ti != "") {
-							if (st != "superseded" && st != "retracted") TITLE[ti] = 1
+							if (live) TITLE[ti] = 1
 							else if (!(ti in DEAD)) { DEAD[ti] = V[f, "id"]; DEADST[ti] = st }
 						}
+						# THE SAME LIVE PREDICATE, and MI reads it for the reason
+						# TITLE does. A retired note declaring `model_input` owes no
+						# row: the only ways to satisfy the demand are to render the
+						# dead title as a row - undoing the repair the row side just
+						# asked for - or to write `excluded_from_model` onto a
+						# corpse, which records a decision about a live revenue line
+						# on a note nobody will open. Observed end to end: the row
+						# side flagged a dead-backed row, re-titling it to the live
+						# claim cleared that, and this half then demanded a row for
+						# the superseded note the repair had just pointed away from.
+						# "an input the ledger holds" is what the failure says, and a
+						# note the ledger has retired is not one.
+						if (isa && live && V[f, "model_input"] != "") MI[++nmi] = f
 					}
-					if (isa && V[f, "model_input"] != "") MI[++nmi] = f
 
 					# What the roadmap ships a change to. `moves` names the note
 					# an item moves, which roadmap-sequencing.md already
@@ -4096,17 +4121,22 @@ if [ "$MODE" = "assumption-rows" ]; then
 					else
 						report("financial-model.md", "model-table-missing", "",
 							"the assumptions section of financial-model.md lists no rows and the vault carries " nmi " assumption note" (nmi == 1 ? "" : "s") " declaring `model_input`. A table with a heading and no rows reads as a model whose inputs are stated somewhere, and they are stated in the ledger only - so the projection has no visible input list at all")
-					printf("%d declared model input%s and no assumptions table the model renders - %s\n", nmi, (nmi == 1 ? "" : "s"), vault)
+					printf("%d live declared model input%s and no assumptions table the model renders - %s\n", nmi, (nmi == 1 ? "" : "s"), vault)
 					exit
 				}
 
 				for (i = 1; i <= NROW; i++) {
 					if (ROW[i] in TITLE) { HIT[ROW[i]] = 1; continue }
 					# A RETIRED MATCH IS ONE SITUATION AND GETS ONE FAILURE. HIT
-					# is set here too, so the note-side rule below stays exactly
-					# as it was: the row IS rendered, and reporting the same pair
-					# again as an input the table has no row for would send its
-					# reader to a second, wrong repair.
+					# is set here too, so the same pair is never also reported as
+					# an input the table has no row for - a second, wrong repair.
+					# SINCE MI WENT LIVE-ONLY THIS MARKING CANNOT BE THE THING
+					# THAT CLEARS IT: an MI member is a live assumption, so its
+					# title is in TITLE and a matching row takes the branch above.
+					# It stays because the invariant belongs to the row loop
+					# rather than to the note predicate - widen MI again and this
+					# line is the only thing standing between one situation and
+					# two failures pointing at different repairs.
 					if (ROW[i] in DEAD) {
 						HIT[ROW[i]] = 1
 						report("financial-model.md", "model-row-dead-assumption", DEAD[ROW[i]],
@@ -4158,7 +4188,7 @@ if [ "$MODE" = "assumption-rows" ]; then
 				# matched count over a set it never had. A reader has to be able
 				# to tell that half agreeing from that half not running.
 				else if (nmi == 0)
-					printf("%d assumption row%s against no declared model inputs - %s. Not checked: whether a declared input reached the table, because no `assumption` note carries `model_input`.\n",
+					printf("%d assumption row%s against no declared model inputs - %s. Not checked: whether a declared input reached the table, because no live `assumption` note carries `model_input`.\n",
 						NROW, (NROW == 1 ? "" : "s"), vault)
 				# TWO COUNTS, NOT TWO SIDES OF ONE. `against` read as a
 				# comparison between two sets that have to agree, and they do
@@ -4168,7 +4198,7 @@ if [ "$MODE" = "assumption-rows" ]; then
 				# now, one half at a time, rather than implying an equality
 				# whose absence would then read as a miscount.
 				else
-					printf("%d assumption row%s each backed by a live `assumption` or `claim` note, and %d declared model input%s each rendered as a row or excluded with a reason, matched verbatim - %s\n",
+					printf("%d assumption row%s each backed by a live `assumption` or `claim` note, and %d live declared model input%s each rendered as a row or excluded with a reason, matched verbatim - %s\n",
 						NROW, (NROW == 1 ? "" : "s"), nmi, (nmi == 1 ? "" : "s"), vault)
 			}
 		' "$RECORDS")
