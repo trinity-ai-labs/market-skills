@@ -102,6 +102,19 @@
 #      Both modes are gated on schemaVersion 3 and both are asserted SILENT at 1
 #      and at 2, because every corpus that exists is at one of those and carries
 #      none of the fields either mode reads.
+#  20. --supersession-sweep reads the edge from BOTH ends. A note whose
+#      `superseded_by` names a successor that never named it back is a
+#      half-written edge and not replaced-by-nothing, a `superseded_by` naming
+#      no note in the vault is a third row again, and a well-formed pair beside
+#      them stays silent. The back-edge written onto the successor clears it,
+#      and neither check is gated on schemaVersion - asserted both ways, on a
+#      vault that writes no `superseded_by` and on the same broken edges stamped
+#      back down to 1.
+#  21. --assumption-rows reads a row's match against the note's `status`. A live
+#      row whose only title match is `superseded` or `retracted` is its own
+#      failure rather than a match, the sibling row backed by a `current` note
+#      stays silent, the same pair is never reported twice under two codes, and
+#      re-filing the note as `current` clears it.
 
 set -u
 
@@ -2157,6 +2170,190 @@ case "$CD_NONE" in
 *'no current claim or assumption names a resolving document section'*)
 	ok "the absent citation is named rather than reported clean" ;;
 *) no "--claim-drift did not say there was nothing cited (got: $CD_NONE)" ;;
+esac
+
+# --- 20. the supersession edge has two ends -----------------------------------
+# The sweep walks `supersedes`, which lives on the SUPERSEDING note - so until
+# now a note recording its own replacement in `superseded_by` whose named
+# successor never wrote the other half was invisible from both directions at
+# once, and printed under `superseded by: nothing`. That says the record names no
+# replacement, when in fact it names one and the other end is missing, and the
+# two need different repairs. Observed: an assumption backing a live model row
+# carried `superseded_by`, the sweep reported it as replaced by nothing, and
+# three current claims went on resting on the dead note.
+#
+# The vault carries a well-formed pair alongside the two broken ones, so the
+# COUNT is the assertion with teeth: a rule that reported every note carrying
+# `superseded_by` would fire three times here and still clear a census looking
+# only for the check names.
+printf '\nhalf-written supersession edges\n'
+
+HE=$("$LINT" --supersession-sweep --vault "$HERE/supersession-half-edge" --json 2>/dev/null)
+HE_STATUS=$?
+[ "$HE_STATUS" = "1" ] && ok "a half-written supersession edge fails the sweep" ||
+	no "supersession-half-edge should exit 1 (got $HE_STATUS)"
+case "$HE" in
+*'"broken_edge_count": 2'*) ok "the well-formed pair beside them is not reported" ;;
+*) no "the sweep did not report exactly two half-written edges (got: $HE)" ;;
+esac
+
+# The two codes are separate rows because the repairs differ: one line on a note
+# the record already names, versus a successor that has to be written or a typo
+# fixed. Folding them into one code would send half the readers to the wrong fix.
+case "$HE" in
+*'"id": "ASSUMPTION-HE1CC003"'*'"check": "superseded-by-unreciprocated"'*)
+	ok "a successor that does not name its predecessor back is reported by name" ;;
+*) no "superseded-by-unreciprocated did not name ASSUMPTION-HE1CC003 (got: $HE)" ;;
+esac
+# Both globs are anchored INSIDE one row - id first, then the code - because a
+# `check` glob followed by an ID matches an ID that turns up anywhere later in
+# the document, and `reached_no_document` further down carries both of these.
+# An assertion satisfied by a different section is one that passes while the row
+# it names reports the wrong note.
+case "$HE" in
+*'"id": "ASSUMPTION-HE1EE005"'*'"check": "superseded-by-dangling"'*)
+	ok "a superseded_by naming no note in the vault is a separate row" ;;
+*) no "superseded-by-dangling did not name ASSUMPTION-HE1EE005 (got: $HE)" ;;
+esac
+
+# THE ROW IT REPLACES. Under the bug this note read as replaced by nothing at
+# all, so the assertion that has teeth is the worklist row itself carrying the
+# successor the record names - a check that only counted failures would pass
+# while the worklist went on telling its reader there was nothing to look for.
+case "$HE" in
+*'"declared_superseded_by": "CLAIM-HE1DD004", "edge_state": "unreciprocated"'*)
+	ok "the worklist row names the successor instead of reporting replaced-by-nothing" ;;
+*) no "the worklist row did not carry the declared successor (got: $HE)" ;;
+esac
+case "$HE" in
+*'superseded by: nothing'*) no "a note whose record names a successor still printed replaced-by-nothing" ;;
+*) ok "replaced-by-nothing is not printed over a note whose record names a successor" ;;
+esac
+
+# THE PASSING COUNTERPART, asserted on a copy with the back-edge written. Without
+# it the rule reads as failing every `superseded_by` in existence, and the fix it
+# asks for would have no way to clear it.
+HE_FIX="$PAIRS_FILE.half-edge-closed"
+rm -rf "$HE_FIX"
+cp -R "$HERE/supersession-half-edge" "$HE_FIX"
+strip_cr <"$HERE/supersession-half-edge/claims/CLAIM-HE1DD004.md" |
+	awk '{ print }
+		/^stale_after: "2099-12-31"$/ {
+			print "supersedes:"
+			print "  - ASSUMPTION-HE1CC003"
+			print "supersedes_reason: \"Onboarding went self-serve, so the flat-load figure no longer holds.\""
+			print "reconciled: \"2026-07-20\""
+		}' >"$HE_FIX/claims/CLAIM-HE1DD004.md"
+if grep -q '^  - ASSUMPTION-HE1CC003$' "$HE_FIX/claims/CLAIM-HE1DD004.md"; then
+	ok "the copy with the back-edge written carries it"
+else
+	no "the back-edge rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+HE_FIX_OUT=$("$LINT" --supersession-sweep --vault "$HE_FIX" --json 2>/dev/null)
+case "$HE_FIX_OUT" in
+*'"broken_edge_count": 1'*) ok "writing the other end of the edge clears its row" ;;
+*) no "the back-edge did not clear superseded-by-unreciprocated (got: $HE_FIX_OUT)" ;;
+esac
+
+# NOT GATED ON schemaVersion, and both directions of that need asserting.
+# Sliced off $SC rather than re-invoking the lint over the clean vault, per the
+# capture-once rule above; 2e already asserts that vault exits 0, and a second
+# copy of that assertion here would only make the suite slower.
+case "$SC" in
+*'"broken_edge_count": 0'*) ok "a vault writing no superseded_by owes neither new check" ;;
+*) no "a clean sweep reported a broken edge, or dropped the count (got: $SC)" ;;
+esac
+
+# The direction that has teeth: the SAME half-written edges at schemaVersion 1
+# still fail. A check gated on the version would go silent here, and every
+# corpus in existence is at 1 or 2 - so a rule that only fired at 3 would leave
+# the failure this slice exists for invisible on exactly the vaults carrying it.
+HE_AT1="$PAIRS_FILE.half-edge-at-1"
+rm -rf "$HE_AT1"
+cp -R "$HERE/supersession-half-edge" "$HE_AT1"
+printf '{\n  "schemaVersion": 1,\n  "created": "2026-07-31"\n}\n' >"$HE_AT1/.vault/config.json"
+if grep -q '"schemaVersion": 1' "$HE_AT1/.vault/config.json"; then
+	ok "the copy stamped at schemaVersion 1 carries it"
+else
+	no "the schemaVersion rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+HE_AT1_OUT=$("$LINT" --supersession-sweep --vault "$HE_AT1" --json 2>/dev/null)
+HE_AT1_STATUS=$?
+[ "$HE_AT1_STATUS" = "1" ] && ok "the same half-written edges still fail at schemaVersion 1" ||
+	no "a half-written edge must fail at 1 as well (got $HE_AT1_STATUS)"
+case "$HE_AT1_OUT" in
+*'"broken_edge_count": 2'*) ok "neither new check is gated on the version" ;;
+*) no "the count changed at schemaVersion 1 (got: $HE_AT1_OUT)" ;;
+esac
+
+# --- 21. a live model row backed only by a retired note -----------------------
+# `--assumption-rows` matched a row against every assumption title regardless of
+# `status`, so a live row whose only match was `superseded` matched cleanly and
+# the mode printed `matched verbatim` over it. Observed as exactly that: a live
+# row in the assumptions table backed only by a superseded note, green for days.
+# One of the three rows in this vault is backed by a `current` note, so the count
+# is what says the status is read rather than the whole table flagged.
+printf '\nretired notes behind live model rows\n'
+
+MRS=$("$LINT" --assumption-rows --vault "$HERE/model-row-superseded" --json 2>/dev/null)
+MRS_STATUS=$?
+[ "$MRS_STATUS" = "1" ] && ok "a live row backed only by a retired note fails" ||
+	no "model-row-superseded should exit 1 (got $MRS_STATUS)"
+case "$MRS" in
+*'"failure_count": 2'*) ok "the row whose note is current is not reported" ;;
+*) no "--assumption-rows did not report exactly two rows over model-row-superseded (got: $MRS)" ;;
+esac
+
+# BOTH RETIRED STATUSES. A check reading only `superseded` would leave a
+# withdrawn assumption backing a live row, which is the same defect under the
+# other word the schema allows - and the message has to name the status, because
+# re-file and point-at-the-successor are different repairs.
+# One case per status, each anchored inside its own row. Written as one glob,
+# `status: superseded` matches the FIRST failure and the second note ID then
+# matches anywhere after it - so the word `retracted` is never asserted at all,
+# and hardcoding `superseded` into the message would still pass.
+case "$MRS" in
+*'"id": "ASSUMPTION-MS22BB02"'*'status: superseded'*)
+	ok "a superseded note behind a live row is reported with its status" ;;
+*) no "model-row-dead-assumption did not name the superseded note status (got: $MRS)" ;;
+esac
+case "$MRS" in
+*'"id": "ASSUMPTION-MS33CC03"'*'status: retracted'*)
+	ok "a retracted note behind a live row is reported with its status" ;;
+*) no "model-row-dead-assumption did not name the retracted note status (got: $MRS)" ;;
+esac
+case "$MRS" in
+*'"check": "model-row-no-assumption"'*)
+	no "a retired match was reported as a row matching nothing - the two repairs differ" ;;
+*) ok "a retired match is not reported as a row matching no note at all" ;;
+esac
+
+# ONE SITUATION, ONE FAILURE. Both retired notes declare `model_input`, so a
+# reading that left the row unmatched would report them AGAIN as inputs the table
+# has no row for - sending the reader to a second, wrong repair.
+case "$MRS" in
+*'"check": "assumption-not-in-model"'*)
+	no "the retired note was reported twice, as a dead row and as an input with no row" ;;
+*) ok "the rendered row keeps assumption-not-in-model silent on the same note" ;;
+esac
+
+# THE PASSING COUNTERPART. Re-filing the note as current clears its row, which is
+# one of the two repairs the message names - without this the rule reads as
+# banning a title that ever belonged to a retired note.
+MRS_FIX="$PAIRS_FILE.model-row-refiled"
+rm -rf "$MRS_FIX"
+cp -R "$HERE/model-row-superseded" "$MRS_FIX"
+strip_cr <"$HERE/model-row-superseded/assumptions/ASSUMPTION-MS22BB02.md" |
+	awk '{ sub(/^status: superseded$/, "status: current"); print }' >"$MRS_FIX/assumptions/ASSUMPTION-MS22BB02.md"
+if grep -q '^status: current$' "$MRS_FIX/assumptions/ASSUMPTION-MS22BB02.md"; then
+	ok "the copy with the note re-filed as current carries it"
+else
+	no "the status rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+MRS_FIX_OUT=$("$LINT" --assumption-rows --vault "$MRS_FIX" --json 2>/dev/null)
+case "$MRS_FIX_OUT" in
+*'"failure_count": 1'*) ok "re-filing the note as current clears its row" ;;
+*) no "a current note must clear model-row-dead-assumption (got: $MRS_FIX_OUT)" ;;
 esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"

@@ -371,6 +371,23 @@ if its size is visible before it starts — that count is also the instrument
 `docs/specs/2026-07-27-claim-citation-codes.md` names as the trigger that would reopen its
 decision, so it is part of the product rather than a nicety.
 
+**The sweep reads the edge from BOTH ends, and the second one is a failure rather than a worklist
+row.** Everything above walks `supersedes`, which lives on the superseding note, because that is
+where the reason and the `reconciled:` date live. A note carrying `superseded_by` whose named
+successor never wrote the matching `supersedes` was therefore invisible from both directions at
+once and printed under *superseded by: nothing* — which says the record names no replacement, when
+it names one and only the other end is missing. Those are different repairs, and reporting the
+first as the second is what let it sit: on a live corpus an assumption backing a financial-model
+row named its replacement, nothing named it back, and three current claims went on resting on the
+dead note. `superseded-by-unreciprocated` and `superseded-by-dangling` are separate codes for the
+same reason — one needs a line added to a note the record already names, the other needs the
+successor written or a typo fixed, and `check`'s dangling-edge rule walks the block-list edge
+fields and never this scalar. **Neither is gated on `schemaVersion`, and neither needs to be:**
+both fire on the PRESENCE of `superseded_by`, so a corpus that never wrote the field cannot owe
+them — the exemption a version buys, obtained without spending one. `superseded_by` is also the
+third address of the superseded set, beside a `supersedes` edge and `status: superseded`, for the
+reason the other two are both there.
+
 **The worklist is a report and the verdict is a separate question, and the distinction is the
 one thing to keep precise here.** Finding rows is not a failure — a healthy vault exits 0 with a
 worklist in it, because a supersession with a blast radius is the corpus working and a mode that
@@ -459,7 +476,17 @@ of the omission, and every downstream verdict inherited a denominator missing a 
 defaults to TWO**, because the template ships `| # | Assumption | … |` and column one is the `A-n`
 label a milestone's `moves` and the plan's prose both cite — defaulting to it would report every row of
 a correct table as an input that escaped the ledger, which is exactly the crying wolf `--roadmap-table`
-was scoped out for once already. **Its fourth check is the identity's, not the table's**:
+was scoped out for once already. **The row side reads `status` as well as the title, and that is a
+fifth failure rather than a looser match**: `model-row-dead-assumption` fires on a live row whose only
+title match is an `assumption` at `status: superseded` or `retracted`, and the message names the note
+and its status because the two repairs — point the row at the successor, or re-file the note — are
+chosen off exactly that. Matching every title regardless of status made a live row backed only by a
+superseded note report as *matched verbatim*, observed green for days over a live model. It is not
+folded into `model-row-no-assumption`, because the row DID match a note and a reader told nothing
+stands behind it goes and writes a second one; and it marks the row hit, so the same pair is never
+also reported as an input the table has no row for. Ungated, since the trigger is a `status` value a
+corpus only carries where a note was actually retired. **Its fourth check is the identity's, not the
+table's**:
 `excluded-line-on-roadmap` fails an assumption carrying `excluded_from_model` that a `milestone`'s
 `moves` names and that no verdict note lists in `arr_excludes`. Excluding a revenue line is legitimate
 — a metered layer must not be allowed to flatter subscription churn — so what fails is the *silence*,

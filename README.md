@@ -302,6 +302,19 @@ supersession that put them in doubt existed. The verdict applies to a vault at `
 2 — a vault at 1 predates the field and exits 0 either way. It says the read happened, not that
 it was done well; what it removes is skipping the read by default.
 
+**And a supersession has two ends.** `supersedes` is written on the replacement; `superseded_by`
+is the same edge written on the note being replaced, and the whole worklist is built from the
+first one, because that is where the reason and the `reconciled:` date live. So a note naming its
+successor in `superseded_by` where that successor never named it back used to read as *replaced
+by nothing at all* — which says the record names no replacement, when in fact it names one and
+only the other end is missing. That cost a real corpus a live financial-model row backed by a
+dead note, with three current claims still resting on it, because nothing could see that the edge
+existed and was half written. Two failures now, kept separate because the repairs are: a
+`superseded_by` naming a note that does not list it back needs one line added to that note, and a
+`superseded_by` naming an ID the vault does not hold needs somebody to write the successor or fix
+a typo. Neither is gated on a version — both fire on the presence of the field, so a vault that
+never wrote it owes nothing.
+
 `--red-team` asks the same question of the panel. `red-team.md` carries a `## Lenses dispatched`
 roster, and this fails when a lens named there wrote no objection row, or when a row names a
 lens the roster does not — a lens that returned findings, saw them folded into two documents and
@@ -419,7 +432,13 @@ So an `assumption` note that declares itself a model input — `model_input: rev
 either a row in the assumptions table, matched on its `title` **verbatim**, or an
 `excluded_from_model` reason saying why the model does not carry it. Either clears the rule; neither
 is the failure. It reads the reverse direction too, because otherwise the cheapest way past the
-first check is a row nothing in the ledger stands behind. **And there is one rule that is about the
+first check is a row nothing in the ledger stands behind. **The reverse direction reads `status`
+as well as the title:** a live row whose only matching note is `superseded` or `retracted` is its
+own failure, naming the note it found and the status it carries. The title match says the row was
+rendered off *some* note; only the status says the ledger still stands behind it, and a projection
+resting on a retired assumption has nothing ordering it in the validation queue while every check
+reads green — which is what happened, a live row backed only by a superseded note, reported as
+*matched verbatim* for days. **And there is one rule that is about the
 target rather than the table:** where the roadmap ships a dated change to a line the model excludes,
 the verdict note has to name that line in `arr_excludes` — the exit identity is ARR × multiple and
 none of the multiple's inputs is ARR, so an undeclared exclusion is a denominator nobody can see.

@@ -235,6 +235,14 @@ decisions/DECISION-SUPS0002.md
   rather than `superseded`. Supersession is two edits and only one was made
 ```
 
+**Write the edge on the replacement, not only on the note being replaced.** `superseded_by` on
+the target is legitimate and useful to a reader who opens that file, but every query walks
+`supersedes` — so an edge written from that side alone is a supersession only one file knows
+about, and `--supersession-sweep` reports the note as replaced by *nothing at all* while the
+sections it was cited into go unnamed. It fails that as `superseded-by-unreciprocated`, and a
+`superseded_by` naming an ID the vault does not hold as `superseded-by-dangling`. Neither is
+gated on the version, so both apply from the first stage of a migration.
+
 **When the prose gives no reason, write what the prose supports and no more.** `supersedes`
 without `supersedes_reason` is rejected, and the temptation under a bulk migration is to
 back-fill something plausible. "The later pull returned a different figure; the corpus does not
@@ -902,7 +910,10 @@ the upgrade here is opt-in per note: go through the assumptions table in `financ
 for each row mint or find the `assumption` note behind it and copy the row's `Assumption` cell into
 `title` **unchanged**. The match is verbatim, so a note whose title is a tidied-up version of its row
 fails twice over — once as a row with no note behind it, once as a declared input the table never
-lists. This is stage 4 read from the other end, and a back-fill is the one moment the two lists sit
+lists. **And "find the note behind it" means a note that is still `current`**: a row whose only
+title match is `superseded` or `retracted` fails as `model-row-dead-assumption`, because the
+projection is standing on a value the ledger already retired. Point the row at the successor, or
+re-file the note if the migration retired it in error. This is stage 4 read from the other end, and a back-fill is the one moment the two lists sit
 side by side and can be made to agree for free.
 
 **`--claim-drift` is the expensive half, and the cost is a real read rather than a transcription.**

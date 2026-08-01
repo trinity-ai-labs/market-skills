@@ -129,7 +129,8 @@ and is never restated here.
     the rule that every number in a projection is a named row is checked by reading the model, and
     whether a named assumption is MISSING from the table can only be checked against the notes. It
     fails a declared model input with no row and no stated exclusion, a row matching no assumption
-    `title`, and a revenue line the roadmap ships that the model does not carry and the identity
+    `title`, a row whose only `title` match is an assumption the ledger has retired, and a revenue
+    line the roadmap ships that the model does not carry and the identity
     does not declare. **What that last one cost, undetected, is the largest miss on record here:**
     a revenue line existed as correctly authored notes, never became rows, was filed as revenue
     outside the model, and three separate verdict re-solves each corrected a different term and
@@ -1371,8 +1372,10 @@ three milestones, and where everything landed. Invite pushback on the specific b
   as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault at the per-dimension gate, and the render gate ran
   `vault-lint.sh --release-gate` to a zero exit — every part, one verdict — with the
-  `--supersession-sweep` worklist it printed read to its end and every superseded pair carrying
-  the `reconciled:` date of that read. The bare run is a strict subset of
+  `--supersession-sweep` worklist it printed read to its end, every superseded pair carrying
+  the `reconciled:` date of that read, and every note naming its replacement in `superseded_by`
+  named back by that replacement in `supersedes` — a supersession the successor does not record
+  is one the sweep reads as replaced by nothing, so its cited sections are never named. The bare run is a strict subset of
   the checks that exist and its success line now says so, so a plan clears it while citing a
   document nobody can open — and the last thing standing between that citation and a rendered
   PDF is this gate.
@@ -1456,8 +1459,9 @@ three milestones, and where everything landed. Invite pushback on the specific b
   directory has neither check run over it — which prints the same green as one that passed them.
 - The financial model's assumptions table is complete in **both** directions — no number appears
   in a projection that isn't a named assumption row, **and** no assumption note that declares
-  itself a model input is missing from the table. `vault-lint.sh --assumption-rows` reads the two
-  against each other; the second half is the one that was prose and never fired, and what it cost
+  itself a model input is missing from the table, **and** no live row is backed only by an
+  assumption the ledger has retired to `superseded` or `retracted`. `vault-lint.sh
+  --assumption-rows` reads all three against each other; the second half is the one that was prose and never fired, and what it cost
   was a whole revenue line that existed as correctly authored notes, never became rows, and was
   therefore filed as *revenue outside this model* — which reads as a modelling decision and was a
   consequence of the omission. Every verdict downstream inherited a denominator missing it.

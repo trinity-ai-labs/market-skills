@@ -463,6 +463,27 @@ vault-lint.sh - read-only checks over a claim vault.
       field, cannot owe it, and exits 0 either way - vault-migration.md carries
       the back-fill.
 
+      superseded-by-unreciprocated: a note whose `superseded_by` names a note
+      this vault holds, where that note's `supersedes` does not name it back.
+      The worklist is walked from the SUPERSEDING side, because that is where
+      the reason and the `reconciled:` date live - so an edge written from the
+      replaced note's end only reaches nothing, and the note reads as replaced
+      by nothing at all while the record plainly names a successor. Observed:
+      an assumption backing a live model row carried `superseded_by`, the named
+      claim never named it back, and three current claims went on resting on
+      the dead note. The repair is one line on the note the record already
+      names, which is why this is not the same row as replaced-by-nothing.
+
+      superseded-by-dangling: a note whose `superseded_by` names an ID no note
+      in this vault carries. The record names a successor nobody can open, so
+      there is nothing to read the replacement out of and nothing to add the
+      back-edge to. The dangling-edge check in `check` walks the block-list
+      edge fields and never this scalar, so nothing else reports it.
+
+      Neither is gated on schemaVersion: both fire on the PRESENCE of
+      `superseded_by`, so a corpus that never wrote the field cannot owe them
+      and no existing vault reddens on the day the skill updates.
+
       It reports the row count as well as the rows, because the gate that
       consumes this is a read and a read is bounded only if its size is visible
       before it starts. A superseded note whose used_in named nothing is listed
@@ -688,7 +709,7 @@ vault-lint.sh - read-only checks over a claim vault.
   vault-lint.sh --assumption-rows [--vault PATH] [--json]
       Check the assumptions table in financial-model.md against the assumption
       notes that declare themselves inputs to the model, both directions. A
-      verdict - it exits 1 on any of its four failures.
+      verdict - it exits 1 on any of its five failures.
 
       This is --roadmap-table one artifact over, and it exists because the
       rule it inverts had no counterpart. plan-template.md requires that no
@@ -718,6 +739,16 @@ vault-lint.sh - read-only checks over a claim vault.
       model-row-no-assumption: a row matching no `assumption` note title. The
       reverse direction, and it is what stops the rule above being cleared by
       writing a row nothing in the ledger stands behind.
+
+      model-row-dead-assumption: a row whose only title match is an
+      `assumption` note at `status: superseded` or `retracted`. The title match
+      says the row was rendered off SOME note; it does not say the ledger still
+      stands behind it. A live row backed only by a retired note is an input
+      the projection rests on that nothing orders in the validation queue, and
+      the match reads as clean - observed as exactly that, a live assumption
+      row backed only by a superseded note with the mode reporting `matched
+      verbatim` for days. It is separate from model-row-no-assumption because
+      the repair is: point the row at the successor, or re-file the note.
 
       excluded-line-on-roadmap: an assumption the roadmap ships a change to -
       a `milestone` whose `moves` names it - that carries
@@ -1553,6 +1584,25 @@ function Invoke-ModeSupersessionSweep {
 		return 'a' + $Anchor
 	}
 
+	# Which end of the supersession edge this note is actually reachable from -
+	# bin/vault-lint.sh's estate(). `superseded_by` is the field a reader writes
+	# on the note being REPLACED, and until now nothing read it, so a note whose
+	# successor never wrote the matching `supersedes` reported as replaced by
+	# nothing at all. Four values: confirmed, unreciprocated, dangling, absent.
+	#
+	# $SBYST DECIDES WHEREVER THE FIELD IS PRESENT, and $Confirmed only where it
+	# is not. Reading $Confirmed first would report `edge_state: confirmed` on a
+	# note some OTHER note supersedes while its own `superseded_by` is broken -
+	# so the one field whose job is to say which end is reachable would call the
+	# edge whole in the same document that lists it under broken_edges. Two call
+	# sites, and the walk that fills $SBYST runs once per note.
+	function Get-SweepEdgeState {
+		param([string]$File, [string]$Confirmed)
+		if ($SBYST.ContainsKey($File)) { return $SBYST[$File] }
+		if ($Confirmed.Length -ne 0) { return 'confirmed' }
+		return 'absent'
+	}
+
 	# One superseded note for the JSON worklist - what it said, what replaced
 	# it, and why. $SbEntry is the [id, reason] pair half one or half two
 	# recorded for this note.
@@ -1563,7 +1613,9 @@ function Invoke-ModeSupersessionSweep {
 		[void]$Sb.Append('"type": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $File 'type')) + '", ')
 		[void]$Sb.Append('"title": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $File 'title')) + '", ')
 		[void]$Sb.Append('"superseded_by": "' + (ConvertTo-SweepJsonEscaped $SbEntry[0]) + '", ')
-		[void]$Sb.Append('"supersedes_reason": "' + (ConvertTo-SweepJsonEscaped $SbEntry[1]) + '"}')
+		[void]$Sb.Append('"supersedes_reason": "' + (ConvertTo-SweepJsonEscaped $SbEntry[1]) + '", ')
+		[void]$Sb.Append('"declared_superseded_by": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $File 'superseded_by')) + '", ')
+		[void]$Sb.Append('"edge_state": "' + (ConvertTo-SweepJsonEscaped (Get-SweepEdgeState $File $SbEntry[0])) + '"}')
 	}
 
 	# The same note, as the human report needs it.
@@ -1571,13 +1623,23 @@ function Invoke-ModeSupersessionSweep {
 		param([System.Text.StringBuilder]$Sb, [string]$File, [string[]]$SbEntry, [string]$Pad)
 		[void]$Sb.Append($Pad + (Get-SweepValue $File 'id') + '  ' + (Get-SweepValue $File 'type') + "`n")
 		[void]$Sb.Append($Pad + '  ' + (Get-SweepValue $File 'title') + "`n")
-		if ($SbEntry[0].Length -eq 0) {
-			[void]$Sb.Append($Pad + '  superseded by: nothing - `status: superseded` with no note naming it in `supersedes`, so the record says this was replaced and not by what' + "`n")
-		} else {
+		$state = Get-SweepEdgeState $File $SbEntry[0]
+		$declared = Get-SweepValue $File 'superseded_by'
+		if ($state -ceq 'confirmed') {
 			[void]$Sb.Append($Pad + '  superseded by ' + $SbEntry[0] + "`n")
 			$reasonText = $SbEntry[1]
 			if ($reasonText.Length -eq 0) { $reasonText = '(none recorded - `supersedes_reason` is absent, so why it was replaced is already gone)' }
 			[void]$Sb.Append($Pad + '  reason: ' + $reasonText + "`n")
+		# A HALF-WRITTEN EDGE IS NOT REPLACED BY NOTHING, and printing it as
+		# though it were is what sent a reader looking for a successor the note
+		# already names. The successor is named HERE, where the reader of this
+		# row is; why the edge is broken and what to do about it is one paragraph
+		# in the half-written section below, rather than a second wording of the
+		# same finding on every row it reached.
+		} elseif ($state -ceq 'unreciprocated' -or $state -ceq 'dangling') {
+			[void]$Sb.Append($Pad + '  superseded by ' + $declared + ' on its own `superseded_by` only - see the half-written edges below' + "`n")
+		} else {
+			[void]$Sb.Append($Pad + '  superseded by: nothing - `status: superseded` with no note naming it in `supersedes`, so the record says this was replaced and not by what' + "`n")
 		}
 	}
 
@@ -1638,17 +1700,80 @@ function Invoke-ModeSupersessionSweep {
 		}
 	}
 
+	# ------------------------------------------------------------------------
+	# THE SUPERSESSION HAS TWO ENDS AND ONLY ONE OF THEM WAS EVER READ - ports
+	# the `superseded_by` pass in bin/vault-lint.sh's END. Half one above walks
+	# `supersedes`, which lives on the SUPERSEDING note, so a note carrying
+	# `superseded_by` whose named successor never wrote the matching
+	# `supersedes` was invisible from both sides: half one never reached it and
+	# half two prints it under `superseded by: nothing`, which says the record
+	# names no replacement when in fact it names one and the other end is
+	# missing. Different repairs - one line on a named note versus a decision
+	# about what replaced this.
+	#
+	# Observed: an assumption backing a live row in a financial model carried
+	# `superseded_by` naming a claim that never named it back. The sweep
+	# reported it as replaced by nothing, and three current claims went on
+	# resting on the dead note - one of them the single strongest negative in
+	# that corpus - because nothing could see that the edge existed and was half
+	# written.
+	#
+	# RECIPROCITY IS READ OFF $SUPBY, THE INDEX HALF ONE JUST BUILT, rather than
+	# by re-walking the successor `supersedes` list. That is why this pass sits
+	# here and not above: one definition of "that note names this one" means the
+	# row a broken edge reports and the row the worklist prints cannot disagree
+	# about the same pair.
+	#
+	# NOT GATED ON schemaVersion: it fires on the PRESENCE of `superseded_by`,
+	# so a corpus that never wrote the field cannot owe it. A dangling
+	# `superseded_by` is a SEPARATE row - `check` walks the block-list edge
+	# fields and never this scalar, so nothing else reports it, and there is no
+	# note to add the back-edge to.
+	# ------------------------------------------------------------------------
+	$SBYST = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$BROKE = New-Object 'System.Collections.Generic.List[string]'
+	$BWHY = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+
+	foreach ($f in $files) {
+		$sby = Get-SweepValue $f 'superseded_by'
+		if ($sby.Length -eq 0) { continue }
+		$fid = Get-SweepValue $f 'id'
+		if ($BYID.ContainsKey($sby)) { $SBYST[$f] = 'unreciprocated' } else { $SBYST[$f] = 'dangling' }
+		if ($SUPBY.ContainsKey($f)) {
+			# Ordinal, never `-ceq`: that takes the invariant-culture path, which
+			# reports an ID carrying a zero-width space equal to one without, and
+			# awk compares bytes.
+			foreach ($entry in $SUPBY[$f]) {
+				if ([string]::Equals($entry[0], $sby, [System.StringComparison]::Ordinal)) { $SBYST[$f] = 'confirmed'; break }
+			}
+		}
+		if ($SBYST[$f] -ceq 'confirmed') { continue }
+		[void]$BROKE.Add($f)
+		if ($SBYST[$f] -ceq 'unreciprocated') {
+			$BWHY[$f] = '`superseded_by: ' + $sby + '` names a note this vault holds, and `supersedes` on ' + $sby + ' does not name ' + $fid + ' back. The worklist is built from the superseding side, because that is where the reason and the `reconciled:` date live - so a supersession written from this end only reaches nothing: this note reads as replaced by nothing at all, and the sections it was cited into are never named for re-reading. Add ' + $fid + ' to `supersedes` on ' + $sby + ', with the `supersedes_reason` that pair owes'
+		} else {
+			$BWHY[$f] = '`superseded_by: ' + $sby + '` and no note in this vault carries that ID. The record says this note was replaced and names a successor nobody can open, so there is nothing to read the replacement out of and nothing to add the back-edge to - either the successor was never written, or the ID is a typo. The dangling-edge check walks the block-list edge fields and never this scalar, so nothing else in this tool reports it'
+		}
+	}
+
 	# Half two, and the ordering pass for both - bin/vault-lint.sh:1556-1567.
 	# Walking $files rather than the edge loop above is what makes the output
 	# order the vault order instead of a hash order, so two runs over an
 	# unchanged vault produce the same worklist.
+	#
+	# `superseded_by` is the THIRD address of the same fact and joins the set for
+	# the reason the other two are here: the worklist must not depend on the
+	# supersession being well-formed. A note that records its own replacement and
+	# never got its `status` flipped is exactly the half-made pair whose cited
+	# sections still assert the old value, and taking only the other two halves
+	# would leave those sections unnamed.
 	$SUP = New-Object 'System.Collections.Generic.List[string]'
 	foreach ($f in $files) {
 		$id = Get-SweepValue $f 'id'
 		if ($id.Length -eq 0) { continue }
 		$status = Get-SweepValue $f 'status'
 		$hasEntries = $SUPBY.ContainsKey($f) -and $SUPBY[$f].Count -gt 0
-		if (-not $hasEntries -and $status -cne 'superseded') { continue }
+		if (-not $hasEntries -and $status -cne 'superseded' -and (Get-SweepValue $f 'superseded_by').Length -eq 0) { continue }
 		[void]$SUP.Add($f)
 		if (-not $hasEntries) {
 			if (-not $SUPBY.ContainsKey($f)) { $SUPBY[$f] = New-Object 'System.Collections.Generic.List[string[]]' }
@@ -1705,15 +1830,30 @@ function Invoke-ModeSupersessionSweep {
 	$nsup = $SUP.Count
 	$nu = $UNREC.Count
 	$nnou = $NOUSE.Count
+	$nb = $BROKE.Count
 
 	if ($script:JSON -eq 1) {
 		$sb = New-Object System.Text.StringBuilder
 		[void]$sb.Append("{`n")
-		if ($nu -eq 0) { [void]$sb.Append('  "ok": true,' + "`n") } else { [void]$sb.Append('  "ok": false,' + "`n") }
+		if ($nu -eq 0 -and $nb -eq 0) { [void]$sb.Append('  "ok": true,' + "`n") } else { [void]$sb.Append('  "ok": false,' + "`n") }
 		[void]$sb.Append('  "vault": "' + (ConvertTo-SweepJsonEscaped $script:VAULT) + "`",`n")
 		[void]$sb.Append('  "worklist_count": ' + $nt + ",`n")
 		[void]$sb.Append('  "superseded_count": ' + $nsup + ",`n")
 		[void]$sb.Append('  "unreconciled_count": ' + $nu + ",`n")
+		[void]$sb.Append('  "broken_edge_count": ' + $nb + ",`n")
+		[void]$sb.Append('  "broken_edges": [')
+		for ($i = 0; $i -lt $nb; $i++) {
+			$f = $BROKE[$i]
+			if ($i -eq 0) { [void]$sb.Append("`n    {") } else { [void]$sb.Append(",`n    {") }
+			[void]$sb.Append('"id": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'id')) + '", ')
+			[void]$sb.Append('"file": "' + (ConvertTo-SweepJsonEscaped $f) + '", ')
+			[void]$sb.Append('"type": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'type')) + '", ')
+			[void]$sb.Append('"title": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'title')) + '", ')
+			[void]$sb.Append('"check": "superseded-by-' + $SBYST[$f] + '", ')
+			[void]$sb.Append('"superseded_by": "' + (ConvertTo-SweepJsonEscaped (Get-SweepValue $f 'superseded_by')) + '", ')
+			[void]$sb.Append('"detail": "' + (ConvertTo-SweepJsonEscaped $BWHY[$f]) + '"}')
+		}
+		if ($nb -eq 0) { [void]$sb.Append('],' + "`n") } else { [void]$sb.Append("`n  ],`n") }
 		[void]$sb.Append('  "unreconciled": [')
 		for ($i = 0; $i -lt $nu; $i++) {
 			$f = $UNREC[$i]
@@ -1759,7 +1899,7 @@ function Invoke-ModeSupersessionSweep {
 		}
 		if ($m -eq 0) { [void]$sb.Append("]`n}`n") } else { [void]$sb.Append("`n  ]`n}`n") }
 		Write-OutText $sb.ToString()
-		if ($nu -eq 0) { exit 0 } else { exit 1 }
+		if ($nu -eq 0 -and $nb -eq 0) { exit 0 } else { exit 1 }
 	}
 
 	$sb = New-Object System.Text.StringBuilder
@@ -1783,28 +1923,47 @@ function Invoke-ModeSupersessionSweep {
 		}
 	}
 
+	# The half-written edges print above the reconciliation verdict and above the
+	# schemaVersion gate, because this one is not gated: it fires on the presence
+	# of `superseded_by`, so a vault at 1 that writes the field owes the same
+	# answer as one at 3.
+	[void]$sb.Append("`n  supersessions the record only half made - ``superseded_by`` names a successor that does not name it back`n")
+	if ($nb -eq 0) { [void]$sb.Append("    (none)`n") }
+	foreach ($f in $BROKE) {
+		[void]$sb.Append('    ' + (Get-SweepValue $f 'id') + '  ' + (Get-SweepValue $f 'type') + '  superseded-by-' + $SBYST[$f] + "`n")
+		[void]$sb.Append('      ' + (Get-SweepValue $f 'title') + "`n")
+		[void]$sb.Append('      superseded_by ' + (Get-SweepValue $f 'superseded_by') + "`n")
+		[void]$sb.Append('      ' + $BWHY[$f] + "`n")
+	}
+
 	# The verdict prints last, because it is the half a reader acts on and the
 	# worklist above it can run to dozens of rows. At schemaVersion 1 the
 	# section says the rule does not apply rather than printing an empty list.
+	#
+	# A BRANCH RATHER THAN AN EARLY RETURN, so both summary lines below print in
+	# one place. A vault at 1 can still carry a half-written edge, and a summary
+	# skipped by an early return leaves its reader reconstructing the verdict
+	# from the exit code.
 	if ([int]$script:FOUND_SCHEMA -lt 2) {
 		[void]$sb.Append("`n  reconciliation is a schemaVersion 2 rule and this vault is at " + $script:FOUND_SCHEMA + " - the worklist above is a report here, and nothing was asked about whether it was read`n")
-		Write-OutText $sb.ToString()
-		exit 0
+	} else {
+		[void]$sb.Append("`n  supersessions with nothing recording that the worklist was read`n")
+		if ($nu -eq 0) { [void]$sb.Append("    (none)`n") }
+		foreach ($f in $UNREC) {
+			[void]$sb.Append('    ' + (Get-SweepValue $f 'id') + '  ' + (Get-SweepValue $f 'type') + "`n")
+			[void]$sb.Append('      ' + (Get-SweepValue $f 'title') + "`n")
+			[void]$sb.Append('      supersedes ' + $UTGT[$f] + "`n")
+			[void]$sb.Append('      ' + $UWHY[$f] + "`n")
+		}
 	}
-
-	[void]$sb.Append("`n  supersessions with nothing recording that the worklist was read`n")
-	if ($nu -eq 0) { [void]$sb.Append("    (none)`n") }
-	foreach ($f in $UNREC) {
-		[void]$sb.Append('    ' + (Get-SweepValue $f 'id') + '  ' + (Get-SweepValue $f 'type') + "`n")
-		[void]$sb.Append('      ' + (Get-SweepValue $f 'title') + "`n")
-		[void]$sb.Append('      supersedes ' + $UTGT[$f] + "`n")
-		[void]$sb.Append('      ' + $UWHY[$f] + "`n")
+	if ($nb -gt 0) {
+		[void]$sb.Append("`nvault-lint supersession-sweep: " + $nb + ' half-written supersession edge' + (Get-SweepPlural $nb) + ' - the record names a successor and the successor does not name it back, under ' + $script:VAULT + "`n")
 	}
 	if ($nu -gt 0) {
 		[void]$sb.Append("`nvault-lint supersession-sweep: " + $nu + ' supersession' + (Get-SweepPlural $nu) + ' with nothing recording that its sections were read, under ' + $script:VAULT + "`n")
 	}
 	Write-OutText $sb.ToString()
-	if ($nu -eq 0) { exit 0 } else { exit 1 }
+	if ($nu -eq 0 -and $nb -eq 0) { exit 0 } else { exit 1 }
 }
 
 # ----------------------------------------------------------------------------
@@ -3496,7 +3655,19 @@ function Invoke-ModeAssumptionRows {
 	# Three sets over the notes, in one walk. TITLE is every assumption title a
 	# row may match - not only the declared inputs - because a row whose note
 	# exists and agrees is not a failure whatever else that note declares.
+	#
+	# A SUPERSEDED OR RETRACTED NOTE IS NOT A MATCH, and $dead holds it
+	# separately rather than beside the live titles. The title key alone says the
+	# row was rendered off SOME note; only the status says the ledger still
+	# stands behind it, and a row whose only match has been retired is a live
+	# input resting on a value nobody is obliged to maintain. Observed: a live
+	# row in the assumptions table was backed only by a superseded note, and this
+	# mode read `matched verbatim` over it for days. A title carried by both a
+	# live note and a retired one still matches live, because the row loop reads
+	# $titles first.
 	$titles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
+	$dead = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$deadStatus = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
 	$inputs = New-Object 'System.Collections.Generic.List[psobject]'
 	$declared = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 	$moved = New-Object 'System.Collections.Generic.Dictionary[string,string]'
@@ -3504,7 +3675,15 @@ function Invoke-ModeAssumptionRows {
 		$ty = Get-ModelNoteValue $f 'type'
 		$title = Get-ModelNoteValue $f 'title'
 		if (Test-ModelEqual $ty 'assumption') {
-			if ($title.Length -ne 0) { [void]$titles.Add($title) }
+			if ($title.Length -ne 0) {
+				$st = Get-ModelNoteValue $f 'status'
+				if (-not (Test-ModelEqual $st 'superseded') -and -not (Test-ModelEqual $st 'retracted')) {
+					[void]$titles.Add($title)
+				} elseif (-not $dead.ContainsKey($title)) {
+					$dead[$title] = Get-ModelNoteValue $f 'id'
+					$deadStatus[$title] = $st
+				}
+			}
 			# Read once and carried on the record: the guard and the field are the
 			# same lookup, and asking twice is the loop-invariant recompute this
 			# walk exists to do once.
@@ -3576,6 +3755,15 @@ function Invoke-ModeAssumptionRows {
 	$hitTitles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
 	foreach ($row in $modelRows) {
 		if ($titles.Contains($row)) { [void]$hitTitles.Add($row); continue }
+		# A RETIRED MATCH IS ONE SITUATION AND GETS ONE FAILURE. $hitTitles is
+		# set here too, so the note-side rule below stays exactly as it was: the
+		# row IS rendered, and reporting the same pair again as an input the
+		# table has no row for would send its reader to a second, wrong repair.
+		if ($dead.ContainsKey($row)) {
+			[void]$hitTitles.Add($row)
+			Add-ModelFailure 'financial-model.md' 'model-row-dead-assumption' $dead[$row] ('row `' + $row + '` in the assumptions section matches ' + $dead[$row] + ' and that note is `status: ' + $deadStatus[$row] + '`, with no `current` assumption carrying the title. The row is live in the model and the only thing standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one, or re-file the assumption as `current` if it was retired in error')
+			continue
+		}
 		Add-ModelFailure 'financial-model.md' 'model-row-no-assumption' '' ('row `' + $row + '` in the assumptions section matches no `assumption` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing')
 	}
 
