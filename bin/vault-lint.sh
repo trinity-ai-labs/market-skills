@@ -388,11 +388,28 @@ vault-lint.sh - read-only checks over a claim vault.
       roadmap ships. The notes lint clean, the table lints clean, and until
       this mode nothing compared them.
 
-      The key is the assumption `title`, matched VERBATIM, the same rule
+      The key is the note `title`, matched VERBATIM, the same rule
       --roadmap-table holds a milestone title to and for the same reason: the
-      table renders `value`, its source and its confidence off the note, so a
-      correct table matches character for character by construction and a
+      table renders the row off the note - `value` and its confidence where
+      that note is an `assumption`, the sourced figure where it is a `claim` -
+      so a correct table matches character for character by construction and a
       mismatch means the row was written by hand.
+
+      A ROW IS BACKED BY A LIVE NOTE, AND WHICH ONES COUNT IS DECIDED BY
+      `status` RATHER THAN BY WHICH ASSERTING SET HOLDS THE NOTE. An
+      `assumption` and a `claim` both back a row; a `superseded` or
+      `retracted` note of either type does not. THAT PAIR IS THE WHOLE SET,
+      and the other five types are out by argument rather than by omission - a
+      `source` and a `fact` are provenance a claim rests ON rather than a
+      value the projection carries, and a `milestone`, `question` or
+      `decision` asserts no value at all. Reading `assumption` alone made this
+      fail a row this method's own promotion rule produces - a structural
+      driver with no subject instrument belongs in the indexed set, so filing
+      a sourced figure as an unevidenced assumption is the defect, and
+      correcting it retires the assumption and mints a `claim` carrying the
+      same title. Only the note-side direction is about assumptions
+      specifically, because `model_input` is a field a promoted claim does not
+      carry.
 
       assumption-not-in-model: a note carrying `model_input` whose title is no
       row in the table and which carries no `excluded_from_model` reason. The
@@ -400,19 +417,23 @@ vault-lint.sh - read-only checks over a claim vault.
       release introduces, so no existing note carries it and no exemption has
       to be bought for one.
 
-      model-row-no-assumption: a row matching no `assumption` note title. The
-      reverse direction, and it is what stops the rule above being cleared by
-      writing a row nothing in the ledger stands behind.
+      model-row-no-assumption: a row matching no `assumption` or `claim` note
+      title at all. The reverse direction, and it is what stops the rule above
+      being cleared by writing a row nothing in the ledger stands behind. The
+      name is narrower than the rule because the repair is not: what this row
+      is missing is the assumption note the table renders inputs off.
 
-      model-row-dead-assumption: a row whose only title match is an
-      `assumption` note at `status: superseded` or `retracted`. The title match
-      says the row was rendered off SOME note; it does not say the ledger still
-      stands behind it. A live row backed only by a retired note is an input
-      the projection rests on that nothing orders in the validation queue, and
-      the match reads as clean - observed as exactly that, a live assumption
-      row backed only by a superseded note with the mode reporting `matched
-      verbatim` for days. It is separate from model-row-no-assumption because
-      the repair is: point the row at the successor, or re-file the note.
+      model-row-dead-assumption: a row whose EVERY title match is at
+      `status: superseded` or `retracted`. The title match says the row was
+      rendered off SOME note; it does not say the ledger still stands behind
+      it. A live row backed only by a retired note is an input the projection
+      rests on that nothing orders in the validation queue, and the match reads
+      as clean - observed as exactly that, a live assumption row backed only by
+      a superseded note with the mode reporting `matched verbatim` for days. A
+      live `claim` carrying the title clears it, which is what makes a
+      promotion pass rather than read as a defect. It is separate from
+      model-row-no-assumption because the repair is: point the row at the
+      successor, or re-file the note.
 
       excluded-line-on-roadmap: an assumption the roadmap ships a change to -
       a `milestone` whose `moves` names it - that carries
@@ -435,6 +456,11 @@ vault-lint.sh - read-only checks over a claim vault.
       exactly that, and the success line names assumption-not-in-model as not
       run: the row count it prints is the model-row-no-assumption half alone,
       and the half this mode was written for iterated over nothing.
+
+      THE SUCCESS LINE PRINTS TWO COUNTS AND THEY NEED NOT AGREE. A row backed
+      by a `claim` is not a declared model input, and a declared input cleared
+      by `excluded_from_model` is not a row - so the line states what each half
+      checked instead of reading as a comparison whose two sides have to match.
 
       Gated on schemaVersion 3, which is where the fields it reads were added.
       A vault at 1 or 2 carries none of them, cannot owe this, and is told the
