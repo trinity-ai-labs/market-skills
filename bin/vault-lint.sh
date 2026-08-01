@@ -1353,12 +1353,21 @@ fi
 # section per note makes a two-item job look like six, and a worklist that
 # overstates its own size is one that gets skipped at the moment it matters.
 #
-# THE SUPERSEDED SET IS BOTH HALVES OF THE TWO-EDIT RULE: every note named by a
-# `supersedes` edge, and every note carrying `status: superseded`. Taking either
-# half alone would make the worklist depend on the supersession being
-# well-formed - and a half-made supersession is exactly the vault where the
-# worklist matters most, because `check` has already found something wrong with
-# the pair and the documents downstream still say the old thing.
+# THE SUPERSEDED SET IS EVERY ADDRESS OF THE SAME FACT: every note named by a
+# `supersedes` edge, every note carrying `status: superseded`, and every note
+# carrying `superseded_by`. Taking any subset would make the worklist depend on
+# the supersession being well-formed - and a half-made supersession is exactly
+# the vault where the worklist matters most, because `check` has already found
+# something wrong with the pair and the documents downstream still say the old
+# thing.
+#
+# A HALF-WRITTEN EDGE IS A FAILURE, AND A DIFFERENT ONE FROM REPLACED-BY-NOTHING.
+# `superseded_by` names the successor from the replaced note's own side, and
+# nothing here read it, so a successor that never wrote the matching `supersedes`
+# left the pair invisible from both directions - printed as replaced by nothing
+# at all, which sends its reader to decide what replaced this instead of to add
+# one line to a note the record already names. See the END pass for what that
+# cost on a live corpus.
 #
 # THE COUNT IS PART OF THE PRODUCT. The gate that consumes this is a read, and a
 # read is bounded only if its size is visible before it starts - a worklist
@@ -1422,7 +1431,32 @@ if [ "$MODE" = "supersession-sweep" ]; then
 			printf DQ "type" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "type"])
 			printf DQ "title" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "title"])
 			printf DQ "superseded_by" DQ ": " DQ "%s" DQ ", ", jesc(sb[1])
-			printf DQ "supersedes_reason" DQ ": " DQ "%s" DQ "}", jesc(sb[2])
+			printf DQ "supersedes_reason" DQ ": " DQ "%s" DQ ", ", jesc(sb[2])
+			printf DQ "declared_superseded_by" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "superseded_by"])
+			printf DQ "edge_state" DQ ": " DQ "%s" DQ "}", jesc(estate(f, sb[1]))
+		}
+
+		# Which end of the supersession edge this note is actually reachable
+		# from. `superseded_by` is the field a reader writes on the note being
+		# replaced, and until now nothing read it - so a note whose successor
+		# never wrote the matching `supersedes` was reported as replaced by
+		# nothing at all, which is a different repair from the one it needs.
+		#   confirmed      - the successor names it back; the edge is whole
+		#   unreciprocated - `superseded_by` names a note in this vault that
+		#                    does not name it back
+		#   dangling       - `superseded_by` names an ID no note carries
+		#   absent         - the field is not there
+		#
+		# SBYST DECIDES WHEREVER THE FIELD IS PRESENT, and s1 only where it is
+		# not. Reading s1 first would report `edge_state: confirmed` on a note
+		# some OTHER note supersedes while its own `superseded_by` is broken -
+		# so the one field whose job is to say which end is reachable would call
+		# the edge whole in the same document that lists it under broken_edges.
+		# Two call sites, jnote() and tnote(), and the walk that fills SBYST
+		# runs once per note in END.
+		function estate(f, s1) {
+			if (f in SBYST) return SBYST[f]
+			return (s1 != "" ? "confirmed" : "absent")
 		}
 
 		# ------------------------------------------------------------------
@@ -1565,16 +1599,25 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		# said, what replaced it, and why. The reason is what stops the row
 		# sending its reader back to the ledger before they can even decide
 		# whether this section is worth opening.
-		function tnote(f, b, pad,   sb) {
+		function tnote(f, b, pad,   sb, st) {
 			split(SB[f, b], sb, SUBSEP)
 			printf "%s%s  %s\n", pad, V[f, "id"], V[f, "type"]
 			printf "%s  %s\n", pad, V[f, "title"]
-			if (sb[1] == "")
-				printf "%s  superseded by: nothing - `status: superseded` with no note naming it in `supersedes`, so the record says this was replaced and not by what\n", pad
-			else {
+			st = estate(f, sb[1])
+			if (st == "confirmed") {
 				printf "%s  superseded by %s\n", pad, sb[1]
 				printf "%s  reason: %s\n", pad, (sb[2] == "" ? "(none recorded - `supersedes_reason` is absent, so why it was replaced is already gone)" : sb[2])
 			}
+			# A HALF-WRITTEN EDGE IS NOT REPLACED BY NOTHING, and printing it as
+			# though it were is what sent a reader looking for a successor the
+			# note already names. The successor is named HERE, where the reader
+			# of this row is; why the edge is broken and what to do about it is
+			# one paragraph in the half-written section below, rather than a
+			# second wording of the same finding on every row it reached.
+			else if (st == "unreciprocated" || st == "dangling")
+				printf "%s  superseded by %s on its own `superseded_by` only - see the half-written edges below\n", pad, V[f, "superseded_by"]
+			else
+				printf "%s  superseded by: nothing - `status: superseded` with no note naming it in `supersedes`, so the record says this was replaced and not by what\n", pad
 		}
 
 		END {
@@ -1654,14 +1697,77 @@ if [ "$MODE" = "supersession-sweep" ]; then
 				}
 			}
 
+			# THE SUPERSESSION HAS TWO ENDS AND ONLY ONE OF THEM WAS EVER READ.
+			# Half one above walks `supersedes`, which lives on the SUPERSEDING
+			# note. A note carrying `superseded_by` whose named successor never
+			# wrote the matching `supersedes` was therefore invisible from both
+			# sides at once: half one never reached it, and half two prints it
+			# under `superseded by: nothing`, which says the record does not name
+			# a replacement when in fact it names one and the other end is
+			# missing. Those are different repairs - one line on a named note
+			# versus a decision about what replaced this - and reporting the
+			# first as the second is what let it sit.
+			#
+			# Observed: an assumption backing a live row in a financial model
+			# carried `superseded_by` naming a claim that never named it back.
+			# The sweep reported it as replaced by nothing, and three current
+			# claims went on resting on the dead note - one of them the single
+			# strongest negative in that corpus - because nothing could see that
+			# the edge existed and was half written.
+			#
+			# RECIPROCITY IS READ OFF SB, THE INDEX HALF ONE JUST BUILT, rather
+			# than by re-walking the successor `supersedes` list. That is why
+			# this pass sits here and not above: one definition of "that note
+			# names this one" means the row a broken edge reports and the row
+			# the worklist prints cannot disagree about the same pair. A second
+			# walk would also be a third place the `:: label` rule has to be
+			# applied the same way, held together by nothing but a comment.
+			#
+			# NOT GATED ON schemaVersion, and it does not need to be: it fires
+			# only on the PRESENCE of `superseded_by`, so a corpus that never
+			# wrote the field cannot owe it and no vault reddens on the day the
+			# plugin updates. That is the exemption schemaVersion exists to buy,
+			# obtained here without spending a version.
+			#
+			# A DANGLING `superseded_by` IS A SEPARATE ROW rather than folded in
+			# with the unreciprocated one. The block-list dangling-edge check in
+			# `check` walks the edge FIELDS and never this scalar, so nothing
+			# else in the tool reports it - and the repair differs again: there
+			# is no note to add the back-edge to, so either the successor was
+			# never written or the ID is a typo.
+			for (i = 1; i <= nf; i++) {
+				f = files[i]
+				sby = V[f, "superseded_by"]
+				if (sby == "") continue
+				SBYST[f] = (sby in BYID) ? "unreciprocated" : "dangling"
+				for (b = 1; b <= SN[f]; b++) {
+					split(SB[f, b], sbp, SUBSEP)
+					if (sbp[1] == sby) { SBYST[f] = "confirmed"; break }
+				}
+				if (SBYST[f] == "confirmed") continue
+				BROKE[++nb] = f
+				if (SBYST[f] == "unreciprocated")
+					BWHY[f] = "`superseded_by: " sby "` names a note this vault holds, and `supersedes` on " sby " does not name " V[f, "id"] " back. The worklist is built from the superseding side, because that is where the reason and the `reconciled:` date live - so a supersession written from this end only reaches nothing: this note reads as replaced by nothing at all, and the sections it was cited into are never named for re-reading. Add " V[f, "id"] " to `supersedes` on " sby ", with the `supersedes_reason` that pair owes"
+				else
+					BWHY[f] = "`superseded_by: " sby "` and no note in this vault carries that ID. The record says this note was replaced and names a successor nobody can open, so there is nothing to read the replacement out of and nothing to add the back-edge to - either the successor was never written, or the ID is a typo. The dangling-edge check walks the block-list edge fields and never this scalar, so nothing else in this tool reports it"
+			}
+
 			# Half two, and the ordering pass for both. Iterating files[] rather
 			# than the edge walk above is what makes the output order the vault
 			# order instead of awk hash order, so two runs over an unchanged
 			# vault produce the same worklist.
+			#
+			# `superseded_by` is the THIRD address of the same fact, and it joins
+			# the set for the reason the other two are both here: the worklist
+			# must not depend on the supersession being well-formed. A note that
+			# records its own replacement and never got its `status` flipped is
+			# exactly the half-made pair whose cited sections still assert the
+			# old value, and taking only the other two halves would leave those
+			# sections unnamed.
 			for (i = 1; i <= nf; i++) {
 				f = files[i]
 				if (V[f, "id"] == "") continue
-				if (SN[f] == 0 && V[f, "status"] != "superseded") continue
+				if (SN[f] == 0 && V[f, "status"] != "superseded" && V[f, "superseded_by"] == "") continue
 				SUP[++nsup] = f
 				if (SN[f] == 0) SB[f, ++SN[f]] = "" SUBSEP ""
 			}
@@ -1711,11 +1817,25 @@ if [ "$MODE" = "supersession-sweep" ]; then
 				# `ok` is the verdict as a field rather than only as an exit
 				# status, so a consumer parsing the document does not have to
 				# have captured the status to know which answer it is holding.
-				printf "  " DQ "ok" DQ ": %s,\n", (nu == 0 ? "true" : "false")
+				printf "  " DQ "ok" DQ ": %s,\n", (nu == 0 && nb == 0 ? "true" : "false")
 				printf "  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
 				printf "  " DQ "worklist_count" DQ ": %d,\n", nt
 				printf "  " DQ "superseded_count" DQ ": %d,\n", nsup
 				printf "  " DQ "unreconciled_count" DQ ": %d,\n", nu
+				printf "  " DQ "broken_edge_count" DQ ": %d,\n", nb
+				printf "  " DQ "broken_edges" DQ ": ["
+				for (i = 1; i <= nb; i++) {
+					f = BROKE[i]
+					printf "%s\n    {", (i == 1 ? "" : ",")
+					printf DQ "id" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "id"])
+					printf DQ "file" DQ ": " DQ "%s" DQ ", ", jesc(f)
+					printf DQ "type" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "type"])
+					printf DQ "title" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "title"])
+					printf DQ "check" DQ ": " DQ "%s" DQ ", ", jesc("superseded-by-" SBYST[f])
+					printf DQ "superseded_by" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "superseded_by"])
+					printf DQ "detail" DQ ": " DQ "%s" DQ "}", jesc(BWHY[f])
+				}
+				printf "%s],\n", (nb == 0 ? "" : "\n  ")
 				printf "  " DQ "unreconciled" DQ ": ["
 				for (i = 1; i <= nu; i++) {
 					f = UNREC[i]
@@ -1759,7 +1879,7 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					}
 				}
 				printf "%s]\n}\n", (m == 0 ? "" : "\n  ")
-				exit (nu == 0 ? 0 : 1)
+				exit (nu == 0 && nb == 0 ? 0 : 1)
 			}
 
 			printf "vault-lint supersession-sweep: %d section%s to re-read, from %d superseded note%s\n",
@@ -1782,28 +1902,49 @@ if [ "$MODE" = "supersession-sweep" ]; then
 				for (b = 1; b <= SN[f]; b++) tnote(f, b, "    ")
 			}
 
+			# The half-written edges print above the reconciliation verdict and
+			# ABOVE the schemaVersion gate below, because this one is not gated:
+			# it fires on the presence of `superseded_by`, so a vault at 1 that
+			# writes the field owes the same answer as one at 3.
+			printf "\n  supersessions the record only half made - `superseded_by` names a successor that does not name it back\n"
+			if (nb == 0) printf "    (none)\n"
+			for (i = 1; i <= nb; i++) {
+				f = BROKE[i]
+				printf "    %s  %s  superseded-by-%s\n", V[f, "id"], V[f, "type"], SBYST[f]
+				printf "      %s\n", V[f, "title"]
+				printf "      superseded_by %s\n", V[f, "superseded_by"]
+				printf "      %s\n", BWHY[f]
+			}
 			# The verdict prints last, because it is the half a reader acts on
 			# and the worklist above it can run to dozens of rows. At
 			# schemaVersion 1 the section says the rule does not apply rather
 			# than printing an empty list: an unconditional `(none)` here would
 			# report a vault as reconciled when nothing about it was asked.
-			if (schema + 0 < 2) {
+			#
+			# A BRANCH RATHER THAN AN EARLY EXIT, so both summary lines below print
+			# in one place. A vault at 1 can still carry a half-written edge, and a
+			# summary skipped by an early return leaves its reader reconstructing
+			# the verdict from the exit code.
+			if (schema + 0 < 2)
 				printf "\n  reconciliation is a schemaVersion 2 rule and this vault is at %s - the worklist above is a report here, and nothing was asked about whether it was read\n", schema
-				exit 0
+			else {
+				printf "\n  supersessions with nothing recording that the worklist was read\n"
+				if (nu == 0) printf "    (none)\n"
+				for (i = 1; i <= nu; i++) {
+					f = UNREC[i]
+					printf "    %s  %s\n", V[f, "id"], V[f, "type"]
+					printf "      %s\n", V[f, "title"]
+					printf "      supersedes %s\n", UTGT[f]
+					printf "      %s\n", UWHY[f]
+				}
 			}
-			printf "\n  supersessions with nothing recording that the worklist was read\n"
-			if (nu == 0) printf "    (none)\n"
-			for (i = 1; i <= nu; i++) {
-				f = UNREC[i]
-				printf "    %s  %s\n", V[f, "id"], V[f, "type"]
-				printf "      %s\n", V[f, "title"]
-				printf "      supersedes %s\n", UTGT[f]
-				printf "      %s\n", UWHY[f]
-			}
+			if (nb > 0)
+				printf "\nvault-lint supersession-sweep: %d half-written supersession edge%s - the record names a successor and the successor does not name it back, under %s\n",
+					nb, (nb == 1 ? "" : "s"), vault
 			if (nu > 0)
 				printf "\nvault-lint supersession-sweep: %d supersession%s with nothing recording that its sections were read, under %s\n",
 					nu, (nu == 1 ? "" : "s"), vault
-			exit (nu == 0 ? 0 : 1)
+			exit (nu == 0 && nb == 0 ? 0 : 1)
 		}
 	' "$RECORDS"
 	exit $?
