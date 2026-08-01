@@ -3652,9 +3652,31 @@ function Invoke-ModeAssumptionRows {
 		}
 	}
 
-	# Three sets over the notes, in one walk. TITLE is every assumption title a
-	# row may match - not only the declared inputs - because a row whose note
-	# exists and agrees is not a failure whatever else that note declares.
+	# Three sets over the notes, in one walk. TITLE is every title a row may
+	# match - not only the declared inputs - because a row whose note exists
+	# and agrees is not a failure whatever else that note declares.
+	#
+	# WHICH NOTES BACK A ROW IS DECIDED BY `status`, NOT BY WHICH ASSERTING
+	# SET HOLDS THE NOTE. A row is backed when a LIVE `assumption` OR a live
+	# `claim` carries its title, so both types feed $titles and $dead. THAT
+	# PAIR IS THE WHOLE SET and the other five types are out by argument
+	# rather than by omission - a `source` and a `fact` are provenance a
+	# claim rests ON rather than a value the projection carries, and a
+	# `milestone`, `question` or `decision` asserts no value at all.
+	# Widening past the pair changes what a model row may stand on; it is
+	# not the next step of this fix. Reading `assumption` alone made this fire
+	# on a row the method's own promotion rule produces: a structural driver
+	# with no subject instrument belongs in the indexed set, so filing a
+	# sourced figure as an unevidenced assumption is the defect, and correcting it
+	# retires the assumption and mints a `claim` carrying the same title. The
+	# row was then backed by a `current` claim whose `used_in` named the
+	# assumptions section directly, every word of the failure was true, and
+	# the conclusion did not follow.
+	#
+	# $inputs STAYS ASSUMPTION-ONLY, and that is the row->note direction only.
+	# `model_input` is a field a promoted claim does not carry, so widening
+	# the title index leaves assumption-not-in-model reading exactly the set
+	# it read before.
 	#
 	# A SUPERSEDED OR RETRACTED NOTE IS NOT A MATCH, and $dead holds it
 	# separately rather than beside the live titles. The title key alone says the
@@ -3664,7 +3686,7 @@ function Invoke-ModeAssumptionRows {
 	# row in the assumptions table was backed only by a superseded note, and this
 	# mode read `matched verbatim` over it for days. A title carried by both a
 	# live note and a retired one still matches live, because the row loop reads
-	# $titles first.
+	# $titles first - which is also what clears the promoted row above.
 	$titles = New-Object 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::Ordinal)
 	$dead = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
 	$deadStatus = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
@@ -3674,7 +3696,8 @@ function Invoke-ModeAssumptionRows {
 	foreach ($f in $noteFiles) {
 		$ty = Get-ModelNoteValue $f 'type'
 		$title = Get-ModelNoteValue $f 'title'
-		if (Test-ModelEqual $ty 'assumption') {
+		$isAssumption = Test-ModelEqual $ty 'assumption'
+		if ($isAssumption -or (Test-ModelEqual $ty 'claim')) {
 			if ($title.Length -ne 0) {
 				$st = Get-ModelNoteValue $f 'status'
 				if (-not (Test-ModelEqual $st 'superseded') -and -not (Test-ModelEqual $st 'retracted')) {
@@ -3684,6 +3707,8 @@ function Invoke-ModeAssumptionRows {
 					$deadStatus[$title] = $st
 				}
 			}
+		}
+		if ($isAssumption) {
 			# Read once and carried on the record: the guard and the field are the
 			# same lookup, and asking twice is the loop-invariant recompute this
 			# walk exists to do once.
@@ -3761,10 +3786,10 @@ function Invoke-ModeAssumptionRows {
 		# table has no row for would send its reader to a second, wrong repair.
 		if ($dead.ContainsKey($row)) {
 			[void]$hitTitles.Add($row)
-			Add-ModelFailure 'financial-model.md' 'model-row-dead-assumption' $dead[$row] ('row `' + $row + '` in the assumptions section matches ' + $dead[$row] + ' and that note is `status: ' + $deadStatus[$row] + '`, with no `current` assumption carrying the title. The row is live in the model and the only thing standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one, or re-file the assumption as `current` if it was retired in error')
+			Add-ModelFailure 'financial-model.md' 'model-row-dead-assumption' $dead[$row] ('row `' + $row + '` in the assumptions section matches ' + $dead[$row] + ' and that note is `status: ' + $deadStatus[$row] + '`, with no live `assumption` or `claim` note carrying the title. The row is live in the model and everything standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one - a title promoted to a `claim` backs the row exactly as an assumption does, because the distinction is `status` and not `type` - or re-file this note as `current` if it was retired in error')
 			continue
 		}
-		Add-ModelFailure 'financial-model.md' 'model-row-no-assumption' '' ('row `' + $row + '` in the assumptions section matches no `assumption` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing')
+		Add-ModelFailure 'financial-model.md' 'model-row-no-assumption' '' ('row `' + $row + '` in the assumptions section matches no `assumption` or `claim` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing')
 	}
 
 	# Either escape clears it, and that is the design. A row means the input
@@ -3802,9 +3827,15 @@ function Invoke-ModeAssumptionRows {
 		# half not running.
 		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' against no declared model inputs - ' + $VAULT + '. Not checked: whether a declared input reached the table, because no `assumption` note carries `model_input`.'
 	} else {
+		# TWO COUNTS, NOT TWO SIDES OF ONE. `against` read as a comparison
+		# between two sets that have to agree, and they do not: a row backed by
+		# a `claim` is not a declared model input, and a declared input cleared
+		# by `excluded_from_model` is not a row. Both halves ran and both
+		# agreed - which is what this says now, one half at a time, rather than
+		# implying an equality whose absence would then read as a miscount.
 		$miPlural = 's'
 		if ($nmi -eq 1) { $miPlural = '' }
-		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' against ' + [string]$nmi + ' declared model input' + $miPlural + ', matched verbatim - ' + $VAULT
+		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' each backed by a live `assumption` or `claim` note, and ' + [string]$nmi + ' declared model input' + $miPlural + ' each rendered as a row or excluded with a reason, matched verbatim - ' + $VAULT
 	}
 
 	exit (Render-Failures 'vault-lint assumption-rows' $okLine)

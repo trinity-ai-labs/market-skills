@@ -3975,11 +3975,35 @@ if [ "$MODE" = "assumption-rows" ]; then
 				# the same four in one loop, so a diff of the two reads as one
 				# pass rather than as a structural difference nobody intended.
 				#
-				# TITLE is every assumption title a row may match - not only the
-				# declared inputs - because a row whose note exists and agrees is
-				# not a failure whatever else that note declares. MI is the
-				# declared inputs, in vault order so two runs print the same
-				# list.
+				# TITLE is every title a row may match - not only the declared
+				# inputs - because a row whose note exists and agrees is not a
+				# failure whatever else that note declares. MI is the declared
+				# inputs, in vault order so two runs print the same list.
+				#
+				# WHICH NOTES BACK A ROW IS DECIDED BY `status`, NOT BY WHICH
+				# ASSERTING SET HOLDS THE NOTE. A row is backed when a LIVE
+				# `assumption` OR a live `claim` carries its title, so both types
+				# feed TITLE and DEAD. THAT PAIR IS THE WHOLE SET and the other
+				# five types are out by argument rather than by omission - a
+				# `source` and a `fact` are provenance a claim rests ON rather
+				# than a value the projection carries, and a `milestone`,
+				# `question` or `decision` asserts no value at all. Widening past
+				# the pair changes what a model row may stand on; it is not the
+				# next step of this fix. Reading `assumption` alone made this
+				# fire on a row this method produces by its own promotion rule: a
+				# structural driver with no subject instrument belongs in the
+				# indexed set, so filing a sourced figure as an unevidenced
+				# assumption is the defect, and correcting it retires the
+				# assumption and mints a `claim` carrying the same title. The row
+				# was then backed by a `current` claim whose `used_in` named the
+				# assumptions section directly, every word of the failure was
+				# true, and the conclusion did not follow - a corpus that did what
+				# the method says was told it had a defect.
+				#
+				# MI STAYS ASSUMPTION-ONLY, and that is the row->note direction
+				# only. `model_input` is a field a promoted claim does not carry,
+				# so widening the title index leaves assumption-not-in-model
+				# reading exactly the set it read before.
 				#
 				# A SUPERSEDED OR RETRACTED NOTE IS NOT A MATCH, and DEAD holds
 				# it separately rather than beside the live titles. The title
@@ -3990,19 +4014,21 @@ if [ "$MODE" = "assumption-rows" ]; then
 				# assumptions table was backed only by a superseded note, and
 				# the gate read `matched verbatim` over it for days. A title
 				# carried by both a live note and a retired one still matches
-				# live, because the row loop reads TITLE first.
+				# live, because the row loop reads TITLE first - which is also
+				# what clears the promoted row above.
 				for (i = 1; i <= nf; i++) {
 					f = files[i]
 					ty = V[f, "type"]
-						if (ty == "assumption") {
+					isa = (ty == "assumption")
+					if (isa || ty == "claim") {
 						ti = V[f, "title"]
 						st = V[f, "status"]
 						if (ti != "") {
 							if (st != "superseded" && st != "retracted") TITLE[ti] = 1
 							else if (!(ti in DEAD)) { DEAD[ti] = V[f, "id"]; DEADST[ti] = st }
 						}
-						if (V[f, "model_input"] != "") MI[++nmi] = f
 					}
+					if (isa && V[f, "model_input"] != "") MI[++nmi] = f
 
 					# What the roadmap ships a change to. `moves` names the note
 					# an item moves, which roadmap-sequencing.md already
@@ -4058,11 +4084,11 @@ if [ "$MODE" = "assumption-rows" ]; then
 					if (ROW[i] in DEAD) {
 						HIT[ROW[i]] = 1
 						report("financial-model.md", "model-row-dead-assumption", DEAD[ROW[i]],
-							"row `" ROW[i] "` in the assumptions section matches " DEAD[ROW[i]] " and that note is `status: " DEADST[ROW[i]] "`, with no `current` assumption carrying the title. The row is live in the model and the only thing standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one, or re-file the assumption as `current` if it was retired in error")
+							"row `" ROW[i] "` in the assumptions section matches " DEAD[ROW[i]] " and that note is `status: " DEADST[ROW[i]] "`, with no live `assumption` or `claim` note carrying the title. The row is live in the model and everything standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one - a title promoted to a `claim` backs the row exactly as an assumption does, because the distinction is `status` and not `type` - or re-file this note as `current` if it was retired in error")
 						continue
 					}
 					report("financial-model.md", "model-row-no-assumption", "",
-						"row `" ROW[i] "` in the assumptions section matches no `assumption` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing")
+						"row `" ROW[i] "` in the assumptions section matches no `assumption` or `claim` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing")
 				}
 
 				for (i = 1; i <= nmi; i++) {
@@ -4108,8 +4134,15 @@ if [ "$MODE" = "assumption-rows" ]; then
 				else if (nmi == 0)
 					printf("%d assumption row%s against no declared model inputs - %s. Not checked: whether a declared input reached the table, because no `assumption` note carries `model_input`.\n",
 						NROW, (NROW == 1 ? "" : "s"), vault)
+				# TWO COUNTS, NOT TWO SIDES OF ONE. `against` read as a
+				# comparison between two sets that have to agree, and they do
+				# not: a row backed by a `claim` is not a declared model input,
+				# and a declared input cleared by `excluded_from_model` is not a
+				# row. Both halves ran and both agreed - which is what this says
+				# now, one half at a time, rather than implying an equality
+				# whose absence would then read as a miscount.
 				else
-					printf("%d assumption row%s against %d declared model input%s, matched verbatim - %s\n",
+					printf("%d assumption row%s each backed by a live `assumption` or `claim` note, and %d declared model input%s each rendered as a row or excluded with a reason, matched verbatim - %s\n",
 						NROW, (NROW == 1 ? "" : "s"), nmi, (nmi == 1 ? "" : "s"), vault)
 			}
 		' "$RECORDS")

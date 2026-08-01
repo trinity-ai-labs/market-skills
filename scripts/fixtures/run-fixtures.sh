@@ -115,6 +115,13 @@
 #      failure rather than a match, the sibling row backed by a `current` note
 #      stays silent, the same pair is never reported twice under two codes, and
 #      re-filing the note as `current` clears it.
+#  22. --assumption-rows reads that match against `status` and NOT against
+#      `type`. A row backed by a live `claim` is backed - including the
+#      promotion this method prescribes, where the assumption behind a row is
+#      retired and a claim carrying the same title replaces it - and retiring
+#      that claim puts the row back in the failing set, so the check is widened
+#      rather than silenced. The success line prints two counts that legitimately
+#      differ, because a row backed by a claim is not a declared model input.
 
 set -u
 
@@ -2354,6 +2361,98 @@ MRS_FIX_OUT=$("$LINT" --assumption-rows --vault "$MRS_FIX" --json 2>/dev/null)
 case "$MRS_FIX_OUT" in
 *'"failure_count": 1'*) ok "re-filing the note as current clears its row" ;;
 *) no "a current note must clear model-row-dead-assumption (got: $MRS_FIX_OUT)" ;;
+esac
+
+# --- 22. a live model row backed by a claim -----------------------------------
+# The check above read the row->note direction as a question about `type` when it
+# is a question about `status`, and a corpus that did what this method prescribes
+# was told it had a defect. A structural driver with no subject instrument
+# belongs in the indexed set, so filing a sourced figure as an unevidenced
+# assumption is the thing that was wrong; correcting it retires the assumption
+# and mints a `claim` carrying the same title. Every word of the failure was then
+# true - the title matched a `superseded` note and no `current` assumption
+# carried it - and the conclusion did not follow, because the row was backed the
+# whole time. Two rows here carry the two shapes: A-1 has a claim and no
+# assumption at all, A-3 has the promotion pair.
+printf '\nlive model rows backed by a claim\n'
+
+# ONE INVOCATION, because exit 0 already carries every silence this vault is
+# built to prove. A failure of ANY code exits 1, so a green run says both that
+# neither the claim-only row nor the promotion pair was reported AND that
+# `assumption-not-in-model` stayed quiet on the retired assumption behind A-3 -
+# which still declares `model_input`, so an implementation that cleared the row
+# without marking the title hit would report it again as an input the table has
+# no row for, the second and wrong repair. Asserting the count separately over
+# the same unmutated vault would be a second full walk that cannot fail on its
+# own; the mutated copies below are where the counts have teeth.
+MRC_OK=$("$LINT" --assumption-rows --vault "$HERE/model-row-claim-backed" 2>&1)
+MRC_STATUS=$?
+[ "$MRC_STATUS" = "0" ] && ok "a row backed by a current claim passes, and the promoted-away assumption is not reported from the other side" ||
+	no "model-row-claim-backed should exit 0 (got $MRC_STATUS: $MRC_OK)"
+
+# THE TWO COUNTS IN THE SUCCESS LINE ARE NOT TWO SIDES OF ONE. Three rows against
+# two declared inputs is correct here and always will be: a row backed by a
+# `claim` never becomes a declared model input, so a line reading as a comparison
+# would send its reader looking for a row that was never owed.
+case "$MRC_OK" in
+*'3 assumption rows each backed by'*'2 declared model inputs each rendered as a row or excluded'*)
+	ok "the success line states each half rather than comparing two counts" ;;
+*) no "the success line still reads as a comparison of two counts (got: $MRC_OK)" ;;
+esac
+case "$MRC_OK" in
+*'3 assumption rows against 3 declared'*|*'rows against 2 declared'*)
+	no "the success line still says rows AGAINST declared inputs" ;;
+*) ok "the success line no longer sets the row count against the input count" ;;
+esac
+
+# AND THE CHECK IS WIDENED, NOT SILENCED. Retire the claim and the row it backed
+# is dead again - which is what says the fix reads `status` on a claim rather
+# than treating any `claim` match as a pass. Asserted on the claim-only row, so
+# the failure names the claim itself and the message has to read correctly about
+# a note that is not an assumption.
+MRC_DEAD="$PAIRS_FILE.claim-retired"
+rm -rf "$MRC_DEAD"
+cp -R "$HERE/model-row-claim-backed" "$MRC_DEAD"
+strip_cr <"$HERE/model-row-claim-backed/claims/CLAIM-CB11AA01.md" |
+	awk '{ sub(/^status: current$/, "status: superseded"); print }' >"$MRC_DEAD/claims/CLAIM-CB11AA01.md"
+if grep -q '^status: superseded$' "$MRC_DEAD/claims/CLAIM-CB11AA01.md"; then
+	ok "the copy with the claim retired carries it"
+else
+	no "the status rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+MRC_DEAD_OUT=$("$LINT" --assumption-rows --vault "$MRC_DEAD" --json 2>/dev/null)
+MRC_DEAD_STATUS=$?
+[ "$MRC_DEAD_STATUS" = "1" ] && ok "retiring the claim puts its row back in the failing set" ||
+	no "a row whose only match is a retired claim must fail (got $MRC_DEAD_STATUS: $MRC_DEAD_OUT)"
+case "$MRC_DEAD_OUT" in
+*'"failure_count": 1'*) ok "only the row whose claim was retired is reported" ;;
+*) no "--assumption-rows did not report exactly one row over the retired-claim copy (got: $MRC_DEAD_OUT)" ;;
+esac
+case "$MRC_DEAD_OUT" in
+*'"check": "model-row-dead-assumption"'*'"id": "CLAIM-CB11AA01"'*'status: superseded'*)
+	ok "the failure names the retired claim and its status" ;;
+*) no "model-row-dead-assumption did not name the retired claim (got: $MRC_DEAD_OUT)" ;;
+esac
+
+# THE PROMOTION HALF OF THE SAME RULE. Retire the claim that replaced the
+# assumption and A-3 has two retired matches and no live one, so it fails again -
+# without this the promotion could be passing because the claim was seen rather
+# than because its `status` was read.
+MRC_PROM="$PAIRS_FILE.promotion-retired"
+rm -rf "$MRC_PROM"
+cp -R "$HERE/model-row-claim-backed" "$MRC_PROM"
+strip_cr <"$HERE/model-row-claim-backed/claims/CLAIM-CB33CC03.md" |
+	awk '{ sub(/^status: current$/, "status: retracted"); print }' >"$MRC_PROM/claims/CLAIM-CB33CC03.md"
+if grep -q '^status: retracted$' "$MRC_PROM/claims/CLAIM-CB33CC03.md"; then
+	ok "the copy with the superseding claim retracted carries it"
+else
+	no "the status rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+MRC_PROM_OUT=$("$LINT" --assumption-rows --vault "$MRC_PROM" --json 2>/dev/null)
+case "$MRC_PROM_OUT" in
+*'"check": "model-row-dead-assumption"'*'Gross margin holds at the observed blended rate'*)
+	ok "a promotion whose claim is also retired leaves the row dead" ;;
+*) no "retiring both notes behind the promoted row did not fail it (got: $MRC_PROM_OUT)" ;;
 esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
