@@ -247,6 +247,16 @@ vault-lint.sh - read-only checks over a claim vault.
       kind the plan asserts and the ledger does not hold. Checked in BOTH
       directions - a verdict note whose driver no row carries fails too,
       because otherwise the rule above is cleared by editing a cell.
+      The anchor's section runs to the next heading of the SAME DEPTH OR
+      SHALLOWER, so a table inside a ### subsection under it is still that
+      section's table. Read to the next heading of any depth instead, a plan
+      that opens a subsection one line in has its corner table fall outside
+      the section, the mode reads zero rows, and the whole corner-row half
+      goes quiet while the run still passes.
+
+      A plan whose verdict anchor carries no such table is reported as
+      exactly that, and the success line names the kind check as not run:
+      zero rows compared is not the same answer as zero rows disagreeing.
 
       verdict-thin-evidence: the closure under the note reaches fewer than
       three distinct source notes, or they all share one counterparty, and
@@ -313,9 +323,12 @@ vault-lint.sh - read-only checks over a claim vault.
       placeholder word list: a check that has to be taught every spelling of
       `TBD` is one that misses the next one.
 
-      A vault with no competitor-analysis.md profiled no competitors and
-      passes. Gated on schemaVersion 2 - the axes are what version 2 asks the
-      section for, and a vault at 1 is held to the rules it was written under.
+      A vault with no competitor-analysis.md at its root passes, and the
+      success line names the document it could not open and says the axes
+      went unread - never that no competitor set was profiled, which is a
+      conclusion a missing file cannot support. Gated on schemaVersion 2 -
+      the axes are what version 2 asks the section for, and a vault at 1 is
+      held to the rules it was written under.
 
   vault-lint.sh --deliverable [--vault PATH] [--json]
       Read every rendered deliverables/*.html and fail on the vault's own
@@ -417,6 +430,11 @@ vault-lint.sh - read-only checks over a claim vault.
       model-table-missing: notes declare themselves model inputs and the table
       renders none of them. The inputs are in the ledger and nowhere a reader
       can see them.
+
+      A vault where NO note declares itself a model input is reported as
+      exactly that, and the success line names assumption-not-in-model as not
+      run: the row count it prints is the model-row-no-assumption half alone,
+      and the half this mode was written for iterated over nothing.
 
       Gated on schemaVersion 3, which is where the fields it reads were added.
       A vault at 1 or 2 carries none of them, cannot owe this, and is told the
@@ -2223,6 +2241,10 @@ TABLE_READER_AWK='
 					if (fc != "") continue
 
 					if (match(t, /^#+[ \t]+/)) {
+						# The heading depth. The FIRST copy of this count -
+						# --binding-driver readdoc() carries the second, and
+						# both feed the same same-depth-or-shallower
+						# boundary. Change one, change both.
 						nh = 0
 						while (substr(t, nh + 1, 1) == "#") nh++
 						h = substr(t, RLENGTH + 1)
@@ -2991,13 +3013,26 @@ if [ "$MODE" = "binding-driver" ]; then
 			# has them. Memoised on SCANNED, so a document cited by four notes
 			# is opened once.
 			#
-			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is looser
-			# than the rule the shared readtable() uses (next heading of the
-			# same depth or shallower). Nothing in plan-template.md puts a
-			# subsection under the verdict anchor, so the two agree today; if
-			# one is ever added, the phrase a reader sees inside that subsection
-			# is outside the body this reads and the condition check would cry
-			# wolf. That is the trigger to adopt readtable() depth rule here.
+			# A SECTION ENDS AT THE NEXT HEADING OF THE SAME DEPTH OR SHALLOWER,
+			# which is the rule the shared readtable() uses, so a subsection
+			# under a heading is still part of it. This used to end a section at
+			# the next heading of ANY depth, on the reasoning that nothing in
+			# plan-template.md puts a subsection under the verdict anchor - and
+			# that comment named the arrival of one as the trigger to adopt the
+			# depth rule. THE TRIGGER FIRED. A plan opened a `###` one line into
+			# the body of the verdict anchor, which put the corner table outside the
+			# body this reads: the mode found ZERO rows and printed `1 verdict
+			# note against 0 corner verdict rows under the {#target-verdict}
+			# anchor, matched verbatim` - a clean pass over a table it never
+			# opened, for as long as the note had existed, with the whole
+			# corner-row half of the mode silently disabled and the condition
+			# check ready to cry wolf over any phrase written below that
+			# subsection heading.
+			#
+			# A LINE THEREFORE REACHES EVERY OPEN ANCESTOR, which is what a
+			# nested boundary means: SECT is a stack carrying one entry per
+			# section still open, and a heading pops every entry at its own
+			# depth or deeper before pushing its own.
 			#
 			# THE CORNER TABLE IS IDENTIFIED BY ITS HEADER rather than by being
 			# the first table in the section, which is tighter than
@@ -3028,12 +3063,13 @@ if [ "$MODE" = "binding-driver" ]; then
 			# makes, which is also why fenced lines never reach BODY: a fenced
 			# template carrying a condition would otherwise satisfy the check
 			# for a section that renders nothing. Change one, change all six.
-			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, alldash, hdr, dcol, kcol, intable, wanttable, kk, dv, kv) {
+			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, si, nh, alldash, hdr, dcol, kcol, intable, SECT, SLEV, nsect, tpos, kk, dv, kv) {
 				if (doc in SCANNED) return
 				SCANNED[doc] = 1
 				path = vault "/" doc
 				fc = ""; fn = 0; ord = 0
-				hdr = ""; intable = 0; dcol = 0; kcol = 0; wanttable = 0
+				hdr = ""; intable = 0; dcol = 0; kcol = 0
+				nsect = 0; tpos = 0
 				while ((getline line < path) > 0) {
 					sub(/\r$/, "", line)
 					t = line
@@ -3049,6 +3085,13 @@ if [ "$MODE" = "binding-driver" ]; then
 					if (fc != "") continue
 
 					if (match(t, /^#+[ \t]+/)) {
+						# The heading depth: the run of `#` before the space.
+						# The SECOND copy of this count - the shared
+						# readtable() carries the first, and both feed the
+						# same same-depth-or-shallower boundary. Change one,
+						# change both.
+						nh = 0
+						while (substr(t, nh + 1, 1) == "#") nh++
 						h = substr(t, RLENGTH + 1)
 						sub(/[ \t]*#+[ \t]*$/, "", h)
 						h = trim(h)
@@ -3072,21 +3115,44 @@ if [ "$MODE" = "binding-driver" ]; then
 						# day the author pasted a newer template in.
 						if (ex != "") claimkey(doc, fold(ex), ord)
 						claimkey(doc, fold(h), ord)
-						wanttable = (doc == TABLEDOC && (fold(ex) == TABLEKEY || fold(h) == TABLEKEY))
+
+						# Close every section this heading ends, then open
+						# this one. A subsection leaves its parent on the
+						# stack, which is the whole depth rule. SECT holds
+						# the FINISHED BODY key rather than the ordinal, so
+						# the per-line loop below appends without rebuilding
+						# one composite subscript per open ancestor per line.
+						#
+						# `tpos` is the STACK POSITION of the section that
+						# owns the corner table, not a second copy of its
+						# ordinal and depth. The table section lives exactly
+						# as long as its own stack entry, so the pop above is
+						# already the rule that closes it - carrying its
+						# depth separately would be the same boundary
+						# written twice, in step only for as long as someone
+						# kept it there. A second `{#target-verdict}` anchor
+						# is therefore a new section rather than an
+						# extension of the first, by construction.
+						while (nsect > 0 && SLEV[nsect] >= nh) nsect--
+						if (tpos > nsect) tpos = 0
+						nsect++
+						SECT[nsect] = doc SUBSEP ord
+						SLEV[nsect] = nh
+						if (doc == TABLEDOC && (fold(ex) == TABLEKEY || fold(h) == TABLEKEY)) tpos = nsect
 						hdr = ""; intable = 0
 						continue
 					}
 
-					if (ord == 0) continue
+					if (nsect == 0) continue
 					# A blank line closes a table to every renderer, so it
 					# closes one here - otherwise two tables separated by a
 					# paragraph read as one and the rows of the second land
 					# under the header of the first.
 					if (t == "") { hdr = ""; intable = 0; continue }
 
-					BODY[doc, ord] = BODY[doc, ord] t "\n"
+					for (si = 1; si <= nsect; si++) BODY[SECT[si]] = BODY[SECT[si]] t "\n"
 					if (substr(t, 1, 1) != "|") { hdr = ""; intable = 0; continue }
-					if (!wanttable) continue
+					if (tpos == 0) continue
 
 					row = t
 					sub(/^\|/, "", row)
@@ -3097,7 +3163,11 @@ if [ "$MODE" = "binding-driver" ]; then
 					for (i = 1; i <= nc; i++)
 						if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { alldash = 0; break }
 
-					kk = doc SUBSEP ord
+					# Keyed on the SECTION that owns the table rather than on
+					# the heading the row sits under, so a corner table inside
+					# a subsection is recorded against the anchor the mode
+					# resolves.
+					kk = SECT[tpos]
 					if (alldash) {
 						# The row directly above the rule is the header, and
 						# it is read for nothing but which two columns matter.
@@ -3416,6 +3486,24 @@ if [ "$MODE" = "binding-driver" ]; then
 						printf("no verdict note and no business-plan.md at the vault root - there is no verdict on either side, which is every vault before a target has one - %s\n", vault)
 					exit
 				}
+				# NO CORNER ROWS IS NOT AGREEMENT, and the old line said it was:
+				# it read `matched verbatim` over a row count of zero, which is
+				# what a section-boundary bug looked like from the outside for as
+				# long as it shipped. The kind check is the half that reads those
+				# rows, in both directions, so with none of them read there is
+				# nothing for the ledger to have agreed with and the line says so.
+				#
+				# Which document is named is branched on `hasplan` the way the
+				# no-verdict-either-side line above branches on it: naming an
+				# anchor inside a file that is not there sends its reader to look
+				# for a table in a document they do not have, which is the same
+				# reporting-past-what-was-opened this whole line exists to stop.
+				if (nrow == 0) {
+					where = (hasplan == "1") ? "no corner verdict table under the {#target-verdict} anchor of business-plan.md" : "no business-plan.md at the vault root"
+					printf("%d verdict note%s and %s - %s. Not checked: the Kind cell against `driver_kind`, in either direction, because there is no corner verdict table to read it from.\n",
+						nvn, (nvn == 1 ? "" : "s"), where, vault)
+					exit
+				}
 				printf("%d verdict note%s against %d corner verdict row%s under the {#target-verdict} anchor, matched verbatim - %s\n",
 					nvn, (nvn == 1 ? "" : "s"), nrow, (nrow == 1 ? "" : "s"), vault)
 			}
@@ -3458,15 +3546,20 @@ fi
 
 if [ "$MODE" = "monitoring" ]; then
 	COMPETITORS="$VAULT/competitor-analysis.md"
-	# A vault with no competitor-analysis.md profiled no competitors, which is
-	# every vault before the competitor dimension runs. Reported by name rather
-	# than passing silently: a mode that printed `clean` over a document it never
-	# found reads as a monitoring plan that was checked. The empty failure file
-	# still goes through the renderer, so --json gets a well-formed document
-	# either way.
+	# A vault with no competitor-analysis.md at its root owes nothing, which is
+	# every vault before the competitor dimension runs. The line names the
+	# document it could not open and says the axis half did not run, rather than
+	# stating what it INFERRED from the absence. The old line said `no competitor
+	# set was profiled, so no axis owes an instrument` - a conclusion drawn from a
+	# missing file - and printed it over a vault holding 31 competitor profiles
+	# and a written monitoring plan, because the document lived somewhere other
+	# than the vault root. Absence of the file is not absence of the work, and the
+	# only thing this mode can honestly report is what it did not read. The empty
+	# failure file still goes through the renderer, so --json gets a well-formed
+	# document either way.
 	MONITORING_OK="every monitoring axis names an instrument, a cadence and the decision it would change - $VAULT"
 	if [ ! -f "$COMPETITORS" ]; then
-		MONITORING_OK="no competitor-analysis.md under $VAULT - no competitor set was profiled, so no axis owes an instrument"
+		MONITORING_OK="no competitor-analysis.md at the vault root - $VAULT. Not read: the monitoring axes, so nothing here was held to an instrument, a cadence and the decision it would change - a competitor set profiled under some other path reads exactly like one that was never profiled."
 	elif [ "$FOUND_SCHEMA" -lt 2 ]; then
 		# The axes are what version 2 asks the section for. A vault at 1 is held
 		# to exactly the rules it was written under, the same exemption
@@ -4005,6 +4098,16 @@ if [ "$MODE" = "assumption-rows" ]; then
 
 				if (nmi == 0 && NROW == 0)
 					printf("no declared model inputs and no assumption rows under %s - there is no model on either side, which is every vault before the plan has one\n", vault)
+				# NO DECLARED INPUT IS NOT AGREEMENT. This mode is two checks,
+				# and the count it printed was the row half alone: with no note
+				# carrying `model_input`, `assumption-not-in-model` iterates over
+				# nothing, so the direction this whole mode was written for - an
+				# input the ledger holds and the table never renders - reported a
+				# matched count over a set it never had. A reader has to be able
+				# to tell that half agreeing from that half not running.
+				else if (nmi == 0)
+					printf("%d assumption row%s against no declared model inputs - %s. Not checked: whether a declared input reached the table, because no `assumption` note carries `model_input`.\n",
+						NROW, (NROW == 1 ? "" : "s"), vault)
 				else
 					printf("%d assumption row%s against %d declared model input%s, matched verbatim - %s\n",
 						NROW, (NROW == 1 ? "" : "s"), nmi, (nmi == 1 ? "" : "s"), vault)
@@ -4129,9 +4232,10 @@ if [ "$MODE" = "claim-drift" ]; then
 			# second pass would be a second place the section boundary is
 			# decided.
 			#
-			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is the rule
-			# --binding-driver readdoc() uses rather than the
-			# same-depth-or-shallower one the shared readtable() uses. The unit here is the
+			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, and this is now the
+			# only reader in the file on that rule - readtable() and
+			# --binding-driver readdoc() both end a section at the next heading
+			# of the same depth or shallower. The unit here is the
 			# prose a citation points at, and a subsection has its own address:
 			# rolling it into its parent would re-open every claim on the parent
 			# heading whenever any subsection was touched, and a claim that

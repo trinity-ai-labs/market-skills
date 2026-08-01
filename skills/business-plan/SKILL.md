@@ -166,6 +166,10 @@ nearest-reachable solve and the negotiation script are in
     `Kind` cell hand-edited away from its note's `driver_kind` in either direction — the cell being
     otherwise the cheapest way past the first check. The fields it reads are
     [references/vault.md](references/vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
+    The `Kind` half needs a corner table to read, and the verdict section it looks in runs to the
+    next heading of the same depth or shallower — so a `###` subsection under the anchor is part
+    of that section and its table is read, and a plan carrying no such table anywhere under the
+    anchor is told the `Kind` check did not run rather than that it agreed.
     **A third clause sits on the identity's own terms: the ARR term declares its composition.** A
     model may legitimately exclude a revenue line — a metered layer must not be allowed to flatter
     subscription churn — but an exclusion the identity does not state is a denominator nobody can
@@ -976,8 +980,10 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   notes declares `model_input` — `revenue` or `cost` — or declares `excluded_from_model` with
   the reason.** `--assumption-rows` reads the table both ways, and the direction that catches a
   missing row fires only on notes that declared themselves, so a corpus where nothing carries
-  the field has that half checking nothing while its success line still reports the rows it did
-  match. The gate then reads green over the exact gap it exists to find — which is how a whole
+  the field has that half checking nothing — and its success line now names that half as un-run
+  rather than reporting the rows it did match, which is what let the gate read green over the
+  exact gap it exists to find. Declaring the field is still the whole point: a line the notes
+  never claim is one the check can only report as unclaimed, which is how a whole
   revenue line stayed out of a projection with every note behind it lint-clean, the failure
   invariant 16's third clause and [references/vault.md](references/vault.md) both name. **Every input to the
   revenue build then takes the both-directions test, whichever way the value points**: each

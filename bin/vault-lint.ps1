@@ -582,6 +582,16 @@ vault-lint.sh - read-only checks over a claim vault.
       kind the plan asserts and the ledger does not hold. Checked in BOTH
       directions - a verdict note whose driver no row carries fails too,
       because otherwise the rule above is cleared by editing a cell.
+      The anchor's section runs to the next heading of the SAME DEPTH OR
+      SHALLOWER, so a table inside a ### subsection under it is still that
+      section's table. Read to the next heading of any depth instead, a plan
+      that opens a subsection one line in has its corner table fall outside
+      the section, the mode reads zero rows, and the whole corner-row half
+      goes quiet while the run still passes.
+
+      A plan whose verdict anchor carries no such table is reported as
+      exactly that, and the success line names the kind check as not run:
+      zero rows compared is not the same answer as zero rows disagreeing.
 
       verdict-thin-evidence: the closure under the note reaches fewer than
       three distinct source notes, or they all share one counterparty, and
@@ -648,9 +658,12 @@ vault-lint.sh - read-only checks over a claim vault.
       placeholder word list: a check that has to be taught every spelling of
       `TBD` is one that misses the next one.
 
-      A vault with no competitor-analysis.md profiled no competitors and
-      passes. Gated on schemaVersion 2 - the axes are what version 2 asks the
-      section for, and a vault at 1 is held to the rules it was written under.
+      A vault with no competitor-analysis.md at its root passes, and the
+      success line names the document it could not open and says the axes
+      went unread - never that no competitor set was profiled, which is a
+      conclusion a missing file cannot support. Gated on schemaVersion 2 -
+      the axes are what version 2 asks the section for, and a vault at 1 is
+      held to the rules it was written under.
 
   vault-lint.sh --deliverable [--vault PATH] [--json]
       Read every rendered deliverables/*.html and fail on the vault's own
@@ -753,6 +766,11 @@ vault-lint.sh - read-only checks over a claim vault.
       model-table-missing: notes declare themselves model inputs and the table
       renders none of them. The inputs are in the ledger and nowhere a reader
       can see them.
+
+      A vault where NO note declares itself a model input is reported as
+      exactly that, and the success line names assumption-not-in-model as not
+      run: the row count it prints is the model-row-no-assumption half alone,
+      and the half this mode was written for iterated over nothing.
 
       Gated on schemaVersion 3, which is where the fields it reads were added.
       A vault at 1 or 2 carries none of them, cannot owe this, and is told the
@@ -2500,7 +2518,7 @@ function Invoke-ModeBindingDriver {
 	# their one reader. They are declared in this body rather than beside the
 	# shared ones for the reason the stub seam states: a pattern two modes want
 	# is a pattern two slices are both editing.
-	$RX_BD_HEADING = [regex]'\A#+[ \t]+'
+	$RX_BD_HEADING = [regex]'\A(#+)[ \t]+'
 	$RX_BD_TRAILING_HASH = [regex]'[ \t]*#+[ \t]*\z'
 	$RX_BD_ANCHOR_ATTR = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
 	$RX_BD_LEAD_PIPE = [regex]'\A\|'
@@ -2622,13 +2640,24 @@ function Invoke-ModeBindingDriver {
 	# corner verdict rows of the one section that has them. Memoised on SCANNED,
 	# so a document cited by four notes is opened once.
 	#
-	# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is looser than the
-	# rule the shared Read-FirstItemTable uses (next heading of the same depth or
-	# shallower). Nothing in plan-template.md puts a subsection under the verdict
-	# anchor, so the two agree today; if one is ever added, the phrase a reader
-	# sees inside that subsection is outside the body this reads and the
-	# condition check would cry wolf. That is the trigger to adopt
-	# Read-FirstItemTable depth rule here.
+	# A SECTION ENDS AT THE NEXT HEADING OF THE SAME DEPTH OR SHALLOWER, which is
+	# the rule the shared Read-FirstItemTable uses, so a subsection under a
+	# heading is still part of it. This used to end a section at the next heading
+	# of ANY depth, on the reasoning that nothing in plan-template.md puts a
+	# subsection under the verdict anchor - and that comment named the arrival of
+	# one as the trigger to adopt the depth rule. THE TRIGGER FIRED. A plan opened
+	# a `###` one line into the verdict anchor's body, which put the corner table
+	# outside the body this reads: the mode found ZERO rows and printed `1 verdict
+	# note against 0 corner verdict rows under the {#target-verdict} anchor,
+	# matched verbatim` - a clean pass over a table it never opened, for as long
+	# as the note had existed, with the whole corner-row half of the mode silently
+	# disabled and the condition check ready to cry wolf over any phrase written
+	# below that subsection heading.
+	#
+	# A LINE THEREFORE REACHES EVERY OPEN ANCESTOR, which is what a nested
+	# boundary means: $sect is a stack carrying one entry per section still open,
+	# and a heading pops every entry at its own depth or deeper before pushing its
+	# own.
 	#
 	# THE CORNER TABLE IS IDENTIFIED BY ITS HEADER rather than by being the first
 	# table in the section, which is tighter than --roadmap-table needs and for a
@@ -2675,7 +2704,14 @@ function Invoke-ModeBindingDriver {
 		$intable = 0
 		$dcol = 0
 		$kcol = 0
-		$wanttable = $false
+		# The open-section stack and the section that owns the corner table.
+		# awk's SECT/SLEV are function locals reset per call; these are reset per
+		# call by being declared here. $sect holds the FINISHED BODY key, as awk's
+		# SECT does, so the per-line loop appends without rebuilding one composite
+		# key per open ancestor per line.
+		$sect = New-Object 'System.Collections.Generic.List[string]'
+		$slev = New-Object 'System.Collections.Generic.List[int]'
+		$tpos = 0
 
 		foreach ($raw in $lines) {
 			# `sub(/^[ \t]+/, "", t)` through the same named pair every other trim
@@ -2701,6 +2737,12 @@ function Invoke-ModeBindingDriver {
 
 			$hm = $RX_BD_HEADING.Match($t)
 			if ($hm.Success) {
+				# The heading depth, off the capture group the way
+				# Read-FirstItemTable takes it - the run of `#` before the
+				# space, which the pattern has already matched. Counted in a
+				# second loop instead, the two would be separate mechanisms
+				# answering one question, which is the shape that drifts.
+				$nh = $hm.Groups[1].Length
 				$h = Get-BdTrim ($RX_BD_TRAILING_HASH.Replace($t.Substring($hm.Length), ''))
 				$ex = ''
 				# Braces written as bracket expressions rather than escaped, for
@@ -2723,22 +2765,57 @@ function Invoke-ModeBindingDriver {
 				$hFold = Get-BdFold $h
 				if ($ex.Length -ne 0) { Add-BdClaimKey $Doc $exFold $ord }
 				Add-BdClaimKey $Doc $hFold $ord
-				$wanttable = ((Test-BdEqual $Doc $TABLEDOC) -and ((Test-BdEqual $exFold $TABLEKEY) -or (Test-BdEqual $hFold $TABLEKEY)))
+
+				# Close every section this heading ends, then open this one. A
+				# subsection leaves its parent on the stack, which is the whole
+				# depth rule.
+				#
+				# `$tpos` is the STACK POSITION of the section that owns the
+				# corner table, not a second copy of its ordinal and depth. The
+				# table section lives exactly as long as its own stack entry, so
+				# the pop above is already the rule that closes it - carrying its
+				# depth separately would be the same boundary written twice, in
+				# step only for as long as someone kept it there. A second
+				# `{#target-verdict}` anchor is therefore a new section rather
+				# than an extension of the first, by construction.
+				while ($sect.Count -gt 0 -and $slev[$slev.Count - 1] -ge $nh) {
+					$sect.RemoveAt($sect.Count - 1)
+					$slev.RemoveAt($slev.Count - 1)
+				}
+				if ($tpos -gt $sect.Count) { $tpos = 0 }
+				$sect.Add($Doc + $SUB + $ord)
+				$slev.Add($nh)
+				if ((Test-BdEqual $Doc $TABLEDOC) -and ((Test-BdEqual $exFold $TABLEKEY) -or (Test-BdEqual $hFold $TABLEKEY))) {
+					$tpos = $sect.Count
+				}
 				$hdr = ''
 				$intable = 0
 				continue
 			}
 
-			if ($ord -eq 0) { continue }
+			if ($sect.Count -eq 0) { continue }
 			# A blank line closes a table to every renderer, so it closes one
 			# here - otherwise two tables separated by a paragraph read as one
 			# and the rows of the second land under the header of the first.
 			if ($t.Length -eq 0) { $hdr = ''; $intable = 0; continue }
 
-			$kk = $Doc + $SUB + $ord
-			$BODY[$kk] = (Get-BdBody $kk) + $t + "`n"
+			# TryGetValue inline rather than Get-BdBody: this runs once per open
+			# ancestor per body line of every document the mode opens, and a
+			# PowerShell function call is the expensive part of it. A miss sets
+			# the out-param to default(string), which is $null and not '', so the
+			# fallback is written out rather than relied on - the same reason
+			# Get-ModelNoteValue states for not using TryGetValue bare.
+			foreach ($sk in $sect) {
+				$cur = $null
+				if (-not $BODY.TryGetValue($sk, [ref]$cur)) { $cur = '' }
+				$BODY[$sk] = $cur + $t + "`n"
+			}
 			if ([int]$t[0] -ne 124) { $hdr = ''; $intable = 0; continue }
-			if (-not $wanttable) { continue }
+			if ($tpos -eq 0) { continue }
+			# Keyed on the SECTION that owns the table rather than on the heading
+			# the row sits under, so a corner table inside a subsection is
+			# recorded against the anchor the mode resolves.
+			$kk = $sect[$tpos - 1]
 
 			# Both patterns are anchored, so Replace has exactly one match to
 			# make and agrees with awk's sub(), which replaces only the first.
@@ -3137,15 +3214,31 @@ function Invoke-ModeBindingDriver {
 	# carries no verdict, reads as a verdict that was checked. The shell captures
 	# it in a command substitution, which strips the trailing newline the printf
 	# writes, so it is built here without one.
+	$np = 's'
+	if ($VN.Count -eq 1) { $np = '' }
 	if ($VN.Count -eq 0 -and $tvord -eq 0) {
 		if ($script:HAS_PLAN -eq 1) {
 			$bdOk = 'no verdict note and no section at the {#target-verdict} anchor of business-plan.md - there is no verdict on either side, which is every vault before a target has one - ' + $script:VAULT
 		} else {
 			$bdOk = 'no verdict note and no business-plan.md at the vault root - there is no verdict on either side, which is every vault before a target has one - ' + $script:VAULT
 		}
+	} elseif ($nrow -eq 0) {
+		# NO CORNER ROWS IS NOT AGREEMENT, and the old line said it was: it read
+		# `matched verbatim` over a row count of zero, which is what a
+		# section-boundary bug looked like from the outside for as long as it
+		# shipped. The kind check is the half that reads those rows, in both
+		# directions, so with none of them read there is nothing for the ledger to
+		# have agreed with and the line says so.
+		#
+		# Which document is named is branched on HAS_PLAN the way the
+		# no-verdict-either-side line above branches on it: naming an anchor
+		# inside a file that is not there sends its reader to look for a table in
+		# a document they do not have, which is the same reporting-past-what-was-
+		# opened this whole line exists to stop.
+		$where = 'no business-plan.md at the vault root'
+		if ($script:HAS_PLAN -eq 1) { $where = 'no corner verdict table under the {#target-verdict} anchor of business-plan.md' }
+		$bdOk = [string]$VN.Count + ' verdict note' + $np + ' and ' + $where + ' - ' + $script:VAULT + '. Not checked: the Kind cell against `driver_kind`, in either direction, because there is no corner verdict table to read it from.'
 	} else {
-		$np = 's'
-		if ($VN.Count -eq 1) { $np = '' }
 		$rp = 's'
 		if ($nrow -eq 1) { $rp = '' }
 		$bdOk = [string]$VN.Count + ' verdict note' + $np + ' against ' + [string]$nrow + ' corner verdict row' + $rp + ' under the {#target-verdict} anchor, matched verbatim - ' + $script:VAULT
@@ -3166,8 +3259,17 @@ function Invoke-ModeMonitoring {
 
 	$okLine = 'every monitoring axis names an instrument, a cadence and the decision it would change - ' + $script:VAULT
 
+	# A vault with no competitor-analysis.md at its root owes nothing, which is
+	# every vault before the competitor dimension runs. The line names the
+	# document it could not open and says the axis half did not run, rather than
+	# stating what it INFERRED from the absence. The old line said `no competitor
+	# set was profiled, so no axis owes an instrument` - a conclusion drawn from a
+	# missing file - and printed it over a vault holding 31 competitor profiles
+	# and a written monitoring plan, because the document lived somewhere other
+	# than the vault root. Absence of the file is not absence of the work, and the
+	# only thing this mode can honestly report is what it did not read.
 	if (-not (Test-Path -LiteralPath $competitorsPath -PathType Leaf)) {
-		exit (Render-Failures 'vault-lint monitoring' ('no competitor-analysis.md under ' + $script:VAULT + ' - no competitor set was profiled, so no axis owes an instrument'))
+		exit (Render-Failures 'vault-lint monitoring' ('no competitor-analysis.md at the vault root - ' + $script:VAULT + '. Not read: the monitoring axes, so nothing here was held to an instrument, a cadence and the decision it would change - a competitor set profiled under some other path reads exactly like one that was never profiled.'))
 	}
 	if ([int]$script:FOUND_SCHEMA -lt 2) {
 		exit (Render-Failures 'vault-lint monitoring' ('competitor-analysis.md at schemaVersion ' + $script:FOUND_SCHEMA + ' - the monitoring axes are a schemaVersion 2 rule and a vault at 1 is held to the rules it was written under'))
@@ -3686,11 +3788,20 @@ function Invoke-ModeAssumptionRows {
 		Add-ModelFailure $mi.File 'excluded-line-on-roadmap' $mi.Id ('`excluded_from_model` is `' + $mi.Excluded + '` and ' + $moved[$mi.Id] + ' on the roadmap moves this note, and no verdict note names it in `arr_excludes`. The roadmap ships a change to a line the model does not carry, so the ARR term every corner of the target is solved against is a subset figure and nothing says which subset. A model may exclude a revenue line - a metered layer must not be allowed to flatter subscription churn - but the exclusion is a term of the identity and belongs where the identity is stated: name this note in `arr_excludes` on the verdict note, or give the model a row for it')
 	}
 
+	$rowPlural = 's'
+	if ($nrow -eq 1) { $rowPlural = '' }
 	if ($nmi -eq 0 -and $nrow -eq 0) {
 		$okLine = 'no declared model inputs and no assumption rows under ' + $VAULT + ' - there is no model on either side, which is every vault before the plan has one'
+	} elseif ($nmi -eq 0) {
+		# NO DECLARED INPUT IS NOT AGREEMENT. This mode is two checks, and the
+		# count it printed was the row half's alone: with no note carrying
+		# `model_input`, `assumption-not-in-model` iterates over nothing, so the
+		# direction this whole mode was written for - an input the ledger holds
+		# and the table never renders - reported a matched count over a set it
+		# never had. A reader has to be able to tell that half agreeing from that
+		# half not running.
+		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' against no declared model inputs - ' + $VAULT + '. Not checked: whether a declared input reached the table, because no `assumption` note carries `model_input`.'
 	} else {
-		$rowPlural = 's'
-		if ($nrow -eq 1) { $rowPlural = '' }
 		$miPlural = 's'
 		if ($nmi -eq 1) { $miPlural = '' }
 		$okLine = [string]$nrow + ' assumption row' + $rowPlural + ' against ' + [string]$nmi + ' declared model input' + $miPlural + ', matched verbatim - ' + $VAULT

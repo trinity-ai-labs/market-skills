@@ -54,6 +54,11 @@
 #      a ceiling section owing no note, an empty section owing none either, a
 #      well-evidenced verdict owing no evidence line, and a legacy ceiling claim
 #      carrying none of the fields - and none of them is gated on schemaVersion.
+#      The anchor's section runs to the next heading of the SAME DEPTH OR
+#      SHALLOWER, so a corner table inside a ### subsection under it is read and
+#      the phrases beside it are in the section; and a plan carrying no corner
+#      table at all is told the Kind check did not run, rather than that it
+#      agreed.
 #  14. A vault whose every byte is CRLF still fires the three checks that need a
 #      vocabulary term to compare against, and leaks no carriage return into
 #      what it prints. This is the input class no other fixture carried, which is
@@ -65,8 +70,11 @@
 #      an absent section, a section carrying prose and no axis table, and a row
 #      that leaves a column empty - including an em-dash cell, which is the half a
 #      list of placeholder words would get wrong. Each has its silent side beside
-#      it: a complete axis, a table outside the section, a vault that profiled no
-#      competitors, and the same document at schemaVersion 1.
+#      it: a complete axis, a table outside the section, a vault with no
+#      competitor-analysis.md at its root, and the same document at
+#      schemaVersion 1. That last-but-one line names the document it could not
+#      open and says the axes went unread, rather than concluding from a missing
+#      file that nobody was profiled.
 #  16. --deliverable reads the RENDERED deliverables/*.html and fails on a
 #      strikethrough span, a note ID and a red-team objection code - the vault
 #      addresses that resolve to nothing for the reader the document is for. The
@@ -83,7 +91,9 @@
 #      each clear it on their own: a rendered row, or a stated exclusion reason.
 #      The identity rule beside them fails a revenue line excluded from the model
 #      while the roadmap ships a change to it, and clears when the verdict note
-#      declares the exclusion in `arr_excludes`.
+#      declares the exclusion in `arr_excludes`. A vault where no note declares
+#      itself an input passes and is told so: the row half agreed and the half
+#      this mode was written for walked an empty set.
 #  19. --claim-drift re-opens a claim whose cited section has been rewritten since
 #      the note recorded reading it, reports a citation with no recorded hash and
 #      an entry naming a section the note no longer cites, clears on a re-record,
@@ -821,8 +831,14 @@ case "$MON_THIN_J" in
 *) no "--monitoring failure_count is not 2 - a complete axis fired, or an incomplete one did not (got: $MON_THIN_J)" ;;
 esac
 
-# A vault that profiled no competitors owes nothing, at either version. Failing
-# it would fail every corpus before the competitor dimension runs.
+# A vault with no competitor-analysis.md at its root owes nothing, at either
+# version. Failing it would fail every corpus before the competitor dimension
+# runs. What the line may NOT do is state what it inferred from the absence: it
+# said `no competitor set was profiled, so no axis owes an instrument` over a
+# vault holding 31 competitor profiles and a written monitoring plan, because the
+# document lived somewhere other than the vault root. Absence of the file is not
+# absence of the work, so the line names the document it could not open and says
+# the axis half did not run.
 MON_NONE=$("$LINT" --monitoring --vault "$HERE/dead-citation" 2>&1)
 MON_NONE_STATUS=$?
 [ "$MON_NONE_STATUS" = "0" ] && ok "a vault with no competitor-analysis.md passes --monitoring" ||
@@ -830,6 +846,14 @@ MON_NONE_STATUS=$?
 case "$MON_NONE" in
 *"no competitor-analysis.md"*) ok "the absent document is named rather than reported clean" ;;
 *) no "--monitoring did not say the document was absent (got: $MON_NONE)" ;;
+esac
+case "$MON_NONE" in
+*'Not read: the monitoring axes'*) ok "the line says the axis half did not run" ;;
+*) no "--monitoring did not say the axes went unread (got: $MON_NONE)" ;;
+esac
+case "$MON_NONE" in
+*'no competitor set was profiled'*) no "the line still infers that nobody was profiled from a file it could not find" ;;
+*) ok "the line reports what it did not read, not what it concluded from the absence" ;;
 esac
 
 # --- 2j. what the rendered deliverable carries out of the vault ---------------
@@ -1581,6 +1605,63 @@ case "$BD_KU" in
 *) ok "an undetermined corner naming its driver with an em-dash kind demands no note" ;;
 esac
 
+# --- the section boundary the corner table is read inside --------------------
+# The verdict anchor's section runs to the next heading of the SAME DEPTH OR
+# SHALLOWER, so a `###` opened one line into its body leaves the corner table,
+# both conditional phrases and the evidence line inside the section. Read to the
+# next heading of ANY depth instead - which is what this mode did until a live
+# plan opened one - all three fall outside: the mode finds zero corner rows, so
+# the Kind check runs in NEITHER direction, and the two condition checks and the
+# two evidence checks cry wolf over strings the reader can see. That vault
+# reported `1 verdict note against 0 corner verdict rows ... matched verbatim` and
+# passed, for as long as the note had existed.
+#
+# The count is the whole assertion, and it moves in both directions at once: four
+# failures under the old boundary, one under this one.
+BD_SS=$("$LINT" --binding-driver --vault "$HERE/verdict-subsection" --json 2>/dev/null)
+BD_SS_STATUS=$?
+[ "$BD_SS_STATUS" = "1" ] && ok "a corner table inside a subsection under the anchor is read" ||
+	no "verdict-subsection should exit 1 (got $BD_SS_STATUS)"
+case "$BD_SS" in
+*'"failure_count": 1'*) ok "only the planted Kind cell is reported - the phrases inside the subsection are in the section" ;;
+*) no "--binding-driver did not report exactly one row over verdict-subsection (got: $BD_SS)" ;;
+esac
+case "$BD_SS" in
+*'"check": "verdict-kind-mismatch"'*CLAIM-SS1DD004*) ok "the row inside the subsection is compared against its note" ;;
+*) no "the corner table inside the subsection was not read (got: $BD_SS)" ;;
+esac
+# The three silent sides, each of which fires under a boundary that stops at the
+# first `###`: the other corner's Kind cell agrees, both conditional_on phrases
+# are written inside the subsection, and so is the line the evidence counts
+# generate.
+case "$BD_SS" in
+*'"check": "verdict-unconditional"'*) no "a conditional_on phrase written inside the subsection was reported missing" ;;
+*) ok "a conditional_on phrase inside the subsection is inside the section" ;;
+esac
+case "$BD_SS" in
+*'"check": "verdict-thin-evidence"'*) no "an evidence line written inside the subsection was reported missing" ;;
+*) ok "the generated evidence line inside the subsection is inside the section" ;;
+esac
+
+# --- no corner table is not agreement ----------------------------------------
+# The success line over a vault carrying a verdict note and no corner table under
+# the anchor. It must name the Kind check as NOT RUN rather than report a count
+# and `matched verbatim`: zero rows compared and zero rows disagreeing end in the
+# same words, and only one of them means the check happened. That wording is what
+# made the boundary bug above ship as a clean pass over a table nothing opened.
+BD_NC=$("$LINT" --binding-driver --vault "$HERE/verdict-no-corner-table" 2>&1)
+BD_NC_STATUS=$?
+[ "$BD_NC_STATUS" = "0" ] && ok "a verdict note with no corner table under the anchor passes" ||
+	no "verdict-no-corner-table should exit 0 (got $BD_NC_STATUS: $BD_NC)"
+case "$BD_NC" in
+*'no corner verdict table'*'Not checked: the Kind cell'*) ok "the success line names the Kind check as not run rather than as agreed" ;;
+*) no "--binding-driver reported a vacuous pass over zero corner rows (got: $BD_NC)" ;;
+esac
+case "$BD_NC" in
+*'matched verbatim'*) no "the no-table line still says matched verbatim - there was nothing to match" ;;
+*) ok "the no-table line does not claim a verbatim match" ;;
+esac
+
 BD_TE=$("$LINT" --binding-driver --vault "$HERE/verdict-thin-evidence" --json 2>/dev/null)
 BD_TE_STATUS=$?
 [ "$BD_TE_STATUS" = "1" ] && ok "a closure that reaches one counterparty fails at any n" ||
@@ -1908,6 +1989,26 @@ AR_NONE_STATUS=$?
 case "$AR_NONE" in
 *'no declared model inputs and no assumption rows'*) ok "the absent model is named rather than reported clean" ;;
 *) no "--assumption-rows did not say there was no model (got: $AR_NONE)" ;;
+esac
+
+# The half that ran and the half that did not, told apart in the success line.
+# This mode is two checks, and with no note carrying `model_input` the direction
+# it was WRITTEN for - an input the ledger holds and the table never renders -
+# iterates over an empty set. The old line printed the row count and `matched
+# verbatim` and said nothing about that, so a vault whose notes never declared an
+# input read exactly like one whose declared inputs all reached the table.
+AR_ND=$("$LINT" --assumption-rows --vault "$HERE/model-no-declared-input" 2>&1)
+AR_ND_STATUS=$?
+[ "$AR_ND_STATUS" = "0" ] && ok "a table whose every row matches a note, with no declared input, passes" ||
+	no "model-no-declared-input should exit 0 (got $AR_ND_STATUS: $AR_ND)"
+case "$AR_ND" in
+*'against no declared model inputs'*'Not checked: whether a declared input reached the table'*)
+	ok "the success line names assumption-not-in-model as not run" ;;
+*) no "--assumption-rows reported a vacuous pass over zero declared inputs (got: $AR_ND)" ;;
+esac
+case "$AR_ND" in
+*'matched verbatim'*) no "the no-input line still says matched verbatim - one of its two halves matched nothing" ;;
+*) ok "the no-input line does not claim both halves agreed" ;;
 esac
 
 # The closed word list, in `check` rather than here because it reads nothing but
