@@ -233,6 +233,10 @@ vault-lint.sh - read-only checks over a claim vault.
       the section, the mode reads zero rows, and the whole corner-row half
       goes quiet while the run still passes.
 
+      A plan whose verdict anchor carries no such table is reported as
+      exactly that, and the success line names the kind check as not run:
+      zero rows compared is not the same answer as zero rows disagreeing.
+
       verdict-thin-evidence: the closure under the note reaches fewer than
       three distinct source notes, or they all share one counterparty, and
       the tail is not surfaced. Surfacing it is a CONJUNCTION - the note
@@ -298,9 +302,12 @@ vault-lint.sh - read-only checks over a claim vault.
       placeholder word list: a check that has to be taught every spelling of
       `TBD` is one that misses the next one.
 
-      A vault with no competitor-analysis.md profiled no competitors and
-      passes. Gated on schemaVersion 2 - the axes are what version 2 asks the
-      section for, and a vault at 1 is held to the rules it was written under.
+      A vault with no competitor-analysis.md at its root passes, and the
+      success line names the document it could not open and says the axes
+      went unread - never that no competitor set was profiled, which is a
+      conclusion a missing file cannot support. Gated on schemaVersion 2 -
+      the axes are what version 2 asks the section for, and a vault at 1 is
+      held to the rules it was written under.
 
   vault-lint.sh --deliverable [--vault PATH] [--json]
       Read every rendered deliverables/*.html and fail on the vault's own
@@ -392,6 +399,11 @@ vault-lint.sh - read-only checks over a claim vault.
       model-table-missing: notes declare themselves model inputs and the table
       renders none of them. The inputs are in the ledger and nowhere a reader
       can see them.
+
+      A vault where NO note declares itself a model input is reported as
+      exactly that, and the success line names assumption-not-in-model as not
+      run: the row count it prints is the model-row-no-assumption half alone,
+      and the half this mode was written for iterated over nothing.
 
       Gated on schemaVersion 3, which is where the fields it reads were added.
       A vault at 1 or 2 carries none of them, cannot owe this, and is told the
@@ -3302,6 +3314,24 @@ if [ "$MODE" = "binding-driver" ]; then
 						printf("no verdict note and no business-plan.md at the vault root - there is no verdict on either side, which is every vault before a target has one - %s\n", vault)
 					exit
 				}
+				# NO CORNER ROWS IS NOT AGREEMENT, and the old line said it was:
+				# it read `matched verbatim` over a row count of zero, which is
+				# what a section-boundary bug looked like from the outside for as
+				# long as it shipped. The kind check is the half that reads those
+				# rows, in both directions, so with none of them read there is
+				# nothing for the ledger to have agreed with and the line says so.
+				#
+				# Which document is named is branched on `hasplan` the way the
+				# no-verdict-either-side line above branches on it: naming an
+				# anchor inside a file that is not there sends its reader to look
+				# for a table in a document they do not have, which is the same
+				# reporting-past-what-was-opened this whole line exists to stop.
+				if (nrow == 0) {
+					where = (hasplan == "1") ? "no corner verdict table under the {#target-verdict} anchor of business-plan.md" : "no business-plan.md at the vault root"
+					printf("%d verdict note%s and %s - %s. Not checked: the Kind cell against `driver_kind`, in either direction, because there is no corner verdict table to read it from.\n",
+						nvn, (nvn == 1 ? "" : "s"), where, vault)
+					exit
+				}
 				printf("%d verdict note%s against %d corner verdict row%s under the {#target-verdict} anchor, matched verbatim - %s\n",
 					nvn, (nvn == 1 ? "" : "s"), nrow, (nrow == 1 ? "" : "s"), vault)
 			}
@@ -3344,15 +3374,20 @@ fi
 
 if [ "$MODE" = "monitoring" ]; then
 	COMPETITORS="$VAULT/competitor-analysis.md"
-	# A vault with no competitor-analysis.md profiled no competitors, which is
-	# every vault before the competitor dimension runs. Reported by name rather
-	# than passing silently: a mode that printed `clean` over a document it never
-	# found reads as a monitoring plan that was checked. The empty failure file
-	# still goes through the renderer, so --json gets a well-formed document
-	# either way.
+	# A vault with no competitor-analysis.md at its root owes nothing, which is
+	# every vault before the competitor dimension runs. The line names the
+	# document it could not open and says the axis half did not run, rather than
+	# stating what it INFERRED from the absence. The old line said `no competitor
+	# set was profiled, so no axis owes an instrument` - a conclusion drawn from a
+	# missing file - and printed it over a vault holding 31 competitor profiles
+	# and a written monitoring plan, because the document lived somewhere other
+	# than the vault root. Absence of the file is not absence of the work, and the
+	# only thing this mode can honestly report is what it did not read. The empty
+	# failure file still goes through the renderer, so --json gets a well-formed
+	# document either way.
 	MONITORING_OK="every monitoring axis names an instrument, a cadence and the decision it would change - $VAULT"
 	if [ ! -f "$COMPETITORS" ]; then
-		MONITORING_OK="no competitor-analysis.md under $VAULT - no competitor set was profiled, so no axis owes an instrument"
+		MONITORING_OK="no competitor-analysis.md at the vault root - $VAULT. Not read: the monitoring axes, so nothing here was held to an instrument, a cadence and the decision it would change - a competitor set profiled under some other path reads exactly like one that was never profiled."
 	elif [ "$FOUND_SCHEMA" -lt 2 ]; then
 		# The axes are what version 2 asks the section for. A vault at 1 is held
 		# to exactly the rules it was written under, the same exemption
@@ -3857,6 +3892,16 @@ if [ "$MODE" = "assumption-rows" ]; then
 
 				if (nmi == 0 && NROW == 0)
 					printf("no declared model inputs and no assumption rows under %s - there is no model on either side, which is every vault before the plan has one\n", vault)
+				# NO DECLARED INPUT IS NOT AGREEMENT. This mode is two checks,
+				# and the count it printed was the row half alone: with no note
+				# carrying `model_input`, `assumption-not-in-model` iterates over
+				# nothing, so the direction this whole mode was written for - an
+				# input the ledger holds and the table never renders - reported a
+				# matched count over a set it never had. A reader has to be able
+				# to tell that half agreeing from that half not running.
+				else if (nmi == 0)
+					printf("%d assumption row%s against no declared model inputs - %s. Not checked: whether a declared input reached the table, because no `assumption` note carries `model_input`.\n",
+						NROW, (NROW == 1 ? "" : "s"), vault)
 				else
 					printf("%d assumption row%s against %d declared model input%s, matched verbatim - %s\n",
 						NROW, (NROW == 1 ? "" : "s"), nmi, (nmi == 1 ? "" : "s"), vault)
