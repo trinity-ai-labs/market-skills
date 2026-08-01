@@ -2,6 +2,45 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.17.0
+
+- **The method could solve a target downward and never upward, so a founder who named a
+  conservative number got it computed, verdicted and never questioned.** `target.md` has carried
+  *"The nearest reachable target is a solve, not a smaller number chosen by feel"* since early on —
+  machinery that holds resources and driver ranges fixed and solves the identity for what is
+  actually achievable when the stated target is out of reach. There was no mirror. Nine hundred
+  lines of that file guard against overclaiming: the both-directions test, the confidence caps, the
+  policy/structural split, the flip test. Not one step asked whether the stated target UNDERSTATES
+  the evidence — and the target is the single number every other number in the plan is solved
+  against.
+- **`SKILL.md` already carried the bar in prose and nothing implemented it**, which is the same
+  defect 1.16.0 shipped a fix for one field over. The quality bar reads *"a claim weaker than its
+  evidence is an error of the same class as one stronger… an overclaim gets challenged, an
+  understatement gets believed"* — stated, and with no producer pointed at the target itself.
+  `AGENTS.md`'s rule is the general form: prose in a reference file is not a producer.
+- **The furthest defensible target is now a solve with the same shape as the nearest reachable
+  one** — same identity, same date, same stated resources, evidenced driver ranges at their
+  defensible top rather than their bottom, reported beside the verdict and never instead of it. It
+  fires on a `reachable` verdict and on any `undetermined` whose upper corners clear, and stays
+  quiet where the verdict is negative at every corner, because there is no upward solve to run
+  against a number that is not reachable.
+- **It reports the capping driver and its kind, not just a number.** *"The evidenced ranges support
+  up to X by the stated date, capped by DRIVER at KIND"* names what would have to move for the
+  larger outcome to be a plan rather than a hope, and where that driver is `policy` the ceiling is
+  a configuration the founder chose — exactly as it is on the way down. A raised target supersedes
+  under the standing rule and the superseded number keeps its reason, so the corpus records that
+  the smaller target was set before the solve rather than in spite of it.
+- **The failure it prevents is expensive and invisible.** A founder states a number that feels
+  safe; the plan solves it, returns reachable, and the roadmap order, the capital path, the pricing
+  and the reference class the verdict is graded in are all sequenced to that number. The work
+  required was the same. The larger outcome sat inside the evidenced ranges the whole time and no
+  step was looking for it, because every check in the file was built to catch a founder claiming
+  too much. An overclaim gets challenged on the first read; an understatement is inherited by every
+  document downstream and reads as discipline.
+- **No lint change.** This is a method rule with two producers — Phase 3's verdict step and a
+  quality bar — and no mechanical surface, so `bin/` is untouched and there is no fixture or parity
+  exposure.
+
 ## 1.16.0
 
 - **`model_input` has been defined in the schema and asked for by nothing, so the half of

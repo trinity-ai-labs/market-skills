@@ -917,6 +917,16 @@ one re-verification none of them structurally reaches:
   acquirer or an investor as a fabricated weakness — one the founder then has to argue their own
   plan out of.
 
+**Where the verdict comes back reachable, or undetermined with its upper corners clearing, the
+furthest defensible target is solved in the same pass and reported beside it** — the same identity,
+the same date, the same stated resources, with the evidenced driver ranges at their defensible top
+instead of their bottom, capped by a named driver and its kind
+([references/target.md](references/target.md#the-furthest-defensible-target-is-a-solve-too-and-a-target-that-clears-with-room-was-set-too-low)).
+A target that clears with room is evidence about the target. Every other guard in this skill catches
+a founder claiming too much; this is the one that catches a plan sequenced to a number smaller than
+its own evidence supports, where the roadmap order, the capital path and the reference class were
+all settled against the smaller one for the same work.
+
 **The evidence-backed verdict is computed after those queries and before the first section is
 drafted**, as the `claim` note [references/target.md](references/target.md) specifies — and where
 it is negative, the negotiation turn happens HERE, before drafting, per that same file. A plan
@@ -1459,6 +1469,12 @@ three milestones, and where everything landed. Invite pushback on the specific b
   failing corner is usually the one the founder was aiming at. **Every corner that names a kind has
   a filed verdict note behind it carrying that kind** — the table renders off the notes, so a
   corner rendered with no note is a verdict the ledger never saw and `--binding-driver` fails it.
+- Where the verdict is reachable, or undetermined with its upper corners clearing, the plan reports
+  the furthest defensible target beside it, in the founder's currency and with the driver that caps
+  it named. The nearest-reachable solve has governed the downward case since the first release and
+  nothing governed the upward one, so a conservative target was computed, verdicted and never
+  questioned — and an understatement is inherited by every document downstream while reading as
+  discipline. A bar that fires only on optimism is a filter, not a check.
 - The plan matches the founder's stated ambition, not a template's default ambition.
 - Nothing was dispatched to the red team until the plan and the vault were reconciled: the
   `--used-in` pass clean, the `--supersession-sweep` worklist read to its end and stamped
