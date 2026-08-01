@@ -54,6 +54,11 @@
 #      a ceiling section owing no note, an empty section owing none either, a
 #      well-evidenced verdict owing no evidence line, and a legacy ceiling claim
 #      carrying none of the fields - and none of them is gated on schemaVersion.
+#      The anchor's section runs to the next heading of the SAME DEPTH OR
+#      SHALLOWER, so a corner table inside a ### subsection under it is read and
+#      the phrases beside it are in the section; and a plan carrying no corner
+#      table at all is told the Kind check did not run, rather than that it
+#      agreed.
 #  14. A vault whose every byte is CRLF still fires the three checks that need a
 #      vocabulary term to compare against, and leaks no carriage return into
 #      what it prints. This is the input class no other fixture carried, which is
@@ -1568,6 +1573,43 @@ case "$BD_KU" in
 *) ok "an undetermined corner naming its driver with an em-dash kind demands no note" ;;
 esac
 
+# --- the section boundary the corner table is read inside --------------------
+# The verdict anchor's section runs to the next heading of the SAME DEPTH OR
+# SHALLOWER, so a `###` opened one line into its body leaves the corner table,
+# both conditional phrases and the evidence line inside the section. Read to the
+# next heading of ANY depth instead - which is what this mode did until a live
+# plan opened one - all three fall outside: the mode finds zero corner rows, so
+# the Kind check runs in NEITHER direction, and the two condition checks and the
+# two evidence checks cry wolf over strings the reader can see. That vault
+# reported `1 verdict note against 0 corner verdict rows ... matched verbatim` and
+# passed, for as long as the note had existed.
+#
+# The count is the whole assertion, and it moves in both directions at once: four
+# failures under the old boundary, one under this one.
+BD_SS=$("$LINT" --binding-driver --vault "$HERE/verdict-subsection" --json 2>/dev/null)
+BD_SS_STATUS=$?
+[ "$BD_SS_STATUS" = "1" ] && ok "a corner table inside a subsection under the anchor is read" ||
+	no "verdict-subsection should exit 1 (got $BD_SS_STATUS)"
+case "$BD_SS" in
+*'"failure_count": 1'*) ok "only the planted Kind cell is reported - the phrases inside the subsection are in the section" ;;
+*) no "--binding-driver did not report exactly one row over verdict-subsection (got: $BD_SS)" ;;
+esac
+case "$BD_SS" in
+*'"check": "verdict-kind-mismatch"'*CLAIM-SS1DD004*) ok "the row inside the subsection is compared against its note" ;;
+*) no "the corner table inside the subsection was not read (got: $BD_SS)" ;;
+esac
+# The three silent sides, each of which fires under a boundary that stops at the
+# first `###`: the other corner's Kind cell agrees, both conditional_on phrases
+# are written inside the subsection, and so is the line the evidence counts
+# generate.
+case "$BD_SS" in
+*'"check": "verdict-unconditional"'*) no "a conditional_on phrase written inside the subsection was reported missing" ;;
+*) ok "a conditional_on phrase inside the subsection is inside the section" ;;
+esac
+case "$BD_SS" in
+*'"check": "verdict-thin-evidence"'*) no "an evidence line written inside the subsection was reported missing" ;;
+*) ok "the generated evidence line inside the subsection is inside the section" ;;
+esac
 BD_TE=$("$LINT" --binding-driver --vault "$HERE/verdict-thin-evidence" --json 2>/dev/null)
 BD_TE_STATUS=$?
 [ "$BD_TE_STATUS" = "1" ] && ok "a closure that reaches one counterparty fails at any n" ||

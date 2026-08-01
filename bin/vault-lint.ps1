@@ -561,6 +561,12 @@ vault-lint.sh - read-only checks over a claim vault.
       kind the plan asserts and the ledger does not hold. Checked in BOTH
       directions - a verdict note whose driver no row carries fails too,
       because otherwise the rule above is cleared by editing a cell.
+      The anchor's section runs to the next heading of the SAME DEPTH OR
+      SHALLOWER, so a table inside a ### subsection under it is still that
+      section's table. Read to the next heading of any depth instead, a plan
+      that opens a subsection one line in has its corner table fall outside
+      the section, the mode reads zero rows, and the whole corner-row half
+      goes quiet while the run still passes.
 
       verdict-thin-evidence: the closure under the note reaches fewer than
       three distinct source notes, or they all share one counterparty, and
@@ -2341,7 +2347,7 @@ function Invoke-ModeBindingDriver {
 	# their one reader. They are declared in this body rather than beside the
 	# shared ones for the reason the stub seam states: a pattern two modes want
 	# is a pattern two slices are both editing.
-	$RX_BD_HEADING = [regex]'\A#+[ \t]+'
+	$RX_BD_HEADING = [regex]'\A(#+)[ \t]+'
 	$RX_BD_TRAILING_HASH = [regex]'[ \t]*#+[ \t]*\z'
 	$RX_BD_ANCHOR_ATTR = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
 	$RX_BD_LEAD_PIPE = [regex]'\A\|'
@@ -2463,13 +2469,24 @@ function Invoke-ModeBindingDriver {
 	# corner verdict rows of the one section that has them. Memoised on SCANNED,
 	# so a document cited by four notes is opened once.
 	#
-	# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is looser than the
-	# rule the shared Read-FirstItemTable uses (next heading of the same depth or
-	# shallower). Nothing in plan-template.md puts a subsection under the verdict
-	# anchor, so the two agree today; if one is ever added, the phrase a reader
-	# sees inside that subsection is outside the body this reads and the
-	# condition check would cry wolf. That is the trigger to adopt
-	# Read-FirstItemTable depth rule here.
+	# A SECTION ENDS AT THE NEXT HEADING OF THE SAME DEPTH OR SHALLOWER, which is
+	# the rule the shared Read-FirstItemTable uses, so a subsection under a
+	# heading is still part of it. This used to end a section at the next heading
+	# of ANY depth, on the reasoning that nothing in plan-template.md puts a
+	# subsection under the verdict anchor - and that comment named the arrival of
+	# one as the trigger to adopt the depth rule. THE TRIGGER FIRED. A plan opened
+	# a `###` one line into the verdict anchor's body, which put the corner table
+	# outside the body this reads: the mode found ZERO rows and printed `1 verdict
+	# note against 0 corner verdict rows under the {#target-verdict} anchor,
+	# matched verbatim` - a clean pass over a table it never opened, for as long
+	# as the note had existed, with the whole corner-row half of the mode silently
+	# disabled and the condition check ready to cry wolf over any phrase written
+	# below that subsection heading.
+	#
+	# A LINE THEREFORE REACHES EVERY OPEN ANCESTOR, which is what a nested
+	# boundary means: $sect is a stack carrying one entry per section still open,
+	# and a heading pops every entry at its own depth or deeper before pushing its
+	# own.
 	#
 	# THE CORNER TABLE IS IDENTIFIED BY ITS HEADER rather than by being the first
 	# table in the section, which is tighter than --roadmap-table needs and for a
@@ -2516,7 +2533,14 @@ function Invoke-ModeBindingDriver {
 		$intable = 0
 		$dcol = 0
 		$kcol = 0
-		$wanttable = $false
+		# The open-section stack and the section that owns the corner table.
+		# awk's SECT/SLEV are function locals reset per call; these are reset per
+		# call by being declared here. $sect holds the FINISHED BODY key, as awk's
+		# SECT does, so the per-line loop appends without rebuilding one composite
+		# key per open ancestor per line.
+		$sect = New-Object 'System.Collections.Generic.List[string]'
+		$slev = New-Object 'System.Collections.Generic.List[int]'
+		$tpos = 0
 
 		foreach ($raw in $lines) {
 			# `sub(/^[ \t]+/, "", t)` through the same named pair every other trim
@@ -2542,6 +2566,12 @@ function Invoke-ModeBindingDriver {
 
 			$hm = $RX_BD_HEADING.Match($t)
 			if ($hm.Success) {
+				# The heading depth, off the capture group the way
+				# Read-FirstItemTable takes it - the run of `#` before the
+				# space, which the pattern has already matched. Counted in a
+				# second loop instead, the two would be separate mechanisms
+				# answering one question, which is the shape that drifts.
+				$nh = $hm.Groups[1].Length
 				$h = Get-BdTrim ($RX_BD_TRAILING_HASH.Replace($t.Substring($hm.Length), ''))
 				$ex = ''
 				# Braces written as bracket expressions rather than escaped, for
@@ -2564,22 +2594,57 @@ function Invoke-ModeBindingDriver {
 				$hFold = Get-BdFold $h
 				if ($ex.Length -ne 0) { Add-BdClaimKey $Doc $exFold $ord }
 				Add-BdClaimKey $Doc $hFold $ord
-				$wanttable = ((Test-BdEqual $Doc $TABLEDOC) -and ((Test-BdEqual $exFold $TABLEKEY) -or (Test-BdEqual $hFold $TABLEKEY)))
+
+				# Close every section this heading ends, then open this one. A
+				# subsection leaves its parent on the stack, which is the whole
+				# depth rule.
+				#
+				# `$tpos` is the STACK POSITION of the section that owns the
+				# corner table, not a second copy of its ordinal and depth. The
+				# table section lives exactly as long as its own stack entry, so
+				# the pop above is already the rule that closes it - carrying its
+				# depth separately would be the same boundary written twice, in
+				# step only for as long as someone kept it there. A second
+				# `{#target-verdict}` anchor is therefore a new section rather
+				# than an extension of the first, by construction.
+				while ($sect.Count -gt 0 -and $slev[$slev.Count - 1] -ge $nh) {
+					$sect.RemoveAt($sect.Count - 1)
+					$slev.RemoveAt($slev.Count - 1)
+				}
+				if ($tpos -gt $sect.Count) { $tpos = 0 }
+				$sect.Add($Doc + $SUB + $ord)
+				$slev.Add($nh)
+				if ((Test-BdEqual $Doc $TABLEDOC) -and ((Test-BdEqual $exFold $TABLEKEY) -or (Test-BdEqual $hFold $TABLEKEY))) {
+					$tpos = $sect.Count
+				}
 				$hdr = ''
 				$intable = 0
 				continue
 			}
 
-			if ($ord -eq 0) { continue }
+			if ($sect.Count -eq 0) { continue }
 			# A blank line closes a table to every renderer, so it closes one
 			# here - otherwise two tables separated by a paragraph read as one
 			# and the rows of the second land under the header of the first.
 			if ($t.Length -eq 0) { $hdr = ''; $intable = 0; continue }
 
-			$kk = $Doc + $SUB + $ord
-			$BODY[$kk] = (Get-BdBody $kk) + $t + "`n"
+			# TryGetValue inline rather than Get-BdBody: this runs once per open
+			# ancestor per body line of every document the mode opens, and a
+			# PowerShell function call is the expensive part of it. A miss sets
+			# the out-param to default(string), which is $null and not '', so the
+			# fallback is written out rather than relied on - the same reason
+			# Get-ModelNoteValue states for not using TryGetValue bare.
+			foreach ($sk in $sect) {
+				$cur = $null
+				if (-not $BODY.TryGetValue($sk, [ref]$cur)) { $cur = '' }
+				$BODY[$sk] = $cur + $t + "`n"
+			}
 			if ([int]$t[0] -ne 124) { $hdr = ''; $intable = 0; continue }
-			if (-not $wanttable) { continue }
+			if ($tpos -eq 0) { continue }
+			# Keyed on the SECTION that owns the table rather than on the heading
+			# the row sits under, so a corner table inside a subsection is
+			# recorded against the anchor the mode resolves.
+			$kk = $sect[$tpos - 1]
 
 			# Both patterns are anchored, so Replace has exactly one match to
 			# make and agrees with awk's sub(), which replaces only the first.
