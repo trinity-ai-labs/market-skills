@@ -357,7 +357,10 @@ The `Assumption` cell IS the note's `title`, copied verbatim, and every row is a
 `assumption` note written before the table. That is what lets
 `vault-lint.sh --assumption-rows` read the two against each other character for character,
 the same rule a roadmap row is held to against a milestone `title` — a table rendered off the
-notes matches by construction, so a mismatch means the row was written by hand. The `#` column
+notes matches by construction, so a mismatch means the row was written by hand. The note behind
+a row also has to be one the ledger still stands behind: a row whose only title match is
+`status: superseded` or `retracted` fails, because the title alone says the row was rendered
+off some note and only the status says the projection is resting on a live one. The `#` column
 stays the `A-n` label the prose and a milestone's `moves` field cite; nothing mechanical reads
 it.
 
