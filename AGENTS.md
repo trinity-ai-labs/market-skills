@@ -139,12 +139,12 @@ The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` and
 `bin/vault-lint.ps1` rather than to the repo: it asserts that every check the lint claims
 to make still fires, against corpora built to trigger each one, and `VAULT_LINT` points it
 at whichever implementation you're testing — `VAULT_LINT=bin/vault-lint.ps1 sh
-scripts/fixtures/run-fixtures.sh` runs the same 336 assertions against the PowerShell side.
+scripts/fixtures/run-fixtures.sh` runs the same 349 assertions against the PowerShell side.
 A check that stops firing and a check that was deleted look identical from the outside,
 which is why the assertion has to be written down rather than eyeballed.
 
 The parity gate is the third half: `node scripts/parity/parity.mjs` runs both scripts
-across 13 modes × 27 fixture vaults and fails on any byte-level disagreement between their
+across 13 modes × 30 fixture vaults and fails on any byte-level disagreement between their
 output — key order, an escaped character, row order, a path separator. The fixtures suite
 proves each script still does what it claims; the parity gate proves the two scripts still
 agree with each other — a check that stops firing in only *one* implementation is invisible
@@ -306,6 +306,29 @@ carries a `MODES` census asserting that every mode has a block in `usage()` — 
 table cannot absorb, since a help paragraph is hand-written at a shared anchor and a mode that
 loses its block still works.
 
+**That rule about the bare run's line is a rule about EVERY success line, and the sub-modes learned
+it late.** A mode that cannot see its subject must name the subject and say which half did not run —
+never report what it would have concluded had it looked. Three lines were failing that and each cost
+a real read: `--monitoring` printed *no competitor set was profiled, so no axis owes an instrument*
+over a vault holding 31 profiles and a written monitoring plan whose document lived somewhere other
+than the vault root; `--binding-driver` printed *matched verbatim* over zero corner rows, which is
+what a section-boundary bug looked like from the outside for as long as it shipped; and
+`--assumption-rows` printed its matched-row count with nothing about the half that walks the
+declared inputs, which is empty whenever no note carries `model_input`. None of the three becomes a
+failure — a vault legitimately has no competitor set, no verdict table and no declared inputs. What
+has to be readable is *checked and agreed* against *had nothing to check*, and `run-fixtures.sh`
+asserts each line both ways: the new wording present, and the old *matched verbatim* absent.
+
+**Two lines of that same shape are still unfixed, and they are named here so the next change to
+either one finds this rule rather than the sentence beside it.** `--red-team` prints *no red-team.md
+under $VAULT - no panel was dispatched, so no lens owes rows*, and `--deliverable` prints *no
+deliverables/\*.html under $VAULT - nothing has been rendered yet, so no artifact carries anything
+out*. Both infer the state of the work from one absent path, which is exactly what `--monitoring`
+was doing over a vault with 31 profiles in it. Neither has a real failure behind it yet — the rule
+in *Writing skills* below is that a rule with no failure mode gets cut, and these two would be
+rewritten on the strength of a sibling's incident rather than their own — so they are recorded
+rather than changed. Rewrite them when one of them costs a read, or when a slice owns those modes.
+
 **`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2 3`) and refuses anything else.** A vault at
 1 is held to exactly the rules it was written under; 2 and 3 are where a check that an existing
 corpus could not owe goes, and the found version is passed into every awk program that needs it as
@@ -347,6 +370,23 @@ falls back to two rows — being wrong here costs a section nobody re-reads, so 
 if its size is visible before it starts — that count is also the instrument
 `docs/specs/2026-07-27-claim-citation-codes.md` names as the trigger that would reopen its
 decision, so it is part of the product rather than a nicety.
+
+**The sweep reads the edge from BOTH ends, and the second one is a failure rather than a worklist
+row.** Everything above walks `supersedes`, which lives on the superseding note, because that is
+where the reason and the `reconciled:` date live. A note carrying `superseded_by` whose named
+successor never wrote the matching `supersedes` was therefore invisible from both directions at
+once and printed under *superseded by: nothing* — which says the record names no replacement, when
+it names one and only the other end is missing. Those are different repairs, and reporting the
+first as the second is what let it sit: on a live corpus an assumption backing a financial-model
+row named its replacement, nothing named it back, and three current claims went on resting on the
+dead note. `superseded-by-unreciprocated` and `superseded-by-dangling` are separate codes for the
+same reason — one needs a line added to a note the record already names, the other needs the
+successor written or a typo fixed, and `check`'s dangling-edge rule walks the block-list edge
+fields and never this scalar. **Neither is gated on `schemaVersion`, and neither needs to be:**
+both fire on the PRESENCE of `superseded_by`, so a corpus that never wrote the field cannot owe
+them — the exemption a version buys, obtained without spending one. `superseded_by` is also the
+third address of the superseded set, beside a `supersedes` edge and `status: superseded`, for the
+reason the other two are both there.
 
 **The worklist is a report and the verdict is a separate question, and the distinction is the
 one thing to keep precise here.** Finding rows is not a failure — a healthy vault exits 0 with a
@@ -398,7 +438,14 @@ anywhere**: the `conditional_on` phrase against the section the verdict renders 
 table's `Kind` cell against `driver_kind`, both directions. There is no phrase list and no
 sentence-shape inference, for `--roadmap-table`'s reason one section over — a check that infers a
 verdict from how a sentence reads cries wolf, and switching it off takes the half that worked with
-it. Three things it deliberately does not do belong in any change to it. **The section a verdict
+it. **A section runs to the next heading of the SAME DEPTH OR SHALLOWER**, the rule the shared
+`readtable()` uses, so a `###` subsection under the verdict anchor is part of the verdict section
+and a corner table inside it is read. Ended at the next heading of ANY depth instead — which is what
+this mode did until a plan opened one — the table falls outside the body, the mode compares ZERO
+rows, and it printed `1 verdict note against 0 corner verdict rows under the {#target-verdict}
+anchor, matched verbatim`: a clean pass over a table it never opened, with the whole corner-row half
+disabled and the condition check ready to cry wolf over a phrase written below that heading.
+Three further things it deliberately does not do belong in any change to it. **The section a verdict
 renders into is the anchor its subject names, and only where the plan has no such section the ones
 its `used_in` names** — read as a union instead, a note that also cites `## Why now` clears the
 condition check whenever the phrase turns up there, so the verdict corner may read *does not clear*
@@ -429,7 +476,17 @@ of the omission, and every downstream verdict inherited a denominator missing a 
 defaults to TWO**, because the template ships `| # | Assumption | … |` and column one is the `A-n`
 label a milestone's `moves` and the plan's prose both cite — defaulting to it would report every row of
 a correct table as an input that escaped the ledger, which is exactly the crying wolf `--roadmap-table`
-was scoped out for once already. **Its fourth check is the identity's, not the table's**:
+was scoped out for once already. **The row side reads `status` as well as the title, and that is a
+fifth failure rather than a looser match**: `model-row-dead-assumption` fires on a live row whose only
+title match is an `assumption` at `status: superseded` or `retracted`, and the message names the note
+and its status because the two repairs — point the row at the successor, or re-file the note — are
+chosen off exactly that. Matching every title regardless of status made a live row backed only by a
+superseded note report as *matched verbatim*, observed green for days over a live model. It is not
+folded into `model-row-no-assumption`, because the row DID match a note and a reader told nothing
+stands behind it goes and writes a second one; and it marks the row hit, so the same pair is never
+also reported as an input the table has no row for. Ungated, since the trigger is a `status` value a
+corpus only carries where a note was actually retired. **Its fourth check is the identity's, not the
+table's**:
 `excluded-line-on-roadmap` fails an assumption carrying `excluded_from_model` that a `milestone`'s
 `moves` names and that no verdict note lists in `arr_excludes`. Excluding a revenue line is legitimate
 — a metered layer must not be allowed to flatter subscription churn — so what fails is the *silence*,

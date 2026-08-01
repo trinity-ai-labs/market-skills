@@ -129,7 +129,8 @@ and is never restated here.
     the rule that every number in a projection is a named row is checked by reading the model, and
     whether a named assumption is MISSING from the table can only be checked against the notes. It
     fails a declared model input with no row and no stated exclusion, a row matching no assumption
-    `title`, and a revenue line the roadmap ships that the model does not carry and the identity
+    `title`, a row whose only `title` match is an assumption the ledger has retired, and a revenue
+    line the roadmap ships that the model does not carry and the identity
     does not declare. **What that last one cost, undetected, is the largest miss on record here:**
     a revenue line existed as correctly authored notes, never became rows, was filed as revenue
     outside the model, and three separate verdict re-solves each corrected a different term and
@@ -165,6 +166,10 @@ nearest-reachable solve and the negotiation script are in
     `Kind` cell hand-edited away from its note's `driver_kind` in either direction — the cell being
     otherwise the cheapest way past the first check. The fields it reads are
     [references/vault.md](references/vault.md#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)'s.
+    The `Kind` half needs a corner table to read, and the verdict section it looks in runs to the
+    next heading of the same depth or shallower — so a `###` subsection under the anchor is part
+    of that section and its table is read, and a plan carrying no such table anywhere under the
+    anchor is told the `Kind` check did not run rather than that it agreed.
     **A third clause sits on the identity's own terms: the ARR term declares its composition.** A
     model may legitimately exclude a revenue line — a metered layer must not be allowed to flatter
     subscription churn — but an exclusion the identity does not state is a denominator nobody can
@@ -975,8 +980,10 @@ founder's answers, the vault, and judgment in one head. The load-bearing rules:
   notes declares `model_input` — `revenue` or `cost` — or declares `excluded_from_model` with
   the reason.** `--assumption-rows` reads the table both ways, and the direction that catches a
   missing row fires only on notes that declared themselves, so a corpus where nothing carries
-  the field has that half checking nothing while its success line still reports the rows it did
-  match. The gate then reads green over the exact gap it exists to find — which is how a whole
+  the field has that half checking nothing — and its success line now names that half as un-run
+  rather than reporting the rows it did match, which is what let the gate read green over the
+  exact gap it exists to find. Declaring the field is still the whole point: a line the notes
+  never claim is one the check can only report as unclaimed, which is how a whole
   revenue line stayed out of a projection with every note behind it lint-clean, the failure
   invariant 16's third clause and [references/vault.md](references/vault.md) both name. **Every input to the
   revenue build then takes the both-directions test, whichever way the value points**: each
@@ -1365,8 +1372,10 @@ three milestones, and where everything landed. Invite pushback on the specific b
   as corroboration and is the shape nobody stops to check.
 - Lint is clean over the whole vault at the per-dimension gate, and the render gate ran
   `vault-lint.sh --release-gate` to a zero exit — every part, one verdict — with the
-  `--supersession-sweep` worklist it printed read to its end and every superseded pair carrying
-  the `reconciled:` date of that read. The bare run is a strict subset of
+  `--supersession-sweep` worklist it printed read to its end, every superseded pair carrying
+  the `reconciled:` date of that read, and every note naming its replacement in `superseded_by`
+  named back by that replacement in `supersedes` — a supersession the successor does not record
+  is one the sweep reads as replaced by nothing, so its cited sections are never named. The bare run is a strict subset of
   the checks that exist and its success line now says so, so a plan clears it while citing a
   document nobody can open — and the last thing standing between that citation and a rendered
   PDF is this gate.
@@ -1450,8 +1459,9 @@ three milestones, and where everything landed. Invite pushback on the specific b
   directory has neither check run over it — which prints the same green as one that passed them.
 - The financial model's assumptions table is complete in **both** directions — no number appears
   in a projection that isn't a named assumption row, **and** no assumption note that declares
-  itself a model input is missing from the table. `vault-lint.sh --assumption-rows` reads the two
-  against each other; the second half is the one that was prose and never fired, and what it cost
+  itself a model input is missing from the table, **and** no live row is backed only by an
+  assumption the ledger has retired to `superseded` or `retracted`. `vault-lint.sh
+  --assumption-rows` reads all three against each other; the second half is the one that was prose and never fired, and what it cost
   was a whole revenue line that existed as correctly authored notes, never became rows, and was
   therefore filed as *revenue outside this model* — which reads as a modelling decision and was a
   consequence of the omission. Every verdict downstream inherited a denominator missing it.

@@ -128,6 +128,27 @@ vault-lint.sh - read-only checks over a claim vault.
       field, cannot owe it, and exits 0 either way - vault-migration.md carries
       the back-fill.
 
+      superseded-by-unreciprocated: a note whose `superseded_by` names a note
+      this vault holds, where that note's `supersedes` does not name it back.
+      The worklist is walked from the SUPERSEDING side, because that is where
+      the reason and the `reconciled:` date live - so an edge written from the
+      replaced note's end only reaches nothing, and the note reads as replaced
+      by nothing at all while the record plainly names a successor. Observed:
+      an assumption backing a live model row carried `superseded_by`, the named
+      claim never named it back, and three current claims went on resting on
+      the dead note. The repair is one line on the note the record already
+      names, which is why this is not the same row as replaced-by-nothing.
+
+      superseded-by-dangling: a note whose `superseded_by` names an ID no note
+      in this vault carries. The record names a successor nobody can open, so
+      there is nothing to read the replacement out of and nothing to add the
+      back-edge to. The dangling-edge check in `check` walks the block-list
+      edge fields and never this scalar, so nothing else reports it.
+
+      Neither is gated on schemaVersion: both fire on the PRESENCE of
+      `superseded_by`, so a corpus that never wrote the field cannot owe them
+      and no existing vault reddens on the day the skill updates.
+
       It reports the row count as well as the rows, because the gate that
       consumes this is a read and a read is bounded only if its size is visible
       before it starts. A superseded note whose used_in named nothing is listed
@@ -226,6 +247,16 @@ vault-lint.sh - read-only checks over a claim vault.
       kind the plan asserts and the ledger does not hold. Checked in BOTH
       directions - a verdict note whose driver no row carries fails too,
       because otherwise the rule above is cleared by editing a cell.
+      The anchor's section runs to the next heading of the SAME DEPTH OR
+      SHALLOWER, so a table inside a ### subsection under it is still that
+      section's table. Read to the next heading of any depth instead, a plan
+      that opens a subsection one line in has its corner table fall outside
+      the section, the mode reads zero rows, and the whole corner-row half
+      goes quiet while the run still passes.
+
+      A plan whose verdict anchor carries no such table is reported as
+      exactly that, and the success line names the kind check as not run:
+      zero rows compared is not the same answer as zero rows disagreeing.
 
       verdict-thin-evidence: the closure under the note reaches fewer than
       three distinct source notes, or they all share one counterparty, and
@@ -292,9 +323,12 @@ vault-lint.sh - read-only checks over a claim vault.
       placeholder word list: a check that has to be taught every spelling of
       `TBD` is one that misses the next one.
 
-      A vault with no competitor-analysis.md profiled no competitors and
-      passes. Gated on schemaVersion 2 - the axes are what version 2 asks the
-      section for, and a vault at 1 is held to the rules it was written under.
+      A vault with no competitor-analysis.md at its root passes, and the
+      success line names the document it could not open and says the axes
+      went unread - never that no competitor set was profiled, which is a
+      conclusion a missing file cannot support. Gated on schemaVersion 2 -
+      the axes are what version 2 asks the section for, and a vault at 1 is
+      held to the rules it was written under.
 
   vault-lint.sh --deliverable [--vault PATH] [--json]
       Read every rendered deliverables/*.html and fail on the vault's own
@@ -339,7 +373,7 @@ vault-lint.sh - read-only checks over a claim vault.
   vault-lint.sh --assumption-rows [--vault PATH] [--json]
       Check the assumptions table in financial-model.md against the assumption
       notes that declare themselves inputs to the model, both directions. A
-      verdict - it exits 1 on any of its four failures.
+      verdict - it exits 1 on any of its five failures.
 
       This is --roadmap-table one artifact over, and it exists because the
       rule it inverts had no counterpart. plan-template.md requires that no
@@ -370,6 +404,16 @@ vault-lint.sh - read-only checks over a claim vault.
       reverse direction, and it is what stops the rule above being cleared by
       writing a row nothing in the ledger stands behind.
 
+      model-row-dead-assumption: a row whose only title match is an
+      `assumption` note at `status: superseded` or `retracted`. The title match
+      says the row was rendered off SOME note; it does not say the ledger still
+      stands behind it. A live row backed only by a retired note is an input
+      the projection rests on that nothing orders in the validation queue, and
+      the match reads as clean - observed as exactly that, a live assumption
+      row backed only by a superseded note with the mode reporting `matched
+      verbatim` for days. It is separate from model-row-no-assumption because
+      the repair is: point the row at the successor, or re-file the note.
+
       excluded-line-on-roadmap: an assumption the roadmap ships a change to -
       a `milestone` whose `moves` names it - that carries
       `excluded_from_model` and that no verdict note's `arr_excludes` declares.
@@ -386,6 +430,11 @@ vault-lint.sh - read-only checks over a claim vault.
       model-table-missing: notes declare themselves model inputs and the table
       renders none of them. The inputs are in the ledger and nowhere a reader
       can see them.
+
+      A vault where NO note declares itself a model input is reported as
+      exactly that, and the success line names assumption-not-in-model as not
+      run: the row count it prints is the model-row-no-assumption half alone,
+      and the half this mode was written for iterated over nothing.
 
       Gated on schemaVersion 3, which is where the fields it reads were added.
       A vault at 1 or 2 carries none of them, cannot owe this, and is told the
@@ -1353,12 +1402,21 @@ fi
 # section per note makes a two-item job look like six, and a worklist that
 # overstates its own size is one that gets skipped at the moment it matters.
 #
-# THE SUPERSEDED SET IS BOTH HALVES OF THE TWO-EDIT RULE: every note named by a
-# `supersedes` edge, and every note carrying `status: superseded`. Taking either
-# half alone would make the worklist depend on the supersession being
-# well-formed - and a half-made supersession is exactly the vault where the
-# worklist matters most, because `check` has already found something wrong with
-# the pair and the documents downstream still say the old thing.
+# THE SUPERSEDED SET IS EVERY ADDRESS OF THE SAME FACT: every note named by a
+# `supersedes` edge, every note carrying `status: superseded`, and every note
+# carrying `superseded_by`. Taking any subset would make the worklist depend on
+# the supersession being well-formed - and a half-made supersession is exactly
+# the vault where the worklist matters most, because `check` has already found
+# something wrong with the pair and the documents downstream still say the old
+# thing.
+#
+# A HALF-WRITTEN EDGE IS A FAILURE, AND A DIFFERENT ONE FROM REPLACED-BY-NOTHING.
+# `superseded_by` names the successor from the replaced note's own side, and
+# nothing here read it, so a successor that never wrote the matching `supersedes`
+# left the pair invisible from both directions - printed as replaced by nothing
+# at all, which sends its reader to decide what replaced this instead of to add
+# one line to a note the record already names. See the END pass for what that
+# cost on a live corpus.
 #
 # THE COUNT IS PART OF THE PRODUCT. The gate that consumes this is a read, and a
 # read is bounded only if its size is visible before it starts - a worklist
@@ -1422,7 +1480,32 @@ if [ "$MODE" = "supersession-sweep" ]; then
 			printf DQ "type" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "type"])
 			printf DQ "title" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "title"])
 			printf DQ "superseded_by" DQ ": " DQ "%s" DQ ", ", jesc(sb[1])
-			printf DQ "supersedes_reason" DQ ": " DQ "%s" DQ "}", jesc(sb[2])
+			printf DQ "supersedes_reason" DQ ": " DQ "%s" DQ ", ", jesc(sb[2])
+			printf DQ "declared_superseded_by" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "superseded_by"])
+			printf DQ "edge_state" DQ ": " DQ "%s" DQ "}", jesc(estate(f, sb[1]))
+		}
+
+		# Which end of the supersession edge this note is actually reachable
+		# from. `superseded_by` is the field a reader writes on the note being
+		# replaced, and until now nothing read it - so a note whose successor
+		# never wrote the matching `supersedes` was reported as replaced by
+		# nothing at all, which is a different repair from the one it needs.
+		#   confirmed      - the successor names it back; the edge is whole
+		#   unreciprocated - `superseded_by` names a note in this vault that
+		#                    does not name it back
+		#   dangling       - `superseded_by` names an ID no note carries
+		#   absent         - the field is not there
+		#
+		# SBYST DECIDES WHEREVER THE FIELD IS PRESENT, and s1 only where it is
+		# not. Reading s1 first would report `edge_state: confirmed` on a note
+		# some OTHER note supersedes while its own `superseded_by` is broken -
+		# so the one field whose job is to say which end is reachable would call
+		# the edge whole in the same document that lists it under broken_edges.
+		# Two call sites, jnote() and tnote(), and the walk that fills SBYST
+		# runs once per note in END.
+		function estate(f, s1) {
+			if (f in SBYST) return SBYST[f]
+			return (s1 != "" ? "confirmed" : "absent")
 		}
 
 		# ------------------------------------------------------------------
@@ -1565,16 +1648,25 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		# said, what replaced it, and why. The reason is what stops the row
 		# sending its reader back to the ledger before they can even decide
 		# whether this section is worth opening.
-		function tnote(f, b, pad,   sb) {
+		function tnote(f, b, pad,   sb, st) {
 			split(SB[f, b], sb, SUBSEP)
 			printf "%s%s  %s\n", pad, V[f, "id"], V[f, "type"]
 			printf "%s  %s\n", pad, V[f, "title"]
-			if (sb[1] == "")
-				printf "%s  superseded by: nothing - `status: superseded` with no note naming it in `supersedes`, so the record says this was replaced and not by what\n", pad
-			else {
+			st = estate(f, sb[1])
+			if (st == "confirmed") {
 				printf "%s  superseded by %s\n", pad, sb[1]
 				printf "%s  reason: %s\n", pad, (sb[2] == "" ? "(none recorded - `supersedes_reason` is absent, so why it was replaced is already gone)" : sb[2])
 			}
+			# A HALF-WRITTEN EDGE IS NOT REPLACED BY NOTHING, and printing it as
+			# though it were is what sent a reader looking for a successor the
+			# note already names. The successor is named HERE, where the reader
+			# of this row is; why the edge is broken and what to do about it is
+			# one paragraph in the half-written section below, rather than a
+			# second wording of the same finding on every row it reached.
+			else if (st == "unreciprocated" || st == "dangling")
+				printf "%s  superseded by %s on its own `superseded_by` only - see the half-written edges below\n", pad, V[f, "superseded_by"]
+			else
+				printf "%s  superseded by: nothing - `status: superseded` with no note naming it in `supersedes`, so the record says this was replaced and not by what\n", pad
 		}
 
 		END {
@@ -1654,14 +1746,77 @@ if [ "$MODE" = "supersession-sweep" ]; then
 				}
 			}
 
+			# THE SUPERSESSION HAS TWO ENDS AND ONLY ONE OF THEM WAS EVER READ.
+			# Half one above walks `supersedes`, which lives on the SUPERSEDING
+			# note. A note carrying `superseded_by` whose named successor never
+			# wrote the matching `supersedes` was therefore invisible from both
+			# sides at once: half one never reached it, and half two prints it
+			# under `superseded by: nothing`, which says the record does not name
+			# a replacement when in fact it names one and the other end is
+			# missing. Those are different repairs - one line on a named note
+			# versus a decision about what replaced this - and reporting the
+			# first as the second is what let it sit.
+			#
+			# Observed: an assumption backing a live row in a financial model
+			# carried `superseded_by` naming a claim that never named it back.
+			# The sweep reported it as replaced by nothing, and three current
+			# claims went on resting on the dead note - one of them the single
+			# strongest negative in that corpus - because nothing could see that
+			# the edge existed and was half written.
+			#
+			# RECIPROCITY IS READ OFF SB, THE INDEX HALF ONE JUST BUILT, rather
+			# than by re-walking the successor `supersedes` list. That is why
+			# this pass sits here and not above: one definition of "that note
+			# names this one" means the row a broken edge reports and the row
+			# the worklist prints cannot disagree about the same pair. A second
+			# walk would also be a third place the `:: label` rule has to be
+			# applied the same way, held together by nothing but a comment.
+			#
+			# NOT GATED ON schemaVersion, and it does not need to be: it fires
+			# only on the PRESENCE of `superseded_by`, so a corpus that never
+			# wrote the field cannot owe it and no vault reddens on the day the
+			# plugin updates. That is the exemption schemaVersion exists to buy,
+			# obtained here without spending a version.
+			#
+			# A DANGLING `superseded_by` IS A SEPARATE ROW rather than folded in
+			# with the unreciprocated one. The block-list dangling-edge check in
+			# `check` walks the edge FIELDS and never this scalar, so nothing
+			# else in the tool reports it - and the repair differs again: there
+			# is no note to add the back-edge to, so either the successor was
+			# never written or the ID is a typo.
+			for (i = 1; i <= nf; i++) {
+				f = files[i]
+				sby = V[f, "superseded_by"]
+				if (sby == "") continue
+				SBYST[f] = (sby in BYID) ? "unreciprocated" : "dangling"
+				for (b = 1; b <= SN[f]; b++) {
+					split(SB[f, b], sbp, SUBSEP)
+					if (sbp[1] == sby) { SBYST[f] = "confirmed"; break }
+				}
+				if (SBYST[f] == "confirmed") continue
+				BROKE[++nb] = f
+				if (SBYST[f] == "unreciprocated")
+					BWHY[f] = "`superseded_by: " sby "` names a note this vault holds, and `supersedes` on " sby " does not name " V[f, "id"] " back. The worklist is built from the superseding side, because that is where the reason and the `reconciled:` date live - so a supersession written from this end only reaches nothing: this note reads as replaced by nothing at all, and the sections it was cited into are never named for re-reading. Add " V[f, "id"] " to `supersedes` on " sby ", with the `supersedes_reason` that pair owes"
+				else
+					BWHY[f] = "`superseded_by: " sby "` and no note in this vault carries that ID. The record says this note was replaced and names a successor nobody can open, so there is nothing to read the replacement out of and nothing to add the back-edge to - either the successor was never written, or the ID is a typo. The dangling-edge check walks the block-list edge fields and never this scalar, so nothing else in this tool reports it"
+			}
+
 			# Half two, and the ordering pass for both. Iterating files[] rather
 			# than the edge walk above is what makes the output order the vault
 			# order instead of awk hash order, so two runs over an unchanged
 			# vault produce the same worklist.
+			#
+			# `superseded_by` is the THIRD address of the same fact, and it joins
+			# the set for the reason the other two are both here: the worklist
+			# must not depend on the supersession being well-formed. A note that
+			# records its own replacement and never got its `status` flipped is
+			# exactly the half-made pair whose cited sections still assert the
+			# old value, and taking only the other two halves would leave those
+			# sections unnamed.
 			for (i = 1; i <= nf; i++) {
 				f = files[i]
 				if (V[f, "id"] == "") continue
-				if (SN[f] == 0 && V[f, "status"] != "superseded") continue
+				if (SN[f] == 0 && V[f, "status"] != "superseded" && V[f, "superseded_by"] == "") continue
 				SUP[++nsup] = f
 				if (SN[f] == 0) SB[f, ++SN[f]] = "" SUBSEP ""
 			}
@@ -1711,11 +1866,25 @@ if [ "$MODE" = "supersession-sweep" ]; then
 				# `ok` is the verdict as a field rather than only as an exit
 				# status, so a consumer parsing the document does not have to
 				# have captured the status to know which answer it is holding.
-				printf "  " DQ "ok" DQ ": %s,\n", (nu == 0 ? "true" : "false")
+				printf "  " DQ "ok" DQ ": %s,\n", (nu == 0 && nb == 0 ? "true" : "false")
 				printf "  " DQ "vault" DQ ": " DQ "%s" DQ ",\n", jesc(vault)
 				printf "  " DQ "worklist_count" DQ ": %d,\n", nt
 				printf "  " DQ "superseded_count" DQ ": %d,\n", nsup
 				printf "  " DQ "unreconciled_count" DQ ": %d,\n", nu
+				printf "  " DQ "broken_edge_count" DQ ": %d,\n", nb
+				printf "  " DQ "broken_edges" DQ ": ["
+				for (i = 1; i <= nb; i++) {
+					f = BROKE[i]
+					printf "%s\n    {", (i == 1 ? "" : ",")
+					printf DQ "id" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "id"])
+					printf DQ "file" DQ ": " DQ "%s" DQ ", ", jesc(f)
+					printf DQ "type" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "type"])
+					printf DQ "title" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "title"])
+					printf DQ "check" DQ ": " DQ "%s" DQ ", ", jesc("superseded-by-" SBYST[f])
+					printf DQ "superseded_by" DQ ": " DQ "%s" DQ ", ", jesc(V[f, "superseded_by"])
+					printf DQ "detail" DQ ": " DQ "%s" DQ "}", jesc(BWHY[f])
+				}
+				printf "%s],\n", (nb == 0 ? "" : "\n  ")
 				printf "  " DQ "unreconciled" DQ ": ["
 				for (i = 1; i <= nu; i++) {
 					f = UNREC[i]
@@ -1759,7 +1928,7 @@ if [ "$MODE" = "supersession-sweep" ]; then
 					}
 				}
 				printf "%s]\n}\n", (m == 0 ? "" : "\n  ")
-				exit (nu == 0 ? 0 : 1)
+				exit (nu == 0 && nb == 0 ? 0 : 1)
 			}
 
 			printf "vault-lint supersession-sweep: %d section%s to re-read, from %d superseded note%s\n",
@@ -1782,28 +1951,49 @@ if [ "$MODE" = "supersession-sweep" ]; then
 				for (b = 1; b <= SN[f]; b++) tnote(f, b, "    ")
 			}
 
+			# The half-written edges print above the reconciliation verdict and
+			# ABOVE the schemaVersion gate below, because this one is not gated:
+			# it fires on the presence of `superseded_by`, so a vault at 1 that
+			# writes the field owes the same answer as one at 3.
+			printf "\n  supersessions the record only half made - `superseded_by` names a successor that does not name it back\n"
+			if (nb == 0) printf "    (none)\n"
+			for (i = 1; i <= nb; i++) {
+				f = BROKE[i]
+				printf "    %s  %s  superseded-by-%s\n", V[f, "id"], V[f, "type"], SBYST[f]
+				printf "      %s\n", V[f, "title"]
+				printf "      superseded_by %s\n", V[f, "superseded_by"]
+				printf "      %s\n", BWHY[f]
+			}
 			# The verdict prints last, because it is the half a reader acts on
 			# and the worklist above it can run to dozens of rows. At
 			# schemaVersion 1 the section says the rule does not apply rather
 			# than printing an empty list: an unconditional `(none)` here would
 			# report a vault as reconciled when nothing about it was asked.
-			if (schema + 0 < 2) {
+			#
+			# A BRANCH RATHER THAN AN EARLY EXIT, so both summary lines below print
+			# in one place. A vault at 1 can still carry a half-written edge, and a
+			# summary skipped by an early return leaves its reader reconstructing
+			# the verdict from the exit code.
+			if (schema + 0 < 2)
 				printf "\n  reconciliation is a schemaVersion 2 rule and this vault is at %s - the worklist above is a report here, and nothing was asked about whether it was read\n", schema
-				exit 0
+			else {
+				printf "\n  supersessions with nothing recording that the worklist was read\n"
+				if (nu == 0) printf "    (none)\n"
+				for (i = 1; i <= nu; i++) {
+					f = UNREC[i]
+					printf "    %s  %s\n", V[f, "id"], V[f, "type"]
+					printf "      %s\n", V[f, "title"]
+					printf "      supersedes %s\n", UTGT[f]
+					printf "      %s\n", UWHY[f]
+				}
 			}
-			printf "\n  supersessions with nothing recording that the worklist was read\n"
-			if (nu == 0) printf "    (none)\n"
-			for (i = 1; i <= nu; i++) {
-				f = UNREC[i]
-				printf "    %s  %s\n", V[f, "id"], V[f, "type"]
-				printf "      %s\n", V[f, "title"]
-				printf "      supersedes %s\n", UTGT[f]
-				printf "      %s\n", UWHY[f]
-			}
+			if (nb > 0)
+				printf "\nvault-lint supersession-sweep: %d half-written supersession edge%s - the record names a successor and the successor does not name it back, under %s\n",
+					nb, (nb == 1 ? "" : "s"), vault
 			if (nu > 0)
 				printf "\nvault-lint supersession-sweep: %d supersession%s with nothing recording that its sections were read, under %s\n",
 					nu, (nu == 1 ? "" : "s"), vault
-			exit (nu == 0 ? 0 : 1)
+			exit (nu == 0 && nb == 0 ? 0 : 1)
 		}
 	' "$RECORDS"
 	exit $?
@@ -2051,6 +2241,10 @@ TABLE_READER_AWK='
 					if (fc != "") continue
 
 					if (match(t, /^#+[ \t]+/)) {
+						# The heading depth. The FIRST copy of this count -
+						# --binding-driver readdoc() carries the second, and
+						# both feed the same same-depth-or-shallower
+						# boundary. Change one, change both.
 						nh = 0
 						while (substr(t, nh + 1, 1) == "#") nh++
 						h = substr(t, RLENGTH + 1)
@@ -2819,13 +3013,26 @@ if [ "$MODE" = "binding-driver" ]; then
 			# has them. Memoised on SCANNED, so a document cited by four notes
 			# is opened once.
 			#
-			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is looser
-			# than the rule the shared readtable() uses (next heading of the
-			# same depth or shallower). Nothing in plan-template.md puts a
-			# subsection under the verdict anchor, so the two agree today; if
-			# one is ever added, the phrase a reader sees inside that subsection
-			# is outside the body this reads and the condition check would cry
-			# wolf. That is the trigger to adopt readtable() depth rule here.
+			# A SECTION ENDS AT THE NEXT HEADING OF THE SAME DEPTH OR SHALLOWER,
+			# which is the rule the shared readtable() uses, so a subsection
+			# under a heading is still part of it. This used to end a section at
+			# the next heading of ANY depth, on the reasoning that nothing in
+			# plan-template.md puts a subsection under the verdict anchor - and
+			# that comment named the arrival of one as the trigger to adopt the
+			# depth rule. THE TRIGGER FIRED. A plan opened a `###` one line into
+			# the body of the verdict anchor, which put the corner table outside the
+			# body this reads: the mode found ZERO rows and printed `1 verdict
+			# note against 0 corner verdict rows under the {#target-verdict}
+			# anchor, matched verbatim` - a clean pass over a table it never
+			# opened, for as long as the note had existed, with the whole
+			# corner-row half of the mode silently disabled and the condition
+			# check ready to cry wolf over any phrase written below that
+			# subsection heading.
+			#
+			# A LINE THEREFORE REACHES EVERY OPEN ANCESTOR, which is what a
+			# nested boundary means: SECT is a stack carrying one entry per
+			# section still open, and a heading pops every entry at its own
+			# depth or deeper before pushing its own.
 			#
 			# THE CORNER TABLE IS IDENTIFIED BY ITS HEADER rather than by being
 			# the first table in the section, which is tighter than
@@ -2856,12 +3063,13 @@ if [ "$MODE" = "binding-driver" ]; then
 			# makes, which is also why fenced lines never reach BODY: a fenced
 			# template carrying a condition would otherwise satisfy the check
 			# for a section that renders nothing. Change one, change all six.
-			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, alldash, hdr, dcol, kcol, intable, wanttable, kk, dv, kv) {
+			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, si, nh, alldash, hdr, dcol, kcol, intable, SECT, SLEV, nsect, tpos, kk, dv, kv) {
 				if (doc in SCANNED) return
 				SCANNED[doc] = 1
 				path = vault "/" doc
 				fc = ""; fn = 0; ord = 0
-				hdr = ""; intable = 0; dcol = 0; kcol = 0; wanttable = 0
+				hdr = ""; intable = 0; dcol = 0; kcol = 0
+				nsect = 0; tpos = 0
 				while ((getline line < path) > 0) {
 					sub(/\r$/, "", line)
 					t = line
@@ -2877,6 +3085,13 @@ if [ "$MODE" = "binding-driver" ]; then
 					if (fc != "") continue
 
 					if (match(t, /^#+[ \t]+/)) {
+						# The heading depth: the run of `#` before the space.
+						# The SECOND copy of this count - the shared
+						# readtable() carries the first, and both feed the
+						# same same-depth-or-shallower boundary. Change one,
+						# change both.
+						nh = 0
+						while (substr(t, nh + 1, 1) == "#") nh++
 						h = substr(t, RLENGTH + 1)
 						sub(/[ \t]*#+[ \t]*$/, "", h)
 						h = trim(h)
@@ -2900,21 +3115,44 @@ if [ "$MODE" = "binding-driver" ]; then
 						# day the author pasted a newer template in.
 						if (ex != "") claimkey(doc, fold(ex), ord)
 						claimkey(doc, fold(h), ord)
-						wanttable = (doc == TABLEDOC && (fold(ex) == TABLEKEY || fold(h) == TABLEKEY))
+
+						# Close every section this heading ends, then open
+						# this one. A subsection leaves its parent on the
+						# stack, which is the whole depth rule. SECT holds
+						# the FINISHED BODY key rather than the ordinal, so
+						# the per-line loop below appends without rebuilding
+						# one composite subscript per open ancestor per line.
+						#
+						# `tpos` is the STACK POSITION of the section that
+						# owns the corner table, not a second copy of its
+						# ordinal and depth. The table section lives exactly
+						# as long as its own stack entry, so the pop above is
+						# already the rule that closes it - carrying its
+						# depth separately would be the same boundary
+						# written twice, in step only for as long as someone
+						# kept it there. A second `{#target-verdict}` anchor
+						# is therefore a new section rather than an
+						# extension of the first, by construction.
+						while (nsect > 0 && SLEV[nsect] >= nh) nsect--
+						if (tpos > nsect) tpos = 0
+						nsect++
+						SECT[nsect] = doc SUBSEP ord
+						SLEV[nsect] = nh
+						if (doc == TABLEDOC && (fold(ex) == TABLEKEY || fold(h) == TABLEKEY)) tpos = nsect
 						hdr = ""; intable = 0
 						continue
 					}
 
-					if (ord == 0) continue
+					if (nsect == 0) continue
 					# A blank line closes a table to every renderer, so it
 					# closes one here - otherwise two tables separated by a
 					# paragraph read as one and the rows of the second land
 					# under the header of the first.
 					if (t == "") { hdr = ""; intable = 0; continue }
 
-					BODY[doc, ord] = BODY[doc, ord] t "\n"
+					for (si = 1; si <= nsect; si++) BODY[SECT[si]] = BODY[SECT[si]] t "\n"
 					if (substr(t, 1, 1) != "|") { hdr = ""; intable = 0; continue }
-					if (!wanttable) continue
+					if (tpos == 0) continue
 
 					row = t
 					sub(/^\|/, "", row)
@@ -2925,7 +3163,11 @@ if [ "$MODE" = "binding-driver" ]; then
 					for (i = 1; i <= nc; i++)
 						if (cell[i] !~ /^[ \t]*:?-+:?[ \t]*$/) { alldash = 0; break }
 
-					kk = doc SUBSEP ord
+					# Keyed on the SECTION that owns the table rather than on
+					# the heading the row sits under, so a corner table inside
+					# a subsection is recorded against the anchor the mode
+					# resolves.
+					kk = SECT[tpos]
 					if (alldash) {
 						# The row directly above the rule is the header, and
 						# it is read for nothing but which two columns matter.
@@ -3244,6 +3486,24 @@ if [ "$MODE" = "binding-driver" ]; then
 						printf("no verdict note and no business-plan.md at the vault root - there is no verdict on either side, which is every vault before a target has one - %s\n", vault)
 					exit
 				}
+				# NO CORNER ROWS IS NOT AGREEMENT, and the old line said it was:
+				# it read `matched verbatim` over a row count of zero, which is
+				# what a section-boundary bug looked like from the outside for as
+				# long as it shipped. The kind check is the half that reads those
+				# rows, in both directions, so with none of them read there is
+				# nothing for the ledger to have agreed with and the line says so.
+				#
+				# Which document is named is branched on `hasplan` the way the
+				# no-verdict-either-side line above branches on it: naming an
+				# anchor inside a file that is not there sends its reader to look
+				# for a table in a document they do not have, which is the same
+				# reporting-past-what-was-opened this whole line exists to stop.
+				if (nrow == 0) {
+					where = (hasplan == "1") ? "no corner verdict table under the {#target-verdict} anchor of business-plan.md" : "no business-plan.md at the vault root"
+					printf("%d verdict note%s and %s - %s. Not checked: the Kind cell against `driver_kind`, in either direction, because there is no corner verdict table to read it from.\n",
+						nvn, (nvn == 1 ? "" : "s"), where, vault)
+					exit
+				}
 				printf("%d verdict note%s against %d corner verdict row%s under the {#target-verdict} anchor, matched verbatim - %s\n",
 					nvn, (nvn == 1 ? "" : "s"), nrow, (nrow == 1 ? "" : "s"), vault)
 			}
@@ -3286,15 +3546,20 @@ fi
 
 if [ "$MODE" = "monitoring" ]; then
 	COMPETITORS="$VAULT/competitor-analysis.md"
-	# A vault with no competitor-analysis.md profiled no competitors, which is
-	# every vault before the competitor dimension runs. Reported by name rather
-	# than passing silently: a mode that printed `clean` over a document it never
-	# found reads as a monitoring plan that was checked. The empty failure file
-	# still goes through the renderer, so --json gets a well-formed document
-	# either way.
+	# A vault with no competitor-analysis.md at its root owes nothing, which is
+	# every vault before the competitor dimension runs. The line names the
+	# document it could not open and says the axis half did not run, rather than
+	# stating what it INFERRED from the absence. The old line said `no competitor
+	# set was profiled, so no axis owes an instrument` - a conclusion drawn from a
+	# missing file - and printed it over a vault holding 31 competitor profiles
+	# and a written monitoring plan, because the document lived somewhere other
+	# than the vault root. Absence of the file is not absence of the work, and the
+	# only thing this mode can honestly report is what it did not read. The empty
+	# failure file still goes through the renderer, so --json gets a well-formed
+	# document either way.
 	MONITORING_OK="every monitoring axis names an instrument, a cadence and the decision it would change - $VAULT"
 	if [ ! -f "$COMPETITORS" ]; then
-		MONITORING_OK="no competitor-analysis.md under $VAULT - no competitor set was profiled, so no axis owes an instrument"
+		MONITORING_OK="no competitor-analysis.md at the vault root - $VAULT. Not read: the monitoring axes, so nothing here was held to an instrument, a cadence and the decision it would change - a competitor set profiled under some other path reads exactly like one that was never profiled."
 	elif [ "$FOUND_SCHEMA" -lt 2 ]; then
 		# The axes are what version 2 asks the section for. A vault at 1 is held
 		# to exactly the rules it was written under, the same exemption
@@ -3633,6 +3898,13 @@ fi
 # renders off the other an exact match is a check and anything looser is a
 # similarity test that cries wolf until somebody switches it off.
 #
+# THE TITLE IS THE KEY AND THE STATUS IS PART OF THE ANSWER. Matching a row
+# against every assumption title regardless of `status` made a live row backed
+# only by a `superseded` note match cleanly and print as `matched verbatim` -
+# observed on a live model, green for days. A retired note is not a match: the
+# title says the row was rendered off some note, and only the status says the
+# ledger still stands behind it.
+#
 # THE ARR TERM DECLARES ITS COMPOSITION, and that is the fourth check. A model
 # may legitimately exclude a revenue line - a metered layer must not be allowed
 # to flatter subscription churn, and a good model refuses to mix them. What it
@@ -3708,11 +3980,27 @@ if [ "$MODE" = "assumption-rows" ]; then
 				# not a failure whatever else that note declares. MI is the
 				# declared inputs, in vault order so two runs print the same
 				# list.
+				#
+				# A SUPERSEDED OR RETRACTED NOTE IS NOT A MATCH, and DEAD holds
+				# it separately rather than beside the live titles. The title
+				# key alone says the row was rendered off SOME note; it does not
+				# say the ledger still stands behind it, and a row whose only
+				# match has been retired is a live input resting on a value
+				# nobody is obliged to maintain. Observed: a live row in the
+				# assumptions table was backed only by a superseded note, and
+				# the gate read `matched verbatim` over it for days. A title
+				# carried by both a live note and a retired one still matches
+				# live, because the row loop reads TITLE first.
 				for (i = 1; i <= nf; i++) {
 					f = files[i]
 					ty = V[f, "type"]
-					if (ty == "assumption") {
-						if (V[f, "title"] != "") TITLE[V[f, "title"]] = 1
+						if (ty == "assumption") {
+						ti = V[f, "title"]
+						st = V[f, "status"]
+						if (ti != "") {
+							if (st != "superseded" && st != "retracted") TITLE[ti] = 1
+							else if (!(ti in DEAD)) { DEAD[ti] = V[f, "id"]; DEADST[ti] = st }
+						}
 						if (V[f, "model_input"] != "") MI[++nmi] = f
 					}
 
@@ -3762,6 +4050,17 @@ if [ "$MODE" = "assumption-rows" ]; then
 
 				for (i = 1; i <= NROW; i++) {
 					if (ROW[i] in TITLE) { HIT[ROW[i]] = 1; continue }
+					# A RETIRED MATCH IS ONE SITUATION AND GETS ONE FAILURE. HIT
+					# is set here too, so the note-side rule below stays exactly
+					# as it was: the row IS rendered, and reporting the same pair
+					# again as an input the table has no row for would send its
+					# reader to a second, wrong repair.
+					if (ROW[i] in DEAD) {
+						HIT[ROW[i]] = 1
+						report("financial-model.md", "model-row-dead-assumption", DEAD[ROW[i]],
+							"row `" ROW[i] "` in the assumptions section matches " DEAD[ROW[i]] " and that note is `status: " DEADST[ROW[i]] "`, with no `current` assumption carrying the title. The row is live in the model and the only thing standing behind it has been retired from the ledger, so the projection rests on a value nobody is obliged to maintain, nothing orders it in the validation queue, and the title matched - which is exactly why every check stayed green. Observed: a live assumption row backed only by a superseded note read as `matched verbatim` for days. Point the row at the note that replaced this one, or re-file the assumption as `current` if it was retired in error")
+						continue
+					}
 					report("financial-model.md", "model-row-no-assumption", "",
 						"row `" ROW[i] "` in the assumptions section matches no `assumption` note title in this vault, character for character. The table renders each input off its note, so a row matching none of them was written by hand: the number in it has no `value`, no `sensitivity` and no `validated_by`, so nothing orders it in the validation queue and nothing will ever revisit it. Match the title verbatim, the way a roadmap row matches a milestone title - or write the assumption note this row is missing")
 				}
@@ -3799,6 +4098,16 @@ if [ "$MODE" = "assumption-rows" ]; then
 
 				if (nmi == 0 && NROW == 0)
 					printf("no declared model inputs and no assumption rows under %s - there is no model on either side, which is every vault before the plan has one\n", vault)
+				# NO DECLARED INPUT IS NOT AGREEMENT. This mode is two checks,
+				# and the count it printed was the row half alone: with no note
+				# carrying `model_input`, `assumption-not-in-model` iterates over
+				# nothing, so the direction this whole mode was written for - an
+				# input the ledger holds and the table never renders - reported a
+				# matched count over a set it never had. A reader has to be able
+				# to tell that half agreeing from that half not running.
+				else if (nmi == 0)
+					printf("%d assumption row%s against no declared model inputs - %s. Not checked: whether a declared input reached the table, because no `assumption` note carries `model_input`.\n",
+						NROW, (NROW == 1 ? "" : "s"), vault)
 				else
 					printf("%d assumption row%s against %d declared model input%s, matched verbatim - %s\n",
 						NROW, (NROW == 1 ? "" : "s"), nmi, (nmi == 1 ? "" : "s"), vault)
@@ -3923,9 +4232,10 @@ if [ "$MODE" = "claim-drift" ]; then
 			# second pass would be a second place the section boundary is
 			# decided.
 			#
-			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, which is the rule
-			# --binding-driver readdoc() uses rather than the
-			# same-depth-or-shallower one the shared readtable() uses. The unit here is the
+			# A SECTION ENDS AT THE NEXT HEADING OF ANY DEPTH, and this is now the
+			# only reader in the file on that rule - readtable() and
+			# --binding-driver readdoc() both end a section at the next heading
+			# of the same depth or shallower. The unit here is the
 			# prose a citation points at, and a subsection has its own address:
 			# rolling it into its parent would re-open every claim on the parent
 			# heading whenever any subsection was touched, and a claim that

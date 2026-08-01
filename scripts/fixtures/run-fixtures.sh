@@ -54,6 +54,11 @@
 #      a ceiling section owing no note, an empty section owing none either, a
 #      well-evidenced verdict owing no evidence line, and a legacy ceiling claim
 #      carrying none of the fields - and none of them is gated on schemaVersion.
+#      The anchor's section runs to the next heading of the SAME DEPTH OR
+#      SHALLOWER, so a corner table inside a ### subsection under it is read and
+#      the phrases beside it are in the section; and a plan carrying no corner
+#      table at all is told the Kind check did not run, rather than that it
+#      agreed.
 #  14. A vault whose every byte is CRLF still fires the three checks that need a
 #      vocabulary term to compare against, and leaks no carriage return into
 #      what it prints. This is the input class no other fixture carried, which is
@@ -65,8 +70,11 @@
 #      an absent section, a section carrying prose and no axis table, and a row
 #      that leaves a column empty - including an em-dash cell, which is the half a
 #      list of placeholder words would get wrong. Each has its silent side beside
-#      it: a complete axis, a table outside the section, a vault that profiled no
-#      competitors, and the same document at schemaVersion 1.
+#      it: a complete axis, a table outside the section, a vault with no
+#      competitor-analysis.md at its root, and the same document at
+#      schemaVersion 1. That last-but-one line names the document it could not
+#      open and says the axes went unread, rather than concluding from a missing
+#      file that nobody was profiled.
 #  16. --deliverable reads the RENDERED deliverables/*.html and fails on a
 #      strikethrough span, a note ID and a red-team objection code - the vault
 #      addresses that resolve to nothing for the reader the document is for. The
@@ -83,7 +91,9 @@
 #      each clear it on their own: a rendered row, or a stated exclusion reason.
 #      The identity rule beside them fails a revenue line excluded from the model
 #      while the roadmap ships a change to it, and clears when the verdict note
-#      declares the exclusion in `arr_excludes`.
+#      declares the exclusion in `arr_excludes`. A vault where no note declares
+#      itself an input passes and is told so: the row half agreed and the half
+#      this mode was written for walked an empty set.
 #  19. --claim-drift re-opens a claim whose cited section has been rewritten since
 #      the note recorded reading it, reports a citation with no recorded hash and
 #      an entry naming a section the note no longer cites, clears on a re-record,
@@ -92,6 +102,19 @@
 #      Both modes are gated on schemaVersion 3 and both are asserted SILENT at 1
 #      and at 2, because every corpus that exists is at one of those and carries
 #      none of the fields either mode reads.
+#  20. --supersession-sweep reads the edge from BOTH ends. A note whose
+#      `superseded_by` names a successor that never named it back is a
+#      half-written edge and not replaced-by-nothing, a `superseded_by` naming
+#      no note in the vault is a third row again, and a well-formed pair beside
+#      them stays silent. The back-edge written onto the successor clears it,
+#      and neither check is gated on schemaVersion - asserted both ways, on a
+#      vault that writes no `superseded_by` and on the same broken edges stamped
+#      back down to 1.
+#  21. --assumption-rows reads a row's match against the note's `status`. A live
+#      row whose only title match is `superseded` or `retracted` is its own
+#      failure rather than a match, the sibling row backed by a `current` note
+#      stays silent, the same pair is never reported twice under two codes, and
+#      re-filing the note as `current` clears it.
 
 set -u
 
@@ -808,8 +831,14 @@ case "$MON_THIN_J" in
 *) no "--monitoring failure_count is not 2 - a complete axis fired, or an incomplete one did not (got: $MON_THIN_J)" ;;
 esac
 
-# A vault that profiled no competitors owes nothing, at either version. Failing
-# it would fail every corpus before the competitor dimension runs.
+# A vault with no competitor-analysis.md at its root owes nothing, at either
+# version. Failing it would fail every corpus before the competitor dimension
+# runs. What the line may NOT do is state what it inferred from the absence: it
+# said `no competitor set was profiled, so no axis owes an instrument` over a
+# vault holding 31 competitor profiles and a written monitoring plan, because the
+# document lived somewhere other than the vault root. Absence of the file is not
+# absence of the work, so the line names the document it could not open and says
+# the axis half did not run.
 MON_NONE=$("$LINT" --monitoring --vault "$HERE/dead-citation" 2>&1)
 MON_NONE_STATUS=$?
 [ "$MON_NONE_STATUS" = "0" ] && ok "a vault with no competitor-analysis.md passes --monitoring" ||
@@ -817,6 +846,14 @@ MON_NONE_STATUS=$?
 case "$MON_NONE" in
 *"no competitor-analysis.md"*) ok "the absent document is named rather than reported clean" ;;
 *) no "--monitoring did not say the document was absent (got: $MON_NONE)" ;;
+esac
+case "$MON_NONE" in
+*'Not read: the monitoring axes'*) ok "the line says the axis half did not run" ;;
+*) no "--monitoring did not say the axes went unread (got: $MON_NONE)" ;;
+esac
+case "$MON_NONE" in
+*'no competitor set was profiled'*) no "the line still infers that nobody was profiled from a file it could not find" ;;
+*) ok "the line reports what it did not read, not what it concluded from the absence" ;;
 esac
 
 # --- 2j. what the rendered deliverable carries out of the vault ---------------
@@ -1568,6 +1605,63 @@ case "$BD_KU" in
 *) ok "an undetermined corner naming its driver with an em-dash kind demands no note" ;;
 esac
 
+# --- the section boundary the corner table is read inside --------------------
+# The verdict anchor's section runs to the next heading of the SAME DEPTH OR
+# SHALLOWER, so a `###` opened one line into its body leaves the corner table,
+# both conditional phrases and the evidence line inside the section. Read to the
+# next heading of ANY depth instead - which is what this mode did until a live
+# plan opened one - all three fall outside: the mode finds zero corner rows, so
+# the Kind check runs in NEITHER direction, and the two condition checks and the
+# two evidence checks cry wolf over strings the reader can see. That vault
+# reported `1 verdict note against 0 corner verdict rows ... matched verbatim` and
+# passed, for as long as the note had existed.
+#
+# The count is the whole assertion, and it moves in both directions at once: four
+# failures under the old boundary, one under this one.
+BD_SS=$("$LINT" --binding-driver --vault "$HERE/verdict-subsection" --json 2>/dev/null)
+BD_SS_STATUS=$?
+[ "$BD_SS_STATUS" = "1" ] && ok "a corner table inside a subsection under the anchor is read" ||
+	no "verdict-subsection should exit 1 (got $BD_SS_STATUS)"
+case "$BD_SS" in
+*'"failure_count": 1'*) ok "only the planted Kind cell is reported - the phrases inside the subsection are in the section" ;;
+*) no "--binding-driver did not report exactly one row over verdict-subsection (got: $BD_SS)" ;;
+esac
+case "$BD_SS" in
+*'"check": "verdict-kind-mismatch"'*CLAIM-SS1DD004*) ok "the row inside the subsection is compared against its note" ;;
+*) no "the corner table inside the subsection was not read (got: $BD_SS)" ;;
+esac
+# The three silent sides, each of which fires under a boundary that stops at the
+# first `###`: the other corner's Kind cell agrees, both conditional_on phrases
+# are written inside the subsection, and so is the line the evidence counts
+# generate.
+case "$BD_SS" in
+*'"check": "verdict-unconditional"'*) no "a conditional_on phrase written inside the subsection was reported missing" ;;
+*) ok "a conditional_on phrase inside the subsection is inside the section" ;;
+esac
+case "$BD_SS" in
+*'"check": "verdict-thin-evidence"'*) no "an evidence line written inside the subsection was reported missing" ;;
+*) ok "the generated evidence line inside the subsection is inside the section" ;;
+esac
+
+# --- no corner table is not agreement ----------------------------------------
+# The success line over a vault carrying a verdict note and no corner table under
+# the anchor. It must name the Kind check as NOT RUN rather than report a count
+# and `matched verbatim`: zero rows compared and zero rows disagreeing end in the
+# same words, and only one of them means the check happened. That wording is what
+# made the boundary bug above ship as a clean pass over a table nothing opened.
+BD_NC=$("$LINT" --binding-driver --vault "$HERE/verdict-no-corner-table" 2>&1)
+BD_NC_STATUS=$?
+[ "$BD_NC_STATUS" = "0" ] && ok "a verdict note with no corner table under the anchor passes" ||
+	no "verdict-no-corner-table should exit 0 (got $BD_NC_STATUS: $BD_NC)"
+case "$BD_NC" in
+*'no corner verdict table'*'Not checked: the Kind cell'*) ok "the success line names the Kind check as not run rather than as agreed" ;;
+*) no "--binding-driver reported a vacuous pass over zero corner rows (got: $BD_NC)" ;;
+esac
+case "$BD_NC" in
+*'matched verbatim'*) no "the no-table line still says matched verbatim - there was nothing to match" ;;
+*) ok "the no-table line does not claim a verbatim match" ;;
+esac
+
 BD_TE=$("$LINT" --binding-driver --vault "$HERE/verdict-thin-evidence" --json 2>/dev/null)
 BD_TE_STATUS=$?
 [ "$BD_TE_STATUS" = "1" ] && ok "a closure that reaches one counterparty fails at any n" ||
@@ -1897,6 +1991,26 @@ case "$AR_NONE" in
 *) no "--assumption-rows did not say there was no model (got: $AR_NONE)" ;;
 esac
 
+# The half that ran and the half that did not, told apart in the success line.
+# This mode is two checks, and with no note carrying `model_input` the direction
+# it was WRITTEN for - an input the ledger holds and the table never renders -
+# iterates over an empty set. The old line printed the row count and `matched
+# verbatim` and said nothing about that, so a vault whose notes never declared an
+# input read exactly like one whose declared inputs all reached the table.
+AR_ND=$("$LINT" --assumption-rows --vault "$HERE/model-no-declared-input" 2>&1)
+AR_ND_STATUS=$?
+[ "$AR_ND_STATUS" = "0" ] && ok "a table whose every row matches a note, with no declared input, passes" ||
+	no "model-no-declared-input should exit 0 (got $AR_ND_STATUS: $AR_ND)"
+case "$AR_ND" in
+*'against no declared model inputs'*'Not checked: whether a declared input reached the table'*)
+	ok "the success line names assumption-not-in-model as not run" ;;
+*) no "--assumption-rows reported a vacuous pass over zero declared inputs (got: $AR_ND)" ;;
+esac
+case "$AR_ND" in
+*'matched verbatim'*) no "the no-input line still says matched verbatim - one of its two halves matched nothing" ;;
+*) ok "the no-input line does not claim both halves agreed" ;;
+esac
+
 # The closed word list, in `check` rather than here because it reads nothing but
 # the note. A third word is a note that declares nothing while reading as
 # declared, so the row it owes is never asked for - the same failure the field
@@ -2056,6 +2170,190 @@ case "$CD_NONE" in
 *'no current claim or assumption names a resolving document section'*)
 	ok "the absent citation is named rather than reported clean" ;;
 *) no "--claim-drift did not say there was nothing cited (got: $CD_NONE)" ;;
+esac
+
+# --- 20. the supersession edge has two ends -----------------------------------
+# The sweep walks `supersedes`, which lives on the SUPERSEDING note - so until
+# now a note recording its own replacement in `superseded_by` whose named
+# successor never wrote the other half was invisible from both directions at
+# once, and printed under `superseded by: nothing`. That says the record names no
+# replacement, when in fact it names one and the other end is missing, and the
+# two need different repairs. Observed: an assumption backing a live model row
+# carried `superseded_by`, the sweep reported it as replaced by nothing, and
+# three current claims went on resting on the dead note.
+#
+# The vault carries a well-formed pair alongside the two broken ones, so the
+# COUNT is the assertion with teeth: a rule that reported every note carrying
+# `superseded_by` would fire three times here and still clear a census looking
+# only for the check names.
+printf '\nhalf-written supersession edges\n'
+
+HE=$("$LINT" --supersession-sweep --vault "$HERE/supersession-half-edge" --json 2>/dev/null)
+HE_STATUS=$?
+[ "$HE_STATUS" = "1" ] && ok "a half-written supersession edge fails the sweep" ||
+	no "supersession-half-edge should exit 1 (got $HE_STATUS)"
+case "$HE" in
+*'"broken_edge_count": 2'*) ok "the well-formed pair beside them is not reported" ;;
+*) no "the sweep did not report exactly two half-written edges (got: $HE)" ;;
+esac
+
+# The two codes are separate rows because the repairs differ: one line on a note
+# the record already names, versus a successor that has to be written or a typo
+# fixed. Folding them into one code would send half the readers to the wrong fix.
+case "$HE" in
+*'"id": "ASSUMPTION-HE1CC003"'*'"check": "superseded-by-unreciprocated"'*)
+	ok "a successor that does not name its predecessor back is reported by name" ;;
+*) no "superseded-by-unreciprocated did not name ASSUMPTION-HE1CC003 (got: $HE)" ;;
+esac
+# Both globs are anchored INSIDE one row - id first, then the code - because a
+# `check` glob followed by an ID matches an ID that turns up anywhere later in
+# the document, and `reached_no_document` further down carries both of these.
+# An assertion satisfied by a different section is one that passes while the row
+# it names reports the wrong note.
+case "$HE" in
+*'"id": "ASSUMPTION-HE1EE005"'*'"check": "superseded-by-dangling"'*)
+	ok "a superseded_by naming no note in the vault is a separate row" ;;
+*) no "superseded-by-dangling did not name ASSUMPTION-HE1EE005 (got: $HE)" ;;
+esac
+
+# THE ROW IT REPLACES. Under the bug this note read as replaced by nothing at
+# all, so the assertion that has teeth is the worklist row itself carrying the
+# successor the record names - a check that only counted failures would pass
+# while the worklist went on telling its reader there was nothing to look for.
+case "$HE" in
+*'"declared_superseded_by": "CLAIM-HE1DD004", "edge_state": "unreciprocated"'*)
+	ok "the worklist row names the successor instead of reporting replaced-by-nothing" ;;
+*) no "the worklist row did not carry the declared successor (got: $HE)" ;;
+esac
+case "$HE" in
+*'superseded by: nothing'*) no "a note whose record names a successor still printed replaced-by-nothing" ;;
+*) ok "replaced-by-nothing is not printed over a note whose record names a successor" ;;
+esac
+
+# THE PASSING COUNTERPART, asserted on a copy with the back-edge written. Without
+# it the rule reads as failing every `superseded_by` in existence, and the fix it
+# asks for would have no way to clear it.
+HE_FIX="$PAIRS_FILE.half-edge-closed"
+rm -rf "$HE_FIX"
+cp -R "$HERE/supersession-half-edge" "$HE_FIX"
+strip_cr <"$HERE/supersession-half-edge/claims/CLAIM-HE1DD004.md" |
+	awk '{ print }
+		/^stale_after: "2099-12-31"$/ {
+			print "supersedes:"
+			print "  - ASSUMPTION-HE1CC003"
+			print "supersedes_reason: \"Onboarding went self-serve, so the flat-load figure no longer holds.\""
+			print "reconciled: \"2026-07-20\""
+		}' >"$HE_FIX/claims/CLAIM-HE1DD004.md"
+if grep -q '^  - ASSUMPTION-HE1CC003$' "$HE_FIX/claims/CLAIM-HE1DD004.md"; then
+	ok "the copy with the back-edge written carries it"
+else
+	no "the back-edge rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+HE_FIX_OUT=$("$LINT" --supersession-sweep --vault "$HE_FIX" --json 2>/dev/null)
+case "$HE_FIX_OUT" in
+*'"broken_edge_count": 1'*) ok "writing the other end of the edge clears its row" ;;
+*) no "the back-edge did not clear superseded-by-unreciprocated (got: $HE_FIX_OUT)" ;;
+esac
+
+# NOT GATED ON schemaVersion, and both directions of that need asserting.
+# Sliced off $SC rather than re-invoking the lint over the clean vault, per the
+# capture-once rule above; 2e already asserts that vault exits 0, and a second
+# copy of that assertion here would only make the suite slower.
+case "$SC" in
+*'"broken_edge_count": 0'*) ok "a vault writing no superseded_by owes neither new check" ;;
+*) no "a clean sweep reported a broken edge, or dropped the count (got: $SC)" ;;
+esac
+
+# The direction that has teeth: the SAME half-written edges at schemaVersion 1
+# still fail. A check gated on the version would go silent here, and every
+# corpus in existence is at 1 or 2 - so a rule that only fired at 3 would leave
+# the failure this slice exists for invisible on exactly the vaults carrying it.
+HE_AT1="$PAIRS_FILE.half-edge-at-1"
+rm -rf "$HE_AT1"
+cp -R "$HERE/supersession-half-edge" "$HE_AT1"
+printf '{\n  "schemaVersion": 1,\n  "created": "2026-07-31"\n}\n' >"$HE_AT1/.vault/config.json"
+if grep -q '"schemaVersion": 1' "$HE_AT1/.vault/config.json"; then
+	ok "the copy stamped at schemaVersion 1 carries it"
+else
+	no "the schemaVersion rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+HE_AT1_OUT=$("$LINT" --supersession-sweep --vault "$HE_AT1" --json 2>/dev/null)
+HE_AT1_STATUS=$?
+[ "$HE_AT1_STATUS" = "1" ] && ok "the same half-written edges still fail at schemaVersion 1" ||
+	no "a half-written edge must fail at 1 as well (got $HE_AT1_STATUS)"
+case "$HE_AT1_OUT" in
+*'"broken_edge_count": 2'*) ok "neither new check is gated on the version" ;;
+*) no "the count changed at schemaVersion 1 (got: $HE_AT1_OUT)" ;;
+esac
+
+# --- 21. a live model row backed only by a retired note -----------------------
+# `--assumption-rows` matched a row against every assumption title regardless of
+# `status`, so a live row whose only match was `superseded` matched cleanly and
+# the mode printed `matched verbatim` over it. Observed as exactly that: a live
+# row in the assumptions table backed only by a superseded note, green for days.
+# One of the three rows in this vault is backed by a `current` note, so the count
+# is what says the status is read rather than the whole table flagged.
+printf '\nretired notes behind live model rows\n'
+
+MRS=$("$LINT" --assumption-rows --vault "$HERE/model-row-superseded" --json 2>/dev/null)
+MRS_STATUS=$?
+[ "$MRS_STATUS" = "1" ] && ok "a live row backed only by a retired note fails" ||
+	no "model-row-superseded should exit 1 (got $MRS_STATUS)"
+case "$MRS" in
+*'"failure_count": 2'*) ok "the row whose note is current is not reported" ;;
+*) no "--assumption-rows did not report exactly two rows over model-row-superseded (got: $MRS)" ;;
+esac
+
+# BOTH RETIRED STATUSES. A check reading only `superseded` would leave a
+# withdrawn assumption backing a live row, which is the same defect under the
+# other word the schema allows - and the message has to name the status, because
+# re-file and point-at-the-successor are different repairs.
+# One case per status, each anchored inside its own row. Written as one glob,
+# `status: superseded` matches the FIRST failure and the second note ID then
+# matches anywhere after it - so the word `retracted` is never asserted at all,
+# and hardcoding `superseded` into the message would still pass.
+case "$MRS" in
+*'"id": "ASSUMPTION-MS22BB02"'*'status: superseded'*)
+	ok "a superseded note behind a live row is reported with its status" ;;
+*) no "model-row-dead-assumption did not name the superseded note status (got: $MRS)" ;;
+esac
+case "$MRS" in
+*'"id": "ASSUMPTION-MS33CC03"'*'status: retracted'*)
+	ok "a retracted note behind a live row is reported with its status" ;;
+*) no "model-row-dead-assumption did not name the retracted note status (got: $MRS)" ;;
+esac
+case "$MRS" in
+*'"check": "model-row-no-assumption"'*)
+	no "a retired match was reported as a row matching nothing - the two repairs differ" ;;
+*) ok "a retired match is not reported as a row matching no note at all" ;;
+esac
+
+# ONE SITUATION, ONE FAILURE. Both retired notes declare `model_input`, so a
+# reading that left the row unmatched would report them AGAIN as inputs the table
+# has no row for - sending the reader to a second, wrong repair.
+case "$MRS" in
+*'"check": "assumption-not-in-model"'*)
+	no "the retired note was reported twice, as a dead row and as an input with no row" ;;
+*) ok "the rendered row keeps assumption-not-in-model silent on the same note" ;;
+esac
+
+# THE PASSING COUNTERPART. Re-filing the note as current clears its row, which is
+# one of the two repairs the message names - without this the rule reads as
+# banning a title that ever belonged to a retired note.
+MRS_FIX="$PAIRS_FILE.model-row-refiled"
+rm -rf "$MRS_FIX"
+cp -R "$HERE/model-row-superseded" "$MRS_FIX"
+strip_cr <"$HERE/model-row-superseded/assumptions/ASSUMPTION-MS22BB02.md" |
+	awk '{ sub(/^status: superseded$/, "status: current"); print }' >"$MRS_FIX/assumptions/ASSUMPTION-MS22BB02.md"
+if grep -q '^status: current$' "$MRS_FIX/assumptions/ASSUMPTION-MS22BB02.md"; then
+	ok "the copy with the note re-filed as current carries it"
+else
+	no "the status rewrite did not land - the assertion below would pass over an unchanged vault"
+fi
+MRS_FIX_OUT=$("$LINT" --assumption-rows --vault "$MRS_FIX" --json 2>/dev/null)
+case "$MRS_FIX_OUT" in
+*'"failure_count": 1'*) ok "re-filing the note as current clears its row" ;;
+*) no "a current note must clear model-row-dead-assumption (got: $MRS_FIX_OUT)" ;;
 esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"

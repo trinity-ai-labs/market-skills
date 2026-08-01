@@ -2,6 +2,46 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.18.0
+
+- **Five checks reported a vacuous pass as a pass: when a check could not find its subject, its
+  success line was indistinguishable from a real agreement.** A corpus could carry a green
+  `--release-gate` while three of its parts had read nothing at all. `SKILL.md`'s invariant 16
+  already named the general form — *"the method is strong at preventing false statements and weak
+  at noticing missing ones"* — and the bare `check` run had already learned it, since its success
+  line enumerates what it did **not** open. The sub-modes never did.
+- **`--supersession-sweep` read the supersession edge from one end only.** Every edge was derived
+  from the superseding note's `supersedes:` list, so a note carrying `superseded_by:` whose named
+  successor never wrote the matching entry was reported as replaced by *nothing* — the same output
+  as a genuinely orphaned note, though the repair differs: one needs a line added to a successor
+  the record already names, the other needs somebody to decide what replaced it. Observed: an
+  assumption that was a live row in a financial model sat half-superseded while **three current
+  claims went on resting on it**, one of them the corpus's strongest negative. Now two distinct
+  failures — `superseded-by-unreciprocated` and `superseded-by-dangling` (the successor ID exists
+  nowhere; the block-list dangling-edge check walks edge *fields* and never this scalar, so nothing
+  else reported it). Neither is gated on `schemaVersion`: both fire on the presence of the field,
+  so a corpus that never wrote it cannot owe them.
+- **`--assumption-rows` matched a model row to a note on title while ignoring `status`.** A live row
+  in the assumptions table whose only title match was a `superseded` note matched cleanly and the
+  mode printed `matched verbatim`. `model-row-dead-assumption` now names the note it found and that
+  note's status — the projection was resting on a value nobody is obliged to maintain, and the
+  title matching is exactly why every check stayed green.
+- **`--binding-driver` ended the verdict section at the next heading of ANY depth, so a subsection
+  hid the corner table.** A plan that opened a `###` one line into the body of the
+  `{#target-verdict}` anchor put its corner-verdict table outside the section: the mode found zero
+  rows and printed *"1 verdict note against 0 corner verdict rows … matched verbatim"* — a clean
+  pass over a table it never opened, with the whole corner-row half silently disabled. The section
+  now ends at the next heading of the same depth or shallower, which is the rule the shared
+  `readtable()` already used; that code's own comment had named the arrival of such a subsection as
+  the trigger to adopt it, and the trigger fired.
+- **Three success lines now name the subject they could not find.** `--monitoring` with no
+  `competitor-analysis.md` said *"no competitor set was profiled"* over a vault holding 31 profiles
+  in another directory; `--binding-driver` printed `matched verbatim` at zero corner rows;
+  `--assumption-rows` reported its matched-row count while the missing-row half iterated over
+  nothing. All three still **pass** — a vault may legitimately have no competitor set, no verdict
+  note and no declared model inputs. What changed is that a reader can now tell *checked and
+  agreed* from *had nothing to check*.
+
 ## 1.17.0
 
 - **The method could solve a target downward and never upward, so a founder who named a
