@@ -368,13 +368,14 @@ the user's documents and is frequently not under version control. Without an aut
 there is no way to tell a `current` note written before a source was amended from one written
 after — and that distinction is exactly what you need when deciding which notes to re-check.
 
-Three more fields are available on **any** type, used together:
+Four more fields are available on **any** type, used together:
 
 ```yaml
-supersedes:                          # optional — block list
+supersedes:                          # optional — block list, on the REPLACEMENT
   - CLAIM-QQ19PL30
 supersedes_reason: "The vendor republished the list; the earlier figure was a promotion."   # required with supersedes
 reconciled: "2026-07-10"             # required with supersedes at schemaVersion 2 — quoted ISO date
+superseded_by: CLAIM-AS23SD44        # optional — on the REPLACED note, naming its replacement
 ```
 
 **`supersedes` without `supersedes_reason` is rejected.** A replacement with no reason cannot
@@ -384,12 +385,30 @@ person who knew is gone. And writing `supersedes` **without flipping the target'
 which is indistinguishable from an unresolved contradiction to both the checker and a reader.
 Supersession is always two edits, and `reconciled:` below is what closes it out.
 
+**`superseded_by` is the same edge written from the replaced note's own side, and it is only
+usable if the other side names it back.** Every query in this vault walks `supersedes`, because
+that is where the reason and the `reconciled:` date live — so a note carrying `superseded_by`
+whose named successor never wrote `supersedes` is a supersession only one file knows about, and
+the sweep reads it as replaced by *nothing at all*. On a live corpus that cost exactly what it
+sounds like: an assumption backing a live row in the financial model named its replacement,
+nothing named it back, the sweep reported it as replaced by nothing, and three current claims
+went on resting on the dead note. So `vault-lint.sh --supersession-sweep` **fails** two shapes —
+`superseded_by` naming a note that does not list it in `supersedes` (`superseded-by-unreciprocated`),
+and `superseded_by` naming an ID no note in the vault carries (`superseded-by-dangling`). Neither
+is gated on `schemaVersion`: both fire on the presence of the field, so a vault that never wrote
+it owes nothing. Write `superseded_by` when it helps a reader of the replaced note find the
+replacement, and write the `supersedes` half in the same edit.
+
 **Both those edits land in the vault, and the documents the old note reached hear nothing.** That
 is the third cost of a supersession: a superseded claim that was cited into three plan sections
 leaves those three sections asserting the old value, with `status: superseded` sitting in a file
 nobody rereads. `vault-lint.sh --supersession-sweep` is what says so out loud — it walks every
 superseded note, unions the `used_in` targets behind them, and prints one row per document
-section with the notes that reached it, their replacements and each `supersedes_reason`. One row
+section with the notes that reached it, their replacements and each `supersedes_reason`. A note
+counts as superseded under any of the three addresses of the same fact — named by a `supersedes`
+edge, carrying `status: superseded`, or carrying `superseded_by` — because the worklist matters
+most on the pair that was only half made, and one that only read well-formed supersessions would
+go quiet exactly there. One row
 per *section* rather than per note, because the work is re-reading the section once however many
 superseded notes point at it — and one section named two ways is still one row, since a heading
 is addressable both by an explicit `{#anchor}` and by the slug of its text and two notes can
@@ -704,7 +723,19 @@ excluded_from_model: "billed on a separate cycle, so it is modelled in the meter
 `financial-model.md`: a declared input with no row fails, and a row matching no `assumption`
 `title` verbatim fails too. The match is the `title`, character for character, the same rule a
 roadmap row is held to against a milestone `title` — [plan-template.md](plan-template.md) states
-it as the contract the table is written under. **The failure it prevents:** two assumptions
+it as the contract the table is written under.
+
+**A retired note is not a match, and that is a third failure rather than a looser rule.** The
+title says the row was rendered off *some* note; only `status` says the ledger still stands
+behind it. A live row in the assumptions table whose only matching note is `superseded` or
+`retracted` fails as `model-row-dead-assumption`, naming the note it found and the status it
+carries — the projection is resting on a value nobody is obliged to maintain, nothing orders it
+in the validation queue, and because the title matched, every check stayed green. Observed as
+exactly that: a live assumption row backed only by a superseded note, reported as *matched
+verbatim* for days. The two repairs are point the row at the successor, or re-file the
+assumption as `current` if it was retired in error.
+
+**The failure it prevents:** two assumptions
 governing a whole revenue line existed as notes, correctly authored with subjects and confidence,
 and were never added as rows — so the rule meant to keep every number traceable made that revenue
 line structurally unable to enter the projection, the model filed it as revenue outside its scope,
@@ -1241,6 +1272,15 @@ this release can carry:
 |---|---|---|
 | the assumptions table renders the declared inputs | `--assumption-rows` | a declared `model_input` with no row and no `excluded_from_model`, a row matching no `assumption` `title` verbatim, declared inputs with no table to render them, and a line excluded from the model that the roadmap ships a change to and no verdict note lists in `arr_excludes` |
 | a cited section still carries what it carried | `--claim-drift` | a `reconciled_sections` hash the section no longer matches, a resolving citation with no entry recording it, and an entry naming a target `used_in` does not |
+
+**What no version gates**, because each fires on the presence of a field rather than on a rule
+every corpus would suddenly owe — which is the exemption `schemaVersion` exists to provide,
+obtained without spending a version:
+
+| rule | mode | what fires |
+|---|---|---|
+| a supersession is written from both ends | `--supersession-sweep` | `superseded-by-unreciprocated` — `superseded_by` naming a note that does not list it in `supersedes`; and `superseded-by-dangling` — `superseded_by` naming an ID no note carries |
+| a model row stands on a live note | `--assumption-rows` | `model-row-dead-assumption` — a row whose only `title` match is an `assumption` at `status: superseded` or `retracted` |
 
 **Version 3's cost to an existing corpus is a back-fill and nothing else**, and it is bigger than
 2's: every claim in a finished corpus is already cited into a plan, so moving to 3 means re-reading
