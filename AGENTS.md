@@ -490,10 +490,14 @@ stands behind it goes and writes a second one; and it marks the row hit, so the 
 also reported as an input the table has no row for. Ungated, since the trigger is a `status` value a
 corpus only carries where a note was actually retired.
 
-**And it reads `status` and NOT `type` — getting that backwards shipped a false positive inside an
-hour.** The title index the row direction matches against holds every live `assumption`
-**and** every live `claim`, because a row is backed by whatever the ledger still stands behind. Read
-as a question about the type instead, the check fired on a row this method's own promotion rule
+**And a live `claim` backs a row exactly as a live `assumption` does — reading only `assumption`
+titles shipped a false positive inside an hour.** The title index the row direction matches against
+holds every live note of either type, because a row is backed by whatever the ledger still stands
+behind. **The pair is still a closed set and the type test is still load-bearing** — a `source` or
+`fact` is provenance a claim rests *on* rather than a value the projection carries, and a
+`milestone`, `question` or `decision` asserts no value at all, which is why the enumeration is
+stated at the predicate in both scripts rather than left as an omission. Reading `assumption`
+alone, the check fired on a row this method's own promotion rule
 produces: a structural driver with no subject instrument belongs in the indexed set rather than
 degraded to an assumption, so filing a sourced figure as unevidenced is the defect, and correcting it
 retires the assumption and mints a `claim` carrying the same title. The failure then said the row's

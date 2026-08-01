@@ -735,9 +735,9 @@ exactly that: a live assumption row backed only by a superseded note, reported a
 verbatim* for days. The two repairs are point the row at the successor, or re-file the
 assumption as `current` if it was retired in error.
 
-**What backs a row is decided by `status`, not by `type` — a live `claim` backs one exactly as a
-live `assumption` does.** That is not a leniency; it is the promotion rule stated from the
-model's side. A structural driver with no subject instrument belongs in the indexed set rather
+**A live `claim` backs a row exactly as a live `assumption` does** — both assert a value, and what
+disqualifies either is `superseded` or `retracted`. That is not a leniency; it is the promotion
+rule stated from the model's side. A structural driver with no subject instrument belongs in the indexed set rather
 than degraded to an assumption, so a sourced figure filed as unevidenced is the defect, and
 correcting it retires the assumption and mints a `claim` carrying the same title. Read as a
 question about the note's type, the check called that correction a defect: it reported the row's

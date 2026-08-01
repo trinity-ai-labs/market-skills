@@ -916,7 +916,9 @@ projection is standing on a value the ledger already retired. Point the row at t
 re-file the note if the migration retired it in error. **That successor may be a `claim`** — a
 sourced figure filed as an unevidenced assumption is exactly what a back-fill turns up, and
 promoting it retires the assumption and mints a claim carrying the same title. The row is backed
-either way; what the check reads is `status`, not `type`. This is stage 4 read from the other end,
+either way, because both types assert a value and what disqualifies either is `superseded` or
+`retracted`. Do not point the row at the `source` or `fact` under the claim: that is what the
+claim rests *on*, and it backs nothing. This is stage 4 read from the other end,
 and a back-fill is the one moment the two lists sit
 side by side and can be made to agree for free.
 

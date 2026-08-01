@@ -131,9 +131,11 @@ and is never restated here.
     fails a declared model input with no row and no stated exclusion, a row matching no note
     `title`, a row whose every `title` match is a note the ledger has retired, and a revenue
     line the roadmap ships that the model does not carry and the identity
-    does not declare. **What backs a row is `status`, not `type`** — a live `claim` backs one as a
-    live `assumption` does, so promoting a sourced figure out of the assumptions set is a repair
-    rather than a defect. **What that last one cost, undetected, is the largest miss on record
+    does not declare. **A live `claim` backs a row exactly as a live `assumption` does** — both
+    assert a value, and what disqualifies either is `superseded` or `retracted` — so promoting a
+    sourced figure out of the assumptions set is a repair rather than a defect. Those two are the
+    whole set: a `source` or `fact` is provenance a claim rests *on*, not a value the projection
+    carries. **What that last one cost, undetected, is the largest miss on record
     here:**
     a revenue line existed as correctly authored notes, never became rows, was filed as revenue
     outside the model, and three separate verdict re-solves each corrected a different term and

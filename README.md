@@ -438,12 +438,15 @@ own failure, naming the note it found and the status it carries. The title match
 rendered off *some* note; only the status says the ledger still stands behind it, and a projection
 resting on a retired assumption has nothing ordering it in the validation queue while every check
 reads green — which is what happened, a live row backed only by a superseded note, reported as
-*matched verbatim* for days. **The reverse direction reads `status` and not `type`**, so a row is
-backed by any live note carrying its title — an `assumption` or a `claim`. That matters because a
-promotion is a repair this method prescribes: a structural driver with no subject instrument
-belongs in the indexed set, so a sourced figure filed as an unevidenced assumption gets retired and
-replaced by a `claim` carrying the same title. Read as a question about the type, the check called
-that correction a defect — every word of the failure true, the conclusion wrong. **And there is
+*matched verbatim* for days. **A live `claim` backs a row exactly as a live `assumption` does**,
+because both are notes that assert a value and what disqualifies either is `superseded` or
+`retracted`. That matters because a promotion is a repair this method prescribes: a structural
+driver with no subject instrument belongs in the indexed set, so a sourced figure filed as an
+unevidenced assumption gets retired and replaced by a `claim` carrying the same title. Reading only
+`assumption` titles, the check called that correction a defect — every word of the failure true,
+the conclusion wrong. **Those two are the whole set**, and it stays closed: a `source` or `fact` is
+the provenance a claim rests *on* rather than a value the projection carries, and a `milestone`,
+`question` or `decision` asserts no value at all. **And there is
 one rule that is about the
 target rather than the table:** where the roadmap ships a dated change to a line the model excludes,
 the verdict note has to name that line in `arr_excludes` — the exit identity is ARR × multiple and

@@ -15,10 +15,12 @@ Versions are the `version` field in `.claude-plugin/plugin.json`. Because that f
   instrument belongs in the indexed set rather than degraded to an assumption, so filing a sourced
   figure as unevidenced is the defect, and correcting it retires the assumption and mints a claim.
   A corpus did exactly what the method says and the new check called it broken — which is the
-  failure that gets a gate switched off, taking the half that worked with it. **The distinction the
-  check reads is `status`, not `type`:** a row is backed when any live `assumption` or `claim`
-  carries its title, and `model-row-dead-assumption` still fires where *every* match is
-  `superseded` or `retracted`.
+  failure that gets a gate switched off, taking the half that worked with it. **A row is backed
+  when any live `assumption` or `claim` carries its title**, and `model-row-dead-assumption` still
+  fires where *every* match is `superseded` or `retracted`. **That pair is the whole set, and it
+  stays closed** — a `source` and a `fact` are the provenance a claim rests *on* rather than a
+  value the projection carries, and a `milestone`, `question` or `decision` asserts no value at
+  all, so what widened is which asserting notes count, not whether the note's type is read.
 - **Only the row → note direction widened.** `assumption-not-in-model` keys on `model_input`, a
   field a promoted claim does not carry, so the note → row direction reads exactly the set it read
   before. The asymmetry is the design rather than an omission, and it is asserted: the fixture's
