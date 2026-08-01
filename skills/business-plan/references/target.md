@@ -33,6 +33,7 @@ inside Phase 3 is not in context when Phase 3 runs.
 - [A verdict is capped twice and never asserted at high confidence](#a-verdict-is-capped-twice-and-never-asserted-at-high-confidence)
 - [Two verdicts, because a late-only verdict wastes a whole research run](#two-verdicts-because-a-late-only-verdict-wastes-a-whole-research-run)
 - [The nearest reachable target is a solve, not a smaller number chosen by feel](#the-nearest-reachable-target-is-a-solve-not-a-smaller-number-chosen-by-feel)
+- [The furthest defensible target is a solve too, and a target that clears with room was set too low](#the-furthest-defensible-target-is-a-solve-too-and-a-target-that-clears-with-room-was-set-too-low)
 - [The levers are counterfactuals, kept apart from the counter-offer](#the-levers-are-counterfactuals-kept-apart-from-the-counter-offer)
 - [The founder chooses, and the superseded target keeps its reason](#the-founder-chooses-and-the-superseded-target-keeps-its-reason)
 - [Computing a verdict: the checklist](#computing-a-verdict-the-checklist)
@@ -791,6 +792,47 @@ outcome is the counter-offer, and nothing else is.
 - **The counter-offer assumes nothing the founder has not already stated.** The moment it quietly
   assumes more hours it stops being reachable on the stated resources, which is the one property
   that made it the counter-offer.
+
+## The furthest defensible target is a solve too, and a target that clears with room was set too low
+
+The section above solves downward when the stated target is out of reach. Nothing solved upward,
+and the asymmetry was silent: every guard in this file points at overclaiming, so a founder who
+names a conservative number gets it computed, verdicted and never questioned. `SKILL.md` states the
+bar — *a claim weaker than its evidence is an error of the same class as one stronger* — and until
+this section nothing implemented it for the target itself, which is the one number every other
+number in the plan is solved against.
+
+**The rule is the mirror of the one above: hold the founder's stated resources fixed and the
+evidenced driver ranges fixed, and solve the same identity for the LARGEST outcome those ranges
+support by the stated date.** Same identity, same date, same resources, drivers at the defensible
+top of their evidenced bands rather than the bottom. That solved outcome is reported beside the
+verdict, never instead of it.
+
+**It fires whenever the verdict is `reachable`, and on any `undetermined` whose upper corners
+clear.** A target that clears with room is evidence about the target, not only about the plan: the
+same roadmap, the same hours and the same capital were going to produce more than was asked of
+them, and nobody was going to say so. Where the verdict is negative at every corner the section
+above already governs and this one stays quiet — there is no upward solve to run when the stated
+number is not reachable.
+
+**Report it in the founder's own currency and with the driver that caps it.** *"The evidenced
+ranges support up to X by the stated date, capped by DRIVER at KIND"* is actionable; *"you could
+aim higher"* is a compliment. The capping driver matters more than the number, because it names
+what would have to move for the larger outcome to be a plan rather than a hope — and where that
+driver is `policy` the ceiling is a configuration the founder chose, exactly as it is on the way
+down.
+
+**The founder still chooses, and a target raised on this evidence supersedes under the same rule
+as one lowered** — the superseded number keeps its reason, so a corpus records that the smaller
+target was set before the solve rather than in spite of it.
+
+**The failure this prevents, and it is the expensive one.** A founder states a number that feels
+safe. The plan solves it, returns reachable or undetermined, and every downstream decision — the
+roadmap order, the capital path, the pricing, the reference class the whole verdict is graded in —
+is sequenced to that number. The work required was the same. The larger outcome was inside the
+evidenced ranges the entire time and no step in the method was looking for it, because every check
+in this file was built to catch a founder claiming too much. **An overclaim gets challenged on the
+first read; an understatement is inherited by every document downstream and reads as discipline.**
 
 ## The levers are counterfactuals, kept apart from the counter-offer
 
