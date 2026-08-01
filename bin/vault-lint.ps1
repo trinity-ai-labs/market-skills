@@ -463,6 +463,27 @@ vault-lint.sh - read-only checks over a claim vault.
       field, cannot owe it, and exits 0 either way - vault-migration.md carries
       the back-fill.
 
+      superseded-by-unreciprocated: a note whose `superseded_by` names a note
+      this vault holds, where that note's `supersedes` does not name it back.
+      The worklist is walked from the SUPERSEDING side, because that is where
+      the reason and the `reconciled:` date live - so an edge written from the
+      replaced note's end only reaches nothing, and the note reads as replaced
+      by nothing at all while the record plainly names a successor. Observed:
+      an assumption backing a live model row carried `superseded_by`, the named
+      claim never named it back, and three current claims went on resting on
+      the dead note. The repair is one line on the note the record already
+      names, which is why this is not the same row as replaced-by-nothing.
+
+      superseded-by-dangling: a note whose `superseded_by` names an ID no note
+      in this vault carries. The record names a successor nobody can open, so
+      there is nothing to read the replacement out of and nothing to add the
+      back-edge to. The dangling-edge check in `check` walks the block-list
+      edge fields and never this scalar, so nothing else reports it.
+
+      Neither is gated on schemaVersion: both fire on the PRESENCE of
+      `superseded_by`, so a corpus that never wrote the field cannot owe them
+      and no existing vault reddens on the day the skill updates.
+
       It reports the row count as well as the rows, because the gate that
       consumes this is a read and a read is bounded only if its size is visible
       before it starts. A superseded note whose used_in named nothing is listed
@@ -675,7 +696,7 @@ vault-lint.sh - read-only checks over a claim vault.
   vault-lint.sh --assumption-rows [--vault PATH] [--json]
       Check the assumptions table in financial-model.md against the assumption
       notes that declare themselves inputs to the model, both directions. A
-      verdict - it exits 1 on any of its four failures.
+      verdict - it exits 1 on any of its five failures.
 
       This is --roadmap-table one artifact over, and it exists because the
       rule it inverts had no counterpart. plan-template.md requires that no
@@ -705,6 +726,16 @@ vault-lint.sh - read-only checks over a claim vault.
       model-row-no-assumption: a row matching no `assumption` note title. The
       reverse direction, and it is what stops the rule above being cleared by
       writing a row nothing in the ledger stands behind.
+
+      model-row-dead-assumption: a row whose only title match is an
+      `assumption` note at `status: superseded` or `retracted`. The title match
+      says the row was rendered off SOME note; it does not say the ledger still
+      stands behind it. A live row backed only by a retired note is an input
+      the projection rests on that nothing orders in the validation queue, and
+      the match reads as clean - observed as exactly that, a live assumption
+      row backed only by a superseded note with the mode reporting `matched
+      verbatim` for days. It is separate from model-row-no-assumption because
+      the repair is: point the row at the successor, or re-file the note.
 
       excluded-line-on-roadmap: an assumption the roadmap ships a change to -
       a `milestone` whose `moves` names it - that carries
