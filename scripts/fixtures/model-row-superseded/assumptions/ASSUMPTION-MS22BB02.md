@@ -17,7 +17,8 @@ superseded. The title matched, so `--assumption-rows` printed `matched verbatim`
 over it — which is exactly the failure: an input the projection rests on that
 nothing orders in the validation queue, with every check green.
 
-It also carries `model_input`, which is what pins the other half of the rule:
-the row IS rendered, so `assumption-not-in-model` must stay silent here. One
-situation gets one failure, and a second row pointing at a different repair is
-what sends a reader to the wrong fix.
+It also carries `model_input`, and must not ALSO be reported as an input the
+table has no row for: one situation gets one failure, and a second row pointing
+at a different repair is what sends a reader to the wrong fix. Two things hold
+that now - the row loop marks the title hit, and the note side skips a retired
+note outright.

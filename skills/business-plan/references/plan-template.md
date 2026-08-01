@@ -366,9 +366,15 @@ The `Assumption` cell IS the note's `title`, copied verbatim, and every row is a
 `vault-lint.sh --assumption-rows` read the two against each other character for character,
 the same rule a roadmap row is held to against a milestone `title` — a table rendered off the
 notes matches by construction, so a mismatch means the row was written by hand. The note behind
-a row also has to be one the ledger still stands behind: a row whose only title match is
+a row also has to be one the ledger still stands behind: a row whose every title match is
 `status: superseded` or `retracted` fails, because the title alone says the row was rendered
-off some note and only the status says the projection is resting on a live one. The `#` column
+off some note and only the status says the projection is resting on a live one. **A row's note
+may be a `claim` rather than an `assumption`, and a live one of either backs the row** — both
+assert a value, and what disqualifies either is `superseded` or `retracted`. A row is written off
+an assumption note, but a sourced figure that was filed as unevidenced gets promoted: the
+assumption is retired and a `claim` carrying the same title replaces it. The row keeps standing;
+what changed is which set holds the note. Those two types are the whole set — a `source` or `fact`
+is what a claim rests *on*, never what a row stands on. The `#` column
 stays the `A-n` label the prose and a milestone's `moves` field cite; nothing mechanical reads
 it.
 

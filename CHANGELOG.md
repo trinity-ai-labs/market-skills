@@ -2,6 +2,61 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.18.1
+
+**The theme of 1.18.0 pointed at itself.** That release was about checks whose success line could
+not tell *agreed* from *had nothing to check*. Three checks in it turned out to have the same shape
+one level down: they walked a set without asking whether its members were still **live**, and
+answered confidently over notes the ledger had already retired. `model-row-dead-assumption` read
+which *type* held the note instead of its status; `assumption-not-in-model` and
+`excluded-line-on-roadmap` read the field that declares an input without reading the status beside
+it. A set read without its status filter reports cleanly either way, which is why all three shipped.
+
+- **`model-row-dead-assumption`, shipped an hour earlier in 1.18.0, failed a model row that was
+  correctly backed — by a `claim` rather than an `assumption`.** The row → note direction indexed
+  `assumption` titles only, so a row whose backing note had been *promoted* matched nothing live,
+  fell through to the retired-match arm, and was reported as a projection standing on a value
+  nobody maintains. Every word of that failure was true — the title did match a `superseded` note,
+  and no `current` assumption carried it — and the conclusion did not follow: a `current` claim
+  carried the title, with `used_in` naming the assumptions section directly. Worse, the promotion
+  that produced it is a pattern this method prescribes. A structural driver with no subject
+  instrument belongs in the indexed set rather than degraded to an assumption, so filing a sourced
+  figure as unevidenced is the defect, and correcting it retires the assumption and mints a claim.
+  A corpus did exactly what the method says and the new check called it broken — which is the
+  failure that gets a gate switched off, taking the half that worked with it. **A row is backed
+  when any live `assumption` or `claim` carries its title**, and `model-row-dead-assumption` still
+  fires where *every* match is `superseded` or `retracted`. **That pair is the whole set, and it
+  stays closed** — a `source` and a `fact` are the provenance a claim rests *on* rather than a
+  value the projection carries, and a `milestone`, `question` or `decision` asserts no value at
+  all, so what widened is which asserting notes count, not whether the note's type is read.
+- **`assumption-not-in-model` demanded a row of notes the ledger had retired, and that demand
+  could not be satisfied.** It walked every `assumption` carrying `model_input` without reading
+  `status`, so a `superseded` or `retracted` note still owed either a row in the table or an
+  `excluded_from_model` reason. Both escapes are unsatisfiable on a retired note: rendering the
+  dead title as a row undoes the repair the row → note direction asks for, and writing
+  `excluded_from_model` records a decision about a live revenue line on a note nobody will open.
+  Found end to end — the row side flagged a dead-backed row, re-titling it to the live claim
+  cleared that, and this half immediately demanded a row for the superseded note the repair had
+  just pointed away from. The failure calls it *an input the ledger holds*, and a note the ledger
+  has retired is not one; it now reads the same live predicate the row side does.
+- **`excluded-line-on-roadmap` walks that same narrowed set, and this is a decision rather than a
+  side effect.** A retired assumption a `milestone` still `moves` no longer owes an `arr_excludes`
+  declaration. Where the note was superseded by a live successor, the successor carries the
+  obligation and nothing is lost; where it was retracted outright, the defect is a roadmap pointing
+  at a dead note — a different repair, and one no check in this tool reports yet. What it was doing
+  was giving the *wrong* repair confidently, which is worse than the gap.
+- **The note → row direction did not widen to claims, and that asymmetry is deliberate.**
+  `assumption-not-in-model` keys on `model_input`, a field a promoted claim does not carry, so a
+  claim never becomes a declared input and never owes a row on its own account.
+- **The success line counts live declared inputs and says so.** With the note side narrowed, a
+  vault whose only declaring notes are retired reports no declared inputs rather than a demand
+  nobody can meet.
+- **`--assumption-rows`'s success line stopped reading as a comparison.** It set a row count
+  *against* a declared-input count, which implies the two have to agree. They do not: a row backed
+  by a `claim` is not a declared model input, and a declared input cleared by `excluded_from_model`
+  is not a row. The line now states what each half checked, so a legitimate difference between the
+  two counts cannot be read as a miscount and send somebody hunting for a row nothing owed.
+
 ## 1.18.0
 
 - **Five checks reported a vacuous pass as a pass: when a check could not find its subject, its

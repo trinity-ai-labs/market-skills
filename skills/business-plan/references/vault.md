@@ -720,20 +720,42 @@ excluded_from_model: "billed on a separate cycle, so it is modelled in the meter
 
 **`model_input` declares that the projection has to carry a row for this note**, and
 `vault-lint.sh --assumption-rows` reads that both ways against the assumptions table in
-`financial-model.md`: a declared input with no row fails, and a row matching no `assumption`
-`title` verbatim fails too. The match is the `title`, character for character, the same rule a
+`financial-model.md`: a **live** declared input with no row fails, and a row matching no note
+`title` verbatim fails too. A `superseded` or `retracted` note owes no row and no exclusion — the
+same live predicate, read from the note side. The match is the `title`, character for character, the same rule a
 roadmap row is held to against a milestone `title` — [plan-template.md](plan-template.md) states
 it as the contract the table is written under.
 
 **A retired note is not a match, and that is a third failure rather than a looser rule.** The
 title says the row was rendered off *some* note; only `status` says the ledger still stands
-behind it. A live row in the assumptions table whose only matching note is `superseded` or
+behind it. A live row in the assumptions table whose *every* matching note is `superseded` or
 `retracted` fails as `model-row-dead-assumption`, naming the note it found and the status it
 carries — the projection is resting on a value nobody is obliged to maintain, nothing orders it
 in the validation queue, and because the title matched, every check stayed green. Observed as
 exactly that: a live assumption row backed only by a superseded note, reported as *matched
 verbatim* for days. The two repairs are point the row at the successor, or re-file the
 assumption as `current` if it was retired in error.
+
+**A live `claim` backs a row exactly as a live `assumption` does** — both assert a value, and what
+disqualifies either is `superseded` or `retracted`. That is not a leniency; it is the promotion
+rule stated from the model's side. A structural driver with no subject instrument belongs in the indexed set rather
+than degraded to an assumption, so a sourced figure filed as unevidenced is the defect, and
+correcting it retires the assumption and mints a `claim` carrying the same title. Read as a
+question about the note's type, the check called that correction a defect: it reported the row's
+only match as `superseded` with no `current` assumption behind it, which was true in both halves
+while the row was backed the whole time by a `current` claim whose `used_in` named the
+assumptions section directly. **The other direction did not widen**, and the asymmetry is
+deliberate: `model_input` is a field an `assumption` carries, so a claim never becomes a declared
+input and never owes a row on its own account.
+
+**Those two types are the whole set, and a `fact` is deliberately not a third.** The other five are
+out by argument rather than by omission: a `source` and a `fact` are the provenance a claim *rests
+on* rather than a value the projection carries — [target.md](target.md)'s ladder puts a driver
+value on a `claim` or an `assumption` and nowhere else — and a `milestone`, `question` or
+`decision` asserts no value at all. So a figure quotable from one source with no inference belongs
+in `facts/` **and** the claim that reads it into the model is what the row stands on. Filing the
+model's input as a `fact` and pointing the row at it is the same defect one type over, and it
+fails.
 
 **The failure it prevents:** two assumptions
 governing a whole revenue line existed as notes, correctly authored with subjects and confidence,
@@ -1280,7 +1302,15 @@ obtained without spending a version:
 | rule | mode | what fires |
 |---|---|---|
 | a supersession is written from both ends | `--supersession-sweep` | `superseded-by-unreciprocated` — `superseded_by` naming a note that does not list it in `supersedes`; and `superseded-by-dangling` — `superseded_by` naming an ID no note carries |
-| a model row stands on a live note | `--assumption-rows` | `model-row-dead-assumption` — a row whose only `title` match is an `assumption` at `status: superseded` or `retracted` |
+| a model row stands on a live note | `--assumption-rows` | `model-row-dead-assumption` — a row whose every `title` match, `assumption` or `claim`, is at `status: superseded` or `retracted` |
+
+**`model-row-dead-assumption` and `model-row-no-assumption` are named narrower than the rule they
+now read, and the names stay.** Both cover a `claim` carrying the row's title as well as an
+`assumption`, because what backs a row is `status` rather than which asserting set holds the note.
+The codes are the string a `--json` consumer keys on, so renaming them to match would break every
+caller pinned to them to buy nothing but a tidier word — and the repair the names point at is still
+the right one, since a row with nothing behind it is missing the `assumption` note the table
+renders inputs off.
 
 **Version 3's cost to an existing corpus is a back-fill and nothing else**, and it is bigger than
 2's: every claim in a finished corpus is already cited into a plan, so moving to 3 means re-reading
