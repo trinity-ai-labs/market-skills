@@ -128,10 +128,13 @@ and is never restated here.
     `--assumption-rows` is in the gate because it is the only inverse the assumptions table has:
     the rule that every number in a projection is a named row is checked by reading the model, and
     whether a named assumption is MISSING from the table can only be checked against the notes. It
-    fails a declared model input with no row and no stated exclusion, a row matching no assumption
-    `title`, a row whose only `title` match is an assumption the ledger has retired, and a revenue
+    fails a declared model input with no row and no stated exclusion, a row matching no note
+    `title`, a row whose every `title` match is a note the ledger has retired, and a revenue
     line the roadmap ships that the model does not carry and the identity
-    does not declare. **What that last one cost, undetected, is the largest miss on record here:**
+    does not declare. **What backs a row is `status`, not `type`** — a live `claim` backs one as a
+    live `assumption` does, so promoting a sourced figure out of the assumptions set is a repair
+    rather than a defect. **What that last one cost, undetected, is the largest miss on record
+    here:**
     a revenue line existed as correctly authored notes, never became rows, was filed as revenue
     outside the model, and three separate verdict re-solves each corrected a different term and
     inherited the same denominator — so the answer never moved.
@@ -1459,8 +1462,9 @@ three milestones, and where everything landed. Invite pushback on the specific b
   directory has neither check run over it — which prints the same green as one that passed them.
 - The financial model's assumptions table is complete in **both** directions — no number appears
   in a projection that isn't a named assumption row, **and** no assumption note that declares
-  itself a model input is missing from the table, **and** no live row is backed only by an
-  assumption the ledger has retired to `superseded` or `retracted`. `vault-lint.sh
+  itself a model input is missing from the table, **and** every live row is backed by a note the
+  ledger still stands behind, `assumption` or `claim`, rather than only by one retired to
+  `superseded` or `retracted`. `vault-lint.sh
   --assumption-rows` reads all three against each other; the second half is the one that was prose and never fired, and what it cost
   was a whole revenue line that existed as correctly authored notes, never became rows, and was
   therefore filed as *revenue outside this model* — which reads as a modelling decision and was a

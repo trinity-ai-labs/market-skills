@@ -433,12 +433,18 @@ either a row in the assumptions table, matched on its `title` **verbatim**, or a
 `excluded_from_model` reason saying why the model does not carry it. Either clears the rule; neither
 is the failure. It reads the reverse direction too, because otherwise the cheapest way past the
 first check is a row nothing in the ledger stands behind. **The reverse direction reads `status`
-as well as the title:** a live row whose only matching note is `superseded` or `retracted` is its
+as well as the title:** a live row whose every matching note is `superseded` or `retracted` is its
 own failure, naming the note it found and the status it carries. The title match says the row was
 rendered off *some* note; only the status says the ledger still stands behind it, and a projection
 resting on a retired assumption has nothing ordering it in the validation queue while every check
 reads green — which is what happened, a live row backed only by a superseded note, reported as
-*matched verbatim* for days. **And there is one rule that is about the
+*matched verbatim* for days. **The reverse direction reads `status` and not `type`**, so a row is
+backed by any live note carrying its title — an `assumption` or a `claim`. That matters because a
+promotion is a repair this method prescribes: a structural driver with no subject instrument
+belongs in the indexed set, so a sourced figure filed as an unevidenced assumption gets retired and
+replaced by a `claim` carrying the same title. Read as a question about the type, the check called
+that correction a defect — every word of the failure true, the conclusion wrong. **And there is
+one rule that is about the
 target rather than the table:** where the roadmap ships a dated change to a line the model excludes,
 the verdict note has to name that line in `arr_excludes` — the exit identity is ARR × multiple and
 none of the multiple's inputs is ARR, so an undeclared exclusion is a denominator nobody can see.
@@ -448,7 +454,11 @@ churn. Excluding it silently is what fails.
 **A vault where no note declares itself a model input is told that**, rather than handed a row
 count and *matched verbatim*: the direction this mode was written for walks the declared inputs, so
 with none of them the half that catches a missing row iterates over nothing, and the count printed
-beside it belongs entirely to the other half.
+beside it belongs entirely to the other half. **And where both halves do run, the line states each
+of them rather than setting one count against the other** — the two are not two sides of one
+number, because a row backed by a `claim` is not a declared model input and a declared input
+cleared by `excluded_from_model` is not a row, so a line reading as a comparison sends its reader
+hunting for a row that was never owed.
 
 `--claim-drift` answers the one question `--used-in` says outright it cannot: whether a section still
 carries what it carried yesterday. `--used-in` checks that a citation resolves, and a heading that

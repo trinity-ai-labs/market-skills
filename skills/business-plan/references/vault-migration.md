@@ -910,10 +910,14 @@ the upgrade here is opt-in per note: go through the assumptions table in `financ
 for each row mint or find the `assumption` note behind it and copy the row's `Assumption` cell into
 `title` **unchanged**. The match is verbatim, so a note whose title is a tidied-up version of its row
 fails twice over — once as a row with no note behind it, once as a declared input the table never
-lists. **And "find the note behind it" means a note that is still `current`**: a row whose only
+lists. **And "find the note behind it" means a note that is still live**: a row whose every
 title match is `superseded` or `retracted` fails as `model-row-dead-assumption`, because the
 projection is standing on a value the ledger already retired. Point the row at the successor, or
-re-file the note if the migration retired it in error. This is stage 4 read from the other end, and a back-fill is the one moment the two lists sit
+re-file the note if the migration retired it in error. **That successor may be a `claim`** — a
+sourced figure filed as an unevidenced assumption is exactly what a back-fill turns up, and
+promoting it retires the assumption and mints a claim carrying the same title. The row is backed
+either way; what the check reads is `status`, not `type`. This is stage 4 read from the other end,
+and a back-fill is the one moment the two lists sit
 side by side and can be made to agree for free.
 
 **`--claim-drift` is the expensive half, and the cost is a real read rather than a transcription.**

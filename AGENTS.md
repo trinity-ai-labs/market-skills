@@ -139,12 +139,15 @@ The fixtures suite is the second half, and it belongs to `bin/vault-lint.sh` and
 `bin/vault-lint.ps1` rather than to the repo: it asserts that every check the lint claims
 to make still fires, against corpora built to trigger each one, and `VAULT_LINT` points it
 at whichever implementation you're testing — `VAULT_LINT=bin/vault-lint.ps1 sh
-scripts/fixtures/run-fixtures.sh` runs the same 349 assertions against the PowerShell side.
+scripts/fixtures/run-fixtures.sh` runs the same assertions against the PowerShell side.
 A check that stops firing and a check that was deleted look identical from the outside,
-which is why the assertion has to be written down rather than eyeballed.
+which is why the assertion has to be written down rather than eyeballed. **Neither the
+assertion count nor the fixture count is written down here** — both tools print their own
+totals, and a number in this file rots on the next fixture anybody adds, which is the reads
+correct while stale shape the enumeration rule two sections down warns about.
 
 The parity gate is the third half: `node scripts/parity/parity.mjs` runs both scripts
-across 13 modes × 30 fixture vaults and fails on any byte-level disagreement between their
+over every mode against every fixture vault and fails on any byte-level disagreement between their
 output — key order, an escaped character, row order, a path separator. The fixtures suite
 proves each script still does what it claims; the parity gate proves the two scripts still
 agree with each other — a check that stops firing in only *one* implementation is invisible
@@ -477,15 +480,31 @@ defaults to TWO**, because the template ships `| # | Assumption | … |` and col
 label a milestone's `moves` and the plan's prose both cite — defaulting to it would report every row of
 a correct table as an input that escaped the ledger, which is exactly the crying wolf `--roadmap-table`
 was scoped out for once already. **The row side reads `status` as well as the title, and that is a
-fifth failure rather than a looser match**: `model-row-dead-assumption` fires on a live row whose only
-title match is an `assumption` at `status: superseded` or `retracted`, and the message names the note
+fifth failure rather than a looser match**: `model-row-dead-assumption` fires on a live row whose every
+title match is at `status: superseded` or `retracted`, and the message names the note
 and its status because the two repairs — point the row at the successor, or re-file the note — are
 chosen off exactly that. Matching every title regardless of status made a live row backed only by a
 superseded note report as *matched verbatim*, observed green for days over a live model. It is not
 folded into `model-row-no-assumption`, because the row DID match a note and a reader told nothing
 stands behind it goes and writes a second one; and it marks the row hit, so the same pair is never
 also reported as an input the table has no row for. Ungated, since the trigger is a `status` value a
-corpus only carries where a note was actually retired. **Its fourth check is the identity's, not the
+corpus only carries where a note was actually retired.
+
+**And it reads `status` and NOT `type` — getting that backwards shipped a false positive inside an
+hour.** The title index the row direction matches against holds every live `assumption`
+**and** every live `claim`, because a row is backed by whatever the ledger still stands behind. Read
+as a question about the type instead, the check fired on a row this method's own promotion rule
+produces: a structural driver with no subject instrument belongs in the indexed set rather than
+degraded to an assumption, so filing a sourced figure as unevidenced is the defect, and correcting it
+retires the assumption and mints a `claim` carrying the same title. The failure then said the row's
+only match was `superseded` with no `current` assumption carrying the title — both halves true, the
+conclusion false, and the corpus it fired on had done exactly what the method says. **Only the row →
+note direction widened.** `assumption-not-in-model` keys on `model_input`, a field a promoted claim
+does not carry, so the note → row direction reads the set it always read; that asymmetry is the
+design, not an oversight. **And the success line stopped reading as a comparison** — a row backed by a
+`claim` is not a declared model input and a declared input cleared by `excluded_from_model` is not a
+row, so the two counts legitimately differ and a line setting one *against* the other sends its reader
+looking for a row nothing owed. **Its fourth check is the identity's, not the
 table's**:
 `excluded-line-on-roadmap` fails an assumption carrying `excluded_from_model` that a `milestone`'s
 `moves` names and that no verdict note lists in `arr_excludes`. Excluding a revenue line is legitimate
