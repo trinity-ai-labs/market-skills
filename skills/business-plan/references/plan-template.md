@@ -138,6 +138,14 @@ configuration](target.md#a-binding-driver-that-is-policy-makes-the-verdict-condi
 since a structural verdict owes none; and a kind the note carries that no row shows is the same
 dodge run the other way.
 
+WHERE IN THE SECTION YOU PUT THE TABLE IS FREE, and that is worth stating because it was not
+always. The check reads this section to the next heading of the SAME DEPTH OR SHALLOWER, so a
+`###` subsection under the anchor — *How each corner was solved*, or one subsection per corner — is
+part of the section, and the corner table, the conditional-configuration phrase and the evidence
+line are all read wherever inside it they sit. Only a heading at `##` or above ends the section.
+The one thing to know is the absence case: a section carrying no corner table at all is reported
+as exactly that, and the run says the `Kind` check did not run rather than that it agreed.
+
 WHERE THE EVIDENCE UNDER A BINDING DRIVER IS THIN, THE SECTION SAYS SO IN ONE FIXED FORM RENDERED
 OFF THE NOTE'S TWO COUNTS — `Evidence: 2 sources, 1 counterparty`, with both numerals taken verbatim
 from `evidence_n` and `evidence_counterparties` and each noun pluralising on its own numeral (`1
@@ -366,8 +374,10 @@ EVERY NOTE BEHIND A ROW HERE DECLARES `model_input`, one of the two words `reven
 only half the contract: `--assumption-rows` reads it BOTH ways, and the direction that
 catches a missing row — a declared input the table never rendered — can only fire on notes
 that declared themselves. A corpus where no note carries the field is one where that half
-silently checks nothing, and its success line still reports the rows it did match, so the
-gate reads green over exactly the gap it exists to find. That is not hypothetical: it is
+checks nothing — its success line now says so outright, naming the un-run half instead of
+reporting the rows it did match and leaving the gate reading green over exactly the gap it
+exists to find. Declaring the field is still the whole point: a line the notes never claim
+is a line the check can only report as unclaimed. That is not hypothetical: it is
 how a whole revenue line stayed out of a projection while every note behind it lint-clean,
 which [vault.md](vault.md#the-assumption-note-is-what-you-would-believe-with-no-evidence)
 records as the largest miss on file. `sensitivity` and `validated_by` are owed on the same note and

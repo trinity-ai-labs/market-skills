@@ -360,6 +360,15 @@ section being there and non-empty, never on what it says. A vault with no verdic
 corpus's ceiling claim that carries none of the new fields — the fields are owed outright only under
 the `target-verdict` subject, which no corpus written before that term can hold.
 
+**The verdict section runs to the next heading of the same depth or shallower**, so a `###`
+subsection under the anchor is part of it and a corner table inside that subsection is read.
+Nothing asks you to keep the section flat, and nothing should: read to the next heading of any
+depth, a plan that opens a subsection one line in has its table fall outside the section, the mode
+compares zero rows, and the whole `Kind` half goes quiet while the run still passes. **A plan with
+no corner table under the anchor is told exactly that**, and the line names the `Kind` check as not
+run rather than reporting a count and *matched verbatim* — zero rows compared and zero rows
+disagreeing end in the same words, and only one of them means the check happened.
+
 `--monitoring` asks the competitor analysis which way things are moving, which is the one question
 nothing else in the corpus asks. Every profile carries the date it was researched and every claim
 note carries a `stale_after`, and both of those answer *is this still true* — a snapshot, and a
@@ -371,7 +380,10 @@ by what goes wrong without it — an axis with no instrument is a thing somebody
 one with no cadence is a re-check with no date, and one with no decision behind it is a signal
 nobody acts on, which costs the same to collect as one that matters. A cell carrying no letter or
 digit — an em dash, a run of hyphens — reads as empty, because that is the cheapest way past the
-rule. A vault with no `competitor-analysis.md` profiled nobody and passes; gated on
+rule. A vault with no `competitor-analysis.md` **at its root** passes, and the line it prints names
+the document it could not open and says the axes went unread — it does not tell you nobody was
+profiled, because it cannot know that: that wording once printed over a vault holding 31 competitor
+profiles and a fully written monitoring plan whose document simply lived somewhere else. Gated on
 `schemaVersion` 2.
 
 `--deliverable` is the only mode that reads a rendered file rather than the vault, and it exists
@@ -413,6 +425,11 @@ the verdict note has to name that line in `arr_excludes` — the exit identity i
 none of the multiple's inputs is ARR, so an undeclared exclusion is a denominator nobody can see.
 Excluding a revenue line is legitimate; a metered layer must not be allowed to flatter subscription
 churn. Excluding it silently is what fails.
+
+**A vault where no note declares itself a model input is told that**, rather than handed a row
+count and *matched verbatim*: the direction this mode was written for walks the declared inputs, so
+with none of them the half that catches a missing row iterates over nothing, and the count printed
+beside it belongs entirely to the other half.
 
 `--claim-drift` answers the one question `--used-in` says outright it cannot: whether a section still
 carries what it carried yesterday. `--used-in` checks that a citation resolves, and a heading that
