@@ -165,9 +165,12 @@
 #      predicate is pinned by the one combination that can detect a re-widening -
 #      an `assumption` that forecloses and declares NO `reverses_if` - because a
 #      claim is in the population under either reading and a declared reversal
-#      condition leaves a widened mode with nothing to report. The same vault
-#      carries `forecloses` alone, so it asserts that `check` fires on ANY of the
-#      three fields rather than only on all of them. The
+#      condition leaves a widened mode with nothing to report. `check`s trigger
+#      is asserted as the SET of three and not as `forecloses`: the new vault
+#      carries `forecloses` alone, and a second note beside the original carries
+#      the `foreclosed_on` and `reverses_if` that deleting the word leaves
+#      behind. Without that second note a trigger narrowed to `forecloses` keeps
+#      every other fixture failing and ships the suite green. The
 #      listing is asserted on the passing side, because the mode is a report as
 #      much as a verdict and a success line that named nothing would say the
 #      corpus forecloses nothing. `foreclosed_on` is a SCALAR note reference, so
@@ -3002,10 +3005,34 @@ case "$FOA_FC" in
 esac
 [ "$FOA_STATUS" = "1" ] && ok "check fails an assumption carrying the foreclosure fields" ||
 	no "the dodge is open: an assumption carrying forecloses passed everything (got $FOA_STATUS)"
+# TWO NOTES, ONE KIND, AND NOTHING ELSE. The count is two because this vault
+# holds the rule`s two authoring shapes - all three fields, and the two left
+# behind when `forecloses` is deleted - and both are the same failure with the
+# same repair. Anything beyond those two is a rule this fixture was not built to
+# trip, which is what the count is here to catch.
 case "$FOA" in
-*'"failure_count": 1'*'"check": "foreclosure-on-assumption"'*)
-	ok "the failure is foreclosure-on-assumption, and it is the only one the fixture trips" ;;
+*'"failure_count": 2'*'"check": "foreclosure-on-assumption"'*)
+	ok "the failure is foreclosure-on-assumption, and it is the only kind the fixture trips" ;;
 *) no "check did not fire foreclosure-on-assumption alone (got: $FOA)" ;;
+esac
+# THE TRIGGER IS THE SET OF THREE, and only the second note holds it to that.
+# The first carries all three and the vault next door carries `forecloses`
+# alone, so a trigger narrowed to `forecloses` leaves both of them failing and
+# ships the suite green; this note carries `foreclosed_on` and `reverses_if`
+# with no `forecloses`, which is the state deleting the word actually leaves,
+# and it is the only note in the suite a narrowing silences.
+case "$FOA" in
+*'"id": "ASSUMPTION-FA42BB02"'*) ok "the fields left behind when forecloses is deleted are still the same failure" ;;
+*) no "the trigger has narrowed to forecloses - an assumption carrying the other two went silent (got: $FOA)" ;;
+esac
+# Which two, named in the message. `fcf` is built by the same three presence
+# tests that form the trigger, so the field list a reader is shown IS the field
+# list the rule read - and dropping either of these from the enumeration changes
+# both at once.
+case "$FOA" in
+*'this `assumption` carries `foreclosed_on`, `reverses_if`, and the three foreclosure fields'*)
+	ok "the message names the two fields it fired on, in the order the enumeration reads them" ;;
+*) no "foreclosure-on-assumption did not name foreclosed_on and reverses_if as what it found (got: $FOA)" ;;
 esac
 # NOT type-agreement, for the reason filename-mismatch is not: the `type` field
 # is correct and the directory matches, so a reader sent to look at `type` reads
