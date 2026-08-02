@@ -131,10 +131,12 @@
 #  24. --subject-orphan reports a vocabulary subject with no `claim` and no
 #      `assumption` under it that the corpus reasons from anyway - by its own key
 #      in a note body, and through an alias in a plan document, which is the half
-#      an alias-blind implementation passes. Its three silent sides are asserted
+#      an alias-blind implementation passes. Its four silent sides are asserted
 #      beside it: a subject nothing mentions, a `required: true` subject that is
-#      coverage-gap`s, and a plan carrying three words a substring scan finds an
-#      alias inside. The message is asserted as a DIAGNOSIS - where the corpus
+#      coverage-gap`s, an unfiled term sharing an alias with a FILED one - the
+#      mention belongs to the subject already answered, and only registering
+#      every term`s strings keeps it there - and a plan carrying three words a
+#      substring scan finds an alias inside. The message is asserted as a DIAGNOSIS - where the corpus
 #      leans on the subject, and which note to write - because the mode ships
 #      failing rather than gated, and it is not gated on schemaVersion at either
 #      end.
@@ -2561,12 +2563,30 @@ SO_STATUS=$?
 [ "$SO_STATUS" = "1" ] && ok "--subject-orphan exits 1 on a subject the corpus leans on and never filed" ||
 	no "--subject-orphan should exit 1 over subject-orphan (got $SO_STATUS)"
 
-# The count is what says the two silent subjects in that vault stayed silent:
-# `primary-risk` is unfiled and never mentioned, and `steady-state-ceiling` is
-# unfiled, mentioned, and coverage-gap`s because it is `required: true`.
+# The count is what says the three silent subjects in that vault stayed silent:
+# `primary-risk` is unfiled and never mentioned, `steady-state-ceiling` is
+# unfiled, mentioned, and coverage-gap`s because it is `required: true`, and
+# `willingness-to-pay` is the shared-alias case asserted by name below.
 case "$SO_OUT" in
-*'"failure_count": 2'*) ok "the unmentioned subject and the required one are not reported" ;;
+*'"failure_count": 2'*) ok "the unmentioned subject, the required one and the shared alias are not reported" ;;
 *) no "--subject-orphan did not report exactly two failures over subject-orphan (got: $SO_OUT)" ;;
+esac
+
+# A FILED TERM CLAIMS ITS OWN STRINGS, and this is the assertion that holds the
+# mechanism to the claim. `willingness-to-pay` is unfiled and lists `price` as an
+# alias; so does `price-anchor`, which the assumption in that vault files. The
+# only line carrying `price` is a sentence about price-anchor - a mention the
+# vault has already answered, which owes nothing.
+#
+# Registering only the UNFILED terms leaves the filed term`s strings unowned and
+# reports willingness-to-pay against that sentence: a confident false positive in
+# the one mode that ships failing and ungated and can turn a finished corpus red
+# on upgrade. Asserted BY NAME rather than left to the count above, which moves
+# for any of four reasons and only this one points at the registration order.
+case "$SO_OUT" in
+*willingness-to-pay*)
+	no "an unfiled term claimed an alias a FILED term also lists - that mention belongs to the subject already answered" ;;
+*) ok "a filed term claims its own aliases, so an unfiled term sharing one reports nothing" ;;
 esac
 
 # THE CANONICAL KEY, READ OUT OF A NOTE BODY. `timing-window` is spelled in full

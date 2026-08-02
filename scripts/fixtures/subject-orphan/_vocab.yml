@@ -49,3 +49,13 @@ terms:
     aliases:
       - ceiling
     required: true
+
+  willingness-to-pay:
+    definition: What a buyer will pay before walking away. Unfiled, and it lists `price` as an
+      alias - which price-anchor, FILED by the assumption in this vault, lists too. The mention
+      of `price` in that note belongs to the subject the vault has already answered, so this term
+      must stay SILENT. Registering only unfiled terms leaves the filed term's strings unowned and
+      reports this one, pointing at a sentence about price-anchor.
+    aliases:
+      - price
+    required: false
