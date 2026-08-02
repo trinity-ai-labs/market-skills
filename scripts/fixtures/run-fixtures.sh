@@ -160,7 +160,10 @@
 #      ledger has retired and over one that declares its reversal condition. The
 #      listing is asserted on the passing side, because the mode is a report as
 #      much as a verdict and a success line that named nothing would say the
-#      corpus forecloses nothing.
+#      corpus forecloses nothing. `foreclosed_on` is a SCALAR note reference, so
+#      the block-list dangling-edge rule never opens it - the gap `superseded_by`
+#      has - and foreclosed-on-dangling is asserted both ways: firing where the
+#      target names nothing, silent where it resolves.
 #  28. The `market-size` nesting rule is asserted in BOTH directions of its
 #      schemaVersion gate, over one corpus copied and restamped rather than two
 #      kept identical by hand: two unnested `current` population claims fail at
@@ -1259,6 +1262,47 @@ while read -r mode; do
 	*) no "--help has no block for $mode" ;;
 	esac
 done <"$PAIRS_FILE.modes"
+
+# THE TWO HELP TEXTS ARE THE SAME TEXT, and this is a different question from
+# the census above. That one proves every mode has a block; this proves the two
+# implementations print the same words - a mode can have a block in both and the
+# blocks can say different things, which is the drift the census cannot see.
+#
+# bin/vault-lint.ps1's own header states the guarantee: the text is transcribed
+# verbatim from the shell's usage() heredoc except for the binary name, and the
+# two are held together by `vault-lint.ps1 --help` against `vault-lint.sh
+# --help`. NOTHING RAN THAT COMPARISON until this assertion, so the file stated
+# a guarantee, the guarantee was already broken by one stray blank line, and the
+# mechanism named as enforcing it did not exist - a check that reads as passing
+# because nobody wrote it, which is the shape this whole suite exists to break.
+#
+# Both texts are normalised by the ONE substitution the header describes - the
+# binary name - and nothing else, because anything further this stripped would
+# be a place a real divergence could hide. Run only when both implementations
+# are present and runnable: this suite is pointed at whichever one VAULT_LINT
+# names, and a missing sibling is a skip with a reason rather than a red.
+HELP_SH="$HERE/../../bin/vault-lint.sh"
+HELP_PS1="$HERE/../../bin/vault-lint.ps1"
+HELP_PSHOST=""
+for cand in pwsh powershell.exe pwsh.exe; do
+	if command -v "$cand" >/dev/null 2>&1; then HELP_PSHOST="$cand"; break; fi
+done
+if [ ! -f "$HELP_SH" ] || [ ! -f "$HELP_PS1" ]; then
+	ok "only one implementation is present, so there is no second help text to compare (skipped)"
+elif [ -z "$HELP_PSHOST" ]; then
+	ok "no PowerShell host on this machine, so the second help text could not be rendered (skipped)"
+else
+	sh "$HELP_SH" --help 2>/dev/null | sed 's/vault-lint\.sh/<prog>/g' >"$PAIRS_FILE.help.sh"
+	"$HELP_PSHOST" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$HELP_PS1" --help 2>/dev/null |
+		strip_cr | sed 's/vault-lint\.ps1/<prog>/g' >"$PAIRS_FILE.help.ps1"
+	if [ ! -s "$PAIRS_FILE.help.sh" ] || [ ! -s "$PAIRS_FILE.help.ps1" ]; then
+		no "one of the two --help texts came back empty, so the comparison tested nothing"
+	elif diff "$PAIRS_FILE.help.sh" "$PAIRS_FILE.help.ps1" >/dev/null 2>&1; then
+		ok "both implementations print the same --help text, modulo the binary name"
+	else
+		no "the two --help texts have drifted: $(diff "$PAIRS_FILE.help.sh" "$PAIRS_FILE.help.ps1" | head -6 | tr '\n' ' ')"
+	fi
+fi
 
 # --- 8. the milestone type, its two order rules, and the schema gate ---------
 # The census above already asserts that each new check FIRES. What it cannot see
@@ -2897,6 +2941,40 @@ case "$FC_OK" in
 *) no "--foreclosed listed only one of two used_in entries (got: $FC_OK)" ;;
 esac
 
+# `foreclosed_on` IS A SCALAR NOTE REFERENCE, so `check`s dangling-edge rule -
+# which walks the block-list edge fields - never opens it. That is the gap
+# `superseded_by` has, and it gets the same answer: a rule of its own. The cost
+# is specific to this field. The floor skeptic is briefed off this mode's output
+# with `foreclosed_on` in it, so a dangling target dispatches the one lens
+# pointed at the foreclosure to a note that does not exist - and a lens that
+# found nothing is indistinguishable from a foreclosure that survived attack,
+# which is the vacuous pass this release exists to close.
+FOD=$("$LINT" --foreclosed --vault "$HERE/foreclosed-on-dangling" --json 2>/dev/null)
+FOD_STATUS=$(run_status "$HERE/foreclosed-on-dangling" --foreclosed)
+[ "$FOD_STATUS" = "1" ] && ok "--foreclosed exits 1 on a foreclosed_on naming no note in the vault" ||
+	no "a dangling foreclosed_on was not reported (got $FOD_STATUS)"
+case "$FOD" in
+*'"check": "foreclosed-on-dangling"'*) ok "the dangling input is its own kind, not folded into foreclosure-no-reverse" ;;
+*) no "--foreclosed did not fire foreclosed-on-dangling (got: $FOD)" ;;
+esac
+# The note declares `reverses_if`, so the OTHER rule is silent over it - which
+# is what says these are two findings with two repairs rather than one widened.
+case "$FOD" in
+*foreclosure-no-reverse*) no "foreclosure-no-reverse fired on a note that declares reverses_if (got: $FOD)" ;;
+*) ok "a declared reversal condition is still silent beside the dangling input" ;;
+esac
+case "$FOD" in
+*'the one lens pointed at this conclusion to a note that does not exist'*)
+	ok "the failure names what a dangling input costs the panel" ;;
+*) no "foreclosed-on-dangling did not name the cost (got: $FOD)" ;;
+esac
+# The two passing fixtures both carry a foreclosed_on that RESOLVES, so the rule
+# is asserted silent where the target exists rather than only where it does not.
+case "$FC_OUT$FC_OK" in
+*foreclosed-on-dangling*) no "foreclosed-on-dangling fired on a resolving foreclosed_on" ;;
+*) ok "a foreclosed_on naming a note the vault holds is silent" ;;
+esac
+
 # A vault where nothing forecloses is told which half did not run, never that
 # its conclusions agree - the rule every success line in this tool is held to.
 FC_CLEAN=$("$LINT" --foreclosed --vault "$HERE/clean" 2>&1)
@@ -2942,8 +3020,42 @@ case "$PN_OUT" in
 esac
 
 PN_EDGE_STATUS=$(run_status "$HERE/population-nested-edge")
-[ "$PN_EDGE_STATUS" = "0" ] && ok "a nested_in edge between the two populations clears the check" ||
+[ "$PN_EDGE_STATUS" = "0" ] && ok "a nested_in chain across the populations clears the check" ||
 	no "population-nested-edge should pass (got $PN_EDGE_STATUS)"
+
+# THREE RINGS ARE TWO EDGES, which is the contract vault.md states and the shape
+# a plan that sized properly actually has. population-nested-edge carries three
+# `current` populations and exactly two edges - innermost names middle, middle
+# names outermost - and the innermost names the outermost NOWHERE. A check
+# comparing pairs instead of walking the chain fails that corpus, and the repair
+# it would demand is a third edge derivable from the other two, which is the
+# second copy of one fact the no-mirroring rule refuses.
+PN_RINGS=$(grep -c '^nested_in:' "$HERE"/population-nested-edge/claims/*.md | grep -c ':1$')
+PN_POPS=$(grep -l '^subject: "market-size"' "$HERE"/population-nested-edge/claims/*.md | wc -l | tr -d ' ')
+[ "$PN_RINGS" = "2" ] && [ "$PN_POPS" = "3" ] &&
+	ok "the passing corpus is three populations joined by two edges, not three" ||
+	no "population-nested-edge is no longer the three-ring two-edge shape (edges=$PN_RINGS populations=$PN_POPS)"
+case $(grep -h 'CLAIM-PN05EE55' "$HERE"/population-nested-edge/claims/CLAIM-PN03CC33.md) in
+'') ok "the innermost ring does not name the outermost - reachability is transitive or this corpus fails" ;;
+*) no "the innermost ring names the outermost directly, so transitivity is not what this fixture proves" ;;
+esac
+
+# CONNECTIVITY, NOT "DOES EACH NOTE CARRY AN EDGE". Two nested PAIRS under one
+# subject leave every note carrying an edge and the set still holding two
+# unrelated ring systems, so a share figure is a percentage of whichever system
+# its reader assumed. That corpus passes a per-note edge test and fails the
+# contract, which is why the rule unions the edges and counts components.
+PTC=$("$LINT" check --vault "$HERE/population-two-chains" --json 2>/dev/null)
+PTC_STATUS=$(run_status "$HERE/population-two-chains")
+[ "$PTC_STATUS" = "1" ] && ok "two internally-edged chains under one subject do not satisfy the rule" ||
+	no "two disconnected nested pairs passed the nesting rule (got $PTC_STATUS)"
+# Each row names the claims THIS one cannot reach, never the whole group: the
+# first chain is told about the second and not about its own partner.
+case "$PTC" in
+*'"id": "CLAIM-TC01AA01"'*'connects this one to: CLAIM-TC03CC03, CLAIM-TC04DD04'*)
+	ok "the row names the claims this one has no chain to, not every other member" ;;
+*) no "population-unnested did not name the unreachable set (got: $PTC)" ;;
+esac
 
 # ONLY AN EDGE THAT RESOLVES CLEARS THE RULE, and this is the assertion that
 # stops a typo from silencing it. Read as a relation without resolving the
