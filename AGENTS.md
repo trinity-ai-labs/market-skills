@@ -654,9 +654,17 @@ cancelled, because that work was never written down. What a check can reach is t
 that is the whole of the mode: `foreclosure-no-reverse` fails a `current` note carrying `forecloses`
 with no `reverses_if`. It is `validated_by` one field over and carries that rule's honest limit —
 a stated reversal condition is not evidence the thinking was done, only that skipping it stopped
-being the default. Three boundaries belong in any change to it. **Both types that file a position
-are read**, `claim` and `assumption`, the closed pair `--subject-orphan` states at its own
-predicate: reading `claim` alone makes the type the cheapest way past the rule. **`status` is read
+being the default. Three boundaries belong in any change to it. **It reads `claim` only, and
+`--subject-orphan`'s closed pair does not transfer** — that rule asks which types *file* a
+position, while these three fields are claim-only *by argument*: a foreclosure is a conclusion
+drawn from an input, `foreclosed_on` names that input, and a note resting on nothing has no input
+to name. Reading both types would give the wrong repair under the right name, because this mode's
+message says to add `reverses_if` and the documented repair for an assumption in the shape of a
+finding is the `question` the plan stopped asking. The dodge that narrowing looks like it opens is
+closed by `check`'s `foreclosure-on-assumption` instead — **reported separately from
+`type-agreement` for the reason `filename-mismatch` is**: the `type` field is correct and the
+directory matches, so a reader sent to look at `type` reads `assumption`, concludes it is right,
+and stops. Two rules, two repairs, and neither says the other's sentence. **`status` is read
 and a retired foreclosure owes nothing**, the live predicate `--assumption-rows` learned — a
 `superseded` or `retracted` note has already been taken back, so demanding a reversal condition of
 it names a repair on a note the ledger retired. And **the passing side is a LISTING, not a bare

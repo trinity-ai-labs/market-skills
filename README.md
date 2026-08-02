@@ -566,9 +566,19 @@ value of that input which would put the option back), and the mode lists every l
 section its `used_in` names and fails one that carries no `reverses_if`. It is `validated_by` one
 field over: an assumption owes the step that would settle it, a foreclosure owes the value that
 would reverse it, and neither is evidence the thinking was done — what both remove is skipping it
-by default. Both types that file a position are read, `claim` and `assumption`, because reading
-`claim` alone would make the type the cheapest way past the rule; a `superseded` or `retracted`
-foreclosure owes nothing, because the ledger has already taken it back. **The three fields ship
+by default. It reads `claim` notes only, and a `superseded` or `retracted` foreclosure owes
+nothing because the ledger has already taken it back.
+
+**Claim-only is the argument, not a filing convention** — and it is why the dodge it looks like it
+opens is closed somewhere else. A foreclosure is a conclusion drawn from an input, `foreclosed_on`
+is where that input is named, and a note resting on nothing has no input to name; so an option
+taken off the table by an *assumption* is not a foreclosure that forgot a field, it is an
+assumption in the shape of a finding, and the repair is to file the **question** the plan stopped
+asking. Reading both types here would hand that reader the wrong repair under the right name: the
+message says add `reverses_if`, and following it dresses the category error in three fields and
+ships it green. So the bare check reports it instead, under its own name, pointing at the
+question — and because the note's `type` is correct and its directory matches, that is deliberately
+not `type-agreement`, which would send a reader to look at `type`, read `assumption`, and stop. **The three fields ship
 additive at the current `schemaVersion` and the rule is deliberately ungated** — that is a decision
 rather than an omission: the trigger is the *presence* of `forecloses`, so a corpus written before
 the field existed declares nothing and can owe nothing, and a version spent to exempt an empty

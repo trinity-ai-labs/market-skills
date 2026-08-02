@@ -1149,12 +1149,17 @@ vault-lint.sh - read-only checks over a claim vault.
       being attacked. `check`s dangling-edge rule walks the block-list edge
       fields and never this scalar, so nothing else reports it, which is the
       gap `superseded_by` has and answers the same way.
-      IT READS BOTH TYPES THAT FILE A POSITION, `claim` and `assumption` - the
-      closed pair --subject-orphan states at its own predicate. A `source` or
-      a `fact` is provenance a position rests on, and a `milestone`, `question`
-      or `decision` takes nothing off the table. Reading `claim` alone would
-      make filing the foreclosure as an assumption the cheapest way past this
-      rule, and a dodge available by omission is not an exemption.
+      IT READS `claim` ONLY, and --subject-orphan's closed pair does not
+      transfer. That rule asks which types FILE a position; these three fields
+      are claim-only by ARGUMENT - a foreclosure is a conclusion drawn from an
+      input, `foreclosed_on` is where that input is named, and a note resting
+      on nothing has no input to name. An option taken off the table by an
+      `assumption` is not a foreclosure missing a field; it is an assumption
+      in the shape of a finding, and the repair is to file the `question` the
+      plan stopped asking. Reading both types here would give that reader the
+      WRONG REPAIR under the right name - add `reverses_if`, and the category
+      error ships dressed in three fields and green. `check` reports it
+      instead, under foreclosure-on-assumption, which names the question.
 
       IT READS `status`, AND A RETIRED FORECLOSURE OWES NOTHING. A `superseded`
       or `retracted` note has already been taken back, so demanding a reversal
@@ -5239,7 +5244,7 @@ function Invoke-ModeForeclosed {
 		$id = Get-ForeclosedValue $f 'id'
 		$ty = Get-ForeclosedValue $f 'type'
 		if ($id.Length -eq 0) { continue }
-		if ($ty -cne 'claim' -and $ty -cne 'assumption') { continue }
+		if ($ty -cne 'claim') { continue }
 		if ((Get-ForeclosedValue $f 'status') -cne 'current') { continue }
 		if (-not (Test-ForeclosedPresent $f 'forecloses')) { continue }
 
@@ -5275,7 +5280,7 @@ function Invoke-ModeForeclosed {
 	# forecloses has no population here, and a line reading as a pass over it
 	# would report agreement about a question this mode never got to ask.
 	if ($nfc -eq 0) {
-		$okLine = 'no `current` claim or assumption under ' + $script:VAULT + ' carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition'
+		$okLine = 'no `current` claim under ' + $script:VAULT + ' carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition'
 	} else {
 		$notePlural = 's'
 		$takePlural = ''
@@ -5930,6 +5935,7 @@ function Invoke-ModeCheck {
 					Add-CheckFailure $f 'filename-mismatch' $id ('the filename is ' + $BASE[$f] + ' but the ID is ' + $id + '. The filename is meant to be exactly the ID plus .md, so that find-the-file-for-this-ID and grep-for-this-ID are the same operation - here they give two answers and one of them is wrong')
 				}
 			}
+
 		}
 
 		# --- supersession is always two edits ---------------------------

@@ -154,10 +154,14 @@
 #      leans on the subject, and which note to write - because the mode ships
 #      failing rather than gated, and it is not gated on schemaVersion at either
 #      end.
-#  27. --foreclosed reports a live note that takes an option off the table and
-#      never says what would put it back, reads the `assumption` half of the
-#      pair as well as the `claim` half, and stays silent over a foreclosure the
+#  27. --foreclosed reports a live CLAIM that takes an option off the table and
+#      never says what would put it back, and stays silent over a foreclosure the
 #      ledger has retired and over one that declares its reversal condition. The
+#      three fields are a claim`s by argument, so the mode is asserted SILENT
+#      over an assumption carrying them and `check` is asserted to fail it under
+#      its own name - reading both types there would tell a reader to add
+#      `reverses_if` to a note whose documented repair is the question it stopped
+#      asking, which is the wrong repair under the right name. The
 #      listing is asserted on the passing side, because the mode is a report as
 #      much as a verdict and a success line that named nothing would say the
 #      corpus forecloses nothing. `foreclosed_on` is a SCALAR note reference, so
@@ -2881,26 +2885,18 @@ FC_STATUS=$(run_status "$HERE/foreclosed-no-reverse" --foreclosed)
 [ "$FC_STATUS" = "1" ] && ok "--foreclosed exits 1 on a foreclosure with no reversal condition" ||
 	no "--foreclosed should exit 1 over foreclosed-no-reverse (got $FC_STATUS)"
 
-# EXACTLY TWO, and which two is the whole assertion. Three of the four notes in
-# that vault carry `forecloses`; the one that also carries `reverses_if` and the
-# one the ledger has retired are the two that must not appear, and a count alone
-# would pass a mode that reported the wrong pair.
+# EXACTLY ONE, and which one is the whole assertion. All three notes in that
+# vault carry `forecloses`; the one that also carries `reverses_if` and the one
+# the ledger has retired are the two that must not appear, and a count alone
+# would pass a mode that reported the wrong note.
 case "$FC_OUT" in
-*'"failure_count": 2'*) ok "--foreclosed reports exactly the two foreclosures with no reversal condition" ;;
-*) no "--foreclosed did not report exactly two failures over foreclosed-no-reverse (got: $FC_OUT)" ;;
+*'"failure_count": 1'*) ok "--foreclosed reports exactly the foreclosure with no reversal condition" ;;
+*) no "--foreclosed did not report exactly one failure over foreclosed-no-reverse (got: $FC_OUT)" ;;
 esac
 
 case "$FC_OUT" in
 *'"check": "foreclosure-no-reverse"'*'"id": "CLAIM-FC11AA01"'*) ok "a claim that forecloses with no reverses_if is reported" ;;
 *) no "--foreclosed did not report CLAIM-FC11AA01 (got: $FC_OUT)" ;;
-esac
-
-# BOTH TYPES THAT FILE A POSITION ARE READ. Reading `claim` alone would make
-# filing the foreclosure as an `assumption` the cheapest way past this rule, and
-# a dodge available by omission is not an exemption.
-case "$FC_OUT" in
-*'"id": "ASSUMPTION-FC12BB02"'*) ok "an assumption that forecloses is held to the same bar as a claim" ;;
-*) no "--foreclosed read only claims and missed the assumption half (got: $FC_OUT)" ;;
 esac
 
 case "$FC_OUT" in

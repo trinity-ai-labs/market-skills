@@ -715,12 +715,17 @@ vault-lint.sh - read-only checks over a claim vault.
       being attacked. `check`s dangling-edge rule walks the block-list edge
       fields and never this scalar, so nothing else reports it, which is the
       gap `superseded_by` has and answers the same way.
-      IT READS BOTH TYPES THAT FILE A POSITION, `claim` and `assumption` - the
-      closed pair --subject-orphan states at its own predicate. A `source` or
-      a `fact` is provenance a position rests on, and a `milestone`, `question`
-      or `decision` takes nothing off the table. Reading `claim` alone would
-      make filing the foreclosure as an assumption the cheapest way past this
-      rule, and a dodge available by omission is not an exemption.
+      IT READS `claim` ONLY, and --subject-orphan's closed pair does not
+      transfer. That rule asks which types FILE a position; these three fields
+      are claim-only by ARGUMENT - a foreclosure is a conclusion drawn from an
+      input, `foreclosed_on` is where that input is named, and a note resting
+      on nothing has no input to name. An option taken off the table by an
+      `assumption` is not a foreclosure missing a field; it is an assumption
+      in the shape of a finding, and the repair is to file the `question` the
+      plan stopped asking. Reading both types here would give that reader the
+      WRONG REPAIR under the right name - add `reverses_if`, and the category
+      error ships dressed in three fields and green. `check` reports it
+      instead, under foreclosure-on-assumption, which names the question.
 
       IT READS `status`, AND A RETIRED FORECLOSURE OWES NOTHING. A `superseded`
       or `retracted` note has already been taken back, so demanding a reversal
@@ -5584,10 +5589,21 @@ fi
 # checkable, and neither is evidence the thinking was done - what they remove is
 # skipping it by DEFAULT, which is what a foreclosure held to nothing had been.
 #
-# BOTH TYPES THAT FILE A POSITION ARE READ, `claim` and `assumption`, the closed
-# pair --subject-orphan states at its own predicate and for its reason. Reading
-# `claim` alone would make filing the foreclosure as an assumption the cheapest
-# way past this rule, and a dodge available by omission is not an exemption.
+# `claim` ONLY, AND --subject-orphan's CLOSED PAIR DOES NOT TRANSFER HERE. That
+# rule asks which types FILE a position and the answer is both; this one reads
+# fields that are claim-only BY ARGUMENT, because a foreclosure is a conclusion
+# drawn from an input and `foreclosed_on` is where that input is named - a note
+# resting on nothing has no input to name. So an option taken off the table by
+# an `assumption` is not a foreclosure missing a field, it is an assumption in
+# the shape of a finding, and vault.md`s repair is to file the `question` the
+# plan stopped asking rather than to dress the note in these three.
+#
+# READING BOTH TYPES HERE WOULD GIVE THE WRONG REPAIR UNDER THE RIGHT NAME - a
+# reader told to add `reverses_if` dresses the category error in three fields
+# and ships it green, which is worse than the gap. The dodge that would open by
+# narrowing is closed in `check` instead: an `assumption` carrying any of the
+# three is its own failure there, under a name that sends its reader to the
+# question. Two rules, two repairs, and neither says the other`s sentence.
 #
 # `status` IS READ AND A RETIRED FORECLOSURE OWES NOTHING - the live predicate
 # --assumption-rows learned. A `superseded` or `retracted` note has already been
@@ -5655,7 +5671,7 @@ if [ "$MODE" = "foreclosed" ]; then
 					id = V[f, "id"]
 					ty = V[f, "type"]
 					if (id == "") continue
-					if (ty != "claim" && ty != "assumption") continue
+					if (ty != "claim") continue
 					if (V[f, "status"] != "current") continue
 					if (!present(f, "forecloses")) continue
 
@@ -5695,7 +5711,7 @@ if [ "$MODE" = "foreclosed" ]; then
 				# a pass over it would report agreement about a question this mode
 				# never got to ask.
 				if (nfc == 0)
-					printf("no `current` claim or assumption under %s carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition\n", vault)
+					printf("no `current` claim under %s carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition\n", vault)
 				else
 					printf("%d `current` note%s take%s an option off the table and every one of them declares what would put it back: %s - %s\n",
 						nfc, (nfc == 1 ? "" : "s"), (nfc == 1 ? "s" : ""), listed, vault)
@@ -6122,6 +6138,7 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 					if (BASE[f] != id ".md")
 						report(f, "filename-mismatch", id, "the filename is " BASE[f] " but the ID is " id ". The filename is meant to be exactly the ID plus .md, so that find-the-file-for-this-ID and grep-for-this-ID are the same operation - here they give two answers and one of them is wrong")
 				}
+
 			}
 
 			# --- supersession is always two edits ---------------------------
