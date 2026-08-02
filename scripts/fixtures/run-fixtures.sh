@@ -2971,6 +2971,51 @@ case "$FC_OUT$FC_OK" in
 *) ok "a foreclosed_on naming a note the vault holds is silent" ;;
 esac
 
+# THE THREE FIELDS ARE A CLAIM`S, AND THE RESTRICTION IS THE ARGUMENT. A
+# foreclosure is a conclusion drawn from an input and `foreclosed_on` is where
+# that input is named, so a note resting on nothing has no input to name: an
+# option taken off the table by an `assumption` is not a foreclosure that forgot
+# a field, it is an assumption in the shape of a finding.
+#
+# That is why --foreclosed reads claims only and `check` carries the other half.
+# Reading both types here would give the WRONG REPAIR UNDER THE RIGHT NAME - the
+# message says add `reverses_if`, and a reader who follows it dresses the
+# category error in three fields and ships it green.
+#
+# The fixture carries `reverses_if` deliberately, so --foreclosed is silent over
+# it for the right reason (wrong type) rather than by accident (nothing missing).
+FOA=$("$LINT" check --vault "$HERE/foreclosure-on-assumption" --json 2>/dev/null)
+FOA_STATUS=$(run_status "$HERE/foreclosure-on-assumption")
+FOA_FC=$("$LINT" --foreclosed --vault "$HERE/foreclosure-on-assumption" --json 2>/dev/null)
+FOA_FC_STATUS=$(run_status "$HERE/foreclosure-on-assumption" --foreclosed)
+[ "$FOA_FC_STATUS" = "0" ] && ok "--foreclosed is silent over an assumption carrying the foreclosure fields" ||
+	no "--foreclosed still reads assumptions (got $FOA_FC_STATUS)"
+case "$FOA_FC" in
+*foreclosure-no-reverse*) no "--foreclosed told an assumption to add reverses_if - the documented repair is the question (got: $FOA_FC)" ;;
+*) ok "no reader is told to add reverses_if to a note that cannot carry it" ;;
+esac
+[ "$FOA_STATUS" = "1" ] && ok "check fails an assumption carrying the foreclosure fields" ||
+	no "the dodge is open: an assumption carrying forecloses passed everything (got $FOA_STATUS)"
+case "$FOA" in
+*'"failure_count": 1'*'"check": "foreclosure-on-assumption"'*)
+	ok "the failure is foreclosure-on-assumption, and it is the only one the fixture trips" ;;
+*) no "check did not fire foreclosure-on-assumption alone (got: $FOA)" ;;
+esac
+# NOT type-agreement, for the reason filename-mismatch is not: the `type` field
+# is correct and the directory matches, so a reader sent to look at `type` reads
+# `assumption`, concludes it is right, and stops.
+# Matched on the `check` FIELD and not anywhere in the document: the message
+# itself says "this is not type-agreement", so a substring test over the whole
+# JSON matches its own prose and reports a pass it did not earn.
+case "$FOA" in
+*'"check": "type-agreement"'*) no "the field-on-wrong-type failure was folded into type-agreement (got: $FOA)" ;;
+*) ok "the type field is not reported as the problem - the field on it is" ;;
+esac
+case "$FOA" in
+*'file the `question` the plan stopped asking'*) ok "the failure names the documented repair rather than the missing field" ;;
+*) no "foreclosure-on-assumption did not name the question (got: $FOA)" ;;
+esac
+
 # A vault where nothing forecloses is told which half did not run, never that
 # its conclusions agree - the rule every success line in this tool is held to.
 FC_CLEAN=$("$LINT" --foreclosed --vault "$HERE/clean" 2>&1)

@@ -5936,6 +5936,36 @@ function Invoke-ModeCheck {
 				}
 			}
 
+			# --- the foreclosure fields belong to a claim -----------------
+			# vault.md restricts the three to a `claim` and the restriction IS
+			# the rule rather than a place they happen to live: a foreclosure is
+			# a conclusion drawn from an input, and `foreclosed_on` is where that
+			# input is named - a note resting on nothing has no input to name.
+			#
+			# REPORTED SEPARATELY FROM type-agreement, for the reason
+			# filename-mismatch is above: the note's `type` is not wrong here. It
+			# is a legitimate assumption carrying a field its type cannot own,
+			# and a reader sent to look at `type` reads `assumption`, concludes
+			# it is correct, and stops.
+			#
+			# AND NOT REPORTED BY --foreclosed, which reads claims only: that
+			# mode's message says to add `reverses_if`, and following it would
+			# dress the category error in three fields and ship it green. The
+			# repair here is the `question` the plan stopped asking.
+			#
+			# Ungated, on --foreclosed's terms: the trigger is the presence of a
+			# field no corpus written before this release carries.
+			if ($ty -ceq 'assumption') {
+				$fcf = ''
+				foreach ($ff in @('forecloses', 'foreclosed_on', 'reverses_if')) {
+					if (-not (Test-CheckPresent $f $ff)) { continue }
+					if ($fcf.Length -ne 0) { $fcf = $fcf + ', ' }
+					$fcf = $fcf + '`' + $ff + '`'
+				}
+				if ($fcf.Length -ne 0) {
+					Add-CheckFailure $f 'foreclosure-on-assumption' $id ('this `assumption` carries ' + $fcf + ', and the three foreclosure fields belong to a `claim`. The restriction is the argument rather than a filing convention: a foreclosure is a conclusion drawn from an input and `foreclosed_on` is where that input is named, so a note resting on nothing has no input to name. An option taken off the table with nothing behind it is not a foreclosure that forgot its fields - it is an assumption in the shape of a finding, and it is the most expensive kind of note to leave that way, because it removes work from the roadmap on the strength of something nobody sourced. THE REPAIR IS NOT TO ADD `reverses_if`: file the `question` the plan stopped asking, and let the answer decide whether a claim closes the option. Where the conclusion really does rest on an input this vault holds, the note is a `claim` and the fields go there. This is not type-agreement - the `type` field is correct and the directory matches; it is the field that cannot sit on this type')
+				}
+			}
 		}
 
 		# --- supersession is always two edits ---------------------------
