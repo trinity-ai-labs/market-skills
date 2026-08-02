@@ -647,14 +647,18 @@ async function compareCell(cell, shSide, psSide, slot) {
 // ---------------------------------------------------------------------------
 // the worker pool - over CELLS, and the report order is not the finish order
 //
-// The sweep is 16 modes x 40 fixtures and about 93% of its wall time is the
-// PowerShell side starting up, so it is almost entirely waiting. Running cells
-// concurrently takes it from roughly 8.5 minutes to 2.5 on an 8-core machine.
+// The sweep is every mode over every fixture vault and about 93% of its wall
+// time is the PowerShell side starting up, so it is almost entirely waiting.
+// Running cells concurrently took it from 501s to 157s on an idle M-series box.
+// The two dimensions are deliberately not written down as numbers here: both
+// grow every release, and a count in a comment goes stale silently, because an
+// enumeration that has gone short reads exactly like one that is complete.
 //
-// OVER CELLS, NOT MODES. Pooled at mode level the speedup caps at 16 and
-// --release-gate - alone about half the sweep, because bin/vault-lint.ps1
-// re-invokes a host per gate part - becomes a four-minute straggler on one
-// worker while the rest idle. Cells spread it across every worker.
+// OVER CELLS, NOT MODES. Pooled at mode level the speedup caps at the mode
+// count, and --release-gate - alone about half the sweep, because
+// bin/vault-lint.ps1 re-invokes a host per gate part - becomes a multi-minute
+// straggler on one worker while the rest idle. Cells spread it across every
+// worker.
 //
 // THE FAILURE THE ORDERING RULE PREVENTS: a report whose lines arrive in
 // completion order varies run to run, so two CI logs cannot be diffed and a

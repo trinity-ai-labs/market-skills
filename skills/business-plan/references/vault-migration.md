@@ -720,8 +720,14 @@ Clean looks like this, and exits 0:
 
 ```
 vault-lint: note-level checks passed - /Users/example/Documents/go-to-market/example-product.
-Not opened: citation targets, supersession blast radius, panel objection rows, roadmap table against the milestone set, verdict drivers and the evidence under them - --release-gate asks all of them.
+Not opened: <every gate mode this run did not open, named one by one> - --release-gate asks all of them.
 ```
+
+**The `Not opened:` list is elided above on purpose, and it is not elided in the tool.** The real
+line names each mode, read off the same table `--release-gate` composes itself from, so it grows
+with every mode added. Transcribed here it would go quietly short on the next one and read as the
+whole list — which is the failure the line itself exists to prevent, one document over. Run the
+command to see the current set.
 
 The line is deliberately narrower than "clean". This run reads note fields and opens no
 document, so a corpus whose citations all point at renamed files prints it too — and a success

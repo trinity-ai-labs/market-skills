@@ -645,8 +645,9 @@ citation codes, the assumption rows, the section hashes — fires on an overclai
 was already recognised twice in `skills/business-plan` (the furthest-defensible target, and
 red-team pre-pass step 4) with both fixes stopping at the identity's own terms. A note asserting an
 option is NOT viable removes work from the roadmap, kills a segment or takes a configuration off
-the table, and **nothing attacks it**: all three panel lenses ask whether the plan can deliver what
-it promises and none asks whether it wrongly concluded it could not. **The failure is silent by
+the table, and **nothing attacked it**: the three panel lenses that predate this release ask
+whether the plan can deliver what it promises and none asks whether it wrongly concluded it could
+not — which is what the fourth, the floor skeptic briefed off this mode's output, is for. **The failure is silent by
 construction, which is what makes it a different shape from every check that reads an edge** — the
 option is gone, so nothing downstream references it, so no query has a target; the foreclosure
 cannot dangle, cannot go stale in a way anybody notices, and cannot collide with the work it
