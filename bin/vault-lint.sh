@@ -1607,13 +1607,14 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		# Every heading a document offers, as fold keys pointing at the
 		# heading ordinal. Read once per document, on first sight.
 		#
-		# The fence tracking is one of six copies in this file - --used-in
+		# The fence tracking is one of eight copies in this file - --used-in
 		# scans headings under the same rule, and so do --red-team,
-		# --roadmap-table, --binding-driver and --monitoring. All six are the
-		# same six lines: a `#` inside a fenced block is an example rather than a
-		# section anyone can jump to, and the marker and run length are tracked
-		# so a longer nested fence cannot close its parent early. Change one,
-		# change all six.
+		# --roadmap-table, --binding-driver, --monitoring, --claim-drift and the
+		# shared $DOC_SCAN_AWK that --citation-codes and --unflattened-source
+		# both concatenate. All eight are the same six lines: a `#` inside a
+		# fenced block is an example rather than a section anyone can jump to,
+		# and the marker and run length are tracked so a longer nested fence
+		# cannot close its parent early. Change one, change all eight.
 		#
 		# The fold() below has two more copies, in --roadmap-table and
 		# --binding-driver, which resolve their own section headings by the same
@@ -2229,11 +2230,12 @@ render_failures() {
 # folded into every --release-gate run.
 #
 # The fence tracking is the FOURTH copy in this file - --used-in scan(),
-# --supersession-sweep sections() and --red-team carry the same six lines, and
-# --binding-driver readdoc() and --monitoring carry the fifth and the sixth,
-# because each reads a document at the vault root. Collapsing the two table
-# readers into this one removed the seventh; the rest stay, so change one and
-# change all six. A `#` or a `|` inside a fenced block is an example rather than
+# --supersession-sweep sections() and --red-team carry the same six lines,
+# --binding-driver readdoc(), --monitoring and --claim-drift carry the fifth, the
+# sixth and the seventh, and the shared $DOC_SCAN_AWK below carries the eighth
+# for the two modes that concatenate it, because each reads a document at the
+# vault root. Collapsing the two table readers into this one removed one copy;
+# the rest stay, so change one and change all eight. A `#` or a `|` inside a fenced block is an example rather than
 # anything a reader can act on.
 # ----------------------------------------------------------------------------
 
@@ -2460,12 +2462,13 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
-		# THAT FENCE BLOCK IS ONE OF SIX COPIES in this file. The
+		# THAT FENCE BLOCK IS ONE OF SEVEN COPIES in this file. The
 		# --supersession-sweep sections(), the --red-team row reader, the
-		# shared readtable(), the --binding-driver readdoc() and
-		# --monitoring carry the same six lines, because all six read a document
-		# at the vault root and no one of them can call a function defined in
-		# another awk program. Change one, change all six.
+		# shared readtable(), the --binding-driver readdoc(), --monitoring and
+		# --claim-drift and the shared $DOC_SCAN_AWK carry the same six lines,
+		# because all eight read a document at the vault root and no one of them
+		# can call a function defined in another awk program. Change one, change
+		# all eight.
 		#
 		# This copy is the one that most needed saying so. It has been edited
 		# twice already - the `{#anchor}` attribute below landed here alone -
@@ -2650,12 +2653,13 @@ if [ "$MODE" = "red-team" ]; then
 				# character and run length so a longer nested fence cannot
 				# close its parent early.
 				#
-				# One of six copies of those six lines: the --used-in scan(),
-				# the --supersession-sweep sections(), the shared
-				# readtable(), the --binding-driver readdoc() and --monitoring
-				# carry the same ones, for the same reason - six awk programs
-				# reading a document at the vault root, and no way to share a
-				# function across them. Change one, change all six.
+				# One of eight copies of those six lines: the --used-in scan(),
+				# the --supersession-sweep sections(), the shared readtable(),
+				# the --binding-driver readdoc(), --monitoring, --claim-drift and
+				# the shared $DOC_SCAN_AWK carry the same ones, for the same
+				# reason - eight awk programs reading a document at the vault
+				# root, and no way to share a function across them. Change one,
+				# change all eight.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
@@ -3093,14 +3097,15 @@ if [ "$MODE" = "binding-driver" ]; then
 			# its rows are not rows. Change one, change both.
 			#
 			# The fence tracking is the FIFTH copy in this file - --used-in
-			# scan(), --supersession-sweep sections(), --red-team and
-			# the shared readtable() carry the same six lines, because each
-			# reads a document at the vault root and no one of them can call a
-			# function defined in another awk program. A `#` or a `|` inside a
+			# scan(), --supersession-sweep sections(), --red-team, the shared
+			# readtable(), --monitoring, --claim-drift and the shared
+			# $DOC_SCAN_AWK carry the same six lines, because each reads a
+			# document at the vault root and no one of them can call a function
+			# defined in another awk program. A `#` or a `|` inside a
 			# fenced block is an example rather than an assertion the document
 			# makes, which is also why fenced lines never reach BODY: a fenced
 			# template carrying a condition would otherwise satisfy the check
-			# for a section that renders nothing. Change one, change all six.
+			# for a section that renders nothing. Change one, change all eight.
 			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, si, nh, alldash, hdr, dcol, kcol, intable, SECT, SLEV, nsect, tpos, kk, dv, kv) {
 				if (doc in SCANNED) return
 				SCANNED[doc] = 1
@@ -3644,13 +3649,14 @@ if [ "$MODE" = "monitoring" ]; then
 				t = line
 				sub(/^[ \t]+/, "", t)
 
-				# Fenced blocks hold examples, not rows. One of six copies of
+				# Fenced blocks hold examples, not rows. One of eight copies of
 				# those six lines: the --used-in scan(), the
 				# --supersession-sweep sections(), the --red-team roster reader,
-				# the shared readtable() and the --binding-driver
-				# readdoc() carry the same ones, for the same reason - six awk
-				# programs reading a document at the vault root, and no way to
-				# share a function across them. Change one, change all six.
+				# the shared readtable(), the --binding-driver readdoc(),
+				# --claim-drift and the shared $DOC_SCAN_AWK carry the same ones,
+				# for the same reason - eight awk programs reading a document at
+				# the vault root, and no way to share a function across them.
+				# Change one, change all eight.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
@@ -4338,8 +4344,14 @@ if [ "$MODE" = "claim-drift" ]; then
 			# Fenced lines are CONTENT and only heading detection is suspended
 			# inside them: a `#` in a fence is an example rather than a section
 			# boundary, and dropping a fenced block from the hash would leave a
-			# rewritten example invisible. The six lines are another copy of the
-			# scan every document-reading mode here carries.
+			# rewritten example invisible. The six lines are the SEVENTH copy of
+			# the scan every document-reading mode here carries - --used-in
+			# scan(), --supersession-sweep sections(), --red-team, the shared
+			# readtable(), --binding-driver readdoc() and --monitoring carry
+			# the first six, and the shared $DOC_SCAN_AWK carries the eighth.
+			# This copy went uncounted for two releases while every other site
+			# said six, which is what a census nobody re-derives does: change
+			# one, change all eight.
 			function sections(doc,   path, line, t, c, n, fc, fn, h, ex, id, cur, k) {
 				path = root "/" doc
 				fc = ""; fn = 0; id = 0; cur = 0

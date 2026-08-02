@@ -283,11 +283,13 @@ function ConvertTo-TableFold {
 # The section ends at the next heading of the same depth or shallower, so a
 # subsection under it is still part of it.
 #
-# The fence tracking is one of six copies in this file, one per mode that reads a
-# document at the vault root, and the row parser is one of two - --binding-driver
-# readdoc() reads the corner verdict table under the same rules. Collapsing the
-# two table readers into this one function removed one copy of each; the rest
-# stay, so change one and change all of them.
+# The fence tracking is one of eight copies in this file - one per mode that
+# reads a document at the vault root, including --claim-drift's section reader,
+# plus the shared Test-Fenced above that --citation-codes and
+# --unflattened-source both call - and the row parser is one of two, since
+# --binding-driver readdoc() reads the corner verdict table under the same
+# rules. Collapsing the two table readers into this one function removed
+# one copy of each; the rest stay, so change one and change all of them.
 function Read-FirstItemTable {
 	param([string]$Path, [string]$Heading, [string]$ItemHeader, [int]$DefaultColumn)
 
@@ -999,8 +1001,8 @@ function Get-ModeForFlag {
 # them, and DO NOT hoist a helper out of one body into the shared region for
 # another body to reuse. A helper two modes want is a helper two slices are both
 # editing, which is the cross-slice edit this seam exists to prevent - the shell
-# keeps six separate copies of one six-line fenced-block scan for exactly that
-# reason (bin/vault-lint.sh:1369), and this file inherits the rule.
+# keeps a separate copy of one six-line fenced-block scan per mode body for
+# exactly that reason, and this file inherits the rule.
 #
 # Every stub answers exit status 3 through Exit-NotPorted. Porting a mode is
 # replacing that one call with the mode's real body; the moment it answers
@@ -1546,12 +1548,12 @@ function Invoke-ModeSupersessionSweep {
 	$RX_HEADING = [regex]'\A#+[ \t]+'
 	$RX_ANCHOR = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
 
-	# One of six copies of the same six-line fenced-block scan
-	# (bin/vault-lint.sh:1369 names the other five) - a `#` inside a
+	# One of eight copies of the same six-line fenced-block scan
+	# (bin/vault-lint.sh names the other seven) - a `#` inside a
 	# fenced block is an example, not a heading anyone can jump to, and the
 	# fence marker plus its run length are tracked so a longer nested fence
 	# cannot close its parent early. Kept local rather than hoisted: the other
-	# five copies belong to other mode slices, and reaching across them is
+	# copies belong to other mode slices, and reaching across them is
 	# exactly the cross-slice edit the stub seam exists to prevent.
 	function Read-SweepSections {
 		param([string]$Doc)
@@ -2716,16 +2718,16 @@ function Invoke-ModeBindingDriver {
 	# table to any renderer, so its rows are not rows. Change one, change both.
 	#
 	# The fence tracking is the FIFTH copy in the shell - --used-in scan(),
-	# --supersession-sweep sections(), --red-team and the shared
-	# Read-FirstItemTable carry the same six lines, because each reads a document
-	# at the vault root. THIS COPY STAYS LOCAL TO THIS BODY: the other three mode
-	# bodies keep their own, and hoisting one out is the cross-slice edit the stub
-	# seam exists to prevent. The table reader is the exception and states why at
+	# --supersession-sweep sections(), --red-team, the shared
+	# Read-FirstItemTable, --monitoring, --claim-drift and the shared Test-Fenced
+	# carry the same six lines, because each reads a document at the vault root. THIS COPY STAYS LOCAL TO
+	# THIS BODY: the other mode bodies keep their own, and hoisting one out is the
+	# cross-slice edit the stub seam exists to prevent. The table reader is the exception and states why at
 	# its own definition: two copies of it existed and one claimed to be a
 	# transcription of the other. A `#` or a `|` inside a fenced block is an example rather than
 	# an assertion the document makes, which is also why fenced lines never reach
 	# BODY: a fenced template carrying a condition would otherwise satisfy the
-	# check for a section that renders nothing. Change one, change all six.
+	# check for a section that renders nothing. Change one, change all eight.
 	function Read-BdDoc {
 		param([string]$Doc)
 		if ($SCANNED.Contains($Doc)) { return }
@@ -4004,6 +4006,14 @@ function Invoke-ModeClaimDrift {
 			$line = Remove-TrailingCr $rawLine
 			$t = $line.TrimStart($SPACE_TAB)
 
+			# THE SEVENTH COPY of the fenced-block scan, and the one every
+			# other site's census used to leave out - --used-in, the sweep,
+			# --red-team, the shared Read-FirstItemTable, --binding-driver and
+			# --monitoring carry the first six and the shared Test-Fenced the
+			# eighth. Fenced lines are CONTENT here and only heading detection
+			# is suspended inside them: dropping a fenced block from the hash
+			# would leave a rewritten example invisible. Change one, change all
+			# eight.
 			if ($t.Length -ge 3 -and ((Test-DriftEqual ($t.Substring(0, 3)) '```') -or (Test-DriftEqual ($t.Substring(0, 3)) '~~~'))) {
 				$c = [int]$t[0]
 				$n = 0
@@ -4252,8 +4262,8 @@ function Invoke-ModeClaimDrift {
 #
 # THE HELPERS BELOW ARE LOCAL TO THIS FUNCTION ON PURPOSE. present() in
 # particular is copied verbatim into the --binding-driver pass
-# (bin/vault-lint.sh:2513-2517), and the shell keeps six separate copies of one
-# fenced-block scan for the same reason (:1369): a helper two modes want is
+# (bin/vault-lint.sh:2513-2517), and the shell keeps a separate copy of one
+# fenced-block scan per mode body for the same reason: a helper two modes want is
 # a helper two slices are both editing. Hoisting one into the shared region is
 # the cross-slice edit the stub seam exists to prevent, and a divergence between
 # two copies is what the parity gate is there to report.
