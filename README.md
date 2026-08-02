@@ -247,8 +247,10 @@ axis with an instrument, a cadence and the decision it would change, the financi
 assumptions table against the notes that declare themselves inputs to it, every cited section
 against the content hash the claim recorded when it read it, whether every `[F#]` and `[S#]` the
 prose cites resolves to a row in the index that assigns it, whether a research file's own local
-source row ever reached the global log, and — the only mode that reads a rendered file rather than
-the vault — whether a deliverable carries a vault address out to a reader who has no vault.
+source row ever reached the global log, whether a vocabulary subject the documents argue from has
+any note filed under it at all, whether a claim that takes an option off the table says what would
+put it back, and — the only mode that reads a rendered file rather than the vault — whether a
+deliverable carries a vault address out to a reader who has no vault.
 **`--release-gate` runs every one of them as one call**, which is what you run before a render. The
 count is left out on purpose: a number here rots on the next mode anybody adds, and an enumeration
 that has gone stale reads exactly like one that is complete.
@@ -273,6 +275,10 @@ vault-lint.sh --monitoring --vault "$VAULT_PATH"
 vault-lint.sh --deliverable --vault "$VAULT_PATH"
 vault-lint.sh --assumption-rows --vault "$VAULT_PATH"
 vault-lint.sh --claim-drift --vault "$VAULT_PATH"
+vault-lint.sh --citation-codes --vault "$VAULT_PATH"
+vault-lint.sh --unflattened-source --vault "$VAULT_PATH"
+vault-lint.sh --subject-orphan --vault "$VAULT_PATH"
+vault-lint.sh --foreclosed --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
@@ -624,19 +630,24 @@ either. Both halves matter: without the first, a typo is invisible; without the 
 which. Resolved this way a mistyped edge is two findings with two repairs — fix the target, and
 record the ring.
 
-`--release-gate` is the call before a render, and the only one that asks every question. It is
-**ten parts** — the bare check plus `--used-in`, `--supersession-sweep`, `--red-team`,
-`--roadmap-table`, `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and
-`--claim-drift` — and it prints each under its own heading and exits with the worst status any part
-returned, so the gate is clean only when every part is. The alternative was several calls made from
-memory, and which of them actually ran was a matter of recall.
+`--release-gate` is the call before a render, and the only one that asks every question. It runs
+the bare check plus `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
+`--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows`, `--claim-drift`,
+`--citation-codes`, `--unflattened-source`, `--subject-orphan` and `--foreclosed`, prints each
+under its own heading, and exits with the worst status any part returned, so the gate is clean only
+when every part is. The alternative was several calls made from memory, and which of them actually
+ran was a matter of recall. **No count is written here**, for the reason stated where these modes
+are introduced: a number rots on the next mode anybody adds, and it goes stale silently, because an
+enumeration that has gone short reads exactly like one that is complete.
 
 **The bare run's success line says what it checked and what it did not**, because it used to say
 `clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
 checks passed … not opened: citation targets, supersession blast radius, panel objection rows,
 roadmap table against the milestone set, verdict drivers and the evidence under them, monitoring
 axes and the decision each would change, what the rendered deliverable carries out of the vault,
-assumption rows against the model table, cited sections against their recorded hash* —
+assumption rows against the model table, cited sections against their recorded hash, citation codes
+against their index rows, local source rows against the global log, unfiled subjects the corpus
+reasons about, foreclosed options and what would reverse them* —
 and the list of what it skipped is read off the same mode table `--release-gate` composes itself
 from, so a mode added to the gate cannot leave the line quietly overstating what it covered. A
 success line is what somebody renders on, so it has to be narrower than the verdict its reader
