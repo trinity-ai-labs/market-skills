@@ -141,7 +141,18 @@
 #      declared exemption is asserted on both sides: the exempt ledger passes and
 #      is named in the success line, while the research file beside it is still
 #      read. A row carrying no URL is asserted reported as unresolved rather than
-#      passed, and a missing sources.md as a mode that did not run.
+#      passed, and a missing sources.md as a mode that did not run. The
+#      declaration is asserted in EVERY emphasis form it can wear - plain,
+#      bulleted, and the four bolded ones - because bold is the first thing an
+#      author reaches for in a header, the marker silently defeated the match,
+#      and a fix pinned by one bolded form leaves the other three unpinned for
+#      the next refactor to reopen. Two more forms assert the marker is a CLASS
+#      and not the `**` that was reported, since a `**`-only fix leaves the next
+#      author writing `_Local ledger:_` in that same position. The boundary is
+#      asserted too: a real file named with an underscore, declared inside a bold
+#      wrapper, whose interior byte has to survive the strip. One corpus carries
+#      one sources.md, so every form is asserted over the fixture copied and its
+#      declaration line rewritten, the idiom the schemaVersion gate below uses.
 #  26. --subject-orphan reports a vocabulary subject with no `claim` and no
 #      `assumption` under it that the corpus reasons from anyway - by its own key
 #      in a note body, and through an alias in a plan document, which is the half
@@ -2750,6 +2761,90 @@ case "$US_EX" in
 *'carrying no URL'*) ok "a row with no URL is reported as unresolved, not as agreed" ;;
 *) no "the row with no URL was silently passed (got: $US_EX)" ;;
 esac
+
+# EVERY EMPHASIS FORM THE DECLARATION CAN WEAR. Bold is the first thing an author
+# reaches for in a markdown header, so the forms that failed were the likelier
+# ones to be written: a leading marker is neither a bullet nor the label, so the
+# line was dropped before parsing, and a marker around the path rode along in the
+# token and resolved to no file. Both directions are silent and both fail toward
+# the false positive - the corpus is told to flatten a ledger it correctly
+# declared, which is the hundred-and-fifty-failure report that gets this mode
+# switched off. EVERY form is asserted rather than the one that broke first,
+# the two that already parsed included, because a fix pinned by a single bolded
+# fixture leaves the rest for the next refactor to reopen and a form nobody
+# pinned is one nobody has watched fail.
+#
+# The fixture is copied and its declaration line rewritten per form, the idiom
+# the schemaVersion gate below uses: a corpus carries one sources.md, and a
+# checked-in tree per form would desync the first time somebody edited the
+# original.
+# Both halves of each assertion are load-bearing - exit 0 alone would also be
+# printed by a run that read the file and happened to agree, so the success
+# line's exemption clause is what says the DECLARATION is what passed it.
+US_EMPH="$PAIRS_FILE.ledger-emph"
+
+# The vault under test: the fixture copied with its declaration line replaced by
+# $1. Split from the assertion below rather than folded into ledger_form,
+# because the boundary case at the end of this block has to rename a research
+# file BETWEEN the copy and the run - and a second hand-rolled copy of the copy
+# is what desyncs the moment either the invocation or the success-line wording
+# changes.
+ledger_vault() {
+	rm -rf "$US_EMPH"
+	cp -R "$HERE/source-ledger-exempt" "$US_EMPH"
+	awk -v repl="$1" '
+		swapped == 0 && /^Local ledger:/ { print repl; swapped = 1; next }
+		{ print }
+	' "$HERE/source-ledger-exempt/sources.md" >"$US_EMPH/sources.md"
+}
+
+# $1 names the form, $2 the vault-relative path the declaration has to exempt.
+ledger_exempts() {
+	LF_OUT=$("$LINT" --unflattened-source --vault "$US_EMPH" 2>&1)
+	LF_STATUS=$?
+	if [ "$LF_STATUS" != "0" ]; then
+		no "$1: the declaration did not exempt $2 (got $LF_STATUS: $LF_OUT)"
+		return
+	fi
+	case "$LF_OUT" in
+	*'Exempt by declaration'*"$2"*)
+		ok "$1: the declaration parses and the success line names what it exempted" ;;
+	*)
+		no "$1: exit 0 with no exemption declared - the ledger was read and merely agreed (got: $LF_OUT)" ;;
+	esac
+}
+
+ledger_form() {
+	ledger_vault "$2"
+	ledger_exempts "$1" 'research/company-profiles.md'
+}
+
+# The plain form is re-asserted here even though the block above already covers
+# it over the unedited fixture, and the duplication is the point: this list is
+# what a reader compares the emphasised forms AGAINST, and a set that silently
+# omits its own baseline cannot show that the strip left the working form alone.
+ledger_form 'plain' 'Local ledger: research/company-profiles.md - why it stays local'
+ledger_form 'bulleted' '- Local ledger: research/company-profiles.md - why it stays local'
+ledger_form 'bold around label and path' '**Local ledger: research/company-profiles.md** - why it stays local'
+ledger_form 'bold label' '**Local ledger:** research/company-profiles.md - why it stays local'
+ledger_form 'bold path' 'Local ledger: **research/company-profiles.md** - why it stays local'
+ledger_form 'bulleted, bold path' '- Local ledger: **research/company-profiles.md** - why it stays local'
+ledger_form 'bulleted, bold label' '- **Local ledger:** research/company-profiles.md - why it stays local'
+# The markers are a class rather than the `**` that was reported: a fix for the
+# doubled asterisk alone leaves the next author writing `_Local ledger:_` in this
+# exact position and the bug returns wearing a different marker.
+ledger_form 'underscore label' '_Local ledger:_ research/company-profiles.md - why it stays local'
+ledger_form 'single asterisk around label and path' '*Local ledger: research/company-profiles.md* - why it stays local'
+# WHAT THE STRIP DELIBERATELY DOES NOT DO: it never reaches inside the path. An
+# underscore is both an emphasis marker and an ordinary filename character, and a
+# strip that removed it everywhere would turn `company_profiles.md` into a name
+# no corpus holds - the declaration would then fail exactly as it did before,
+# under a fix written to stop it. The ledger below is a real file whose name
+# carries the marker, declared inside a bold wrapper, so the wrapper has to come
+# off and the interior byte has to stay.
+ledger_vault '**Local ledger: research/company_profiles.md** - the underscore is this file`s name, not a wrapper'
+mv "$US_EMPH/research/company-profiles.md" "$US_EMPH/research/company_profiles.md"
+ledger_exempts 'underscore inside the path' 'research/company_profiles.md'
 
 # No sources.md is a mode that did not run, never agreement.
 US_NONE=$("$LINT" --unflattened-source --vault "$HERE/clean" 2>&1)
