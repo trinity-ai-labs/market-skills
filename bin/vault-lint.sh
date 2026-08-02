@@ -522,6 +522,89 @@ vault-lint.sh - read-only checks over a claim vault.
       `reconciled_sections` was added - vault-migration.md carries the
       back-fill.
 
+  vault-lint.sh --citation-codes [--vault PATH] [--json]
+      Check that every [F#] and [S#] a document cites resolves to a row in
+      the index that assigns that code. A verdict - it exits 1 on either of
+      its two failures.
+
+      The resolution contract is already written down: [S#] resolves through
+      sources.md at the vault root and [F#] through
+      research/founder-brief.md. Nothing enforced it. --used-in opens a
+      NOTE's citation target; a code in prose is a different address and no
+      check opened it, so a plan could cite a code that resolves to nothing
+      and clear --release-gate. A dead code is indistinguishable from a
+      working one in the rendered document, and the reader who follows it is
+      the one person who cannot check it.
+
+      citation-code-no-source-row: an [S#] with no row in sources.md.
+      citation-code-no-fact-row: an [F#] with no row in
+      research/founder-brief.md. Two codes rather than one because the two
+      repairs open different files.
+
+      THE TWO INDEX FILES ARE NOT SCANNED, and that is load-bearing rather
+      than an optimisation. An index legitimately discusses its own retired
+      numbers - a row recording that a code was withdrawn and deliberately
+      left unused names that code - and a scan that read those mentions as
+      citations would fail a corpus doing exactly the right thing.
+
+      FORWARD DIRECTION ONLY. Cited with no row is the failure; a row nothing
+      cites is not. A recorded fact nothing leans on yet is a healthy state,
+      and failing it would push an author toward citing things to silence a
+      linter.
+
+      WHAT IT DOES NOT CHECK, AND THE SUCCESS LINE SAYS SO: whether a code
+      resolves to the INTENDED source. Resolution is necessary and it is not
+      sufficient. A research file legitimately carries its own local S table,
+      so a document citing a local code the global log also assigns resolves
+      to a row and to a DIFFERENT source - observed on four documents at
+      once, every code resolving. --unflattened-source closes the half of
+      that a check can reach.
+
+      A missing index file is reported as a half that did not run rather than
+      as agreement, the convention --claim-drift uses for a schemaVersion it
+      does not apply to.
+
+  vault-lint.sh --unflattened-source [--vault PATH] [--json]
+      Check that every row of a research file's own local source table names
+      a URL the root sources.md also names. A verdict - it exits 1 on its one
+      failure.
+
+      source-unflattened: a local `| S<n> |` row whose URL appears nowhere in
+      sources.md. The global log is what assigns a citable [S#], so a source
+      that exists only in a research file's local table can be cited from
+      research prose and cannot be cited from a plan document at all. It is
+      invisible to every other check: the local table is well-formed, the log
+      is well-formed, and nothing compared them. Observed: a source lived
+      only as one research file's local S14, global [S14] was a DIFFERENT
+      source, and four documents cited [S14] meaning the local one.
+
+      THE NAME IS NOT `orphan-source`, which `check` already reports and
+      which means close to the opposite - a source note nothing in the vault
+      rests on. That one is a source nobody cited; this one is a source
+      nobody CAN cite.
+
+      IT READS A DECLARED EXEMPTION OUT OF sources.md'S OWN HEADER, and
+      without one the mode is unusable. A corpus may deliberately keep a
+      large per-row ledger out of the global log - a per-profile table of a
+      hundred rows or more, cited with a qualified suffix - and reporting
+      every one of those as a failure is how a check gets switched off. A
+      line in the header, before the log's first table row, of the form
+
+          Local ledger: research/<file>.md - why it stays local
+
+      exempts that file. The first whitespace-delimited token after the colon
+      is the vault-relative path this mode reads; everything after it is the
+      reason, for the person who has to decide whether it still holds. The
+      declaration lives in the log rather than in the research file because
+      the log is where a corpus states which sources it assigns codes to.
+
+      A row carrying NO URL is neither resolved nor failed - there is no key
+      to match it on - and the success line reports how many there were, so a
+      table of unlinkable rows cannot read as a table that agreed.
+
+      A missing sources.md is reported as a mode that did not run rather than
+      as agreement, the same convention --citation-codes uses.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -593,6 +676,8 @@ check                gate  note-level checks
 --deliverable        gate  what the rendered deliverable carries out of the vault
 --assumption-rows    gate  assumption rows against the model table
 --claim-drift        gate  cited sections against their recorded hash
+--citation-codes     gate  citation codes against their index rows
+--unflattened-source gate  local source rows against the global log
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -2347,6 +2432,96 @@ TABLE_READER_AWK='
 '
 
 # ----------------------------------------------------------------------------
+# the fence scan two modes share, by the same mechanism the table reader uses
+#
+# --citation-codes and --unflattened-source both walk a document line by line
+# looking for a token, and both have to ignore fenced blocks for the reason every
+# other document-reading mode does: a corpus document that carries its own row
+# template or its own citation example would otherwise fail for documenting its
+# own format, which is exactly why --red-team skips fences over a red-team.md
+# that ships a row template.
+#
+# ONE SOURCE RATHER THAN TWO COPIES, because the two modes are written together
+# and neither has a reason to drift from the other. It is a shell variable for
+# TABLE_READER_AWK's reason - awk takes one program text and two adjacent shell
+# words concatenate into one argument - and it does NOT collapse any of the seven
+# copies that already exist: those were each written independently and none
+# claims to match another, which is the test AGENTS.md sets for collapsing one.
+# It is the EIGHTH copy of the rule in this file, and every one of the other
+# seven names it. That count was wrong before this mode existed - --claim-drift's
+# section reader is a copy no enumeration had ever counted, so the census said
+# six over seven - which is the failure a hand-maintained count has and the
+# reason each site restates it rather than pointing at one place.
+#
+# THE STATE IS GLOBAL AND THE CALLER RESETS IT. FC and FN hold the open fence's
+# marker character and run length across calls, so a caller that reads more than
+# one document sets FC = "" before each file - a fence left open at the end of
+# one document would otherwise swallow the whole of the next.
+#
+# IT ALSO CARRIES trim() AND firstcell(). Both modes read a source or fact code
+# out of the first cell of a table row under identical rules, and the second body
+# said so in its own comment - which is the claim, not the resemblance, that makes
+# a duplicate worth collapsing: a change to how a cell may be spelled would
+# otherwise land in one mode and leave the other reading a different set of rows.
+# A host program gets all three by concatenating this one variable and must not
+# define any of them itself: awk rejects a duplicate function definition at
+# startup, which is what makes the collision loud.
+DOC_SCAN_AWK='
+			function trim(s) {
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# 1 when this line opens or closes a fence, or sits inside one,
+			# so a caller skips the line on a true answer. The marker
+			# character and its run length are both tracked, which is what
+			# stops a longer nested fence from closing its parent early.
+			#
+			# THE TWO MARKERS ARE BUILT FROM BYTE VALUES rather than written
+			# as literals, which is the one difference from the seven copies
+			# that sit inside an awk program argument. This one travels in a
+			# shell variable, and a backtick inside a single-quoted
+			# assignment is a shell diagnostic about a string the shell never
+			# expands. 96 is the backtick and 126 the tilde, under the LC_ALL=C
+			# every caller sets, where %c is the byte rather than the code
+			# point. Three or more of either opens a fence, which is what the
+			# literal comparison the other copies use tests.
+			function fenced(t,   c, n) {
+				if (BQ == "") { BQ = sprintf("%c", 96); TL = sprintf("%c", 126) }
+				c = substr(t, 1, 1)
+				if (c != BQ && c != TL) return (FC != "")
+				n = 0
+				while (substr(t, n + 1, 1) == c) n++
+				if (n < 3) return (FC != "")
+				if (FC == "") { FC = c; FN = n }
+				else if (c == FC && n >= FN) { FC = ""; FN = 0 }
+				return 1
+			}
+
+			# The first cell of a markdown table row, trimmed, with the
+			# optional square brackets around a code stripped off. "" when the
+			# line is not a table row at all - the same answer a row whose first
+			# cell is empty gives, and both callers treat the two alike because
+			# neither is a code.
+			#
+			# THE BRACKETS ARE OPTIONAL ON EITHER INDEX. The two documents write
+			# the cell differently in the field - a founder brief writes the code
+			# bare and a source log writes it bracketed - and holding each to its
+			# own spelling alone would fail a document written in the other for a
+			# difference no reader can see.
+			function firstcell(t,   row, p) {
+				if (substr(t, 1, 1) != "|") return ""
+				row = substr(t, 2)
+				p = index(row, "|")
+				row = trim((p > 0) ? substr(row, 1, p - 1) : row)
+				sub(/^\[/, "", row)
+				sub(/\]$/, "", row)
+				return row
+			}
+'
+
+# ----------------------------------------------------------------------------
 # --used-in - every used_in target resolves
 #
 # Two checks, named apart because they want different fixes. `used-in-missing-file`
@@ -3783,7 +3958,7 @@ fi
 # antecedent. No script can judge an antecedent, so that half is a read-back item
 # in the render loop and this mode covers the half that is mechanical.
 #
-# There is no fenced-block scan here for the reason the other six modes have one:
+# There is no fenced-block scan here for the reason the other modes have one:
 # a deliverable is prose for an outside reader and does not document its own
 # format. The one document in this corpus that does - red-team.md, which carries
 # its own row template - is not a deliverable and is not read by this mode.
@@ -4546,6 +4721,368 @@ if [ "$MODE" = "claim-drift" ]; then
 		' "$RECORDS")
 
 	render_failures "vault-lint claim-drift" "$CD_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --citation-codes - every cited code resolves to a row in its index
+#
+# The resolution contract was specified and never enforced: [S#] resolves through
+# sources.md, [F#] through research/founder-brief.md. --used-in opens the target
+# a NOTE names; a code in prose is a different address, and nothing opened it -
+# so a plan could cite a code that resolves to nothing and clear --release-gate.
+# A dead code renders exactly like a working one, and the reader who follows it
+# is the one person who cannot check it.
+#
+# THE TWO INDEX FILES ARE EXCLUDED FROM THE SCAN, and that is load-bearing rather
+# than an optimisation. An index legitimately discusses its own retired numbers -
+# a row recording that a code was withdrawn and deliberately left unused names
+# that code in its own prose - and a naive scan reads that mention as a citation
+# and fails a corpus doing exactly the right thing.
+#
+# FORWARD DIRECTION ONLY, which is the opposite call to --red-team's roster and
+# to --roadmap-table's two directions, for a reason specific to an index: a
+# recorded fact nothing leans on yet is healthy, so failing a row nothing cites
+# would push an author toward citing things to silence a linter. There is no
+# dodge-by-omission here either way - the failure is cited-with-no-row, and
+# deleting the citation is deleting the claim that needed it.
+#
+# THE BRACKETS ARE OPTIONAL ON BOTH INDEX ROWS. The two documents write the cell
+# differently in the field - `| F1 |` in the brief and `| [S1] |` in the log - and
+# holding each to only its own spelling would fail a brief written in the other
+# for a formatting difference no reader can see.
+#
+# WHAT THE SUCCESS LINE MUST SAY. Resolution is necessary and it is not
+# sufficient: a research file carries its own local S table, so a document citing
+# a local code the global log also assigns resolves to a row and to a DIFFERENT
+# source. That is the shape of defect this whole family exists to close - a check
+# whose success line claims more than it verified - so the line states the limit
+# rather than leaving it to be inferred, and --unflattened-source below closes
+# the half of it a check can reach.
+#
+# LC_ALL=C for --used-in's reason: a document carries em dashes and curly quotes,
+# and macOS awk in a UTF-8 locale aborts the record on the first sequence it
+# cannot decode, which would end the scan early and pass a document it never
+# finished reading.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "citation-codes" ]; then
+	CC_BRIEF="research/founder-brief.md"
+	CC_LOG="sources.md"
+	CC_HAS_BRIEF=0
+	[ -f "$VAULT/$CC_BRIEF" ] && CC_HAS_BRIEF=1
+	CC_HAS_LOG=0
+	[ -f "$VAULT/$CC_LOG" ] && CC_HAS_LOG=1
+
+	# NEITHER INDEX, NOTHING TO READ. Every code would resolve against nothing,
+	# so the line is decided before the first document is opened - and opening
+	# them anyway is a full read of the corpus to print a constant. The same
+	# shape --deliverable uses when nothing has been rendered.
+	if [ "$CC_HAS_BRIEF" -eq 0 ] && [ "$CC_HAS_LOG" -eq 0 ]; then
+		render_failures "vault-lint citation-codes" "no $CC_LOG and no $CC_BRIEF under $VAULT - neither index exists, so no \`[F#]\` or \`[S#]\` was resolved against anything and this mode checked nothing"
+		exit $?
+	fi
+
+	# Every document a reader of this corpus opens, as a vault-relative path:
+	# the markdown at the vault root and the markdown in research/. Globs
+	# rather than find, because these are the two directory levels the
+	# resolution contract names and a glob needs no non-POSIX -maxdepth. The
+	# note directories are deliberately not walked - a claim note carries no
+	# citation code at all, which is the same fact --used-in's boundary rests
+	# on - so scanning them would be a walk over the whole ledger for a pattern
+	# it never holds.
+	#
+	# ORDER DOES NOT MATTER HERE and is not sorted: render_failures sorts the
+	# whole failure file before anything prints it, and every count below is
+	# keyed rather than positional.
+	CC_LIST="$TMP/citation-docs"
+	for f in "$VAULT"/*.md "$VAULT"/research/*.md; do
+		[ -f "$f" ] || continue
+		rel="${f#"$VAULT/"}"
+		[ "$rel" = "$CC_LOG" ] && continue
+		[ "$rel" = "$CC_BRIEF" ] && continue
+		printf '%s\n' "$rel"
+	done >"$CC_LIST"
+
+	# $DOC_SCAN_AWK is prepended the way --roadmap-table prepends the table
+	# reader: two adjacent shell words concatenate into the single program text
+	# awk takes. It brings fenced() and trim(), so this program must not define
+	# either itself.
+	CC_OK=$(LC_ALL=C awk -v vault="$VAULT" -v out="$FAILURES" -v brief="$CC_BRIEF" -v logdoc="$CC_LOG" \
+		-v hasbrief="$CC_HAS_BRIEF" -v haslog="$CC_HAS_LOG" "$DOC_SCAN_AWK"'
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# The codes one index assigns, read off the FIRST cell of every
+			# row. A cell holding anything else is not an assignment and is
+			# not read - which is what keeps a prose table in the same
+			# document from registering codes.
+			function readindex(rel, kind,   path, line, t, cell) {
+				path = vault "/" rel
+				FC = ""; FN = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (fenced(t)) continue
+					cell = firstcell(t)
+					if (cell ~ /^[FS][0-9]+$/ && substr(cell, 1, 1) == kind) ASSIGNED[cell] = 1
+				}
+				close(path)
+			}
+
+			# Every [F#] and [S#] one document cites. Reported once per
+			# document per code: the repair is one row in one index, and a
+			# code cited on six lines is not six repairs. The line of the
+			# FIRST occurrence goes in the message, because a failure naming
+			# no line sends its reader through the file by eye.
+			function scan(rel,   path, line, t, ln, rest, tok, code, kind, k) {
+				path = vault "/" rel
+				FC = ""; FN = 0
+				ln = 0
+				while ((getline line < path) > 0) {
+					ln++
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (fenced(t)) continue
+					rest = line
+					while (match(rest, /\[[FS][0-9]+\]/)) {
+						tok = substr(rest, RSTART, RLENGTH)
+						rest = substr(rest, RSTART + RLENGTH)
+						code = substr(tok, 2, length(tok) - 2)
+						kind = substr(code, 1, 1)
+						# A code whose index is absent is not resolved and
+						# not failed. The success line says which half went
+						# unread, rather than reporting agreement over an
+						# index nobody could open.
+						if (kind == "F" && hasbrief != 1) continue
+						if (kind == "S" && haslog != 1) continue
+						k = rel SUBSEP code
+						if (k in DONE) continue
+						DONE[k] = 1
+						nchecked++
+						if (code in ASSIGNED) continue
+						if (kind == "F")
+							report(rel, "citation-code-no-fact-row", code,
+								"line " ln " cites `" tok "` and " brief " carries no `| " code " |` row. The code is an address into the founder brief and it resolves to nothing, so a reader who follows it finds no fact behind the sentence that leaned on one - and the document renders identically to one whose codes all resolve, which is why nothing else in this corpus can see it. Either the row was never written, or the code is a typo for one that was")
+						else
+							report(rel, "citation-code-no-source-row", code,
+								"line " ln " cites `" tok "` and " logdoc " carries no `| " code " |` row. The code is an address into the source log and it resolves to nothing, so the sentence carries the appearance of provenance and none of the substance - and a reader who follows it is the one person who cannot check it. Either the source was never logged, or the code is a typo for one that was")
+					}
+				}
+				close(path)
+			}
+
+			BEGIN {
+				if (haslog == 1) readindex(logdoc, "S")
+				if (hasbrief == 1) readindex(brief, "F")
+			}
+
+			{ scan($0) }
+
+			END {
+				limit = "Not checked: whether a code resolves to the INTENDED source. A research file legitimately carries its own local `S` table, so a document citing a local code the global log also assigns resolves to a row and to a different source - which no count of resolving codes can see. --unflattened-source is the half of that a check can reach."
+				if (hasbrief != 1)
+					printf("%d cited `[S#]` code%s, each resolving to a row in %s - %s. Not checked: `[F#]` codes at all, because there is no %s under %s to resolve them against. %s\n",
+						nchecked, (nchecked == 1 ? "" : "s"), logdoc, vault, brief, vault, limit)
+				else if (haslog != 1)
+					printf("%d cited `[F#]` code%s, each resolving to a row in %s - %s. Not checked: `[S#]` codes at all, because there is no %s under %s to resolve them against. %s\n",
+						nchecked, (nchecked == 1 ? "" : "s"), brief, vault, logdoc, vault, limit)
+				else
+					printf("%d cited code%s, each resolving to a row in the index that assigns it - %s. %s\n",
+						nchecked, (nchecked == 1 ? "" : "s"), vault, limit)
+			}
+		' "$CC_LIST")
+
+	render_failures "vault-lint citation-codes" "$CC_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --unflattened-source - a local source row the global log never received
+#
+# THIS IS THE HALF --citation-codes CANNOT REACH, and the defect is real rather
+# than hypothetical. A vault's research files carry their own local `S` tables for
+# traceability while the root sources.md assigns the global `[S#]` once. A source
+# existed only as one research file's local S14 and was never flattened into the
+# log, so it had no citable code at all - while global [S14] was a DIFFERENT
+# source. Four documents cited [S14] meaning the local one. Every code resolved,
+# and every check passed.
+#
+# THE FAILURE KIND IS `source-unflattened`, NOT `orphan-source`. `check` already
+# emits orphan-source for a source note nothing in the vault rests on, which is
+# close to the opposite finding - one is a source nobody cited, this is a source
+# nobody CAN cite - and giving two findings one name sends half their readers to
+# the wrong repair. Neither is widened into the other.
+#
+# THE DECLARED EXEMPTION IS THE PART THAT DECIDES WHETHER THIS MODE SURVIVES. A
+# corpus may deliberately keep a large per-row ledger out of the global log - a
+# per-profile table of a hundred rows or more, cited with a qualified suffix - and
+# a mode that reported every one of those as a failure would be switched off
+# within a day, taking the working half with it. The exemption is READ FROM THE
+# LOG'S OWN HEADER rather than keyed on a filename this script knows, because the
+# file that holds the ledger differs per corpus and a hardcoded name is a rule
+# that only fits the vault it was written against.
+#
+# THE HEADER IS THE PROSE BEFORE THE LOG'S FIRST TABLE ROW, which is where a
+# corpus already explains what its log does and does not assign. A declaration
+# below the first row would be a note buried inside the data.
+#
+# A ROW WITH NO URL IS NOT RESOLVED AND NOT FAILED. A local row may name a source
+# with no public address, and there is then no key to match it on - so it is
+# counted and reported as unresolved rather than passed in silence, which is the
+# same rule --assumption-rows learned about a half that walks an empty set.
+#
+# LC_ALL=C for --used-in's reason.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "unflattened-source" ]; then
+	US_LOG="sources.md"
+
+	# NO LOG, NO READ. There is nothing to compare a local row against, so the
+	# mode says it did not run before it walks anything - the same shape
+	# --citation-codes reports a missing index with, and the reason the awk
+	# below never has to ask whether the log was there.
+	if [ ! -f "$VAULT/$US_LOG" ]; then
+		render_failures "vault-lint unflattened-source" "no $US_LOG under $VAULT - there is no global log to flatten a local row into, so no research file's own source table was read"
+		exit $?
+	fi
+
+	US_LIST="$TMP/research-docs"
+	for f in "$VAULT"/research/*.md; do
+		[ -f "$f" ] || continue
+		printf '%s\n' "${f#"$VAULT/"}"
+	done >"$US_LIST"
+
+	US_OK=$(LC_ALL=C awk -v vault="$VAULT" -v out="$FAILURES" -v logdoc="$US_LOG" "$DOC_SCAN_AWK"'
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# One URL compared as bytes, minus the punctuation a sentence
+			# leaves on the end of one. The host is case-sensitive here and
+			# a path always is - folding either would be a guess about which
+			# half of a URL is which.
+			# The one URL pattern this mode matches on, held as a string so the
+			# two functions below run the same bytes. Written twice, a class
+			# widened in one and not the other collects an address the other
+			# will never match, and the mode then reports an agreement it did
+			# not verify. The class stops at the characters that delimit a URL
+			# in markdown and in a table - a space, a tab, a pipe, a closing
+			# paren or angle bracket - so a bracketed markdown link and an
+			# angle-bracketed bare one both yield the address and not the
+			# punctuation around it.
+			BEGIN { URLRE = "https?://[^ \t|)>]+" }
+
+			function normurl(u) {
+				sub(/[.,;:]+$/, "", u)
+				sub(/\/+$/, "", u)
+				return u
+			}
+
+			# Every URL one line carries, into the global set.
+			function collecturls(s,   rest, tok) {
+				rest = s
+				while (match(rest, URLRE)) {
+					tok = substr(rest, RSTART, RLENGTH)
+					rest = substr(rest, RSTART + RLENGTH)
+					LOGURL[normurl(tok)] = 1
+				}
+			}
+
+			# The first URL a local row names, which is the key this mode
+			# matches on. First rather than every: a row names one source
+			# and any further link in it is a secondary reference.
+			function firsturl(s) {
+				if (!match(s, URLRE)) return ""
+				return normurl(substr(s, RSTART, RLENGTH))
+			}
+
+			# The log, read once: the URLs it carries anywhere, and the
+			# files its header declares exempt. A URL in the header prose
+			# counts as carried - the question is whether the corpus has the
+			# source in its log at all, not which row holds it.
+			function readlog(   path, line, t, intable, v, w) {
+				path = vault "/" logdoc
+				FC = ""; FN = 0
+				intable = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (fenced(t)) continue
+					if (substr(t, 1, 1) == "|") intable = 1
+					collecturls(line)
+					if (intable) continue
+					# A bullet is still a header line, so the declaration
+					# reads as prose to whoever opens the log.
+					sub(/^[-*][ \t]+/, "", t)
+					if (t !~ /^Local ledger:/) continue
+					# The FIRST whitespace-delimited token after the colon is the
+					# path, and everything after it is the reason - so a
+					# declaration reads as a sentence to whoever opens the log
+					# rather than as a field with a punctuation rule.
+					v = trim(substr(t, 14))
+					if (v == "") continue
+					split(v, w, /[ \t]+/)
+					v = w[1]
+					sub(/^\.\//, "", v)
+					if (v in EXEMPT) continue
+					EXEMPT[v] = 1
+					DECLARED[++ndecl] = v
+				}
+				close(path)
+			}
+
+			# One research file. A row whose first cell is `S<n>` - brackets
+			# optional, the same spelling latitude --citation-codes gives an
+			# index row - is a local source assignment, and the alignment
+			# rule and the header row fall out because neither cell reads as
+			# a code.
+			function scanresearch(rel,   path, line, t, cell, u) {
+				if (rel in EXEMPT) { EXEMPTHIT[rel] = 1; return }
+				path = vault "/" rel
+				FC = ""; FN = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (fenced(t)) continue
+					cell = firstcell(t)
+					if (cell !~ /^S[0-9]+$/) continue
+					if (!(rel in TABLED)) { TABLED[rel] = 1; nfile++ }
+					u = firsturl(line)
+					if (u == "") { nourl++; continue }
+					nrow++
+					if (u in LOGURL) continue
+					report(rel, "source-unflattened", cell,
+						"this file`s own source table assigns `" cell "` to " u " and " logdoc " carries that URL nowhere. The global log is what assigns a citable `[S#]`, so this source can be cited from research prose and cannot be cited from a plan document at all - and nothing else sees it, because the local table is well-formed, the log is well-formed, and no check compared them. Worse, a plan that cites the local code anyway resolves against whatever the log happens to assign that number to, which is a different source. Flatten it: give it a row in " logdoc ", or declare this file`s ledger exempt with a `Local ledger: " rel " - <why it stays local>` line in the log`s header")
+				}
+				close(path)
+			}
+
+			BEGIN { readlog() }
+
+			{ scanresearch($0) }
+
+			END {
+				# What was declared exempt, named in the line rather than
+				# left implicit: an exemption nobody sees is a switched-off
+				# check that reads as a passing one, and a declaration for a
+				# file that no longer exists is only visible here.
+				ex = ""
+				for (i = 1; i <= ndecl; i++)
+					ex = ex (i == 1 ? "" : ", ") DECLARED[i] (DECLARED[i] in EXEMPTHIT ? "" : " (declared, no such file)")
+				exline = (ndecl == 0) ? "" : sprintf(" Exempt by declaration in the log`s header: %s.", ex)
+				noline = (nourl == 0) ? "" : sprintf(" Not resolved: %d local row%s carrying no URL, each naming a source with no key to match on.", nourl, (nourl == 1 ? "" : "s"))
+
+				if (nfile == 0)
+					printf("no research file under %s carries a local `| S<n> |` table - there is no local ledger to flatten, which is every vault whose research keeps no source table of its own.%s\n", vault, exline)
+				else
+					printf("%d local source row%s across %d research file%s, each naming a URL %s also carries - %s.%s%s\n",
+						nrow, (nrow == 1 ? "" : "s"), nfile, (nfile == 1 ? "" : "s"), logdoc, vault, noline, exline)
+			}
+		' "$US_LIST")
+
+	render_failures "vault-lint unflattened-source" "$US_OK"
 	exit $?
 fi
 
