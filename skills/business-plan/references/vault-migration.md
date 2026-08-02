@@ -977,7 +977,7 @@ it was ever failing.
 fails a `market-size` subject holding two or more `current` population claims that no `nested_in`
 chain connects — reachability is transitive, so three rings are two edges and not three. The rule is in
 [vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand)'s version-4 table, and the
-edge itself is in [vault.md](vault.md#eight-edges-each-stored-once-on-the-asserting-note).
+edge itself is in [vault.md](vault.md#every-edge-is-stored-once-on-the-asserting-note).
 
 **Read this before starting, because conflating it with the rest of the release is what would
 make the upgrade look like a corpus-wide back-fill.** Three fields shipped in the same release —
