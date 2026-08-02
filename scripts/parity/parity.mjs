@@ -41,7 +41,8 @@
 // from now until then, which destroys the signal exactly when it is needed.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -332,6 +333,87 @@ function findPowerShell() {
 }
 
 // ---------------------------------------------------------------------------
+// one PowerShell startup cache per worker
+//
+// THE FAILURE THIS PREVENTS: two PowerShell hosts corrupting one another's
+// startup cache, which kills a child on SIGABRT mid-run. Before the non-verdict
+// rule above that arrived as `.sh 1, .ps1 134` and read as the two
+// implementations disagreeing - a parity finding this harness manufactured.
+//
+// KNOWN: concurrent non-interactive PowerShell sessions corrupt the shared
+// ~/.cache/powershell/StartupProfileData-NonInteractive and die with 134 or 139,
+// primarily on macOS - https://github.com/PowerShell/PowerShell/issues/26528.
+// Every element of that report is present here: runLint spawns -NonInteractive,
+// bin/vault-lint.ps1 re-invokes a host per --release-gate part, and nothing
+// keeps two of those from overlapping - two contributors gating at once on one
+// machine is enough, and running cells concurrently makes it the normal case.
+//
+// INFERRED: that this is the cause. Five aggressive reproduction attempts at
+// concurrency 8 and 10 produced no crash, so the mechanism matches every
+// observable without having been demonstrated here. Giving each worker its own
+// XDG_CACHE_HOME removes the shared file the report blames and costs nothing if
+// the hypothesis is wrong. It is NOT what makes a residual crash readable - the
+// non-verdict rule is, whichever way this goes.
+//
+// PER WORKER, not per cell: the cache has to warm once and be reused, or every
+// cell pays a cold PowerShell start - about 300ms of the ~400ms a JSON cell
+// takes on the PowerShell side.
+//
+// Inert where it does not apply, and never a requirement to run: Windows
+// PowerShell 5.1 is .NET Framework and keeps no ~/.cache/powershell, so the
+// variable is simply unread there, and a directory that cannot be created
+// degrades to the unmodified process environment rather than aborting the gate.
+// ---------------------------------------------------------------------------
+
+// undefined = not attempted, null = unavailable, string = the directory.
+let cacheRoot;
+const cacheHomes = [];
+
+function cacheHomeFor(slot) {
+  if (cacheRoot === undefined) {
+    try {
+      cacheRoot = mkdtempSync(join(tmpdir(), 'parity-pwsh-cache-'));
+    } catch {
+      cacheRoot = null;
+    }
+  }
+  if (!cacheRoot) return null;
+  if (cacheHomes[slot] === undefined) {
+    const dir = join(cacheRoot, `worker-${slot}`);
+    try {
+      mkdirSync(dir, { recursive: true });
+      cacheHomes[slot] = dir;
+    } catch {
+      cacheHomes[slot] = null;
+    }
+  }
+  return cacheHomes[slot];
+}
+
+// On `exit` rather than in a finally: process.exit() does not unwind the stack,
+// and every failure path in this file leaves through it.
+process.on('exit', () => {
+  if (!cacheRoot) return;
+  try {
+    rmSync(cacheRoot, { recursive: true, force: true });
+  } catch {
+    // A temp directory left behind is not worth changing this tool's answer for.
+  }
+});
+
+// Ctrl-C during a multi-minute sweep is ordinary, and a signal does not run the
+// `exit` handler above - so each interrupted run would strand a cache directory.
+// Exiting explicitly with the conventional 128+N code runs the cleanup and keeps
+// the status a caller sees unchanged. THE LIMIT: SIGKILL cannot be handled at
+// all, so a hard kill still leaves one directory under the OS temp dir.
+for (const [signal, number] of [
+  ['SIGINT', 2],
+  ['SIGTERM', 15],
+]) {
+  process.on(signal, () => process.exit(128 + number));
+}
+
+// ---------------------------------------------------------------------------
 // running one side
 // ---------------------------------------------------------------------------
 
@@ -351,13 +433,18 @@ function findPowerShell() {
  * `signal` is returned rather than discarded because a child killed outright
  * has a null status, and reporting that as `.ps1 null` is worse than reporting
  * the 134 the other shape of the same death produces. nonVerdict() reads both.
+ *
+ * The PowerShell side runs with its worker's own XDG_CACHE_HOME; the shell side
+ * reads no cache, so it runs with this process's environment untouched.
  */
-function runLint(side, argv) {
+function runLint(side, argv, slot) {
   const spawnArgv =
     side.kind === 'sh'
       ? [SH_LINT, ...argv]
       : ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', PS_LINT, ...argv];
-  const run = spawnSync(side.interpreter, spawnArgv, { cwd: ROOT, maxBuffer: 64 * 1024 * 1024 });
+  const cacheHome = side.kind === 'ps' ? cacheHomeFor(slot) : null;
+  const env = cacheHome ? { ...process.env, XDG_CACHE_HOME: cacheHome } : process.env;
+  const run = spawnSync(side.interpreter, spawnArgv, { cwd: ROOT, env, maxBuffer: 64 * 1024 * 1024 });
   if (run.error) throw new Error(`${side.label}: ${run.error.message}`);
   return {
     stdout: run.stdout ?? Buffer.alloc(0),
@@ -493,8 +580,9 @@ function compareMode(mode, vaults, shSide, psSide) {
       continue;
     }
 
-    const sh = runLint(shSide, argv);
-    const ps = runLint(psSide, argv);
+    // Slot 0: this loop is one worker, so there is one cache to warm.
+    const sh = runLint(shSide, argv, 0);
+    const ps = runLint(psSide, argv, 0);
 
     const where = `${vault} (${argv.join(' ')})`;
 
@@ -601,7 +689,7 @@ function main() {
 
     const answered = new Set();
     for (const mode of modes) {
-      const run = runLint(psSide, argvFor(mode, probeVault));
+      const run = runLint(psSide, argvFor(mode, probeVault), 0);
       // The stub's sentinel is the one answer outside 0/1/2 that means something
       // here, so it is read FIRST; anything else has to be a verdict. Without
       // this the classification is `status !== 3`, and a probe child killed by a
