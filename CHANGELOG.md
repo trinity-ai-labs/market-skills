@@ -2,6 +2,167 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.19.0
+
+**Two issues, and one argument pointed in two directions.** 1.18.0 opened the *absence is not
+success* family — a check that cannot find its subject has to say so rather than report agreement.
+This release runs that out past the success line and into the corpus. A `[F#]` or `[S#]` that
+resolves to nothing renders exactly like one that works, and the reader who follows it is the one
+person who cannot check it. A vocabulary subject the documents argue from and no note was ever
+filed under returns clean from every query the ledger supports, because there is nothing filed to
+return. And a plan claiming **too little** — a segment killed on a technicality, a configuration
+ruled out, a share figure counted against the narrowest population in the vault — clears every
+guard in the tool, because each of them was built to catch a founder claiming too much. Four new
+gate parts, four new note fields, `schemaVersion` 4, and a fourth red-team lens pointed at the
+understatement.
+
+**Read this before upgrading: `--subject-orphan` is this release's one breaking check, and it is
+not gated on `schemaVersion` because there is no field to gate it on.** Every other rule
+shipped here fires on the presence of a field no existing corpus carries, so nothing written
+before it can owe anything — the exemption a version buys, obtained without spending one.
+`--subject-orphan` reads a vocabulary term, the `subject` on a `claim` or an `assumption`, and the
+words already in the documents. Nothing about it is new to a finished vault, so **a corpus that
+already carries the gap goes red on the day the plugin updates.** That is the intent rather than a
+cost: a plan reasoning about a subject the ledger has never held is exactly the state the mode
+exists to surface, and a vacuous pass over it is worse than a red gate.
+
+**The repair is one note per reported subject, and the failure hands you the whole diagnosis.** It
+names the subject, the document, the line number, the line the corpus leans on it from, and which
+note to write — a `claim` under that `subject` where the position has evidence behind it, an
+`assumption` where it does not. Where the mention turns out to be incidental rather than a
+dependence, the term was declared in `_vocab.yml` by a corpus with nothing to say about it and the
+honest repair is in that file. Either way it is a five-minute fix, which is the whole reason the
+message is a diagnosis instead of a verdict: a red gate that only states a verdict is a support
+request.
+
+- **`--citation-codes` — a cited code that resolves to nothing cleared the gate.**
+  `--used-in` opens the document and section a *note* names; plan prose cites `[F#]` and `[S#]`,
+  which resolve through `research/founder-brief.md` and `sources.md`. That contract was written
+  down and enforced by nothing, so a dead code was indistinguishable from a working one at render
+  time. The mode scans every markdown document at the vault root and under `research/` and reports
+  `citation-code-no-source-row` or `citation-code-no-fact-row` — separate kinds because the two
+  repairs open different files. **The two index files are excluded from the scan, and that is
+  load-bearing rather than an optimisation:** an index legitimately records that a code was
+  withdrawn and left unused, which names that code in its own prose, and a scan reading the mention
+  as a citation fails a corpus doing the right thing. It runs **forward only** — cited with no row
+  fails, a row nothing cites does not — because a recorded fact nothing leans on yet is healthy,
+  and failing it would push an author toward citing things to silence a linter.
+- **And its success line says what it did not check, because resolution is necessary and not
+  sufficient.** A research file carries its own local `S` table, so a document citing a local code
+  the global log also assigns resolves to a row *and* to a different source — which no count of
+  resolving codes can see. Observed on four documents at once, every code resolving. The line names
+  that limit rather than reporting the count alone, which is the same rule 1.18.0 taught the other
+  success lines one level down.
+- **`--unflattened-source` closes the half of that a check can reach.** Every row of a
+  `research/*.md` local source table names a URL, and `source-unflattened` fails one the root
+  `sources.md` carries nowhere: the log is what assigns a citable `[S#]`, so such a source can be
+  cited from research prose and cannot be cited from a plan document at all. The kind is
+  deliberately **not** `orphan-source`, which the bare check already reports for close to the
+  opposite finding — one is a source nobody cited, the other a source nobody *can* cite. **The
+  declared exemption is what decides whether the mode survives:** a corpus may deliberately keep a
+  hundred-and-fifty-row per-profile ledger out of the log, and a mode reporting every one of them
+  is switched off within a day, taking the working half with it. So the exemption is read from the
+  log's own header — a `Local ledger: <path> - <why>` line before the log's first table row —
+  rather than keyed on a filename the script knows, because the file holding a ledger differs per
+  corpus and a hardcoded name only ever fits the vault it was written against. A row carrying no
+  URL is neither resolved nor failed; the success line counts those, so a table of unlinkable rows
+  cannot read as a table that agreed.
+- **`--foreclosed` — the first mode in this tool pointed at a plan claiming too little.** A claim
+  of the form *X is not credible* or *this rules out Y* does not add a position, it removes one:
+  work off the roadmap, a segment killed, a configuration off the table. It is the
+  highest-consequence class of claim in a plan and the only one nothing attacked — all three panel
+  lenses asked whether the plan can deliver what it promises and none asked whether it wrongly
+  concluded it could not. **The failure is silent by construction:** the option is gone, so nothing
+  downstream references it, so no check has a target. Three fields make it arguable —
+  `forecloses` (the option in the words the plan uses), `foreclosed_on` (the one input the
+  conclusion rests on, as an ID so `graph` can walk to it) and `reverses_if` (the value of that
+  input that would put the option back). `foreclosure-no-reverse` fails a `current` `claim`
+  carrying the first with none of the last. It is `validated_by` pointed the other way and it
+  carries that rule's honest limit: a stated reversal condition is not evidence the thinking was
+  done, only that skipping it stopped being the default.
+- **The passing side of `--foreclosed` is a listing rather than a bare pass**, because the mode
+  feeds the red-team panel as well as the gate: it names every foreclosure with the section its
+  `used_in` reached, and a vault where nothing forecloses is told which half did not run rather
+  than that its conclusions agree.
+- **`foreclosed-on-dangling` is the mode's second kind, and it exists because `foreclosed_on` is a
+  scalar.** The bare check's dangling-edge rule walks the block-list edge fields and never opens a
+  scalar note reference — the same gap `superseded_by` has, and it gets the same answer: a rule of
+  its own rather than a silent omission. The cost here is specific. The floor skeptic is briefed
+  off this mode's output with `foreclosed_on` in it, so a dangling target dispatches the one lens
+  pointed at the foreclosure to a note that does not exist — and a lens that found nothing reads
+  exactly like a foreclosure that survived being attacked, which is the vacuous pass this release
+  exists to close.
+- **`--foreclosed` reads `claim` notes only, and `check`'s `foreclosure-on-assumption` closes the
+  dodge that looks like it opens.** A foreclosure is a conclusion drawn from an input and
+  `foreclosed_on` is where that input is named, so a note resting on nothing has no input to name:
+  an option taken off the table by an *assumption* is not a foreclosure missing a field, it is an
+  assumption in the shape of a finding, and the repair is the `question` the plan stopped asking.
+  Reading both types would hand that reader the wrong repair under the right name — the message
+  says add `reverses_if`, and following it dresses the category error in three fields and ships it
+  green. So the bare check reports it under its own name, and deliberately not as `type-agreement`,
+  which would send a reader to look at `type`, read `assumption`, and stop.
+- **A retired foreclosure owes nothing.** `status` is read, so a `superseded` or `retracted` note
+  is not asked for a reversal condition — the same live predicate 1.18.1 taught `--assumption-rows`
+  three checks over. Demanding a repair on a note the ledger has already taken back is a repair
+  nobody can make.
+- **`check`'s `population-unnested` — a share figure was a percentage of whichever population its
+  reader assumed.** Where a corpus holds nested populations under one `market-size` subject — a
+  behavioural cut inside a professional population inside a broader one — the subject-collision
+  query does not fire, because nested populations are not contradictory. Taking the innermost
+  silently produces the smallest share available, which then reads as conservative rather than as a
+  decision nobody made. `nested_in` records which population contains which, and the rule fails a
+  `market-size` subject holding two or more `current` population claims with no such chain between
+  them, naming both repairs — either the pair genuinely collides and one figure is wrong, or the
+  edge is missing.
+- **What it tests is connectivity, not whether each note carries an edge**, and the two look
+  equivalent and are not. Reachability is walked transitively, so three rings are satisfied by two
+  edges and demanding the third would ask for a fact the other two already derive. The distinction
+  is what the rule is for: two nested *pairs* under one subject, each internally edged and neither
+  related to the other, leaves every note carrying an edge while the set still holds two unrelated
+  ring systems — the exact failure the edge exists to remove, surviving the check added to remove
+  it.
+- **`nested_in` joins `EDGE_FIELDS`, and the rule also resolves the target itself — both halves,
+  for different failures.** In the set, a mistyped edge is a `dangling-edge` under its own name and
+  `graph` walks the ring. Resolving it here as well is what stops a typo *satisfying* the check:
+  read as a bare relation, `nested_in: CLAIM-TYPO` makes the corpus look nested, the rule clears,
+  and nothing anywhere says the edge points at nothing — a vacuous pass handed back by the check
+  written to refuse one. A typo is therefore two findings with two repairs, which is correct.
+- **`schemaVersion` 4 joins the supported set (`1 2 3 4`), and it buys exactly one rule —
+  conflating that with the three new fields would have turned every existing corpus red.** The
+  nesting rule is gated because it fires on a shape a correct corpus *already has*: a plan that
+  sized properly carries several `current` population claims under `market-size`, none of them
+  wrong, so ungated it would fail every vault that did the work, for a reason having nothing to do
+  with what changed. Correct and unusable is what a version buys out of. The three foreclosure
+  fields ship **additive at the current version and behind no version at all**, because their
+  trigger is the *presence* of `forecloses` — a corpus written before the field declares nothing
+  and can owe nothing, so a version spent there would buy an exemption over an empty population.
+  One release, two decisions, and the distinction is the whole point of the field.
+- **A fourth red-team lens: the floor skeptic, briefed to argue the plan is too pessimistic.** Was
+  a killed segment killed on a technicality? Is the denominator the narrowest population the corpus
+  holds, with wider ones sitting beside it? Does a *not credible* conclusion rest on an input
+  nobody sourced? **It arrives with a worklist rather than an instruction to go looking, and that
+  is the design.** The other three lenses attack what the plan says; this one attacks what the plan
+  stopped saying, which leaves nothing on the page to read — so a brief telling it to find
+  understatement would be telling it to find an absence. Its brief carries `--foreclosed`'s output
+  and the red-team pre-pass's inputs unmodelled in the pessimistic direction, which until now was a
+  report no lens was answerable for.
+- **A share figure names the population it is a share of.** The new invariant is the method half of
+  the nesting rule: where the corpus holds nested populations under one subject the plan reports
+  the set rather than the innermost member alone. What it adds over the lint is that the
+  substitution is invisible at the render — the figure is real, the formula behind it is correct,
+  and the wider counts sit in the same directory.
+- **Contributor tooling only, shipped to nobody: `scripts/parity/parity.mjs` is about three times
+  faster and no longer disguises a dead harness as a parity disagreement.** The sweep is almost
+  entirely spent waiting on PowerShell startup, so cells now run through a bounded worker pool —
+  501s serial to 157s pooled on an idle box — with results read back in mode × fixture order rather
+  than completion order, so two runs are byte-identical and a reviewer can diff one log against
+  another. Separately, a PowerShell host killed by a signal reported as `exit status: .sh 1,
+  .ps1 134`, which reads as the two implementations answering a vault differently and sent a
+  reviewer hunting a port bug that did not exist. The tool documents exit 0, 1 and 2 and nothing
+  else, so anything outside that set was not produced by the tool: such a cell is now reported in
+  its own voice, is not counted as compared, and routes to exit 2. No user-facing behaviour
+  changes.
+
 ## 1.18.1
 
 **The theme of 1.18.0 pointed at itself.** That release was about checks whose success line could
