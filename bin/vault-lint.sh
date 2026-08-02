@@ -2637,7 +2637,7 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
-		# THAT FENCE BLOCK IS ONE OF SEVEN COPIES in this file. The
+		# THAT FENCE BLOCK IS ONE OF EIGHT COPIES in this file. The
 		# --supersession-sweep sections(), the --red-team row reader, the
 		# shared readtable(), the --binding-driver readdoc(), --monitoring and
 		# --claim-drift and the shared $DOC_SCAN_AWK carry the same six lines,

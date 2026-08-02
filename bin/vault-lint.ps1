@@ -6397,10 +6397,12 @@ function Render-Failures {
 	if ($OkLine.Length -eq 0) { $OkLine = 'clean - ' + $script:VAULT }
 
 	# `LC_ALL=C sort` over the failure rows. Ordinal, never Sort-Object's
-	# culture-aware default: all seven modes that render through here inherit the
+	# culture-aware default: EVERY mode that renders through here inherits the
 	# ordering, so a culture-aware comparer reorders rows in every one of them at
 	# once and each JSON diff then reads as a bug in whichever mode was checked
-	# first.
+	# first. The number of them is deliberately not written down - it was stale by
+	# four before anyone noticed, and understating the blast radius is what makes
+	# someone read this as a local concern.
 	$rows = $script:FAILURES.ToArray()
 	[System.Array]::Sort($rows, [System.StringComparer]::Ordinal)
 	$n = $rows.Length

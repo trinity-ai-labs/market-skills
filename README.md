@@ -238,17 +238,20 @@ near-miss subject terms, duplicate sources, retracted notes still cited, and —
 after the item that needs it or two items competing for one constrained resource while the plan
 asserts they run side by side.
 
-**Nine further modes leave the note directories and read the documents**, because the disagreement
+**The other modes leave the note directories and read the documents**, because the disagreement
 worth catching before a render is between the ledger and the document somebody is about to hand
 over: citations that no longer resolve, sections a supersession put in doubt, panel lenses that
 wrote no objection row, the roadmap table against the milestone notes it was rendered from, the
 verdict on your target against the drivers stored under it, whether the monitoring plan names an
 axis with an instrument, a cadence and the decision it would change, the financial model's
 assumptions table against the notes that declare themselves inputs to it, every cited section
-against the content hash the claim recorded when it read it, and — the only mode that reads a
-rendered file rather than the vault — whether a deliverable carries a vault address out to a reader
-who has no vault. **`--release-gate` is all ten as one call**, which is what you run before a
-render.
+against the content hash the claim recorded when it read it, whether every `[F#]` and `[S#]` the
+prose cites resolves to a row in the index that assigns it, whether a research file's own local
+source row ever reached the global log, and — the only mode that reads a rendered file rather than
+the vault — whether a deliverable carries a vault address out to a reader who has no vault.
+**`--release-gate` runs every one of them as one call**, which is what you run before a render. The
+count is left out on purpose: a number here rots on the next mode anybody adds, and an enumeration
+that has gone stale reads exactly like one that is complete.
 
 Claude Code puts an enabled plugin's `bin/` on whichever shell tool the session has — a
 session with the Bash tool gets `vault-lint.sh` on that tool's `PATH`; a session with only
