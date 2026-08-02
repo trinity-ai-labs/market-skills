@@ -529,7 +529,14 @@ of the global log — a per-profile table of a hundred and fifty rows, cited wit
 the working half with it. So the exemption is **read from the log's own header** rather than keyed
 on a filename the script knows: a line before the log's first table row reading
 `Local ledger: research/<file>.md - why it stays local` exempts that file, with the path being what
-the mode reads and the reason being for whoever has to decide whether it still holds. A row
+the mode reads and the reason being for whoever has to decide whether it still holds. **It is
+header prose, so it parses as header prose:** a leading `-` or `*` bullet and markdown emphasis
+— `*`, `**`, `_` or `__` — around the label, the path or both are stripped before the line is read,
+so `- **Local ledger:** research/x.md - why` declares what the plain form does. Bold is the first
+thing an author reaches for in a header, and an exemption that silently did not apply is the mode
+reporting a hundred and fifty failures over a corpus that declared correctly — the false positive
+this whole exemption exists to prevent, arriving through the exemption itself. Emphasis *inside*
+the path is left alone, because there it is a filename character rather than a wrapper. A row
 carrying no URL is neither resolved nor failed — there is no key to match it on — and the success
 line counts those, so a table of unlinkable rows cannot read as a table that agreed. The failure
 kind is `source-unflattened` rather than `orphan-source`, which the bare check already reports for

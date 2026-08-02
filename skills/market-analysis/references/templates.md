@@ -293,7 +293,11 @@ them would bury the sources a plan actually cites.
 ```
 
 The path is what the lint reads and the reason is for whoever later has to decide whether it still
-holds. Declaring it is the escape; leaving the rows out silently is the failure.
+holds. Declaring it is the escape; leaving the rows out silently is the failure. Write it as a
+bullet or in bold if the header reads better that way — a leading `-` or `*`, and `*`, `**`, `_` or
+`__` around the label or the path, are stripped before the line is read, so
+`- **Local ledger:** research/company-profiles.md - …` declares what the plain form does. A marker
+*inside* the path is part of the filename and stays.
 
 Per-dimension `research/<dimension>.md` files follow the skeleton in `dimensions.md`, not this
 file.

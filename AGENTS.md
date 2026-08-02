@@ -605,6 +605,36 @@ a ledger differs per corpus and a hardcoded name is a rule that only fits the va
 against. A row carrying no URL is neither resolved nor failed and is counted in the success line
 instead, the same rule `--assumption-rows` learned about a half that walks an empty set.
 
+**Because it lives in a header, the declaration is read as HEADER PROSE, and any change to that
+read belongs here.** A leading `-` or `*` bullet and markdown emphasis — `*`, `**`, `_` or `__` —
+are stripped at each place a wrapper can sit: before the label, between the colon and the path,
+and after the path. Bold is the first thing an author reaches for in a markdown header, so the
+forms that failed were the likelier ones to be written, and they failed two separate ways with the
+same silence — a leading marker is neither a bullet nor the label, so the line was dropped before
+any parsing happened, and a marker around the path rode along in the token and resolved to no
+file. Both put a corpus that declared correctly on the wrong side of a mode whose whole survival
+rests on the exemption working, which is the false positive arriving through the mechanism built to
+prevent it. **The bullet strip runs FIRST and the order is load-bearing**: `*` is a bullet marker
+too, so stripping emphasis first eats the bullet of `* Local ledger: …` and leaves the space the
+label test then fails on. **The strip never reaches inside the path**, which is the boundary rather
+than an omission — an underscore is an emphasis marker and an ordinary filename character both, so
+a strip that removed it everywhere would turn `company_profiles.md` into a name no corpus holds and
+reproduce the failure under the fix written to stop it. The cost is a path whose own first or last
+character is a marker, which the documented `research/<file>.md` form cannot produce, and a path
+carrying a genuine `*` stays unresolvable rather than being repaired into some other file.
+
+**One more line of that same shape is unfixed, and it is named here so the next change to it finds
+this rule rather than rediscovering the incident.** `--red-team` matches its `## Lenses dispatched`
+roster heading through `key()`, which folds case and collapses whitespace runs and strips no
+emphasis at all — so a `red-team.md` whose heading reads `## **Lenses dispatched**` fails
+`red-team-no-roster` with a correct roster and matching objection rows sitting under it, which is
+the same false positive one document over: a corpus that dispatched a panel and rostered it is told
+no panel ran. It is a different code path — a heading matched structurally, not a `Label: value`
+sentence read out of prose — so the three positional strips above do not reach it and widening them
+would not fix it; `key()` is where it belongs. It is recorded rather than changed because the slice
+that found it owned `--unflattened-source` and a fix reaching into a mode it was not scoped to is
+how two modes end up sharing an untested edit.
+
 `--subject-orphan` is `coverage-gap` over the half of the vocabulary that rule cannot see, and the
 two **partition** `_vocab.yml` rather than overlapping on it. `coverage-gap` fires on a
 `required: true` subject with no claim under it; a subject optional in general is routinely
