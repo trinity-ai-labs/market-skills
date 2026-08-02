@@ -38,6 +38,7 @@ they may not omit.
 - [Locate the vault explicitly and never search upward](#locate-the-vault-explicitly-and-never-search-upward)
 - [schemaVersion refuses what it does not understand](#schemaversion-refuses-what-it-does-not-understand)
 - [The queries this schema exists to make trivial](#the-queries-this-schema-exists-to-make-trivial)
+- [A session invokes whichever script its shell tool can run](#a-session-invokes-whichever-script-its-shell-tool-can-run)
 - [A worked chain from source to decision](#a-worked-chain-from-source-to-decision)
 - [Writing a note: the six-step checklist](#writing-a-note-the-six-step-checklist)
 
@@ -1416,7 +1417,7 @@ carry:
 
 | rule | mode | what fires |
 |---|---|---|
-| nested populations carry the edge that orders them | `check` | a `market-size` subject holding two or more `current` population claims that no `nested_in` chain connects — either a real contradiction the collision query should have surfaced, or a missing edge. Reachability is transitive, so three rings are satisfied by two edges rather than by an edge on every pair |
+| nested populations carry the edge that orders them | `check` | `population-unnested` — a `market-size` subject holding two or more `current` population claims that no `nested_in` chain connects — either a real contradiction the collision query should have surfaced, or a missing edge. Reachability is transitive, so three rings are satisfied by two edges rather than by an edge on every pair |
 
 **Why that one costs a version and this release's other three fields do not** is the whole
 distinction the field exists to draw. `forecloses`, `foreclosed_on` and `reverses_if` fire on their

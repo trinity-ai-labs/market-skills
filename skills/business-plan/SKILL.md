@@ -148,6 +148,12 @@ and is never restated here.
     citation still resolves — and the render is the last moment before the section reaches a
     reader with no way to check it. Both are `schemaVersion` 3 rules, so a vault at 1 or 2 is told
     the rule was not applied rather than that its documents agree.
+    **The reasons above are not the gate's list, and reading them as one is the trap this
+    invariant otherwise sets** — the list is the sentence at the top of this invariant, composed
+    from the tool's own mode table. `--citation-codes`, `--unflattened-source` and
+    `--subject-orphan` are argued at Phase 5's quality bars, and `--foreclosed` at invariant 24;
+    each is as much a gate part as the nine walked through here, and a walkthrough that stops
+    where it stops reads exactly like one that covered everything.
     **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
     cites it, so the gate's second part would check an empty set there, and running the whole
     gate anyway teaches it as cadence-wide when it belongs to one phase.
