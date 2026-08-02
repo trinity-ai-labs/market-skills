@@ -221,7 +221,12 @@ the validation evidence so far and the tests running now.>
 
 ## Market {#market}
 <TAM/SAM/SOM imported with tags + formulas visible. SOM names the beachhead, the wedge, and
-the next 2–3 expansion segments — a SOM without a named beachhead is a red flag.>
+the next 2–3 expansion segments — a SOM without a named beachhead is a red flag. The three are
+one nested set, so every share figure here names which of them it is a share of, and the
+`market-size` claims behind them carry the `nested_in` chain that orders them
+([vault.md](vault.md#eight-edges-each-stored-once-on-the-asserting-note)). Unedged they read as
+three unrelated counts and the share silently lands on the innermost, which is the smallest
+denominator the corpus holds.>
 
 ## Competition & moat {#competition}
 <positioning map ref; per-threat one line + the wedge. Moat: which power is actually
