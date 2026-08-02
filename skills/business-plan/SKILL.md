@@ -87,8 +87,9 @@ and is never restated here.
     for which one a given session picks.) A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
     bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
-    `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and
-    `--claim-drift`, and exits
+    `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows`,
+    `--claim-drift`, `--citation-codes`, `--subject-orphan` and
+    `--unflattened-source`, and exits
     non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
@@ -1517,6 +1518,20 @@ three milestones, and where everything landed. Invite pushback on the specific b
   and never a strip filter — deleting a `~~…~~` span leaves the sentence after it correcting an
   antecedent the reader can no longer see.
 - Rendered deliverables verified page-by-page.
+- Every `[F#]` and `[S#]` the prose cites resolves to a row in the index that assigns it, and
+  `vault-lint.sh --citation-codes` reads it forward only — a code with no row fails, a row nothing
+  cites does not, because failing an unused row would push an author toward citing things to
+  silence a linter. **The check's success line states what it did not ask**, and so does this bar:
+  resolution says the address exists and never that it points at the source the sentence meant. A
+  research file carrying its own local `S` table can assign a number the global log assigns to
+  something else, and every one of those citations resolves.
+- Every row of a research file's own local source table is flattened into the root `sources.md`,
+  or that file's ledger is declared exempt in the log's header with the reason it stays local.
+  `vault-lint.sh --unflattened-source` fails a local row whose URL the log carries nowhere: the log
+  is what assigns a citable `[S#]`, so an unflattened source can be cited from research prose and
+  cannot be cited from a plan document at all — and a plan that cites its local number anyway lands
+  on whatever the log assigns that number to. A per-row ledger kept out of the log deliberately is
+  the declared case, not the failing one; the declaration is what makes it arguable.
 
 ## Common failure modes
 

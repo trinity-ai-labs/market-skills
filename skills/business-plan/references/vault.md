@@ -664,7 +664,9 @@ that bounds it: it names the sections a supersession put in doubt, so the read i
 rather than over every citation in the corpus.
 
 **Before a render, all of them are one call: `vault-lint.sh --release-gate`.** It runs the bare
-check, `--used-in`, the sweep, `--red-team`, `--roadmap-table` and `--binding-driver`, and exits
+check and every gate mode the tool holds — the enumeration lives in the tool's own mode table and
+its `--help`, so it is not restated here, where it would go quietly short the next time a mode is
+added — and exits
 non-zero unless every part passes. The separate modes are still there and are what you reach for
 mid-engagement — a citation question, a supersession question, a panel question, a roadmap question
 and a question about the verdict drivers and the evidence under them are different questions — but
@@ -1303,6 +1305,8 @@ obtained without spending a version:
 |---|---|---|
 | a supersession is written from both ends | `--supersession-sweep` | `superseded-by-unreciprocated` — `superseded_by` naming a note that does not list it in `supersedes`; and `superseded-by-dangling` — `superseded_by` naming an ID no note carries |
 | a model row stands on a live note | `--assumption-rows` | `model-row-dead-assumption` — a row whose every `title` match, `assumption` or `claim`, is at `status: superseded` or `retracted` |
+| a cited code resolves to a row | `--citation-codes` | `citation-code-no-source-row` — an `[S#]` with no row in `sources.md`; and `citation-code-no-fact-row` — an `[F#]` with no row in `research/founder-brief.md`. The two index files are excluded from the scan, because an index legitimately names a code it withdrew and left unused. Forward only: a row nothing cites is not a failure. A missing index reports a half that did not run |
+| a local source row reached the global log | `--unflattened-source` | `source-unflattened` — a `research/*.md` local `\| S<n> \|` row whose URL `sources.md` carries nowhere, unless that file's ledger is declared exempt by a `Local ledger: <path> - <why>` line in the log's header |
 
 **`model-row-dead-assumption` and `model-row-no-assumption` are named narrower than the rule they
 now read, and the names stay.** Both cover a `claim` carrying the row's title as well as an
