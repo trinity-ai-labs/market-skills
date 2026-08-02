@@ -1517,6 +1517,16 @@ three milestones, and where everything landed. Invite pushback on the specific b
   and never a strip filter — deleting a `~~…~~` span leaves the sentence after it correcting an
   antecedent the reader can no longer see.
 - Rendered deliverables verified page-by-page.
+- Every subject the plan reasons *from* has a note filed under it, not just every subject marked
+  `required: true` — and `vault-lint.sh --subject-orphan` fails a vocabulary term with no `claim`
+  and no `assumption` under it that any document in the vault names, under its key or under one of
+  its aliases. The required-subject bar above covers the spine every plan owes; this covers the
+  dependence a *particular* plan invents, which is the half nothing could see. A subject with no
+  note cannot collide with a contradiction, cannot go stale, cannot be superseded and cannot be
+  challenged, so every query the ledger supports returns clean over it and the document leaning on
+  it is the only place the position exists. Nothing gates this on `schemaVersion`, because it reads
+  no field a vault written before it lacks: a corpus that already carries the gap goes red on the
+  upgrade, which is what the check is for.
 
 ## Common failure modes
 

@@ -272,8 +272,10 @@ cadence and the decision each would change, `--deliverable` for whether the rend
 `deliverables/*.html` carries a vault address out to a reader who has no vault,
 `--assumption-rows` for whether the model's assumptions table and the notes that
 declare themselves inputs to it are the same set, `--claim-drift` for whether a cited section
-still carries what it carried when the claim recorded reading it, `--release-gate` for the ten
-parts the composite paragraph below enumerates run as one call — not ten of these, since
+still carries what it carried when the claim recorded reading it, `--subject-orphan` for a
+vocabulary subject the corpus reasons about and has never filed a note under,
+`--release-gate` for the eleven
+parts the composite paragraph below enumerates run as one call — not eleven of these, since
 `--unverified` is not a gate part and the bare `check` is not in this list, which is the
 enumeration trap sitting inside the sentence that warns about it — and
 `graph <ID>` for one note's neighbourhood. This sentence is
@@ -297,7 +299,7 @@ to one script's table and not its twin's.
 
 `--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
 `--supersession-sweep`, `--red-team`, `--roadmap-table`, `--binding-driver`, `--monitoring`,
-`--deliverable`, `--assumption-rows` and `--claim-drift` as separate
+`--deliverable`, `--assumption-rows`, `--claim-drift` and `--subject-orphan` as separate
 invocations of the script and exits with the
 **worst** status any part returned, so a refusal (2) is never reported as a failed check (1). It
 exists because the render gate was several calls made from memory — which of them ran was a
@@ -556,6 +558,28 @@ and pasting it is the assertion that the read happened exactly as stamping a dat
 `current` `claim` and `assumption` notes and only entries whose `#anchor` resolves — a dead anchor is
 `--used-in`'s verdict, and reporting it twice under a name about reconciliation sends its reader to the
 wrong fix. Gated on `schemaVersion` 3.
+
+`--subject-orphan` is `coverage-gap` over the half of the vocabulary that rule cannot see, and the
+two **partition** `_vocab.yml` rather than overlapping on it. `coverage-gap` fires on a
+`required: true` subject with no claim under it; a subject optional in general is routinely
+load-bearing in one plan, and there nothing notices that the documents argue from it and no note
+was ever written. **A subject with no note cannot collide, cannot go stale, cannot be superseded
+and cannot be challenged** — every query the ledger supports returns clean over it, because there
+is nothing filed to return, and silent in every direction is what makes it a different failure from
+an ordinary coverage gap. Three properties belong in any change to it. **The MENTION is the whole
+trigger** — the term or one of its `aliases` on a line of a markdown document under the vault that
+is not a `subject:` line — because without it this is `coverage-gap` over every optional term,
+which fails a vault for declaring a vocabulary richer than the position it took. **A mention is
+matched on TOKEN BOUNDARIES, never as a substring**: both sides are cut into lowercase alphanumeric
+tokens and the candidate has to appear as a consecutive run, so `price` matches `Price` and never
+`priceless` — a substring rule fires on ordinary prose, which is `--roadmap-table`'s crying-wolf
+shape one mode over. And **the message is a diagnosis rather than a verdict** — the subject, the
+document, the line number, the line, and which note to write — because this is the one check gated
+on nothing that can turn a finished corpus red on the version that adds it. That is deliberate: a
+corpus reasoning about a subject it has never filed is the state the mode exists to surface, and a
+vacuous pass is worse than a red gate. Nothing is gated because there is nothing to gate on — it
+reads no field a corpus written before it lacks — which is the exemption `schemaVersion` buys,
+here declined rather than obtained cheaply.
 
 **The two subjects trigger differently, and the asymmetry is the design rather than an
 inconsistency.** `target-verdict` is a term 1.12.0 introduces, so no existing corpus carries it and

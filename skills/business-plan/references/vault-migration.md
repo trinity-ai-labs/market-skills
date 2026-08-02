@@ -808,12 +808,17 @@ vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 **Before the first render — not here — the first and third of those are part of one call.**
 `vault-lint.sh --release-gate` runs the bare check, `--used-in`, the sweep, `--red-team`,
 `--roadmap-table`, `--binding-driver`, `--monitoring`, `--deliverable`,
-`--assumption-rows` and `--claim-drift`
+`--assumption-rows`, `--claim-drift` and `--subject-orphan`
 together and exits
 non-zero unless every part passes, which is what the render gate is held to. It is deliberately
-not the migration's acceptance test: `coverage-gap` and `orphan-source` legitimately survive a
+not the migration's acceptance test: `coverage-gap`, `orphan-source` and `subject-orphan`
+legitimately survive a
 finished migration, so the gate exits 1 over a corpus that is done, and the census above is the
-thing that tells you it is. Reaching for the gate here would make a finished migration look
+thing that tells you it is. All three are findings about the corpus rather than about the schema —
+a required subject with no claim, research nothing rests on, and a subject the documents reason
+from that no note was ever filed under. None of them is back-fill, none is cleared by a version,
+and `--subject-orphan` is the one mode in the tool gated on no `schemaVersion` at all, so it can
+report against a corpus at 1 exactly as it does against one at 3. Reaching for the gate here would make a finished migration look
 unfinished, and a red that is expected is a red nobody reads.
 
 The census proves the corpus is well-formed. The `graph` spot-check on two or three of the
@@ -867,8 +872,8 @@ already requires.
    vault-lint.sh --release-gate --vault "$VAULT_PATH"
    ```
 
-   Everything it reports beyond the two that legitimately survive any finished migration
-   (`coverage-gap`, `orphan-source`) is upgrade work. The milestone rules fire only on notes you
+   Everything it reports beyond the three that legitimately survive any finished migration
+   (`coverage-gap`, `orphan-source`, `subject-orphan`) is upgrade work. The milestone rules fire only on notes you
    wrote in stage 5. Two more reach back into a corpus that already exists, and both are back-fill
    rather than repair:
 

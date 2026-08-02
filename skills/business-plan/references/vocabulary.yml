@@ -46,7 +46,30 @@
 #     done
 #
 # A spine with twelve gaps then announces itself instead of being inherited in silence by
-# every document downstream of it.
+# every document downstream of it. `vault-lint.sh` runs that query as `coverage-gap` in the
+# bare check, so nobody has to remember the loop.
+#
+# `required: true` IS NOT THE WHOLE OF COVERAGE, and reading it as such is what left the
+# other half silent for a release. A subject optional in general is routinely load-bearing
+# in ONE plan: that plan argues from it, this file declares it, and no note is ever written
+# — and `coverage-gap` cannot see it, because the flag says no plan owes this subject a
+# position rather than that no plan ever takes one. What an unfiled subject costs is the
+# same either way. It cannot collide with a claim that contradicts it, cannot go stale,
+# cannot be superseded and cannot be challenged, so every query the ledger supports returns
+# clean over it and the document leaning on it is the only place the position exists.
+# `vault-lint.sh --subject-orphan` is the other half: it fires on a term with no `claim` and
+# no `assumption` under it that any document in the vault NAMES — under its key or under one
+# of the `aliases` below, which is half of why aliases are worth writing down. The mention
+# is what separates a subject nobody needs from one the corpus is reasoning about, so a
+# vocabulary richer than the position a plan took stays clean and costs nothing.
+#
+# WHICH MAKES THE ALIAS LIST A SENSITIVITY DIAL, and it is worth knowing which way you are
+# turning it. A one-word alias is a broad one: `power` under `defensibility` matches any
+# sentence carrying the word, and `trial` under `free-tier` matches a clinical one. The lint
+# does not second-guess the list — a mode that decided which of a vault's aliases to believe
+# would be reasoning about the vocabulary instead of reading it — so a mention that means
+# something else in THIS corpus is repaired by dropping that alias from the vault's own
+# `_vocab.yml`, which is what a per-engagement copy of this file is for.
 #
 # ---------------------------------------------------------------------------------------
 # 2. The two calibration risks

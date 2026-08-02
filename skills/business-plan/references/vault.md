@@ -1304,6 +1304,17 @@ obtained without spending a version:
 | a supersession is written from both ends | `--supersession-sweep` | `superseded-by-unreciprocated` — `superseded_by` naming a note that does not list it in `supersedes`; and `superseded-by-dangling` — `superseded_by` naming an ID no note carries |
 | a model row stands on a live note | `--assumption-rows` | `model-row-dead-assumption` — a row whose every `title` match, `assumption` or `claim`, is at `status: superseded` or `retracted` |
 
+**`--subject-orphan` is ungated for a different reason, and it is the one rule here that CAN turn
+an existing corpus red.** Everything in the table above is exempt by construction: the field it
+reads is one no older vault carries, so the exemption a version buys is obtained without spending
+one. This mode reads no new field at all — a vocabulary term, the `subject` on a `claim` or an
+`assumption`, and the words in the documents — so there is nothing to gate it on, and a vault that
+already reasons about a subject it never filed goes red on the upgrade that adds it. That is the
+intent rather than a cost: a corpus arguing from a position the ledger has never held is exactly
+the state the mode exists to surface, and a vacuous pass is worse than a red gate. What it owes in
+exchange is a message that is a diagnosis — the subject, the document, the line the corpus leans on
+it from, and which note to write — because a red gate that is only a verdict is a support request.
+
 **`model-row-dead-assumption` and `model-row-no-assumption` are named narrower than the rule they
 now read, and the names stay.** Both cover a `claim` carrying the row's title as well as an
 `assumption`, because what backs a row is `status` rather than which asserting set holds the note.
