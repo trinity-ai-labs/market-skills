@@ -154,6 +154,13 @@
 #      leans on the subject, and which note to write - because the mode ships
 #      failing rather than gated, and it is not gated on schemaVersion at either
 #      end.
+#  27. --foreclosed reports a live note that takes an option off the table and
+#      never says what would put it back, reads the `assumption` half of the
+#      pair as well as the `claim` half, and stays silent over a foreclosure the
+#      ledger has retired and over one that declares its reversal condition. The
+#      listing is asserted on the passing side, because the mode is a report as
+#      much as a verdict and a success line that named nothing would say the
+#      corpus forecloses nothing.
 
 set -u
 
@@ -186,7 +193,7 @@ driver-kind-unknown verdict-fields-incomplete"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift --citation-codes --unflattened-source --subject-orphan graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift --citation-codes --unflattened-source --subject-orphan --foreclosed graph"
 
 PASS=0
 FAIL=0
@@ -1108,7 +1115,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash' '--citation-codes: citation codes against their index rows' '--unflattened-source: local source rows against the global log' '--subject-orphan: unfiled subjects the corpus reasons about'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash' '--citation-codes: citation codes against their index rows' '--unflattened-source: local source rows against the global log' '--subject-orphan: unfiled subjects the corpus reasons about' '--foreclosed: foreclosed options and what would reverse them'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -2804,6 +2811,90 @@ SO_NOVOCAB=$("$LINT" --subject-orphan --vault "$HERE/no-vocab" 2>&1)
 case "$SO_NOVOCAB" in
 *'no _vocab.yml under'*) ok "a vault with no vocabulary is told no subject was asked after" ;;
 *) no "--subject-orphan reported a verdict over a vault with no vocabulary (got: $SO_NOVOCAB)" ;;
+esac
+
+# --- 27. foreclosures, and the condition that would reverse one ---------------
+# Every other adversarial guard in this method fires on a plan claiming too
+# much. A note asserting an option is NOT viable claims too little, removes work
+# from the roadmap, and is attacked by nothing - so what is asserted here is the
+# whole of what a check can reach: that the conclusion states the input value
+# which would put the option back.
+printf '\nforeclosed options\n'
+
+FC_OUT=$("$LINT" --foreclosed --vault "$HERE/foreclosed-no-reverse" --json 2>/dev/null)
+FC_STATUS=$(run_status "$HERE/foreclosed-no-reverse" --foreclosed)
+[ "$FC_STATUS" = "1" ] && ok "--foreclosed exits 1 on a foreclosure with no reversal condition" ||
+	no "--foreclosed should exit 1 over foreclosed-no-reverse (got $FC_STATUS)"
+
+# EXACTLY TWO, and which two is the whole assertion. Three of the four notes in
+# that vault carry `forecloses`; the one that also carries `reverses_if` and the
+# one the ledger has retired are the two that must not appear, and a count alone
+# would pass a mode that reported the wrong pair.
+case "$FC_OUT" in
+*'"failure_count": 2'*) ok "--foreclosed reports exactly the two foreclosures with no reversal condition" ;;
+*) no "--foreclosed did not report exactly two failures over foreclosed-no-reverse (got: $FC_OUT)" ;;
+esac
+
+case "$FC_OUT" in
+*'"check": "foreclosure-no-reverse"'*'"id": "CLAIM-FC11AA01"'*) ok "a claim that forecloses with no reverses_if is reported" ;;
+*) no "--foreclosed did not report CLAIM-FC11AA01 (got: $FC_OUT)" ;;
+esac
+
+# BOTH TYPES THAT FILE A POSITION ARE READ. Reading `claim` alone would make
+# filing the foreclosure as an `assumption` the cheapest way past this rule, and
+# a dodge available by omission is not an exemption.
+case "$FC_OUT" in
+*'"id": "ASSUMPTION-FC12BB02"'*) ok "an assumption that forecloses is held to the same bar as a claim" ;;
+*) no "--foreclosed read only claims and missed the assumption half (got: $FC_OUT)" ;;
+esac
+
+case "$FC_OUT" in
+*CLAIM-FC13CC03*) no "--foreclosed reported the foreclosure that declares its reversal condition (got: $FC_OUT)" ;;
+*) ok "a foreclosure declaring reverses_if is silent" ;;
+esac
+
+case "$FC_OUT" in
+*CLAIM-FC14DD04*) no "--foreclosed reported a superseded foreclosure (got: $FC_OUT)" ;;
+*) ok "a foreclosure the ledger has retired owes no reversal condition" ;;
+esac
+
+# The message is the repair, not the verdict: the field to write, and the
+# section a reader has to go and argue the conclusion in.
+case "$FC_OUT" in
+*'the value of `foreclosed_on` that would put the option back on the table'*) ok "the failure says which field to write" ;;
+*) no "--foreclosed did not name the repair (got: $FC_OUT)" ;;
+esac
+case "$FC_OUT" in
+*'Cited into: business-plan.md#pricing'*) ok "the failure names the section the foreclosure reached" ;;
+*) no "--foreclosed did not name where the foreclosure was cited (got: $FC_OUT)" ;;
+esac
+
+# THE PASSING SIDE IS A LISTING, not a bare pass. This mode feeds the panel as
+# well as the gate, so a success line that named nothing would report a corpus
+# taking two options off the table exactly like one taking none.
+FC_OK=$("$LINT" --foreclosed --vault "$HERE/foreclosed-declared" 2>&1)
+FC_OK_STATUS=$(run_status "$HERE/foreclosed-declared" --foreclosed)
+[ "$FC_OK_STATUS" = "0" ] && ok "--foreclosed exits 0 when every foreclosure declares its reversal condition" ||
+	no "--foreclosed should exit 0 over foreclosed-declared (got $FC_OK_STATUS)"
+case "$FC_OK" in
+*'CLAIM-FD21AA01 forecloses the single-seat configuration (business-plan.md#pricing)'*)
+	ok "the passing line lists each foreclosure with the section its used_in names" ;;
+*) no "--foreclosed did not list the foreclosures it passed (got: $FC_OK)" ;;
+esac
+case "$FC_OK" in
+*'(business-plan.md#market, one-pager.md)'*) ok "a foreclosure cited twice lists both sections" ;;
+*) no "--foreclosed listed only one of two used_in entries (got: $FC_OK)" ;;
+esac
+
+# A vault where nothing forecloses is told which half did not run, never that
+# its conclusions agree - the rule every success line in this tool is held to.
+FC_CLEAN=$("$LINT" --foreclosed --vault "$HERE/clean" 2>&1)
+FC_CLEAN_STATUS=$(run_status "$HERE/clean" --foreclosed)
+[ "$FC_CLEAN_STATUS" = "0" ] && ok "--foreclosed passes the clean vault" ||
+	no "--foreclosed should pass the clean vault (got $FC_CLEAN_STATUS)"
+case "$FC_CLEAN" in
+*'nothing in this corpus takes an option off the table'*) ok "a corpus foreclosing nothing is told so rather than reported clean" ;;
+*) no "--foreclosed did not name the half that had nothing to run over (got: $FC_CLEAN)" ;;
 esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"

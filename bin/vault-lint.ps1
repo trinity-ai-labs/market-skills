@@ -1116,6 +1116,50 @@ vault-lint.sh - read-only checks over a claim vault.
       reasoning about a subject it has never filed is exactly the state the
       mode exists to surface, and a vacuous pass is worse than a red gate.
 
+  vault-lint.sh --foreclosed [--vault PATH] [--json]
+      List every live note that takes an option off the table, with the
+      section its used_in names, and fail one that never says what would put
+      the option back. A verdict - it exits 1 on its one failure.
+
+      A note asserting that an option is not viable removes work from the
+      roadmap, kills a segment, or takes a configuration off the table. It is
+      the highest-consequence class of assertion in a plan and the only one
+      nothing attacks: all three panel lenses ask whether the plan can deliver
+      what it promises, and none asks whether it wrongly concluded it could
+      not. The failure is silent BY CONSTRUCTION - the option is gone, so
+      nothing downstream references it, so no other check has a target to fire
+      on, and the conclusion is read as settled ground by the founder, by the
+      panel and by whoever acts on the plan.
+
+      foreclosure-no-reverse: a `current` note carrying `forecloses` and no
+      `reverses_if`. The same shape as an `assumption` carrying no
+      `validated_by`, one field over - the assumption owes the step that would
+      settle it, and the foreclosure owes the value of `foreclosed_on` that
+      would put the option back on the table. Without it the conclusion is
+      permanent, and nothing in the corpus records what it was conditional on.
+
+      IT READS BOTH TYPES THAT FILE A POSITION, `claim` and `assumption` - the
+      closed pair --subject-orphan states at its own predicate. A `source` or
+      a `fact` is provenance a position rests on, and a `milestone`, `question`
+      or `decision` takes nothing off the table. Reading `claim` alone would
+      make filing the foreclosure as an assumption the cheapest way past this
+      rule, and a dodge available by omission is not an exemption.
+
+      IT READS `status`, AND A RETIRED FORECLOSURE OWES NOTHING. A `superseded`
+      or `retracted` note has already been taken back, so demanding a reversal
+      condition of it names a repair on a corpse - the supersession IS the
+      repair, and --supersession-sweep is what reports the sections it put in
+      doubt.
+
+      NOT gated on schemaVersion, and it does not need to be: the trigger is
+      the PRESENCE of `forecloses`, so a corpus that never wrote the field
+      cannot owe anything here. That is the exemption a version buys, obtained
+      without spending one - the terms `superseded_by`'s two rules are on.
+
+      A vault where nothing forecloses is reported as a mode with nothing to
+      run over rather than as agreement, the convention --citation-codes and
+      --unflattened-source use for a half that did not run.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -1194,6 +1238,7 @@ check                gate  note-level checks
 --citation-codes     gate  citation codes against their index rows
 --unflattened-source gate  local source rows against the global log
 --subject-orphan     gate  unfiled subjects the corpus reasons about
+--foreclosed         gate  foreclosed options and what would reverse them
 '@
 
 # The table's rows as records - the shape `while read -r sel gate part` gives
@@ -1250,7 +1295,8 @@ function Get-ModeForFlag {
 #  13. Invoke-ModeCitationCodes      citation-codes
 #  14. Invoke-ModeUnflattenedSource  unflattened-source
 #  15. Invoke-ModeSubjectOrphan      subject-orphan
-#  16. Invoke-ModeCheck              check
+#  16. Invoke-ModeForeclosed         foreclosed
+#  17. Invoke-ModeCheck              check
 #
 # THIS LAYOUT IS A CONTRACT SIX SEPARATE BRANCHES BUILD AGAINST. Each of them
 # replaces exactly one function body below and touches nothing else in this
@@ -5077,7 +5123,138 @@ function Invoke-ModeSubjectOrphan {
 }
 
 # --------------------------------------------------------------------------
-# 16. check - pass 3, the note-level checks
+# 16. --foreclosed - the assertions that take an option off the table
+#
+# Ports the --foreclosed body of bin/vault-lint.sh, whose header comment carries
+# the reasoning: why a foreclosure is the one class of assertion nothing in this
+# method attacks, why the verdict mirrors `validated_by` one field over, why
+# both types that file a position are read, why a retired foreclosure owes
+# nothing, and why nothing gates it on schemaVersion. Every failure string and
+# every success line is transcribed character for character from the awk
+# program.
+#
+# THE HELPERS BELOW ARE LOCAL TO THIS BODY, per the stub seam.
+# --------------------------------------------------------------------------
+function Invoke-ModeForeclosed {
+	$SUB = [string][char]28
+
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$v = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$li = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' ([System.StringComparer]::Ordinal)
+
+	foreach ($rec in $script:RECORDS) {
+		$p = $rec.Split([char]9)
+		if ($p[0] -ceq 'N') { [void]$files.Add($p[1]); continue }
+		if ($p[0] -ceq 'S') { $v[$p[1] + $SUB + $p[2]] = $p[3]; continue }
+		if ($p[0] -ceq 'L') {
+			$kk = $p[1] + $SUB + $p[2]
+			$list = $null
+			if (-not $li.TryGetValue($kk, [ref]$list)) {
+				$list = New-Object 'System.Collections.Generic.List[string]'
+				$li[$kk] = $list
+			}
+			[void]$list.Add($p[3])
+			continue
+		}
+	}
+
+	# `V[f, k]` in awk is the empty string when the key was never set.
+	function Get-ForeclosedValue {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUB + $K
+		if ($v.ContainsKey($kk)) { return $v[$kk] }
+		return ''
+	}
+
+	# The block-list items under a key, an empty list when it carries none. The
+	# leading comma stops PowerShell unwrapping a one-item list into a bare
+	# string, which would make the caller's foreach walk that string's
+	# characters.
+	function Get-ForeclosedList {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUB + $K
+		if ($li.ContainsKey($kk)) { return , $li[$kk] }
+		return , (New-Object 'System.Collections.Generic.List[string]')
+	}
+
+	# The same present() Invoke-ModeCheck and Invoke-ModeBindingDriver use, and
+	# copied verbatim rather than written as a bare emptiness test for their
+	# reason: all three implement the same trigger, and a field authored as a
+	# one-item block list is present to one test and absent to the other. Here
+	# that divergence would exempt a note from the reversal condition purely by
+	# how the field was formatted. Three copies now - Test-CheckPresent,
+	# Test-BdPresent and this one. Change one, change all three.
+	function Test-ForeclosedPresent {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUB + $K
+		if ($v.ContainsKey($kk) -and $v[$kk].Length -ne 0) { return $true }
+		if ($li.ContainsKey($kk) -and $li[$kk].Count -gt 0) { return $true }
+		return $false
+	}
+
+	# textof() - the same field as text, for the message. Scalar where there is
+	# one, otherwise the block-list items joined, so a value the trigger can see
+	# is a value the message can print.
+	function Get-ForeclosedText {
+		param([string]$F, [string]$K)
+		$scalar = Get-ForeclosedValue $F $K
+		if ($scalar.Length -ne 0) { return $scalar }
+		return ((Get-ForeclosedList $F $K) -join ', ')
+	}
+
+	# cited() - the document sections a note reached, which is where a
+	# foreclosure has to be argued with. A note carrying none is reported as such
+	# rather than skipped.
+	function Get-ForeclosedCited {
+		param([string]$F)
+		$entries = Get-ForeclosedList $F 'used_in'
+		if ($entries.Count -eq 0) { return 'no used_in entry' }
+		return ($entries -join ', ')
+	}
+
+	$nfc = 0
+	$listed = ''
+
+	foreach ($f in $files) {
+		$id = Get-ForeclosedValue $f 'id'
+		$ty = Get-ForeclosedValue $f 'type'
+		if ($id.Length -eq 0) { continue }
+		if ($ty -cne 'claim' -and $ty -cne 'assumption') { continue }
+		if ((Get-ForeclosedValue $f 'status') -cne 'current') { continue }
+		if (-not (Test-ForeclosedPresent $f 'forecloses')) { continue }
+
+		# Read once and used by both the listing and the failure, because
+		# Get-ForeclosedCited walks the whole used_in list to build its string
+		# and calling it twice for one note walks it twice.
+		$what = Get-ForeclosedText $f 'forecloses'
+		$where = Get-ForeclosedCited $f
+		$nfc++
+		if ($nfc -ne 1) { $listed = $listed + '; ' }
+		$listed = $listed + $id + ' forecloses ' + $what + ' (' + $where + ')'
+
+		if (Test-ForeclosedPresent $f 'reverses_if') { continue }
+		$detail = '`forecloses` names ' + $what + ' and the note carries no `reverses_if`. Taking an option off the table removes work from the roadmap, kills a segment or rules out a configuration, and it is the one class of assertion nothing in this method attacks - every panel lens asks whether the plan can deliver what it promises and none asks whether it wrongly concluded it could not. With no reversal condition the conclusion is permanent and the corpus records nothing it was conditional on, which is unfalsifiable rather than settled: the option is gone, so nothing downstream references it and no other check has a target to fire on. State `reverses_if` - the value of `foreclosed_on` that would put the option back on the table - the way an `assumption` states `validated_by`. Cited into: ' + $where
+		[void]$script:FAILURES.Add($f + "`tforeclosure-no-reverse`t" + $id + "`t" + $detail)
+	}
+
+	# Which half ran, not what it would have concluded. A vault where nothing
+	# forecloses has no population here, and a line reading as a pass over it
+	# would report agreement about a question this mode never got to ask.
+	if ($nfc -eq 0) {
+		$okLine = 'no `current` claim or assumption under ' + $script:VAULT + ' carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition'
+	} else {
+		$notePlural = 's'
+		$takePlural = ''
+		if ($nfc -eq 1) { $notePlural = ''; $takePlural = 's' }
+		$okLine = [string]$nfc + ' `current` note' + $notePlural + ' take' + $takePlural +
+			' an option off the table and every one of them declares what would put it back: ' + $listed + ' - ' + $script:VAULT
+	}
+
+	exit (Render-Failures 'vault-lint foreclosed' $okLine)
+}
+
+# --------------------------------------------------------------------------
+# 17. check - pass 3, the note-level checks
 #
 # Ports bin/vault-lint.sh:3003-3629. The largest body in the file, gated on
 # schemaVersion throughout, and the mode a bare invocation runs.
@@ -6846,4 +7023,5 @@ if ($MODE -ceq 'claim-drift') { Invoke-ModeClaimDrift }
 if ($MODE -ceq 'citation-codes') { Invoke-ModeCitationCodes }
 if ($MODE -ceq 'unflattened-source') { Invoke-ModeUnflattenedSource }
 if ($MODE -ceq 'subject-orphan') { Invoke-ModeSubjectOrphan }
+if ($MODE -ceq 'foreclosed') { Invoke-ModeForeclosed }
 Invoke-ModeCheck

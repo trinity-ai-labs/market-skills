@@ -681,6 +681,50 @@ vault-lint.sh - read-only checks over a claim vault.
       reasoning about a subject it has never filed is exactly the state the
       mode exists to surface, and a vacuous pass is worse than a red gate.
 
+  vault-lint.sh --foreclosed [--vault PATH] [--json]
+      List every live note that takes an option off the table, with the
+      section its used_in names, and fail one that never says what would put
+      the option back. A verdict - it exits 1 on its one failure.
+
+      A note asserting that an option is not viable removes work from the
+      roadmap, kills a segment, or takes a configuration off the table. It is
+      the highest-consequence class of assertion in a plan and the only one
+      nothing attacks: all three panel lenses ask whether the plan can deliver
+      what it promises, and none asks whether it wrongly concluded it could
+      not. The failure is silent BY CONSTRUCTION - the option is gone, so
+      nothing downstream references it, so no other check has a target to fire
+      on, and the conclusion is read as settled ground by the founder, by the
+      panel and by whoever acts on the plan.
+
+      foreclosure-no-reverse: a `current` note carrying `forecloses` and no
+      `reverses_if`. The same shape as an `assumption` carrying no
+      `validated_by`, one field over - the assumption owes the step that would
+      settle it, and the foreclosure owes the value of `foreclosed_on` that
+      would put the option back on the table. Without it the conclusion is
+      permanent, and nothing in the corpus records what it was conditional on.
+
+      IT READS BOTH TYPES THAT FILE A POSITION, `claim` and `assumption` - the
+      closed pair --subject-orphan states at its own predicate. A `source` or
+      a `fact` is provenance a position rests on, and a `milestone`, `question`
+      or `decision` takes nothing off the table. Reading `claim` alone would
+      make filing the foreclosure as an assumption the cheapest way past this
+      rule, and a dodge available by omission is not an exemption.
+
+      IT READS `status`, AND A RETIRED FORECLOSURE OWES NOTHING. A `superseded`
+      or `retracted` note has already been taken back, so demanding a reversal
+      condition of it names a repair on a corpse - the supersession IS the
+      repair, and --supersession-sweep is what reports the sections it put in
+      doubt.
+
+      NOT gated on schemaVersion, and it does not need to be: the trigger is
+      the PRESENCE of `forecloses`, so a corpus that never wrote the field
+      cannot owe anything here. That is the exemption a version buys, obtained
+      without spending one - the terms `superseded_by`'s two rules are on.
+
+      A vault where nothing forecloses is reported as a mode with nothing to
+      run over rather than as agreement, the convention --citation-codes and
+      --unflattened-source use for a half that did not run.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -755,6 +799,7 @@ check                gate  note-level checks
 --citation-codes     gate  citation codes against their index rows
 --unflattened-source gate  local source rows against the global log
 --subject-orphan     gate  unfiled subjects the corpus reasons about
+--foreclosed         gate  foreclosed options and what would reverse them
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -5478,6 +5523,127 @@ if [ "$MODE" = "subject-orphan" ]; then
 		' "$RECORDS")
 
 	render_failures "vault-lint subject-orphan" "$SO_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --foreclosed - the assertions that take an option off the table
+#
+# Every other adversarial mechanism in this method fires on a plan claiming too
+# much. A note asserting that an option is NOT viable claims too little, and it
+# is the most expensive assertion in the corpus: it removes work from the
+# roadmap, kills a segment, or takes a configuration off the table. All three
+# panel lenses are pointed at whether the plan can deliver what it promises and
+# none at whether it wrongly concluded it could not, so nothing attacks it.
+#
+# THE FAILURE IS SILENT BY CONSTRUCTION, which is what separates this from
+# every check that reads an edge. The option is gone, so nothing downstream
+# references it, so no query has a target: the foreclosure cannot dangle,
+# cannot go stale in a way anybody notices, and cannot collide with the work it
+# cancelled, because that work was never written down. What the corpus can be
+# held to is the CONDITION - the input value that would put the option back -
+# and that is the whole of this mode.
+#
+# THE VERDICT MIRRORS `validated_by` ONE FIELD OVER. An assumption owes the step
+# that would settle it; a foreclosure owes the value of `foreclosed_on` that
+# would reverse it. Both are assertions somebody has to write down, both are
+# checkable, and neither is evidence the thinking was done - what they remove is
+# skipping it by DEFAULT, which is what a foreclosure held to nothing had been.
+#
+# BOTH TYPES THAT FILE A POSITION ARE READ, `claim` and `assumption`, the closed
+# pair --subject-orphan states at its own predicate and for its reason. Reading
+# `claim` alone would make filing the foreclosure as an assumption the cheapest
+# way past this rule, and a dodge available by omission is not an exemption.
+#
+# `status` IS READ AND A RETIRED FORECLOSURE OWES NOTHING - the live predicate
+# --assumption-rows learned. A `superseded` or `retracted` note has already been
+# taken back, so demanding a reversal condition of it names a repair on a note
+# the ledger has retired.
+#
+# NOT gated on schemaVersion, and it does not need to be: the trigger is the
+# PRESENCE of `forecloses`, so a corpus that never wrote the field cannot owe
+# anything here. That is the exemption a version buys, obtained without spending
+# one, on the terms `superseded_by`'s two rules are on.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "foreclosed" ]; then
+	FC_OK=$(awk -v out="$FAILURES" -v vault="$VAULT" -F '\t' '
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+			$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# The same present() the checks pass and --binding-driver use, and
+			# copied verbatim rather than written as `V[f, k] != ""` for their
+			# reason: all three programs implement the same trigger, and a field
+			# authored as a one-item block list is present to one test and absent
+			# to the other. Here that divergence would exempt a note from the
+			# reversal condition purely by how the field was formatted. Three
+			# copies now - the checks pass, --binding-driver and this one. Change
+			# one, change all three.
+			function present(f, k) { return (V[f, k] != "" || LN[f SUBSEP k] > 0) }
+
+			# The same field as TEXT, for the message. Scalar where there is one,
+			# otherwise the block-list items joined - so a value the trigger can
+			# see is a value the message can print, and the two cannot disagree
+			# about whether the field is there.
+			function textof(f, k,   kk, i, o) {
+				if (V[f, k] != "") return V[f, k]
+				kk = f SUBSEP k
+				o = ""
+				for (i = 1; i <= LN[kk]; i++) o = o (i == 1 ? "" : ", ") LI[kk, i]
+				return o
+			}
+
+			# The document sections a note reached, which is where a foreclosure
+			# has to be argued with. A note carrying none is reported as such
+			# rather than skipped: a conclusion that took an option off the table
+			# and reached no document is a decision nothing renders.
+			function cited(f,   kk, i, o) {
+				kk = f SUBSEP "used_in"
+				if (LN[kk] == 0) return "no used_in entry"
+				o = ""
+				for (i = 1; i <= LN[kk]; i++) o = o (i == 1 ? "" : ", ") LI[kk, i]
+				return o
+			}
+
+			END {
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					id = V[f, "id"]
+					ty = V[f, "type"]
+					if (id == "") continue
+					if (ty != "claim" && ty != "assumption") continue
+					if (V[f, "status"] != "current") continue
+					if (!present(f, "forecloses")) continue
+
+					# Read once and used by both the listing and the failure,
+					# because cited() walks the whole used_in list to build its
+					# string and calling it twice for one note walks it twice.
+					what = textof(f, "forecloses")
+					where = cited(f)
+
+					nfc++
+					listed = listed (nfc == 1 ? "" : "; ") id " forecloses " what " (" where ")"
+
+					if (present(f, "reverses_if")) continue
+					report(f, "foreclosure-no-reverse", id, "`forecloses` names " what " and the note carries no `reverses_if`. Taking an option off the table removes work from the roadmap, kills a segment or rules out a configuration, and it is the one class of assertion nothing in this method attacks - every panel lens asks whether the plan can deliver what it promises and none asks whether it wrongly concluded it could not. With no reversal condition the conclusion is permanent and the corpus records nothing it was conditional on, which is unfalsifiable rather than settled: the option is gone, so nothing downstream references it and no other check has a target to fire on. State `reverses_if` - the value of `foreclosed_on` that would put the option back on the table - the way an `assumption` states `validated_by`. Cited into: " where)
+				}
+
+				# Which half ran, not what it would have concluded. A vault where
+				# nothing forecloses has no population here, and a line reading as
+				# a pass over it would report agreement about a question this mode
+				# never got to ask.
+				if (nfc == 0)
+					printf("no `current` claim or assumption under %s carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition\n", vault)
+				else
+					printf("%d `current` note%s take%s an option off the table and every one of them declares what would put it back: %s - %s\n",
+						nfc, (nfc == 1 ? "" : "s"), (nfc == 1 ? "s" : ""), listed, vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint foreclosed" "$FC_OK"
 	exit $?
 fi
 
