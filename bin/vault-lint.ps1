@@ -1033,6 +1033,14 @@ vault-lint.sh - read-only checks over a claim vault.
       declaration lives in the log rather than in the research file because
       the log is where a corpus states which sources it assigns codes to.
 
+      IT IS A HEADER LINE, SO IT MAY BE WRITTEN AS ONE. A leading `-` or `*`
+      bullet, and markdown emphasis - `*`, `**`, `_` or `__` - around the
+      label, around the path, or around both, are stripped before the line is
+      read: `- **Local ledger:** research/x.md - why` declares exactly what
+      the plain form does. Emphasis INSIDE the path is left alone, because
+      there it is a filename character rather than a wrapper - the underscore
+      in `research/company_profiles.md` is part of the name.
+
       A row carrying NO URL is neither resolved nor failed - there is no key
       to match it on - and the success line reports how many there were, so a
       table of unlinkable rows cannot read as a table that agreed.
@@ -4734,6 +4742,8 @@ function Invoke-ModeUnflattenedSource {
 	$RX_US_TRAILPUNCT = [regex]'[.,;:]+\z'
 	$RX_US_TRAILSLASH = [regex]'/+\z'
 	$RX_US_BULLET = [regex]'\A[-*][ \t]+'
+	$RX_US_EMPH_LEAD = [regex]'\A[*_]+'
+	$RX_US_EMPH_TAIL = [regex]'[*_]+\z'
 
 	# One URL compared as bytes, minus the punctuation a sentence leaves on the
 	# end of one. The host is case-sensitive here and a path always is - folding
@@ -4775,13 +4785,41 @@ function Invoke-ModeUnflattenedSource {
 		# A bullet is still a header line, so the declaration reads as prose to
 		# whoever opens the log.
 		$t = $RX_US_BULLET.Replace($t, '')
+		# EMPHASIS IS STRIPPED AT EVERY PLACE A WRAPPER CAN SIT, because bold is
+		# the first thing an author reaches for in a header and a declaration
+		# wearing it has to parse. It failed two separate ways: a leading marker
+		# is neither a bullet nor the label, so the line was skipped before any
+		# parsing happened; and where the label did match, a marker around the
+		# path rode along in the token and resolved to no file. Both are silent -
+		# the corpus is then told to flatten a ledger it correctly declared. The
+		# markers are `*` and `_`, any run of either, since a fix for `**` alone
+		# leaves `_Local ledger:_` failing in exactly this position. The bullet
+		# strip runs FIRST: `*` is also a bullet marker, and stripping emphasis
+		# first would eat the bullet of `* Local ledger: ...` and leave the space
+		# the label test then fails on.
+		#
+		# WHAT IT DELIBERATELY DOES NOT DO: it never touches a marker inside the
+		# path token. Stripping is about the wrapper markdown puts around the
+		# declaration, not about being permissive with paths - `company_profiles.md`
+		# keeps its underscore, and a path holding a genuine `*` stays
+		# unresolvable rather than being silently repaired into some other file.
+		# The cost is that a path whose own first or last character is `*` or `_`
+		# cannot be declared; the documented form is `research/<file>.md`, which
+		# opens on a directory segment and ends in `.md`, so a marker at either
+		# edge is the wrapper every time.
+		$t = $RX_US_EMPH_LEAD.Replace($t, '')
 		if (-not $t.StartsWith('Local ledger:', [System.StringComparison]::Ordinal)) { continue }
 		# The FIRST whitespace-delimited token after the colon is the path, and
 		# everything after it is the reason - so a declaration reads as a sentence
 		# to whoever opens the log rather than as a field with a punctuation rule.
+		# The strip before the split is the close of a wrapper that opened ahead
+		# of the label (`**Local ledger:** path`); the one after it is the close
+		# of one that opened inside the sentence (`Local ledger: **path**`).
 		$v = $t.Substring(13).Trim($script:SPACE_TAB)
+		$v = $RX_US_EMPH_LEAD.Replace($v, '').Trim($script:SPACE_TAB)
 		if ($v.Length -eq 0) { continue }
 		$v = [regex]::Split($v, '[ \t]+')[0]
+		$v = $RX_US_EMPH_TAIL.Replace($v, '')
 		if ($v.StartsWith('./', [System.StringComparison]::Ordinal)) { $v = $v.Substring(2) }
 		if (-not $exempt.Add($v)) { continue }
 		[void]$declared.Add($v)
