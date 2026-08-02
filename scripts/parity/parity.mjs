@@ -70,7 +70,21 @@ const NOT_PORTED_STATUS = 3;
 // mode also has to produce a document at least once (see compareMode).
 const TEXT_ONLY_MODES = new Set(['graph', 'release-gate']);
 
+// Two lists, and the exit code is what tells them apart. `problems` holds parity
+// findings - the two implementations answered a vault differently - and exits 1.
+// `harnessErrors` holds every way this tool failed to put the question at all,
+// and exits 2: a child that died instead of answering, a probe that could not be
+// classified, and either implementation having no interpreter to run it. That is
+// the split assertRunFixturesModesMatchCensus already drew by exiting 2 inline,
+// generalised to the cases that arise after the run has started and so have to
+// be collected rather than exited on.
+//
+// THE FAILURE THIS PREVENTS: a caller that retries an infrastructure flake and
+// escalates a real regression cannot tell them apart if both exit 1. The three
+// one-sided cases above all mean "nothing was compared", and reporting that with
+// the code reserved for "the two scripts disagree" names the wrong culprit.
 const problems = [];
+const harnessErrors = [];
 
 // Two facts are parsed out of the shell implementation rather than copied here -
 // the mode census and the note-type directories. Read LAZILY and memoized: at
@@ -333,6 +347,10 @@ function findPowerShell() {
  *
  * Buffers, not strings: byte-for-byte has to mean bytes, and decoding first
  * would fold a real encoding difference into an equal comparison.
+ *
+ * `signal` is returned rather than discarded because a child killed outright
+ * has a null status, and reporting that as `.ps1 null` is worse than reporting
+ * the 134 the other shape of the same death produces. nonVerdict() reads both.
  */
 function runLint(side, argv) {
   const spawnArgv =
@@ -341,7 +359,50 @@ function runLint(side, argv) {
       : ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', PS_LINT, ...argv];
   const run = spawnSync(side.interpreter, spawnArgv, { cwd: ROOT, maxBuffer: 64 * 1024 * 1024 });
   if (run.error) throw new Error(`${side.label}: ${run.error.message}`);
-  return { stdout: run.stdout ?? Buffer.alloc(0), stderr: run.stderr ?? Buffer.alloc(0), status: run.status };
+  return {
+    stdout: run.stdout ?? Buffer.alloc(0),
+    stderr: run.stderr ?? Buffer.alloc(0),
+    status: run.status,
+    signal: run.signal ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// a non-verdict exit is a HARNESS error, not a parity finding
+//
+// THE FAILURE THIS PREVENTS: a PowerShell host killed by SIGABRT mid-cell
+// reported as `exit status: .sh 1, .ps1 134`, which reads as the two
+// implementations answering a vault differently. It sent a reviewer hunting a
+// port bug that did not exist. 134 is 128 + SIGABRT.
+//
+// The discriminator is the one NOT_PORTED_STATUS already relies on: the tool
+// documents 0 (clean), 1 (failures) and 2 (refusal) and nothing else, so
+// anything outside that set was not produced by the tool. A signal death
+// arrives in two shapes and both are covered - the child killed directly
+// (status null, signal 'SIGABRT') and the host exiting 128+N because its OWN
+// child died, which is what PowerShell's $LASTEXITCODE propagates (status 134,
+// signal null).
+//
+// THE LIMIT, stated because this repo has just spent a release on success lines
+// that claimed more than they verified: this catches a status ABOVE 2 and a
+// signal death, and NOTHING ELSE. A host failure that exits 1 - a PowerShell
+// parse error is the ordinary one - is indistinguishable from a lint verdict of
+// 1 by status alone, so it still arrives as a parity finding and still reads as
+// a disagreement. Telling those apart would mean reading stderr for meaning,
+// which is a different rule with a different failure behind it.
+// ---------------------------------------------------------------------------
+
+const VERDICT_STATUSES = new Set([0, 1, 2]);
+
+/** Why this run is not a verdict this tool produces, or null when it is one. */
+function nonVerdict(run) {
+  if (run.signal) return `was killed by signal ${run.signal}`;
+  if (run.status === null) return 'ended with neither an exit status nor a signal';
+  if (VERDICT_STATUSES.has(run.status)) return null;
+  if (run.status > 128) {
+    return `exited ${run.status}, which is 128 + ${run.status - 128}: a child of its own died on signal ${run.status - 128}`;
+  }
+  return `exited ${run.status}, outside the 0, 1 and 2 this tool documents`;
 }
 
 // ---------------------------------------------------------------------------
@@ -434,10 +495,28 @@ function compareMode(mode, vaults, shSide, psSide) {
 
     const sh = runLint(shSide, argv);
     const ps = runLint(psSide, argv);
+
+    const where = `${vault} (${argv.join(' ')})`;
+
+    // Classified BEFORE anything is compared, and deliberately not counted as a
+    // comparison: a cell whose child died was not compared, and saying it was
+    // would put the count this gate's coverage rests on out by one silently.
+    const shWhy = nonVerdict(sh);
+    const psWhy = nonVerdict(ps);
+    if (shWhy || psWhy) {
+      const sides = [];
+      if (shWhy) sides.push(`${SH_LINT} ${shWhy}`);
+      if (psWhy) sides.push(`${PS_LINT} ${psWhy}`);
+      harnessErrors.push(
+        `${mode} on ${where}: ${sides.join(', and ')}. The two implementations were NOT compared for ` +
+          `this cell - a crashed child is this harness failing, not the two scripts disagreeing.`,
+      );
+      continue;
+    }
+
     compared++;
     if (sh.stdout.length) documents++;
 
-    const where = `${vault} (${argv.join(' ')})`;
     if (sh.status !== ps.status) {
       diffs.push(`${where}\n  exit status: .sh ${sh.status}, .ps1 ${ps.status}`);
       continue;
@@ -506,7 +585,7 @@ function main() {
       return new Set();
     }
     if (!psInterpreter) {
-      problems.push(
+      harnessErrors.push(
         `one-sided: fixture suite only - ${PS_LINT} exists but no PowerShell host was found to run it ` +
           `(tried powershell.exe, then pwsh). This gate compared nothing and is not reporting a pass. ` +
           `Install Windows PowerShell 5.1 or PowerShell 7, or set PARITY_POWERSHELL.`,
@@ -522,7 +601,23 @@ function main() {
 
     const answered = new Set();
     for (const mode of modes) {
-      if (runLint(psSide, argvFor(mode, probeVault)).status !== NOT_PORTED_STATUS) answered.add(mode);
+      const run = runLint(psSide, argvFor(mode, probeVault));
+      // The stub's sentinel is the one answer outside 0/1/2 that means something
+      // here, so it is read FIRST; anything else has to be a verdict. Without
+      // this the classification is `status !== 3`, and a probe child killed by a
+      // signal answers null - which is not 3, so a crashed probe would be filed
+      // as PORTED and could then report a live marker file as stale. That is the
+      // same fabricated finding nonVerdict() exists to stop one call site over.
+      if (run.status === NOT_PORTED_STATUS) continue;
+      const why = nonVerdict(run);
+      if (why) {
+        harnessErrors.push(
+          `probing \`${mode}\` against ${probeVault}: ${PS_LINT} ${why}. Whether the mode is ported could ` +
+            `not be established, so nothing about it was compared or excused.`,
+        );
+        continue;
+      }
+      answered.add(mode);
     }
     return answered;
   }
@@ -560,7 +655,7 @@ function main() {
     // fixture suite still proves the .ps1 answers correctly, but
     // nothing here proves the two AGREE, and that has to be said rather than
     // swallowed.
-    problems.push(
+    harnessErrors.push(
       `one-sided: fixture suite only - no POSIX shell was found to run ${SH_LINT}, so ` +
         `${toCompare.length} ported mode(s) went uncompared. Set PARITY_SH, or install Git Bash.`,
     );
@@ -603,9 +698,13 @@ function main() {
   console.log();
   console.log(`parity: ${probed ? ported.size : 0}/${modes.length} modes ported, ${allowlisted.size} allowlisted`);
 
-  if (problems.length) {
-    console.error(`\n${problems.map((problem) => `parity: ${problem}`).join('\n\n')}`);
-    process.exit(1);
+  if (harnessErrors.length || problems.length) {
+    const lines = [...harnessErrors, ...problems].map((entry) => `parity: ${entry}`);
+    console.error(`\n${lines.join('\n\n')}`);
+    // Both lists are printed because both are findings someone has to read, and
+    // the exit code is what says which kind this run was: a harness failure wins,
+    // because a run that could not put the question cannot report the answer.
+    process.exit(harnessErrors.length ? 2 : 1);
   }
 }
 
