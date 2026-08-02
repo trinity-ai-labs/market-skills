@@ -4752,10 +4752,19 @@ if [ "$MODE" = "subject-orphan" ]; then
 			# out of key() in a global - one integer threaded between two
 			# functions is a coupling that only holds while the caller keeps
 			# evaluating them in the right order.
+			#
+			# nowners is what BOUNDS THE DOCUMENT SCAN: every registered term can
+			# take at most one first mention, so once each has one there is nothing
+			# left for a further document to say. Counted here rather than off the
+			# unfiled set, because OWNER carries filed and required terms too and a
+			# bound that ignored them would end the scan before an unfiled subject`s
+			# first mention - a false NEGATIVE, which in this mode is the vacuous
+			# pass the check exists to close.
 			function own(k, t, spell,   n, part) {
 				if (k == "" || (k in OWNER)) return
 				OWNER[k] = t
 				SPELL[k] = spell
+				if (!(t in OWNS)) { OWNS[t] = 1; nowners++ }
 				n = split(k, part, " ")
 				if (n > maxlen) maxlen = n
 				# Every token that OPENS a candidate. The scan skips a start
@@ -4812,35 +4821,45 @@ if [ "$MODE" = "subject-orphan" ]; then
 				# any document mentions it, so the mention adds nothing to a repair
 				# coverage-gap already demands - and one omission reported as two
 				# failures under two names sends its reader looking for two.
-				#
-				# Terms first, then aliases, so a string both a term and another
-				# term`s alias answer to belongs to the term. Only the keys of
-				# UNFILED terms become candidates: a filed term claims its own
-				# strings and takes them out of the scan, which is what stops a
-				# mention of a subject the vault has already answered being read as
-				# evidence for one it has not.
 				for (i = 1; i <= nterm; i++) {
 					t = terms[i]
 					if (required[t] == "true") continue
 					nasked++
-					if (t in FILED) continue
-					ORPHAN[++nunfiled] = t
-					own(key(t), t, t)
+					if (!(t in FILED)) nunfiled++
 				}
-				# Driven off the list the loop above built rather than re-walking
-				# terms[] behind a second copy of the same predicate. Two copies is
-				# where the drift lands: a later exclusion added to one loop and
-				# not the other registers alias keys for terms this mode has
-				# stopped asking after, and nothing reports that.
-				for (i = 1; i <= nunfiled; i++) {
-					t = ORPHAN[i]
+
+				# EVERY TERM REGISTERS ITS STRINGS - filed and required ones
+				# included - AND THE PARTITION IS APPLIED WHERE THE ROW IS
+				# REPORTED, not here. A filed term has to CLAIM its own key and its
+				# aliases for that claim to mean anything: registering only the
+				# unfiled terms leaves a filed term`s strings unowned, so an unfiled
+				# term listing the same alias picks up a mention that was always
+				# about the subject the vault has already answered. Observed on a
+				# vocabulary where `price` is an alias of a FILED `price-anchor` and
+				# of an unfiled `willingness-to-pay`: a sentence discussing
+				# price-anchor was reported as evidence that willingness-to-pay is
+				# load-bearing, under a message stating the corpus reasons from it.
+				# This mode ships failing and ungated, so a confident false positive
+				# is the thing that makes somebody stop upgrading.
+				#
+				# Terms first, then aliases, so a string that is both a term and
+				# another term`s alias belongs to the term - the precedence `check`
+				# applies when it resolves a subject. Past that it is FIRST CLAIMANT
+				# WINS in vocabulary order, and that is now load-bearing rather than
+				# incidental: two terms listing one alias is the vault`s own
+				# ambiguity, and letting file order settle it is a rule an author
+				# can read off _vocab.yml instead of a judgement this mode makes for
+				# them.
+				for (i = 1; i <= nterm; i++) own(key(terms[i]), terms[i], terms[i])
+				for (i = 1; i <= nterm; i++) {
+					t = terms[i]
 					for (j = 1; j <= AN[t]; j++) own(key(ALIAS[t, j]), t, ALIAS[t, j])
 				}
 
 				# Nothing unfiled is nothing to look for, and opening every
 				# document to prove it would be a corpus read with no question
 				# behind it.
-				for (d = 1; nunfiled > 0 && nfound < nunfiled && d <= ndoc; d++) {
+				for (d = 1; nunfiled > 0 && nfound < nowners && d <= ndoc; d++) {
 					path = vault "/" DOC[d]
 					ln = 0
 					while ((getline line < path) > 0) {
@@ -4885,6 +4904,11 @@ if [ "$MODE" = "subject-orphan" ]; then
 				for (i = 1; i <= nterm; i++) {
 					t = terms[i]
 					if (!(t in HITDOC)) continue
+					# THE PARTITION, APPLIED HERE rather than at registration. A hit
+					# whose owner turns out to be filed or required has still
+					# CONSUMED the key, so no unfiled term can claim that mention -
+					# it just is not a row.
+					if (required[t] == "true" || (t in FILED)) continue
 					report(HITDOC[t], "subject-orphan", t,
 						"no `claim` and no `assumption` is filed under the vocabulary subject `" t "`, and the corpus reasons from it anyway: " HITDOC[t] " line " HITLN[t] " reads `" HITTXT[t] "`" (HITSPELL[t] == t ? "" : ", which carries the alias `" HITSPELL[t] "`") ". Write the note - a `claim` under `subject: " t "` where the position has evidence behind it, an `assumption` where it does not. Unfiled, the subject cannot collide with a contradiction, cannot go stale, cannot be superseded and cannot be challenged, so every query the ledger supports returns clean over it and the document leaning on it is the only place the position exists. This is not coverage-gap, which asks only after subjects marked `required: true`")
 				}

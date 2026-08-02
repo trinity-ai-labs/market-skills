@@ -4452,37 +4452,52 @@ function Invoke-ModeSubjectOrphan {
 	$first = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
 	$maxlen = 0
 	$nasked = 0
+	$nunfiled = 0
+
+	foreach ($t in $terms) {
+		if ($required[$t] -ceq 'true') { continue }
+		$nasked++
+		if (-not $filed.Contains($t)) { $nunfiled++ }
+	}
 
 	# own() at bin/vault-lint.sh, written out at both call sites rather than
 	# lifted into a helper: a PowerShell function cannot assign back to the
 	# caller`s $maxlen, and a helper that returned it would still need the same
-	# two lines at each site to record it. The longest candidate bounds the scan
-	# below, which is why it is tracked at registration.
-	$orphans = New-Object 'System.Collections.Generic.List[string]'
+	# lines at each site to record it.
+	#
+	# EVERY TERM REGISTERS ITS STRINGS - filed and required ones included - AND
+	# THE PARTITION IS APPLIED WHERE THE ROW IS REPORTED. See the shell for the
+	# case that forced it: registering only the unfiled terms leaves a filed
+	# term`s strings unowned, so an unfiled term sharing an alias picks up a
+	# mention that was always about the subject the vault has already answered.
+	#
+	# $owns bounds the scan, and it counts every registered term rather than the
+	# unfiled ones: a bound taken off the unfiled set would end the document scan
+	# before an unfiled subject`s first mention, which is a false negative and the
+	# vacuous pass this mode exists to close.
+	#
+	# Terms first, then aliases, so a string that is both a term and another
+	# term`s alias belongs to the term. Past that it is first claimant wins in
+	# vocabulary order - the vault`s own ambiguity settled by its own file order.
+	$owns = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
 	foreach ($t in $terms) {
-		if ($required[$t] -ceq 'true') { continue }
-		$nasked++
-		if ($filed.Contains($t)) { continue }
-		[void]$orphans.Add($t)
 		$k = Get-SubjectKey $t
-		if ($k.Length -ne 0 -and -not $owner.ContainsKey($k)) {
-			$owner[$k] = $t
-			$spell[$k] = $t
-			$parts = $k.Split([char]32)
-			if ($parts.Length -gt $maxlen) { $maxlen = $parts.Length }
-			[void]$first.Add($parts[0])
-		}
+		if ($k.Length -eq 0 -or $owner.ContainsKey($k)) { continue }
+		$owner[$k] = $t
+		$spell[$k] = $t
+		[void]$owns.Add($t)
+		$parts = $k.Split([char]32)
+		if ($parts.Length -gt $maxlen) { $maxlen = $parts.Length }
+		[void]$first.Add($parts[0])
 	}
-	# Driven off the list the loop above built rather than re-walking $terms
-	# behind a second copy of the same predicate - see the shell.
-	$nunfiled = $orphans.Count
-	foreach ($t in $orphans) {
+	foreach ($t in $terms) {
 		if (-not $aliases.ContainsKey($t)) { continue }
 		foreach ($a in $aliases[$t]) {
 			$k = Get-SubjectKey $a
 			if ($k.Length -eq 0 -or $owner.ContainsKey($k)) { continue }
 			$owner[$k] = $t
 			$spell[$k] = $a
+			[void]$owns.Add($t)
 			$parts = $k.Split([char]32)
 			if ($parts.Length -gt $maxlen) { $maxlen = $parts.Length }
 			[void]$first.Add($parts[0])
@@ -4515,7 +4530,7 @@ function Invoke-ModeSubjectOrphan {
 
 	# Nothing unfiled is nothing to look for, and opening every document to prove
 	# it would be a corpus read with no question behind it.
-	for ($d = 0; $nunfiled -gt 0 -and $hitDoc.Count -lt $nunfiled -and $d -lt $docs.Length; $d++) {
+	for ($d = 0; $nunfiled -gt 0 -and $hitDoc.Count -lt $owns.Count -and $d -lt $docs.Length; $d++) {
 		$doc = $docs[$d]
 		$ln = 0
 		foreach ($raw in (Read-TextLines ($script:VAULT + '/' + $doc))) {
@@ -4555,6 +4570,10 @@ function Invoke-ModeSubjectOrphan {
 	# place the repair gets decided, so the column carries a path worth opening.
 	foreach ($t in $terms) {
 		if (-not $hitDoc.ContainsKey($t)) { continue }
+		# THE PARTITION, APPLIED HERE rather than at registration. A hit whose
+		# owner turns out to be filed or required has still CONSUMED the key, so
+		# no unfiled term can claim that mention - it just is not a row.
+		if ($required[$t] -ceq 'true' -or $filed.Contains($t)) { continue }
 		$detail = 'no `claim` and no `assumption` is filed under the vocabulary subject `' + $t +
 			'`, and the corpus reasons from it anyway: ' + $hitDoc[$t] + ' line ' + [string]$hitLine[$t] +
 			' reads `' + $hitText[$t] + '`'
