@@ -274,8 +274,8 @@ cadence and the decision each would change, `--deliverable` for whether the rend
 declare themselves inputs to it are the same set, `--claim-drift` for whether a cited section
 still carries what it carried when the claim recorded reading it, `--subject-orphan` for a
 vocabulary subject the corpus reasons about and has never filed a note under,
-`--release-gate` for the eleven
-parts the composite paragraph below enumerates run as one call — not eleven of these, since
+`--release-gate` for the ten
+parts the composite paragraph below enumerates run as one call — not ten of these, since
 `--unverified` is not a gate part and the bare `check` is not in this list, which is the
 enumeration trap sitting inside the sentence that warns about it — and
 `graph <ID>` for one note's neighbourhood. This sentence is
