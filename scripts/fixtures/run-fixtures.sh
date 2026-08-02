@@ -161,7 +161,13 @@
 #      over an assumption carrying them and `check` is asserted to fail it under
 #      its own name - reading both types there would tell a reader to add
 #      `reverses_if` to a note whose documented repair is the question it stopped
-#      asking, which is the wrong repair under the right name. The
+#      asking, which is the wrong repair under the right name. The claim-only
+#      predicate is pinned by the one combination that can detect a re-widening -
+#      an `assumption` that forecloses and declares NO `reverses_if` - because a
+#      claim is in the population under either reading and a declared reversal
+#      condition leaves a widened mode with nothing to report. The same vault
+#      carries `forecloses` alone, so it asserts that `check` fires on ANY of the
+#      three fields rather than only on all of them. The
 #      listing is asserted on the passing side, because the mode is a report as
 #      much as a verdict and a success line that named nothing would say the
 #      corpus forecloses nothing. `foreclosed_on` is a SCALAR note reference, so
@@ -3014,6 +3020,70 @@ esac
 case "$FOA" in
 *'file the `question` the plan stopped asking'*) ok "the failure names the documented repair rather than the missing field" ;;
 *) no "foreclosure-on-assumption did not name the question (got: $FOA)" ;;
+esac
+
+# THE NARROWING ITSELF, PINNED. Every note in the fixtures that carries
+# `forecloses` is either a `claim` or - in the vault above - an `assumption` that
+# also carries `reverses_if`, and NEITHER shape can tell the two readings of
+# --foreclosed apart: a claim is in the population under both, and a note
+# declaring its reversal condition leaves a widened mode with nothing missing to
+# report. So a re-widening of the predicate to the `claim`+`assumption` pair
+# --subject-orphan uses - the obvious edit, and the one this slice deliberately
+# reverted - would ship with the whole suite still green.
+#
+# The vault below is the one combination that closes that: `type: assumption`,
+# `forecloses`, and NO `reverses_if`. Widen the mode and this note becomes a live
+# foreclosure owing a reversal condition, so the silence assertion goes red.
+#
+# It carries `forecloses` ALONE, with no `foreclosed_on` beside it - the honest
+# shape of the error, since a note resting on nothing has no input to name, and
+# the half the sibling cannot assert: that vault carries all three fields, so a
+# `check` rule narrowed to the full set would still pass it while going silent
+# here.
+#
+# ASSERTED BY KIND NAME AND EXIT CODE, never by a failure count alone. A count
+# holds steady while the wrong rule fires, and a substring test over the whole
+# JSON matches the message`s own prose - the trap the type-agreement assertion
+# above is written around.
+FAB=$("$LINT" check --vault "$HERE/foreclosure-on-assumption-no-reverse" --json 2>/dev/null)
+FAB_STATUS=$(run_status "$HERE/foreclosure-on-assumption-no-reverse")
+FAB_FC=$("$LINT" --foreclosed --vault "$HERE/foreclosure-on-assumption-no-reverse" 2>&1)
+FAB_FC_STATUS=$(run_status "$HERE/foreclosure-on-assumption-no-reverse" --foreclosed)
+
+[ "$FAB_FC_STATUS" = "0" ] && ok "--foreclosed is silent over an assumption that forecloses and declares no reverses_if" ||
+	no "--foreclosed reads assumptions again: the claim-only predicate has been widened (got $FAB_FC_STATUS)"
+case "$FAB_FC" in
+*foreclosure-no-reverse*) no "--foreclosed reported foreclosure-no-reverse against an assumption - the repair it names is the wrong one for this note (got: $FAB_FC)" ;;
+*) ok "no assumption is told to add reverses_if, whatever it is missing" ;;
+esac
+# SILENT BECAUSE THE NOTE IS NOT IN THE POPULATION, not because nothing was
+# missing from it. The success line names the empty half, which is the only
+# output that distinguishes those two reasons - and the second is what a widened
+# mode would still produce over every other fixture in this section.
+case "$FAB_FC" in
+*'nothing in this corpus takes an option off the table'*) ok "the assumption is outside the population rather than inside it and complete" ;;
+*) no "--foreclosed did not report an empty foreclosure population over an assumption-only vault (got: $FAB_FC)" ;;
+esac
+
+[ "$FAB_STATUS" = "1" ] && ok "check fails an assumption that forecloses without declaring a reversal condition" ||
+	no "an assumption carrying forecloses and no reverses_if passed everything (got $FAB_STATUS)"
+case "$FAB" in
+*'"check": "foreclosure-on-assumption"'*'"id": "ASSUMPTION-FA51AA01"'*)
+	ok "the half that catches it is foreclosure-on-assumption, named on the note itself" ;;
+*) no "check did not fire foreclosure-on-assumption over ASSUMPTION-FA51AA01 (got: $FAB)" ;;
+esac
+# `forecloses` on its own is enough. The sibling vault carries all three fields,
+# so only this one says the trigger is ANY of them rather than the set.
+case "$FAB" in
+*'"failure_count": 1'*) ok "one field out of the three is the whole trigger, and it trips nothing else" ;;
+*) no "check did not report exactly one failure over foreclosure-on-assumption-no-reverse (got: $FAB)" ;;
+esac
+# Matched on the `check` FIELD, for the reason the sibling assertion is: the
+# message says "this is not type-agreement" in its own prose, so a substring
+# test over the whole document passes on the phrase it was written to refuse.
+case "$FAB" in
+*'"check": "type-agreement"'*) no "the field-on-wrong-type failure was folded into type-agreement (got: $FAB)" ;;
+*) ok "the type field is not reported as the problem here either" ;;
 esac
 
 # A vault where nothing forecloses is told which half did not run, never that
