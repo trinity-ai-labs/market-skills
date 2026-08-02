@@ -716,9 +716,9 @@ mid-engagement — a citation question, a supersession question, a panel questio
 and a question about the verdict drivers and the evidence under them are different questions — but
 the gate before anything ships is one invocation with one verdict, because a set of invocations made
 from memory is a set nobody can be held to. The bare run's own success line says as much: it reports
-that the note-level checks passed and that the citation targets, the supersession blast radius, the
-panel objection rows, the roadmap table and the verdict drivers and the evidence under them were
-**not** opened.
+that the note-level checks passed and then names every gate mode it did **not** open, read off that
+same mode table — which is why the list is not transcribed here either, where it would go quietly
+short the next time a mode is added.
 
 ### A claim that forecloses an option declares what would reverse it
 
@@ -1437,7 +1437,9 @@ obtained without spending a version:
 | a model row stands on a live note | `--assumption-rows` | `model-row-dead-assumption` — a row whose every `title` match, `assumption` or `claim`, is at `status: superseded` or `retracted` |
 | a cited code resolves to a row | `--citation-codes` | `citation-code-no-source-row` — an `[S#]` with no row in `sources.md`; and `citation-code-no-fact-row` — an `[F#]` with no row in `research/founder-brief.md`. The two index files are excluded from the scan, because an index legitimately names a code it withdrew and left unused. Forward only: a row nothing cites is not a failure. A missing index reports a half that did not run |
 | a local source row reached the global log | `--unflattened-source` | `source-unflattened` — a `research/*.md` local `\| S<n> \|` row whose URL `sources.md` carries nowhere, unless that file's ledger is declared exempt by a `Local ledger: <path> - <why>` line in the log's header |
-| a foreclosing claim declares what would reverse it | `--foreclosed` | a `current` `claim` carrying `forecloses` and no `reverses_if` — an option removed from the plan with nothing recording the input that would put it back. Nothing pre-existing carries `forecloses`, so nothing pre-existing owes this |
+| a foreclosing claim declares what would reverse it | `--foreclosed` | `foreclosure-no-reverse` — a `current` `claim` carrying `forecloses` and no `reverses_if`, an option removed from the plan with nothing recording the input that would put it back. Nothing pre-existing carries `forecloses`, so nothing pre-existing owes this |
+| the input a foreclosure rests on can be opened | `--foreclosed` | `foreclosed-on-dangling` — `foreclosed_on` naming an ID no note carries. It is a scalar, so the block-list dangling-edge rule never opens it — the same gap `superseded_by` has. A separate kind from the row above because the repairs differ: write the missing note or fix the typo, against state the condition |
+| the foreclosure fields sit on a `claim` | `check` | `foreclosure-on-assumption` — an `assumption` carrying any of `forecloses`, `foreclosed_on` or `reverses_if`. Reported separately from `type-agreement` for `filename-mismatch`'s reason: the `type` field is correct, so a reader sent to look at it reads `assumption` and stops. The repair is the `question` the plan stopped asking, not the three fields |
 
 **`--subject-orphan` is ungated for a different reason, and it is the one rule here that CAN turn
 an existing corpus red.** Everything in the table above is exempt by construction: the field it
