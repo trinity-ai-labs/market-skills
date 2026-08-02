@@ -2,6 +2,20 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.19.1
+
+- **1.19.0 deleted every count in this repo that could rot, except the one that was expensive to
+  delete.** `vault.md`'s edge section was headed *Eight edges, each stored once on the asserting
+  note*, and the number was right — it had just been moved 7→8 in that release when `nested_in`
+  landed. The defect is where it sat. A heading's text is its anchor, three cross-file links
+  resolve through that anchor, and so removing the count costs a rename plus four edits while
+  leaving it costs nothing today. The next edge field therefore gets the outcome that is cheapest
+  at the moment somebody adds it: a heading that says eight over a table that lists nine, with
+  every link resolving and `check.mjs` green, because a check can prove a reference resolves and
+  cannot prove a correct-looking number is still true. The heading now states the claim readers
+  navigate to — *Every edge is stored once on the asserting note* — and the count is gone from the
+  sentence under the table as well, which carried the same rot in a place no anchor protected.
+
 ## 1.19.0
 
 **Two issues, and one argument pointed in two directions.** 1.18.0 opened the *absence is not
