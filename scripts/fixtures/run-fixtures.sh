@@ -154,6 +154,40 @@
 #      leans on the subject, and which note to write - because the mode ships
 #      failing rather than gated, and it is not gated on schemaVersion at either
 #      end.
+#  27. --foreclosed reports a live CLAIM that takes an option off the table and
+#      never says what would put it back, and stays silent over a foreclosure the
+#      ledger has retired and over one that declares its reversal condition. The
+#      three fields are a claim`s by argument, so the mode is asserted SILENT
+#      over an assumption carrying them and `check` is asserted to fail it under
+#      its own name - reading both types there would tell a reader to add
+#      `reverses_if` to a note whose documented repair is the question it stopped
+#      asking, which is the wrong repair under the right name. The claim-only
+#      predicate is pinned by the one combination that can detect a re-widening -
+#      an `assumption` that forecloses and declares NO `reverses_if` - because a
+#      claim is in the population under either reading and a declared reversal
+#      condition leaves a widened mode with nothing to report. `check`s trigger
+#      is asserted as the SET of three and not as `forecloses`: the new vault
+#      carries `forecloses` alone, and a second note beside the original carries
+#      the `foreclosed_on` and `reverses_if` that deleting the word leaves
+#      behind. Without that second note a trigger narrowed to `forecloses` keeps
+#      every other fixture failing and ships the suite green. The
+#      listing is asserted on the passing side, because the mode is a report as
+#      much as a verdict and a success line that named nothing would say the
+#      corpus forecloses nothing. `foreclosed_on` is a SCALAR note reference, so
+#      the block-list dangling-edge rule never opens it - the gap `superseded_by`
+#      has - and foreclosed-on-dangling is asserted both ways: firing where the
+#      target names nothing, silent where it resolves.
+#  28. The `market-size` nesting rule is asserted in BOTH directions of its
+#      schemaVersion gate, over one corpus copied and restamped rather than two
+#      kept identical by hand: two unnested `current` population claims fail at
+#      4 and the same vault passes at 3. The gate is the whole reason the rule
+#      is shippable - a vault that sized properly already holds several of these
+#      - so a suite asserting only the failing side would not be testing it.
+#      Only an edge that RESOLVES clears the rule: a `nested_in` naming a note
+#      the vault does not hold is asserted to leave population-unnested firing
+#      and to be reported as a dangling edge beside it, because a typo that
+#      satisfied the check would hand back exactly the vacuous pass the check
+#      exists to refuse.
 
 set -u
 
@@ -186,7 +220,7 @@ driver-kind-unknown verdict-fields-incomplete"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift --citation-codes --unflattened-source --subject-orphan graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift --citation-codes --unflattened-source --subject-orphan --foreclosed graph"
 
 PASS=0
 FAIL=0
@@ -1108,7 +1142,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash' '--citation-codes: citation codes against their index rows' '--unflattened-source: local source rows against the global log' '--subject-orphan: unfiled subjects the corpus reasons about'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash' '--citation-codes: citation codes against their index rows' '--unflattened-source: local source rows against the global log' '--subject-orphan: unfiled subjects the corpus reasons about' '--foreclosed: foreclosed options and what would reverse them'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -1241,6 +1275,47 @@ while read -r mode; do
 	*) no "--help has no block for $mode" ;;
 	esac
 done <"$PAIRS_FILE.modes"
+
+# THE TWO HELP TEXTS ARE THE SAME TEXT, and this is a different question from
+# the census above. That one proves every mode has a block; this proves the two
+# implementations print the same words - a mode can have a block in both and the
+# blocks can say different things, which is the drift the census cannot see.
+#
+# bin/vault-lint.ps1's own header states the guarantee: the text is transcribed
+# verbatim from the shell's usage() heredoc except for the binary name, and the
+# two are held together by `vault-lint.ps1 --help` against `vault-lint.sh
+# --help`. NOTHING RAN THAT COMPARISON until this assertion, so the file stated
+# a guarantee, the guarantee was already broken by one stray blank line, and the
+# mechanism named as enforcing it did not exist - a check that reads as passing
+# because nobody wrote it, which is the shape this whole suite exists to break.
+#
+# Both texts are normalised by the ONE substitution the header describes - the
+# binary name - and nothing else, because anything further this stripped would
+# be a place a real divergence could hide. Run only when both implementations
+# are present and runnable: this suite is pointed at whichever one VAULT_LINT
+# names, and a missing sibling is a skip with a reason rather than a red.
+HELP_SH="$HERE/../../bin/vault-lint.sh"
+HELP_PS1="$HERE/../../bin/vault-lint.ps1"
+HELP_PSHOST=""
+for cand in pwsh powershell.exe pwsh.exe; do
+	if command -v "$cand" >/dev/null 2>&1; then HELP_PSHOST="$cand"; break; fi
+done
+if [ ! -f "$HELP_SH" ] || [ ! -f "$HELP_PS1" ]; then
+	ok "only one implementation is present, so there is no second help text to compare (skipped)"
+elif [ -z "$HELP_PSHOST" ]; then
+	ok "no PowerShell host on this machine, so the second help text could not be rendered (skipped)"
+else
+	sh "$HELP_SH" --help 2>/dev/null | sed 's/vault-lint\.sh/<prog>/g' >"$PAIRS_FILE.help.sh"
+	"$HELP_PSHOST" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$HELP_PS1" --help 2>/dev/null |
+		strip_cr | sed 's/vault-lint\.ps1/<prog>/g' >"$PAIRS_FILE.help.ps1"
+	if [ ! -s "$PAIRS_FILE.help.sh" ] || [ ! -s "$PAIRS_FILE.help.ps1" ]; then
+		no "one of the two --help texts came back empty, so the comparison tested nothing"
+	elif diff "$PAIRS_FILE.help.sh" "$PAIRS_FILE.help.ps1" >/dev/null 2>&1; then
+		ok "both implementations print the same --help text, modulo the binary name"
+	else
+		no "the two --help texts have drifted: $(diff "$PAIRS_FILE.help.sh" "$PAIRS_FILE.help.ps1" | head -6 | tr '\n' ' ')"
+	fi
+fi
 
 # --- 8. the milestone type, its two order rules, and the schema gate ---------
 # The census above already asserts that each new check FIRES. What it cannot see
@@ -2805,6 +2880,359 @@ case "$SO_NOVOCAB" in
 *'no _vocab.yml under'*) ok "a vault with no vocabulary is told no subject was asked after" ;;
 *) no "--subject-orphan reported a verdict over a vault with no vocabulary (got: $SO_NOVOCAB)" ;;
 esac
+
+# --- 27. foreclosures, and the condition that would reverse one ---------------
+# Every other adversarial guard in this method fires on a plan claiming too
+# much. A note asserting an option is NOT viable claims too little, removes work
+# from the roadmap, and is attacked by nothing - so what is asserted here is the
+# whole of what a check can reach: that the conclusion states the input value
+# which would put the option back.
+printf '\nforeclosed options\n'
+
+FC_OUT=$("$LINT" --foreclosed --vault "$HERE/foreclosed-no-reverse" --json 2>/dev/null)
+FC_STATUS=$(run_status "$HERE/foreclosed-no-reverse" --foreclosed)
+[ "$FC_STATUS" = "1" ] && ok "--foreclosed exits 1 on a foreclosure with no reversal condition" ||
+	no "--foreclosed should exit 1 over foreclosed-no-reverse (got $FC_STATUS)"
+
+# EXACTLY ONE, and which one is the whole assertion. All three notes in that
+# vault carry `forecloses`; the one that also carries `reverses_if` and the one
+# the ledger has retired are the two that must not appear, and a count alone
+# would pass a mode that reported the wrong note.
+case "$FC_OUT" in
+*'"failure_count": 1'*) ok "--foreclosed reports exactly the foreclosure with no reversal condition" ;;
+*) no "--foreclosed did not report exactly one failure over foreclosed-no-reverse (got: $FC_OUT)" ;;
+esac
+
+case "$FC_OUT" in
+*'"check": "foreclosure-no-reverse"'*'"id": "CLAIM-FC11AA01"'*) ok "a claim that forecloses with no reverses_if is reported" ;;
+*) no "--foreclosed did not report CLAIM-FC11AA01 (got: $FC_OUT)" ;;
+esac
+
+case "$FC_OUT" in
+*CLAIM-FC13CC03*) no "--foreclosed reported the foreclosure that declares its reversal condition (got: $FC_OUT)" ;;
+*) ok "a foreclosure declaring reverses_if is silent" ;;
+esac
+
+case "$FC_OUT" in
+*CLAIM-FC14DD04*) no "--foreclosed reported a superseded foreclosure (got: $FC_OUT)" ;;
+*) ok "a foreclosure the ledger has retired owes no reversal condition" ;;
+esac
+
+# The message is the repair, not the verdict: the field to write, and the
+# section a reader has to go and argue the conclusion in.
+case "$FC_OUT" in
+*'the value of `foreclosed_on` that would put the option back on the table'*) ok "the failure says which field to write" ;;
+*) no "--foreclosed did not name the repair (got: $FC_OUT)" ;;
+esac
+case "$FC_OUT" in
+*'Cited into: business-plan.md#pricing'*) ok "the failure names the section the foreclosure reached" ;;
+*) no "--foreclosed did not name where the foreclosure was cited (got: $FC_OUT)" ;;
+esac
+
+# THE PASSING SIDE IS A LISTING, not a bare pass. This mode feeds the panel as
+# well as the gate, so a success line that named nothing would report a corpus
+# taking two options off the table exactly like one taking none.
+FC_OK=$("$LINT" --foreclosed --vault "$HERE/foreclosed-declared" 2>&1)
+FC_OK_STATUS=$(run_status "$HERE/foreclosed-declared" --foreclosed)
+[ "$FC_OK_STATUS" = "0" ] && ok "--foreclosed exits 0 when every foreclosure declares its reversal condition" ||
+	no "--foreclosed should exit 0 over foreclosed-declared (got $FC_OK_STATUS)"
+case "$FC_OK" in
+*'CLAIM-FD21AA01 forecloses the single-seat configuration (business-plan.md#pricing)'*)
+	ok "the passing line lists each foreclosure with the section its used_in names" ;;
+*) no "--foreclosed did not list the foreclosures it passed (got: $FC_OK)" ;;
+esac
+case "$FC_OK" in
+*'(business-plan.md#market, one-pager.md)'*) ok "a foreclosure cited twice lists both sections" ;;
+*) no "--foreclosed listed only one of two used_in entries (got: $FC_OK)" ;;
+esac
+
+# `foreclosed_on` IS A SCALAR NOTE REFERENCE, so `check`s dangling-edge rule -
+# which walks the block-list edge fields - never opens it. That is the gap
+# `superseded_by` has, and it gets the same answer: a rule of its own. The cost
+# is specific to this field. The floor skeptic is briefed off this mode's output
+# with `foreclosed_on` in it, so a dangling target dispatches the one lens
+# pointed at the foreclosure to a note that does not exist - and a lens that
+# found nothing is indistinguishable from a foreclosure that survived attack,
+# which is the vacuous pass this release exists to close.
+FOD=$("$LINT" --foreclosed --vault "$HERE/foreclosed-on-dangling" --json 2>/dev/null)
+FOD_STATUS=$(run_status "$HERE/foreclosed-on-dangling" --foreclosed)
+[ "$FOD_STATUS" = "1" ] && ok "--foreclosed exits 1 on a foreclosed_on naming no note in the vault" ||
+	no "a dangling foreclosed_on was not reported (got $FOD_STATUS)"
+case "$FOD" in
+*'"check": "foreclosed-on-dangling"'*) ok "the dangling input is its own kind, not folded into foreclosure-no-reverse" ;;
+*) no "--foreclosed did not fire foreclosed-on-dangling (got: $FOD)" ;;
+esac
+# The note declares `reverses_if`, so the OTHER rule is silent over it - which
+# is what says these are two findings with two repairs rather than one widened.
+case "$FOD" in
+*foreclosure-no-reverse*) no "foreclosure-no-reverse fired on a note that declares reverses_if (got: $FOD)" ;;
+*) ok "a declared reversal condition is still silent beside the dangling input" ;;
+esac
+case "$FOD" in
+*'the one lens pointed at this conclusion to a note that does not exist'*)
+	ok "the failure names what a dangling input costs the panel" ;;
+*) no "foreclosed-on-dangling did not name the cost (got: $FOD)" ;;
+esac
+# The two passing fixtures both carry a foreclosed_on that RESOLVES, so the rule
+# is asserted silent where the target exists rather than only where it does not.
+case "$FC_OUT$FC_OK" in
+*foreclosed-on-dangling*) no "foreclosed-on-dangling fired on a resolving foreclosed_on" ;;
+*) ok "a foreclosed_on naming a note the vault holds is silent" ;;
+esac
+
+# THE THREE FIELDS ARE A CLAIM`S, AND THE RESTRICTION IS THE ARGUMENT. A
+# foreclosure is a conclusion drawn from an input and `foreclosed_on` is where
+# that input is named, so a note resting on nothing has no input to name: an
+# option taken off the table by an `assumption` is not a foreclosure that forgot
+# a field, it is an assumption in the shape of a finding.
+#
+# That is why --foreclosed reads claims only and `check` carries the other half.
+# Reading both types here would give the WRONG REPAIR UNDER THE RIGHT NAME - the
+# message says add `reverses_if`, and a reader who follows it dresses the
+# category error in three fields and ships it green.
+#
+# The fixture carries `reverses_if` deliberately, so --foreclosed is silent over
+# it for the right reason (wrong type) rather than by accident (nothing missing).
+FOA=$("$LINT" check --vault "$HERE/foreclosure-on-assumption" --json 2>/dev/null)
+FOA_STATUS=$(run_status "$HERE/foreclosure-on-assumption")
+FOA_FC=$("$LINT" --foreclosed --vault "$HERE/foreclosure-on-assumption" --json 2>/dev/null)
+FOA_FC_STATUS=$(run_status "$HERE/foreclosure-on-assumption" --foreclosed)
+[ "$FOA_FC_STATUS" = "0" ] && ok "--foreclosed is silent over an assumption carrying the foreclosure fields" ||
+	no "--foreclosed still reads assumptions (got $FOA_FC_STATUS)"
+case "$FOA_FC" in
+*foreclosure-no-reverse*) no "--foreclosed told an assumption to add reverses_if - the documented repair is the question (got: $FOA_FC)" ;;
+*) ok "no reader is told to add reverses_if to a note that cannot carry it" ;;
+esac
+[ "$FOA_STATUS" = "1" ] && ok "check fails an assumption carrying the foreclosure fields" ||
+	no "the dodge is open: an assumption carrying forecloses passed everything (got $FOA_STATUS)"
+# TWO NOTES, ONE KIND, AND NOTHING ELSE. The count is two because this vault
+# holds the rule`s two authoring shapes - all three fields, and the two left
+# behind when `forecloses` is deleted - and both are the same failure with the
+# same repair. Anything beyond those two is a rule this fixture was not built to
+# trip, which is what the count is here to catch.
+case "$FOA" in
+*'"failure_count": 2'*'"check": "foreclosure-on-assumption"'*)
+	ok "the failure is foreclosure-on-assumption, and it is the only kind the fixture trips" ;;
+*) no "check did not fire foreclosure-on-assumption alone (got: $FOA)" ;;
+esac
+# THE TRIGGER IS THE SET OF THREE, and only the second note holds it to that.
+# The first carries all three and the vault next door carries `forecloses`
+# alone, so a trigger narrowed to `forecloses` leaves both of them failing and
+# ships the suite green; this note carries `foreclosed_on` and `reverses_if`
+# with no `forecloses`, which is the state deleting the word actually leaves,
+# and it is the only note in the suite a narrowing silences.
+case "$FOA" in
+*'"id": "ASSUMPTION-FA42BB02"'*) ok "the fields left behind when forecloses is deleted are still the same failure" ;;
+*) no "the trigger has narrowed to forecloses - an assumption carrying the other two went silent (got: $FOA)" ;;
+esac
+# Which two, named in the message. `fcf` is built by the same three presence
+# tests that form the trigger, so the field list a reader is shown IS the field
+# list the rule read - and dropping either of these from the enumeration changes
+# both at once.
+case "$FOA" in
+*'this `assumption` carries `foreclosed_on`, `reverses_if`, and the three foreclosure fields'*)
+	ok "the message names the two fields it fired on, in the order the enumeration reads them" ;;
+*) no "foreclosure-on-assumption did not name foreclosed_on and reverses_if as what it found (got: $FOA)" ;;
+esac
+# NOT type-agreement, for the reason filename-mismatch is not: the `type` field
+# is correct and the directory matches, so a reader sent to look at `type` reads
+# `assumption`, concludes it is right, and stops.
+# Matched on the `check` FIELD and not anywhere in the document: the message
+# itself says "this is not type-agreement", so a substring test over the whole
+# JSON matches its own prose and reports a pass it did not earn.
+case "$FOA" in
+*'"check": "type-agreement"'*) no "the field-on-wrong-type failure was folded into type-agreement (got: $FOA)" ;;
+*) ok "the type field is not reported as the problem - the field on it is" ;;
+esac
+case "$FOA" in
+*'file the `question` the plan stopped asking'*) ok "the failure names the documented repair rather than the missing field" ;;
+*) no "foreclosure-on-assumption did not name the question (got: $FOA)" ;;
+esac
+
+# THE NARROWING ITSELF, PINNED. Every note in the fixtures that carries
+# `forecloses` is either a `claim` or - in the vault above - an `assumption` that
+# also carries `reverses_if`, and NEITHER shape can tell the two readings of
+# --foreclosed apart: a claim is in the population under both, and a note
+# declaring its reversal condition leaves a widened mode with nothing missing to
+# report. So a re-widening of the predicate to the `claim`+`assumption` pair
+# --subject-orphan uses - the obvious edit, and the one this slice deliberately
+# reverted - would ship with the whole suite still green.
+#
+# The vault below is the one combination that closes that: `type: assumption`,
+# `forecloses`, and NO `reverses_if`. Widen the mode and this note becomes a live
+# foreclosure owing a reversal condition, so the silence assertion goes red.
+#
+# It carries `forecloses` ALONE, with no `foreclosed_on` beside it - the honest
+# shape of the error, since a note resting on nothing has no input to name, and
+# the half the sibling cannot assert: that vault carries all three fields, so a
+# `check` rule narrowed to the full set would still pass it while going silent
+# here.
+#
+# ASSERTED BY KIND NAME AND EXIT CODE, never by a failure count alone. A count
+# holds steady while the wrong rule fires, and a substring test over the whole
+# JSON matches the message`s own prose - the trap the type-agreement assertion
+# above is written around.
+FAB=$("$LINT" check --vault "$HERE/foreclosure-on-assumption-no-reverse" --json 2>/dev/null)
+FAB_STATUS=$(run_status "$HERE/foreclosure-on-assumption-no-reverse")
+FAB_FC=$("$LINT" --foreclosed --vault "$HERE/foreclosure-on-assumption-no-reverse" 2>&1)
+FAB_FC_STATUS=$(run_status "$HERE/foreclosure-on-assumption-no-reverse" --foreclosed)
+
+[ "$FAB_FC_STATUS" = "0" ] && ok "--foreclosed is silent over an assumption that forecloses and declares no reverses_if" ||
+	no "--foreclosed reads assumptions again: the claim-only predicate has been widened (got $FAB_FC_STATUS)"
+case "$FAB_FC" in
+*foreclosure-no-reverse*) no "--foreclosed reported foreclosure-no-reverse against an assumption - the repair it names is the wrong one for this note (got: $FAB_FC)" ;;
+*) ok "no assumption is told to add reverses_if, whatever it is missing" ;;
+esac
+# SILENT BECAUSE THE NOTE IS NOT IN THE POPULATION, not because nothing was
+# missing from it. The success line names the empty half, which is the only
+# output that distinguishes those two reasons - and the second is what a widened
+# mode would still produce over every other fixture in this section.
+case "$FAB_FC" in
+*'nothing in this corpus takes an option off the table'*) ok "the assumption is outside the population rather than inside it and complete" ;;
+*) no "--foreclosed did not report an empty foreclosure population over an assumption-only vault (got: $FAB_FC)" ;;
+esac
+
+[ "$FAB_STATUS" = "1" ] && ok "check fails an assumption that forecloses without declaring a reversal condition" ||
+	no "an assumption carrying forecloses and no reverses_if passed everything (got $FAB_STATUS)"
+case "$FAB" in
+*'"check": "foreclosure-on-assumption"'*'"id": "ASSUMPTION-FA51AA01"'*)
+	ok "the half that catches it is foreclosure-on-assumption, named on the note itself" ;;
+*) no "check did not fire foreclosure-on-assumption over ASSUMPTION-FA51AA01 (got: $FAB)" ;;
+esac
+# `forecloses` on its own is enough. The sibling vault carries all three fields,
+# so only this one says the trigger is ANY of them rather than the set.
+case "$FAB" in
+*'"failure_count": 1'*) ok "one field out of the three is the whole trigger, and it trips nothing else" ;;
+*) no "check did not report exactly one failure over foreclosure-on-assumption-no-reverse (got: $FAB)" ;;
+esac
+# Matched on the `check` FIELD, for the reason the sibling assertion is: the
+# message says "this is not type-agreement" in its own prose, so a substring
+# test over the whole document passes on the phrase it was written to refuse.
+case "$FAB" in
+*'"check": "type-agreement"'*) no "the field-on-wrong-type failure was folded into type-agreement (got: $FAB)" ;;
+*) ok "the type field is not reported as the problem here either" ;;
+esac
+
+# A vault where nothing forecloses is told which half did not run, never that
+# its conclusions agree - the rule every success line in this tool is held to.
+FC_CLEAN=$("$LINT" --foreclosed --vault "$HERE/clean" 2>&1)
+FC_CLEAN_STATUS=$(run_status "$HERE/clean" --foreclosed)
+[ "$FC_CLEAN_STATUS" = "0" ] && ok "--foreclosed passes the clean vault" ||
+	no "--foreclosed should pass the clean vault (got $FC_CLEAN_STATUS)"
+case "$FC_CLEAN" in
+*'nothing in this corpus takes an option off the table'*) ok "a corpus foreclosing nothing is told so rather than reported clean" ;;
+*) no "--foreclosed did not name the half that had nothing to run over (got: $FC_CLEAN)" ;;
+esac
+
+# --- 28. nested populations, and the version gate that makes the rule usable --
+# The two vaults below are byte-identical apart from the schemaVersion their
+# config carries, which is what makes the gate assertion mean something: the
+# only thing separating a red run from a green one is the version.
+printf '\nnested populations under market-size\n'
+
+PN_OUT=$("$LINT" check --vault "$HERE/population-no-edge" --json 2>/dev/null)
+PN_STATUS=$(run_status "$HERE/population-no-edge")
+[ "$PN_STATUS" = "1" ] && ok "check exits 1 on two unnested current population claims at schemaVersion 4" ||
+	no "check should exit 1 over population-no-edge (got $PN_STATUS)"
+
+# Reported per NOTE and not once per group, so the count is the number of claims
+# owing an edge rather than the size of the collision.
+case "$PN_OUT" in
+*'"failure_count": 2'*) ok "each unnested population claim is its own row" ;;
+*) no "population-no-edge did not report exactly two failures (got: $PN_OUT)" ;;
+esac
+case "$PN_OUT" in
+*'"check": "population-unnested"'*) ok "the failure is population-unnested rather than a widened collision check" ;;
+*) no "population-no-edge did not fire population-unnested (got: $PN_OUT)" ;;
+esac
+# A RETIRED POPULATION IS NOT A MEMBER. The third claim under the subject is
+# `retracted`, so a rule reading every status would report three.
+case "$PN_OUT" in
+*CLAIM-PN04DD44*) no "a retracted population claim was reported as owing an edge (got: $PN_OUT)" ;;
+*) ok "a retracted population claim is not a member of the group" ;;
+esac
+case "$PN_OUT" in
+*'so a share figure is a percentage of whichever population its reader assumed'*)
+	ok "the failure says what an unnamed denominator costs" ;;
+*) no "population-unnested did not name the cost (got: $PN_OUT)" ;;
+esac
+
+PN_EDGE_STATUS=$(run_status "$HERE/population-nested-edge")
+[ "$PN_EDGE_STATUS" = "0" ] && ok "a nested_in chain across the populations clears the check" ||
+	no "population-nested-edge should pass (got $PN_EDGE_STATUS)"
+
+# THREE RINGS ARE TWO EDGES, which is the contract vault.md states and the shape
+# a plan that sized properly actually has. population-nested-edge carries three
+# `current` populations and exactly two edges - innermost names middle, middle
+# names outermost - and the innermost names the outermost NOWHERE. A check
+# comparing pairs instead of walking the chain fails that corpus, and the repair
+# it would demand is a third edge derivable from the other two, which is the
+# second copy of one fact the no-mirroring rule refuses.
+PN_RINGS=$(grep -c '^nested_in:' "$HERE"/population-nested-edge/claims/*.md | grep -c ':1$')
+PN_POPS=$(grep -l '^subject: "market-size"' "$HERE"/population-nested-edge/claims/*.md | wc -l | tr -d ' ')
+[ "$PN_RINGS" = "2" ] && [ "$PN_POPS" = "3" ] &&
+	ok "the passing corpus is three populations joined by two edges, not three" ||
+	no "population-nested-edge is no longer the three-ring two-edge shape (edges=$PN_RINGS populations=$PN_POPS)"
+case $(grep -h 'CLAIM-PN05EE55' "$HERE"/population-nested-edge/claims/CLAIM-PN03CC33.md) in
+'') ok "the innermost ring does not name the outermost - reachability is transitive or this corpus fails" ;;
+*) no "the innermost ring names the outermost directly, so transitivity is not what this fixture proves" ;;
+esac
+
+# CONNECTIVITY, NOT "DOES EACH NOTE CARRY AN EDGE". Two nested PAIRS under one
+# subject leave every note carrying an edge and the set still holding two
+# unrelated ring systems, so a share figure is a percentage of whichever system
+# its reader assumed. That corpus passes a per-note edge test and fails the
+# contract, which is why the rule unions the edges and counts components.
+PTC=$("$LINT" check --vault "$HERE/population-two-chains" --json 2>/dev/null)
+PTC_STATUS=$(run_status "$HERE/population-two-chains")
+[ "$PTC_STATUS" = "1" ] && ok "two internally-edged chains under one subject do not satisfy the rule" ||
+	no "two disconnected nested pairs passed the nesting rule (got $PTC_STATUS)"
+# Each row names the claims THIS one cannot reach, never the whole group: the
+# first chain is told about the second and not about its own partner.
+case "$PTC" in
+*'"id": "CLAIM-TC01AA01"'*'connects this one to: CLAIM-TC03CC03, CLAIM-TC04DD04'*)
+	ok "the row names the claims this one has no chain to, not every other member" ;;
+*) no "population-unnested did not name the unreachable set (got: $PTC)" ;;
+esac
+
+# ONLY AN EDGE THAT RESOLVES CLEARS THE RULE, and this is the assertion that
+# stops a typo from silencing it. Read as a relation without resolving the
+# target, the vault below passes: it carries a `nested_in`, so it looks nested,
+# nothing asks which population contains which, and the check that exists to
+# refuse a vacuous pass hands one back. Both codes are asserted because they are
+# different repairs - fix the target, and record the ring - and neither is
+# widened into the other.
+PND=$("$LINT" check --vault "$HERE/population-nested-dangling" --json 2>/dev/null)
+PND_STATUS=$(run_status "$HERE/population-nested-dangling")
+[ "$PND_STATUS" = "1" ] && ok "a nested_in naming no note in the vault does not clear the nesting rule" ||
+	no "a dangling nested_in silenced population-unnested (got $PND_STATUS)"
+case "$PND" in
+*'"check": "dangling-edge"'*'CLAIM-PN02BB99'*) ok "the mistyped nested_in target is reported as a dangling edge" ;;
+*) no "the dangling nested_in target was not reported (got: $PND)" ;;
+esac
+case "$PND" in
+*'"check": "population-unnested"'*) ok "the ring is still reported unrecorded beside the dangling edge" ;;
+*) no "population-unnested went silent over a dangling nested_in (got: $PND)" ;;
+esac
+
+# THE GATE, IN THE DIRECTION NOTHING ELSE ASSERTS. Every existing corpus that
+# sized properly holds two or more current population claims, so an ungated rule
+# would turn all of them red on the day the plugin updates - for a reason having
+# nothing to do with what changed, which is what makes people stop upgrading.
+#
+# The vault under test is the FAILING one copied and restamped, the same idiom
+# the --subject-orphan block below uses, rather than a second fixture tree kept
+# byte-identical by hand. That is what makes "the same shape" true by
+# construction: a later edit to population-no-edge travels here, where a
+# checked-in twin would silently desync and the gate assertion would go on
+# passing over a corpus it no longer matches.
+PN_AT_3="$PAIRS_FILE.population-at-3"
+rm -rf "$PN_AT_3"
+cp -R "$HERE/population-no-edge" "$PN_AT_3"
+printf '{\n  "schemaVersion": 3,\n  "created": "2026-08-02"\n}\n' >"$PN_AT_3/.vault/config.json"
+PN_AT_3_STATUS=$(run_status "$PN_AT_3")
+[ "$PN_AT_3_STATUS" = "0" ] && ok "the same unnested shape passes at schemaVersion 3" ||
+	no "the nesting rule fired below schemaVersion 4 (got $PN_AT_3_STATUS)"
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

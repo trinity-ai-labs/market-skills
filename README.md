@@ -185,7 +185,7 @@ lives inside it:
 
 ```
 ~/Documents/go-to-market/<product-slug>/
-├── .vault/config.json       # schemaVersion — currently 3; a directory without it is not a vault
+├── .vault/config.json       # schemaVersion — currently 4; a directory without it is not a vault
 ├── _vocab.yml               # controlled subject vocabulary
 ├── sources/ facts/ claims/ assumptions/ questions/ decisions/ milestones/ # one file per note
 ├── research/                # all prose — market-analysis dimensions, product-dossier.md,
@@ -209,8 +209,8 @@ It's also what makes a corpus **portable**: copy the slug directory and every ci
 `rests_on` edge, and every research file travels with it.
 
 **A vault created under an earlier version keeps working, and that is a promise rather than an
-accident.** `.vault/config.json` carries a `schemaVersion`; a new vault is created at **3**, and a
-vault at 1 or 2 is held to exactly the rules it was written under — where a check reads a field
+accident.** `.vault/config.json` carries a `schemaVersion`; a new vault is created at **4**, and a
+vault at 1, 2 or 3 is held to exactly the rules it was written under — where a check reads a field
 that version does not have, it reports that the rule was not applied rather than that your
 documents agree. Moving a vault up is opt-in, one version at a time, and forward-only; what each
 step asks for is in
@@ -549,6 +549,80 @@ line number and the line itself, and then says which note to write — this is t
 turns an existing corpus red on upgrade wherever it carries the gap, and a red gate whose message
 is a diagnosis is a five-minute fix while one that is only a verdict is a support request. It is
 gated on no `schemaVersion`, because it reads no field a corpus written before it lacks.
+
+`--foreclosed` is pointed at the one class of assertion nothing else in this method attacks.
+Every other guard here fires on a plan claiming **too much** — a number with no source behind it,
+a target the drivers do not reach, a citation that resolved yesterday. A note saying an option is
+*not* viable claims too little, and it is the most expensive assertion in the corpus: it removes
+work from the roadmap, kills a segment, or takes a configuration off the table. All three panel
+lenses ask whether the plan can deliver what it promises and none asks whether it wrongly
+concluded it could not, so the conclusion reaches the founder, the panel and the reader as settled
+ground. **The failure is silent by construction** — the option is gone, so nothing downstream
+references it, so no check has a target to fire on.
+
+What a check *can* reach is the condition. A foreclosing note carries `forecloses` (the option it
+takes off the table), `foreclosed_on` (the input the conclusion depends on) and `reverses_if` (the
+value of that input which would put the option back), and the mode lists every live one with the
+section its `used_in` names and fails one that carries no `reverses_if`. It is `validated_by` one
+field over: an assumption owes the step that would settle it, a foreclosure owes the value that
+would reverse it, and neither is evidence the thinking was done — what both remove is skipping it
+by default. It reads `claim` notes only, and a `superseded` or `retracted` foreclosure owes
+nothing because the ledger has already taken it back.
+
+**Claim-only is the argument, not a filing convention** — and it is why the dodge it looks like it
+opens is closed somewhere else. A foreclosure is a conclusion drawn from an input, `foreclosed_on`
+is where that input is named, and a note resting on nothing has no input to name; so an option
+taken off the table by an *assumption* is not a foreclosure that forgot a field, it is an
+assumption in the shape of a finding, and the repair is to file the **question** the plan stopped
+asking. Reading both types here would hand that reader the wrong repair under the right name: the
+message says add `reverses_if`, and following it dresses the category error in three fields and
+ships it green. So the bare check reports it instead, under its own name, pointing at the
+question — and because the note's `type` is correct and its directory matches, that is deliberately
+not `type-agreement`, which would send a reader to look at `type`, read `assumption`, and stop. **The three fields ship
+additive at the current `schemaVersion` and the rule is deliberately ungated** — that is a decision
+rather than an omission: the trigger is the *presence* of `forecloses`, so a corpus written before
+the field existed declares nothing and can owe nothing, and a version spent to exempt an empty
+population buys an exemption nobody needed.
+
+**The mode has a second failure, and it exists because `foreclosed_on` is a scalar.** The bare
+check's dangling-edge rule walks the block-list edge fields and never opens a scalar note
+reference, which is the same gap `superseded_by` has and gets the same answer — a rule of its own.
+A `foreclosed_on` naming a note the vault does not hold means the conclusion names the input it
+rests on and that input cannot be opened, so nothing can be re-read to overturn it. It is also the
+brief the floor skeptic is dispatched with, so a dangling target sends the one lens pointed at the
+foreclosure to a note that does not exist — and a lens that found nothing reads exactly like a
+foreclosure that survived being attacked.
+
+**The bare check gained one rule with the same shape, and it is the one that needed a version.**
+Where a corpus holds several nested populations under `market-size` — a behavioural cut inside a
+professional population inside a broader one — a percentage-of-market figure is meaningless
+without saying which, and the subject collision does not fire because nested populations are not
+contradictory. Picking the innermost silently produces the most pessimistic share available, which
+then reads as conservative rather than as a decision nobody made. So `nested_in` records which
+population contains which, and `check` fails a `market-size` subject holding two or more `current`
+population claims with no such edge between them — either a real contradiction or a missing edge,
+and the message names both repairs. **It is gated on `schemaVersion` 4**, because every vault that
+sized properly already holds two or more of those claims: ungated, the rule would turn every
+corpus that did the work red on the day the plugin updated, for a reason having nothing to do with
+what changed. That is the failure mode that makes people stop upgrading, and it would have made a
+correct rule unusable.
+
+**What it asks for is that the populations are connected, not that every pair carries an edge.**
+Reachability is transitive, so three rings are two edges — the innermost names the middle, the
+middle names the outermost — and demanding the third would ask for a fact the other two already
+derive. The distinction is not cosmetic: two nested *pairs* under one subject, each internally
+edged and neither related to the other, leaves every note carrying an edge while the set still
+holds two unrelated ring systems, and a share figure is then a percentage of whichever system its
+reader assumed. That is the failure the edge exists to remove, surviving a check that only asked
+whether each note had one.
+
+**Only an edge that resolves clears it.** `nested_in` is an edge like any other — it is in the set
+the bare check follows for dangling targets and `graph` walks, so a `nested_in` naming a note the
+vault does not hold is reported under its own name, and it does not satisfy the nesting rule
+either. Both halves matter: without the first, a typo is invisible; without the second, a typo
+*silences* the check, because the corpus reads as nested and nothing asks which population contains
+which. Resolved this way a mistyped edge is two findings with two repairs — fix the target, and
+record the ring.
 
 `--release-gate` is the call before a render, and the only one that asks every question. It is
 **ten parts** — the bare check plus `--used-in`, `--supersession-sweep`, `--red-team`,

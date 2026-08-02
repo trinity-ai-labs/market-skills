@@ -370,6 +370,7 @@ vault-lint.sh - read-only checks over a claim vault.
       is in --release-gate so the call before a render is still one call, but
       the run that gates what actually ships is the one inside the render loop,
       after the HTML exists - see the render loop in rendering.md.
+
   vault-lint.sh --assumption-rows [--vault PATH] [--json]
       Check the assumptions table in financial-model.md against the assumption
       notes that declare themselves inputs to the model, both directions. A
@@ -681,6 +682,66 @@ vault-lint.sh - read-only checks over a claim vault.
       reasoning about a subject it has never filed is exactly the state the
       mode exists to surface, and a vacuous pass is worse than a red gate.
 
+  vault-lint.sh --foreclosed [--vault PATH] [--json]
+      List every live note that takes an option off the table, with the
+      section its used_in names, and fail one that never says what would put
+      the option back. A verdict - it exits 1 on its one failure.
+
+      A note asserting that an option is not viable removes work from the
+      roadmap, kills a segment, or takes a configuration off the table. It is
+      the highest-consequence class of assertion in a plan and the only one
+      nothing attacks: all three panel lenses ask whether the plan can deliver
+      what it promises, and none asks whether it wrongly concluded it could
+      not. The failure is silent BY CONSTRUCTION - the option is gone, so
+      nothing downstream references it, so no other check has a target to fire
+      on, and the conclusion is read as settled ground by the founder, by the
+      panel and by whoever acts on the plan.
+
+      foreclosure-no-reverse: a `current` note carrying `forecloses` and no
+      `reverses_if`. The same shape as an `assumption` carrying no
+      `validated_by`, one field over - the assumption owes the step that would
+      settle it, and the foreclosure owes the value of `foreclosed_on` that
+      would put the option back on the table. Without it the conclusion is
+      permanent, and nothing in the corpus records what it was conditional on.
+
+
+      foreclosed-on-dangling: a note carrying `forecloses` whose
+      `foreclosed_on` names an ID no note in this vault carries. The
+      conclusion names the input it rests on and that input cannot be opened,
+      so nothing can be re-read to overturn it. It is also the brief the
+      floor skeptic is dispatched with, so a dangling target sends the one
+      lens pointed at this conclusion to a note that does not exist - and a
+      lens that found nothing reads exactly like a foreclosure that survived
+      being attacked. `check`s dangling-edge rule walks the block-list edge
+      fields and never this scalar, so nothing else reports it, which is the
+      gap `superseded_by` has and answers the same way.
+      IT READS `claim` ONLY, and --subject-orphan's closed pair does not
+      transfer. That rule asks which types FILE a position; these three fields
+      are claim-only by ARGUMENT - a foreclosure is a conclusion drawn from an
+      input, `foreclosed_on` is where that input is named, and a note resting
+      on nothing has no input to name. An option taken off the table by an
+      `assumption` is not a foreclosure missing a field; it is an assumption
+      in the shape of a finding, and the repair is to file the `question` the
+      plan stopped asking. Reading both types here would give that reader the
+      WRONG REPAIR under the right name - add `reverses_if`, and the category
+      error ships dressed in three fields and green. `check` reports it
+      instead, under foreclosure-on-assumption, which names the question.
+
+      IT READS `status`, AND A RETIRED FORECLOSURE OWES NOTHING. A `superseded`
+      or `retracted` note has already been taken back, so demanding a reversal
+      condition of it names a repair on a corpse - the supersession IS the
+      repair, and --supersession-sweep is what reports the sections it put in
+      doubt.
+
+      NOT gated on schemaVersion, and it does not need to be: the trigger is
+      the PRESENCE of `forecloses`, so a corpus that never wrote the field
+      cannot owe anything here. That is the exemption a version buys, obtained
+      without spending one - the terms `superseded_by`'s two rules are on.
+
+      A vault where nothing forecloses is reported as a mode with nothing to
+      run over rather than as agreement, the convention --citation-codes and
+      --unflattened-source use for a half that did not run.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -755,6 +816,7 @@ check                gate  note-level checks
 --citation-codes     gate  citation codes against their index rows
 --unflattened-source gate  local source rows against the global log
 --subject-orphan     gate  unfiled subjects the corpus reasons about
+--foreclosed         gate  foreclosed options and what would reverse them
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -878,7 +940,20 @@ CONFIG="$VAULT/.vault/config.json"
 # recorded hash from every claim already cited into a plan, which is every claim
 # in every finished corpus. A version is exactly what that exemption costs, and
 # vault-migration.md carries the 2 -> 3 back-fill.
-SUPPORTED_SCHEMA="1 2 3"
+#
+# 4 joins the set for ONE rule - the `market-size` nesting check in `check`. A
+# plan that sized properly already carries several current population claims
+# under that subject, a behavioural cut inside a professional population inside
+# a broader one, and none of them is wrong. Ungated, the rule would turn every
+# corpus that did the work red on the day the plugin updates, for a reason
+# having nothing to do with what changed - which is the shape that makes people
+# stop upgrading, so the rule would be correct and unusable. A version is
+# exactly what that exemption costs, and vault-migration.md carries the 3 -> 4
+# back-fill. The fields --foreclosed reads are deliberately NOT behind it: that
+# mode fires on the PRESENCE of `forecloses`, so a corpus written before the
+# field cannot owe it, and a version spent over an empty population buys
+# nothing.
+SUPPORTED_SCHEMA="1 2 3 4"
 FOUND_SCHEMA=$(awk '
 	match($0, /"schemaVersion"[ \t]*:[ \t]*[0-9]+/) {
 		s = substr($0, RSTART, RLENGTH)
@@ -986,7 +1061,16 @@ HAS_FINMODEL=0
 # ARR term that declares it leaves out a note the vault does not hold is the one
 # form of that declaration nobody can check by reading it, and `graph` walking
 # the edge is what makes the excluded line reachable from the verdict.
-EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes"
+#
+# `nested_in` is here on exactly those terms, and ungated for `depends_on`'s
+# reason - no corpus written before the field carries it, so listing it costs
+# nothing at any version. What it buys is the difference between the two ways a
+# population claim can be missing its ring: population-unnested resolves the
+# edge through BYID, so a MISTYPED `nested_in` links nothing and would read as
+# an edge nobody wrote, which is a different repair. Listed here, the typo is a
+# dangling-edge failure under its own name, and `graph` shows which population
+# a claim sits inside instead of stopping at it.
+EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes nested_in"
 
 # ----------------------------------------------------------------------------
 # scratch space
@@ -5482,6 +5566,163 @@ if [ "$MODE" = "subject-orphan" ]; then
 fi
 
 # ----------------------------------------------------------------------------
+# --foreclosed - the assertions that take an option off the table
+#
+# Every other adversarial mechanism in this method fires on a plan claiming too
+# much. A note asserting that an option is NOT viable claims too little, and it
+# is the most expensive assertion in the corpus: it removes work from the
+# roadmap, kills a segment, or takes a configuration off the table. All three
+# panel lenses are pointed at whether the plan can deliver what it promises and
+# none at whether it wrongly concluded it could not, so nothing attacks it.
+#
+# THE FAILURE IS SILENT BY CONSTRUCTION, which is what separates this from
+# every check that reads an edge. The option is gone, so nothing downstream
+# references it, so no query has a target: the foreclosure cannot dangle,
+# cannot go stale in a way anybody notices, and cannot collide with the work it
+# cancelled, because that work was never written down. What the corpus can be
+# held to is the CONDITION - the input value that would put the option back -
+# and that is the whole of this mode.
+#
+# THE VERDICT MIRRORS `validated_by` ONE FIELD OVER. An assumption owes the step
+# that would settle it; a foreclosure owes the value of `foreclosed_on` that
+# would reverse it. Both are assertions somebody has to write down, both are
+# checkable, and neither is evidence the thinking was done - what they remove is
+# skipping it by DEFAULT, which is what a foreclosure held to nothing had been.
+#
+# `claim` ONLY, AND --subject-orphan's CLOSED PAIR DOES NOT TRANSFER HERE. That
+# rule asks which types FILE a position and the answer is both; this one reads
+# fields that are claim-only BY ARGUMENT, because a foreclosure is a conclusion
+# drawn from an input and `foreclosed_on` is where that input is named - a note
+# resting on nothing has no input to name. So an option taken off the table by
+# an `assumption` is not a foreclosure missing a field, it is an assumption in
+# the shape of a finding, and vault.md`s repair is to file the `question` the
+# plan stopped asking rather than to dress the note in these three.
+#
+# READING BOTH TYPES HERE WOULD GIVE THE WRONG REPAIR UNDER THE RIGHT NAME - a
+# reader told to add `reverses_if` dresses the category error in three fields
+# and ships it green, which is worse than the gap. The dodge that would open by
+# narrowing is closed in `check` instead: an `assumption` carrying any of the
+# three is its own failure there, under a name that sends its reader to the
+# question. Two rules, two repairs, and neither says the other`s sentence.
+#
+# `status` IS READ AND A RETIRED FORECLOSURE OWES NOTHING - the live predicate
+# --assumption-rows learned. A `superseded` or `retracted` note has already been
+# taken back, so demanding a reversal condition of it names a repair on a note
+# the ledger has retired.
+#
+# NOT gated on schemaVersion, and it does not need to be: the trigger is the
+# PRESENCE of `forecloses`, so a corpus that never wrote the field cannot owe
+# anything here. That is the exemption a version buys, obtained without spending
+# one, on the terms `superseded_by`'s two rules are on.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "foreclosed" ]; then
+	FC_OK=$(awk -v out="$FAILURES" -v vault="$VAULT" -F '\t' '
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+			$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# The same present() the checks pass and --binding-driver use, and
+			# copied verbatim rather than written as `V[f, k] != ""` for their
+			# reason: all three programs implement the same trigger, and a field
+			# authored as a one-item block list is present to one test and absent
+			# to the other. Here that divergence would exempt a note from the
+			# reversal condition purely by how the field was formatted. Three
+			# copies now - the checks pass, --binding-driver and this one. Change
+			# one, change all three.
+			function present(f, k) { return (V[f, k] != "" || LN[f SUBSEP k] > 0) }
+
+			# The same field as TEXT, for the message. Scalar where there is one,
+			# otherwise the block-list items joined - so a value the trigger can
+			# see is a value the message can print, and the two cannot disagree
+			# about whether the field is there.
+			function textof(f, k,   kk, i, o) {
+				if (V[f, k] != "") return V[f, k]
+				kk = f SUBSEP k
+				o = ""
+				for (i = 1; i <= LN[kk]; i++) o = o (i == 1 ? "" : ", ") LI[kk, i]
+				return o
+			}
+
+			# The document sections a note reached, which is where a foreclosure
+			# has to be argued with. A note carrying none is reported as such
+			# rather than skipped: a conclusion that took an option off the table
+			# and reached no document is a decision nothing renders.
+			function cited(f,   kk, i, o) {
+				kk = f SUBSEP "used_in"
+				if (LN[kk] == 0) return "no used_in entry"
+				o = ""
+				for (i = 1; i <= LN[kk]; i++) o = o (i == 1 ? "" : ", ") LI[kk, i]
+				return o
+			}
+
+			END {
+				# Every ID this vault carries, for the dangling test below.
+				# Built here rather than threaded in, because this mode is the
+				# only reader of `foreclosed_on` and the index costs one pass.
+				for (i = 1; i <= nf; i++) {
+					if (V[files[i], "id"] != "") HASID[V[files[i], "id"]] = 1
+				}
+
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					id = V[f, "id"]
+					ty = V[f, "type"]
+					if (id == "") continue
+					if (ty != "claim") continue
+					if (V[f, "status"] != "current") continue
+					if (!present(f, "forecloses")) continue
+
+					# Read once and used by both the listing and the failure,
+					# because cited() walks the whole used_in list to build its
+					# string and calling it twice for one note walks it twice.
+					what = textof(f, "forecloses")
+					where = cited(f)
+
+					nfc++
+					listed = listed (nfc == 1 ? "" : "; ") id " forecloses " what " (" where ")"
+
+					# `foreclosed_on` names the input the conclusion rests on,
+					# and it is a SCALAR - so `check`s dangling-edge rule,
+					# which walks the block-list edge fields, never opens it.
+					# The same gap `superseded_by` has, answered the same way:
+					# its own rule rather than a silent omission.
+					#
+					# What a dangling one costs is specific to this field. The
+					# floor skeptic is briefed off this mode`s output with
+					# `foreclosed_on` in it, so a target naming nothing sends
+					# the one lens pointed at the foreclosure to a note that
+					# does not exist. The lens reports nothing, and a lens that
+					# found nothing is indistinguishable from a foreclosure
+					# that survived attack - the vacuous pass this release
+					# exists to close, shipped by the release closing it.
+					fon = textof(f, "foreclosed_on")
+					if (fon != "" && !(fon in HASID))
+						report(f, "foreclosed-on-dangling", id, "`foreclosed_on: " fon "` and no note in this vault carries that ID. The conclusion names the input it rests on and that input cannot be opened, so nothing can be re-read to overturn the foreclosure - either the note was never written, or the ID is a typo. It is the brief the floor skeptic is dispatched with, so a dangling target sends the one lens pointed at this conclusion to a note that does not exist, and a lens that found nothing reads exactly like a foreclosure that survived being attacked. `check`s dangling-edge rule walks the block-list edge fields and never this scalar, so nothing else in this tool reports it")
+
+					if (present(f, "reverses_if")) continue
+					report(f, "foreclosure-no-reverse", id, "`forecloses` names " what " and the note carries no `reverses_if`. Taking an option off the table removes work from the roadmap, kills a segment or rules out a configuration, and it is the one class of assertion nothing in this method attacks - every panel lens asks whether the plan can deliver what it promises and none asks whether it wrongly concluded it could not. With no reversal condition the conclusion is permanent and the corpus records nothing it was conditional on, which is unfalsifiable rather than settled: the option is gone, so nothing downstream references it and no other check has a target to fire on. State `reverses_if` - the value of `foreclosed_on` that would put the option back on the table - the way an `assumption` states `validated_by`. Cited into: " where)
+				}
+
+				# Which half ran, not what it would have concluded. A vault where
+				# nothing forecloses has no population here, and a line reading as
+				# a pass over it would report agreement about a question this mode
+				# never got to ask.
+				if (nfc == 0)
+					printf("no `current` claim under %s carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition\n", vault)
+				else
+					printf("%d `current` note%s take%s an option off the table and every one of them declares what would put it back: %s - %s\n",
+						nfc, (nfc == 1 ? "" : "s"), (nfc == 1 ? "s" : ""), listed, vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint foreclosed" "$FC_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
 # pass 3 - the checks
 #
 # Reads the record stream plus the parse errors, and emits one failure per line:
@@ -5708,6 +5949,20 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 
 	function present(f, k) { return (V[f, k] != "" || LN[f SUBSEP k] > 0) }
 
+	# The representative of one `market-size` population`s component, for the
+	# nesting rule below. Plain union-find over PAR[], with path halving so a
+	# long chain does not cost its length on every lookup - three rings is the
+	# common case and a deep one is still linear to build. Iterative rather
+	# than recursive because the population set is corpus data and a recursive
+	# walk over it would be bounded by whatever the corpus happens to hold.
+	function pop_root(x) {
+		while (PAR[x] != x) {
+			PAR[x] = PAR[PAR[x]]
+			x = PAR[x]
+		}
+		return x
+	}
+
 	$1 == "T" { terms[++nterm] = $2; isterm[$2] = 1; required[$2] = $3; next }
 	$1 == "A" { aliases[++nalias] = $2; aliasof[$2] = $3; next }
 	$1 == "N" { files[++nf] = $2; DIR[$2] = $3; BASE[$2] = $4; next }
@@ -5883,6 +6138,39 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 					if (BASE[f] != id ".md")
 						report(f, "filename-mismatch", id, "the filename is " BASE[f] " but the ID is " id ". The filename is meant to be exactly the ID plus .md, so that find-the-file-for-this-ID and grep-for-this-ID are the same operation - here they give two answers and one of them is wrong")
 				}
+
+				# --- the foreclosure fields belong to a claim -----------------
+				# vault.md restricts the three to a `claim` and the restriction
+				# IS the rule rather than a place they happen to live: a
+				# foreclosure is a conclusion drawn from an input, and
+				# `foreclosed_on` is where that input is named - a note resting
+				# on nothing has no input to name. So an option taken off the
+				# table by an assumption is not a foreclosure that forgot a
+				# field, it is an assumption in the shape of a finding.
+				#
+				# REPORTED SEPARATELY FROM type-agreement, for the reason
+				# filename-mismatch is above: the note`s `type` is not wrong
+				# here. It is a legitimate assumption carrying a field its type
+				# cannot own, and a reader sent to look at `type` reads
+				# `assumption`, concludes it is correct, and stops.
+				#
+				# AND NOT REPORTED BY --foreclosed, which reads claims only, for
+				# a sharper reason: that mode`s message says to add
+				# `reverses_if`, and following it would dress the category error
+				# in three fields and ship it green. The repair here is the
+				# `question` the plan stopped asking, and only a rule with its
+				# own name can say so.
+				#
+				# Ungated, on --foreclosed`s terms: the trigger is the presence
+				# of a field no corpus written before this release carries.
+				if (ty == "assumption") {
+					fcf = ""
+					if (present(f, "forecloses")) fcf = fcf (fcf == "" ? "" : ", ") "`forecloses`"
+					if (present(f, "foreclosed_on")) fcf = fcf (fcf == "" ? "" : ", ") "`foreclosed_on`"
+					if (present(f, "reverses_if")) fcf = fcf (fcf == "" ? "" : ", ") "`reverses_if`"
+					if (fcf != "")
+						report(f, "foreclosure-on-assumption", id, "this `assumption` carries " fcf ", and the three foreclosure fields belong to a `claim`. The restriction is the argument rather than a filing convention: a foreclosure is a conclusion drawn from an input and `foreclosed_on` is where that input is named, so a note resting on nothing has no input to name. An option taken off the table with nothing behind it is not a foreclosure that forgot its fields - it is an assumption in the shape of a finding, and it is the most expensive kind of note to leave that way, because it removes work from the roadmap on the strength of something nobody sourced. THE REPAIR IS NOT TO ADD `reverses_if`: file the `question` the plan stopped asking, and let the answer decide whether a claim closes the option. Where the conclusion really does rest on an input this vault holds, the note is a `claim` and the fields go there. This is not type-agreement - the `type` field is correct and the directory matches; it is the field that cannot sit on this type")
+				}
 			}
 
 			# --- supersession is always two edits ---------------------------
@@ -5948,6 +6236,28 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 					rk = V[f, "resource"] SUBSEP sq
 					CONC[rk, ++CN[rk]] = f
 				}
+			}
+
+			# --- nested populations, at schemaVersion 4 ---------------------
+			# Two `current` claims under one subject are a collision, and
+			# vault.md resolves one three ways: supersede a side, add a
+			# `scopes` edge because one is narrower, or discover the two
+			# genuinely disagree. Under `market-size` there is a fourth state
+			# none of those describes - the populations are BOTH right and one
+			# sits inside the other, a behavioural cut inside a professional
+			# population inside a broader one - and `nested_in` is the edge
+			# that records it.
+			#
+			# Collected here and reported after the loop, because the failure
+			# is a property of a GROUP: neither claim is the wrong one, exactly
+			# as false-independence above.
+			#
+			# A note whose `id` never parsed is left out, because the edge test
+			# below matches an ID against an ID and an empty one would relate
+			# every unidentified note to every other.
+			if (schema + 0 >= 4 && ty == "claim" && id != "" &&
+			    V[f, "status"] == "current" && V[f, "subject"] == "market-size") {
+				POP[++NPOP] = f
 			}
 
 			# --- edges resolve to real notes --------------------------------
@@ -6097,6 +6407,85 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 			for (j = 1; j <= CN[rk]; j++) others = others (j == 1 ? "" : ", ") V[CONC[rk, j], "id"]
 			for (j = 1; j <= CN[rk]; j++)
 				report(CONC[rk, j], "false-independence", V[CONC[rk, j], "id"], CN[rk] " milestones declare `resource: " rkp[1] "` at `sequence: " rkp[2] "`: " others ". Items competing for one constrained resource cannot be asserted concurrent, so at least one of them is not happening in that slot. Give them distinct sequences, or name the resource each actually consumes - left as is, the plan reads as though both land and every number downstream inherits a week of capacity that was counted twice")
+		}
+
+		# The `market-size` populations, and whether the corpus says how they
+		# sit inside each other. THE TEST IS CONNECTIVITY, NOT WHETHER EACH
+		# NOTE CARRIES AN EDGE, and vault.md states the contract in those
+		# words: what it asks for is that the claims under one subject are
+		# connected, never that every combination carries a direct edge.
+		# Reachability is walked TRANSITIVELY, so three rings are satisfied by
+		# two edges - the innermost names the middle, the middle names the
+		# outermost - which is the shape a plan that sized properly has, and
+		# demanding the third edge would ask for a fact already derivable from
+		# the other two.
+		#
+		# A per-note "does this one carry an edge" test passes a corpus the
+		# contract fails, and the case is not exotic: two nested PAIRS under
+		# one subject, each internally edged and neither related to the other,
+		# leaves every note carrying an edge and the set still holding two
+		# unrelated ring systems. A share figure is then a percentage of
+		# whichever system its reader assumed, which is the whole failure.
+		# So the edges are unioned and the components counted.
+		#
+		# The edge is undirected here, because the question is whether a pair
+		# is RELATED and not which way round: A naming B is the same statement
+		# about the pair as B naming A, and a rule reading only the narrower
+		# end would fail a corpus that wrote the edge from the other one.
+		#
+		# THIS RULE TESTS RESOLUTION ITSELF rather than leaning on the
+		# dangling-edge rule to have caught a bad target first, and the choice
+		# matters: `nested_in` is in EDGE_FIELDS so dangling-edge does fire on
+		# a typo, but that rule is UNGATED and this one is gated on
+		# schemaVersion 4 - two rules with different triggers, and a nesting
+		# check that assumed its sibling had already run would be assuming
+		# something the gate does not guarantee. So targets resolve through
+		# BYID, the index every other edge-reading check in this pass uses, and
+		# a `nested_in` naming no note in the vault links NOTHING.
+		#
+		# The failure that closes: a typo would otherwise satisfy this check.
+		# The corpus would read as nested, the rule would clear, and nothing
+		# anywhere would say the edge points at a note that does not exist -
+		# a vacuous pass of exactly the shape this mode was added to remove.
+		# Resolved this way the typo is TWO failures, which is right: a
+		# dangling-edge naming the bad target, and a population-unnested saying
+		# the ring is still unrecorded. They are different repairs.
+		#
+		# The scalar and the block-list spelling are both read, for the reason
+		# present() reads both: a note that wrote its edge as a list would
+		# otherwise be exempt by formatting.
+		for (i = 1; i <= NPOP; i++) { POPAT[POP[i]] = i; PAR[i] = i }
+		for (i = 1; i <= NPOP; i++) {
+			f = POP[i]
+			nnest = 0
+			if (V[f, "nested_in"] != "") NEST[++nnest] = target_of(V[f, "nested_in"])
+			k = f SUBSEP "nested_in"
+			for (j = 1; j <= LN[k]; j++) NEST[++nnest] = target_of(LI[k, j])
+			for (j = 1; j <= nnest; j++) {
+				tgt = NEST[j]
+				if (!(tgt in BYID)) continue
+				if (!(BYID[tgt] in POPAT)) continue
+				ra = pop_root(i)
+				rb = pop_root(POPAT[BYID[tgt]])
+				if (ra != rb) PAR[ra] = rb
+			}
+		}
+
+		# Reported per NOTE rather than per group, which is where this differs
+		# from false-independence and duplicate-url above. There the whole group
+		# is implicated and neither member is the wrong one; here each row names
+		# the claims THIS one has no chain to, so the note a reader opens tells
+		# them which ring is still unrecorded - and a note already connected to
+		# everything is not a row at all.
+		if (NPOP >= 2) for (i = 1; i <= NPOP; i++) {
+			f = POP[i]
+			unreached = ""
+			for (j = 1; j <= NPOP; j++) {
+				if (j == i || pop_root(j) == pop_root(i)) continue
+				unreached = unreached (unreached == "" ? "" : ", ") V[POP[j], "id"]
+			}
+			if (unreached == "") continue
+			report(f, "population-unnested", V[f, "id"], "`subject: market-size` is carried by " NPOP " `current` claims and no `nested_in` chain connects this one to: " unreached ". Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. The chain is walked transitively, so three rings are two edges rather than three: add `nested_in` naming the ring immediately outside this claim, or supersede one side if the two genuinely disagree")
 		}
 
 		for (i = 1; i <= nf; i++) {

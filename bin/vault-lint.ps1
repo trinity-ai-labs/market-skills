@@ -1116,6 +1116,66 @@ vault-lint.sh - read-only checks over a claim vault.
       reasoning about a subject it has never filed is exactly the state the
       mode exists to surface, and a vacuous pass is worse than a red gate.
 
+  vault-lint.sh --foreclosed [--vault PATH] [--json]
+      List every live note that takes an option off the table, with the
+      section its used_in names, and fail one that never says what would put
+      the option back. A verdict - it exits 1 on its one failure.
+
+      A note asserting that an option is not viable removes work from the
+      roadmap, kills a segment, or takes a configuration off the table. It is
+      the highest-consequence class of assertion in a plan and the only one
+      nothing attacks: all three panel lenses ask whether the plan can deliver
+      what it promises, and none asks whether it wrongly concluded it could
+      not. The failure is silent BY CONSTRUCTION - the option is gone, so
+      nothing downstream references it, so no other check has a target to fire
+      on, and the conclusion is read as settled ground by the founder, by the
+      panel and by whoever acts on the plan.
+
+      foreclosure-no-reverse: a `current` note carrying `forecloses` and no
+      `reverses_if`. The same shape as an `assumption` carrying no
+      `validated_by`, one field over - the assumption owes the step that would
+      settle it, and the foreclosure owes the value of `foreclosed_on` that
+      would put the option back on the table. Without it the conclusion is
+      permanent, and nothing in the corpus records what it was conditional on.
+
+
+      foreclosed-on-dangling: a note carrying `forecloses` whose
+      `foreclosed_on` names an ID no note in this vault carries. The
+      conclusion names the input it rests on and that input cannot be opened,
+      so nothing can be re-read to overturn it. It is also the brief the
+      floor skeptic is dispatched with, so a dangling target sends the one
+      lens pointed at this conclusion to a note that does not exist - and a
+      lens that found nothing reads exactly like a foreclosure that survived
+      being attacked. `check`s dangling-edge rule walks the block-list edge
+      fields and never this scalar, so nothing else reports it, which is the
+      gap `superseded_by` has and answers the same way.
+      IT READS `claim` ONLY, and --subject-orphan's closed pair does not
+      transfer. That rule asks which types FILE a position; these three fields
+      are claim-only by ARGUMENT - a foreclosure is a conclusion drawn from an
+      input, `foreclosed_on` is where that input is named, and a note resting
+      on nothing has no input to name. An option taken off the table by an
+      `assumption` is not a foreclosure missing a field; it is an assumption
+      in the shape of a finding, and the repair is to file the `question` the
+      plan stopped asking. Reading both types here would give that reader the
+      WRONG REPAIR under the right name - add `reverses_if`, and the category
+      error ships dressed in three fields and green. `check` reports it
+      instead, under foreclosure-on-assumption, which names the question.
+
+      IT READS `status`, AND A RETIRED FORECLOSURE OWES NOTHING. A `superseded`
+      or `retracted` note has already been taken back, so demanding a reversal
+      condition of it names a repair on a corpse - the supersession IS the
+      repair, and --supersession-sweep is what reports the sections it put in
+      doubt.
+
+      NOT gated on schemaVersion, and it does not need to be: the trigger is
+      the PRESENCE of `forecloses`, so a corpus that never wrote the field
+      cannot owe anything here. That is the exemption a version buys, obtained
+      without spending one - the terms `superseded_by`'s two rules are on.
+
+      A vault where nothing forecloses is reported as a mode with nothing to
+      run over rather than as agreement, the convention --citation-codes and
+      --unflattened-source use for a half that did not run.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -1194,6 +1254,7 @@ check                gate  note-level checks
 --citation-codes     gate  citation codes against their index rows
 --unflattened-source gate  local source rows against the global log
 --subject-orphan     gate  unfiled subjects the corpus reasons about
+--foreclosed         gate  foreclosed options and what would reverse them
 '@
 
 # The table's rows as records - the shape `while read -r sel gate part` gives
@@ -1250,7 +1311,8 @@ function Get-ModeForFlag {
 #  13. Invoke-ModeCitationCodes      citation-codes
 #  14. Invoke-ModeUnflattenedSource  unflattened-source
 #  15. Invoke-ModeSubjectOrphan      subject-orphan
-#  16. Invoke-ModeCheck              check
+#  16. Invoke-ModeForeclosed         foreclosed
+#  17. Invoke-ModeCheck              check
 #
 # THIS LAYOUT IS A CONTRACT SIX SEPARATE BRANCHES BUILD AGAINST. Each of them
 # replaces exactly one function body below and touches nothing else in this
@@ -5077,7 +5139,161 @@ function Invoke-ModeSubjectOrphan {
 }
 
 # --------------------------------------------------------------------------
-# 16. check - pass 3, the note-level checks
+# 16. --foreclosed - the assertions that take an option off the table
+#
+# Ports the --foreclosed body of bin/vault-lint.sh, whose header comment carries
+# the reasoning: why a foreclosure is the one class of assertion nothing in this
+# method attacks, why the verdict mirrors `validated_by` one field over, why
+# both types that file a position are read, why a retired foreclosure owes
+# nothing, and why nothing gates it on schemaVersion. Every failure string and
+# every success line is transcribed character for character from the awk
+# program.
+#
+# THE HELPERS BELOW ARE LOCAL TO THIS BODY, per the stub seam.
+# --------------------------------------------------------------------------
+function Invoke-ModeForeclosed {
+	$SUB = [string][char]28
+
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$v = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$li = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' ([System.StringComparer]::Ordinal)
+
+	foreach ($rec in $script:RECORDS) {
+		$p = $rec.Split([char]9)
+		if ($p[0] -ceq 'N') { [void]$files.Add($p[1]); continue }
+		if ($p[0] -ceq 'S') { $v[$p[1] + $SUB + $p[2]] = $p[3]; continue }
+		if ($p[0] -ceq 'L') {
+			$kk = $p[1] + $SUB + $p[2]
+			$list = $null
+			if (-not $li.TryGetValue($kk, [ref]$list)) {
+				$list = New-Object 'System.Collections.Generic.List[string]'
+				$li[$kk] = $list
+			}
+			[void]$list.Add($p[3])
+			continue
+		}
+	}
+
+	# `V[f, k]` in awk is the empty string when the key was never set.
+	function Get-ForeclosedValue {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUB + $K
+		if ($v.ContainsKey($kk)) { return $v[$kk] }
+		return ''
+	}
+
+	# The block-list items under a key, an empty list when it carries none. The
+	# leading comma stops PowerShell unwrapping a one-item list into a bare
+	# string, which would make the caller's foreach walk that string's
+	# characters.
+	function Get-ForeclosedList {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUB + $K
+		if ($li.ContainsKey($kk)) { return , $li[$kk] }
+		return , (New-Object 'System.Collections.Generic.List[string]')
+	}
+
+	# The same present() Invoke-ModeCheck and Invoke-ModeBindingDriver use, and
+	# copied verbatim rather than written as a bare emptiness test for their
+	# reason: all three implement the same trigger, and a field authored as a
+	# one-item block list is present to one test and absent to the other. Here
+	# that divergence would exempt a note from the reversal condition purely by
+	# how the field was formatted. Three copies now - Test-CheckPresent,
+	# Test-BdPresent and this one. Change one, change all three.
+	function Test-ForeclosedPresent {
+		param([string]$F, [string]$K)
+		$kk = $F + $SUB + $K
+		if ($v.ContainsKey($kk) -and $v[$kk].Length -ne 0) { return $true }
+		if ($li.ContainsKey($kk) -and $li[$kk].Count -gt 0) { return $true }
+		return $false
+	}
+
+	# textof() - the same field as text, for the message. Scalar where there is
+	# one, otherwise the block-list items joined, so a value the trigger can see
+	# is a value the message can print.
+	function Get-ForeclosedText {
+		param([string]$F, [string]$K)
+		$scalar = Get-ForeclosedValue $F $K
+		if ($scalar.Length -ne 0) { return $scalar }
+		return ((Get-ForeclosedList $F $K) -join ', ')
+	}
+
+	# cited() - the document sections a note reached, which is where a
+	# foreclosure has to be argued with. A note carrying none is reported as such
+	# rather than skipped.
+	function Get-ForeclosedCited {
+		param([string]$F)
+		$entries = Get-ForeclosedList $F 'used_in'
+		if ($entries.Count -eq 0) { return 'no used_in entry' }
+		return ($entries -join ', ')
+	}
+
+	$nfc = 0
+	$listed = ''
+
+	# Every ID this vault carries, for the dangling test below. Built here
+	# rather than threaded in, because this mode is the only reader of
+	# `foreclosed_on` and the index costs one pass.
+	$hasId = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	foreach ($f in $files) {
+		$fid = Get-ForeclosedValue $f 'id'
+		if ($fid.Length -ne 0) { [void]$hasId.Add($fid) }
+	}
+
+	foreach ($f in $files) {
+		$id = Get-ForeclosedValue $f 'id'
+		$ty = Get-ForeclosedValue $f 'type'
+		if ($id.Length -eq 0) { continue }
+		if ($ty -cne 'claim') { continue }
+		if ((Get-ForeclosedValue $f 'status') -cne 'current') { continue }
+		if (-not (Test-ForeclosedPresent $f 'forecloses')) { continue }
+
+		# Read once and used by both the listing and the failure, because
+		# Get-ForeclosedCited walks the whole used_in list to build its string
+		# and calling it twice for one note walks it twice.
+		$what = Get-ForeclosedText $f 'forecloses'
+		$where = Get-ForeclosedCited $f
+		$nfc++
+		if ($nfc -ne 1) { $listed = $listed + '; ' }
+		$listed = $listed + $id + ' forecloses ' + $what + ' (' + $where + ')'
+
+		# `foreclosed_on` names the input the conclusion rests on, and it is a
+		# SCALAR - so Invoke-ModeCheck's dangling-edge rule, which walks the
+		# block-list edge fields, never opens it. The same gap `superseded_by`
+		# has, answered the same way: its own rule rather than a silent
+		# omission. What a dangling one costs is specific to this field - the
+		# floor skeptic is briefed off this mode's output with `foreclosed_on`
+		# in it, so a target naming nothing sends the one lens pointed at the
+		# foreclosure to a note that does not exist, and a lens that found
+		# nothing is indistinguishable from a foreclosure that survived attack.
+		$fon = Get-ForeclosedText $f 'foreclosed_on'
+		if ($fon.Length -ne 0 -and -not $hasId.Contains($fon)) {
+			[void]$script:FAILURES.Add($f + "`tforeclosed-on-dangling`t" + $id + "`t" + '`foreclosed_on: ' + $fon + '` and no note in this vault carries that ID. The conclusion names the input it rests on and that input cannot be opened, so nothing can be re-read to overturn the foreclosure - either the note was never written, or the ID is a typo. It is the brief the floor skeptic is dispatched with, so a dangling target sends the one lens pointed at this conclusion to a note that does not exist, and a lens that found nothing reads exactly like a foreclosure that survived being attacked. `check`s dangling-edge rule walks the block-list edge fields and never this scalar, so nothing else in this tool reports it')
+		}
+
+		if (Test-ForeclosedPresent $f 'reverses_if') { continue }
+		$detail = '`forecloses` names ' + $what + ' and the note carries no `reverses_if`. Taking an option off the table removes work from the roadmap, kills a segment or rules out a configuration, and it is the one class of assertion nothing in this method attacks - every panel lens asks whether the plan can deliver what it promises and none asks whether it wrongly concluded it could not. With no reversal condition the conclusion is permanent and the corpus records nothing it was conditional on, which is unfalsifiable rather than settled: the option is gone, so nothing downstream references it and no other check has a target to fire on. State `reverses_if` - the value of `foreclosed_on` that would put the option back on the table - the way an `assumption` states `validated_by`. Cited into: ' + $where
+		[void]$script:FAILURES.Add($f + "`tforeclosure-no-reverse`t" + $id + "`t" + $detail)
+	}
+
+	# Which half ran, not what it would have concluded. A vault where nothing
+	# forecloses has no population here, and a line reading as a pass over it
+	# would report agreement about a question this mode never got to ask.
+	if ($nfc -eq 0) {
+		$okLine = 'no `current` claim under ' + $script:VAULT + ' carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition'
+	} else {
+		$notePlural = 's'
+		$takePlural = ''
+		if ($nfc -eq 1) { $notePlural = ''; $takePlural = 's' }
+		$okLine = [string]$nfc + ' `current` note' + $notePlural + ' take' + $takePlural +
+			' an option off the table and every one of them declares what would put it back: ' + $listed + ' - ' + $script:VAULT
+	}
+
+	exit (Render-Failures 'vault-lint foreclosed' $okLine)
+}
+
+# --------------------------------------------------------------------------
+# 17. check - pass 3, the note-level checks
 #
 # Ports bin/vault-lint.sh:3003-3629. The largest body in the file, gated on
 # schemaVersion throughout, and the mode a bare invocation runs.
@@ -5556,6 +5772,9 @@ function Invoke-ModeCheck {
 	# so which group is visited first cannot reach the output.
 	$URLMEM = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
 	$CONC = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	# The `market-size` populations, collected in note order so the members a
+	# message names are in the order the shell names them.
+	$POP = New-Object 'System.Collections.Generic.List[string]'
 	$restedon = New-Object 'System.Collections.Generic.HashSet[string]'
 	$seen = New-Object 'System.Collections.Generic.HashSet[string]'
 
@@ -5716,6 +5935,37 @@ function Invoke-ModeCheck {
 					Add-CheckFailure $f 'filename-mismatch' $id ('the filename is ' + $BASE[$f] + ' but the ID is ' + $id + '. The filename is meant to be exactly the ID plus .md, so that find-the-file-for-this-ID and grep-for-this-ID are the same operation - here they give two answers and one of them is wrong')
 				}
 			}
+
+			# --- the foreclosure fields belong to a claim -----------------
+			# vault.md restricts the three to a `claim` and the restriction IS
+			# the rule rather than a place they happen to live: a foreclosure is
+			# a conclusion drawn from an input, and `foreclosed_on` is where that
+			# input is named - a note resting on nothing has no input to name.
+			#
+			# REPORTED SEPARATELY FROM type-agreement, for the reason
+			# filename-mismatch is above: the note's `type` is not wrong here. It
+			# is a legitimate assumption carrying a field its type cannot own,
+			# and a reader sent to look at `type` reads `assumption`, concludes
+			# it is correct, and stops.
+			#
+			# AND NOT REPORTED BY --foreclosed, which reads claims only: that
+			# mode's message says to add `reverses_if`, and following it would
+			# dress the category error in three fields and ship it green. The
+			# repair here is the `question` the plan stopped asking.
+			#
+			# Ungated, on --foreclosed's terms: the trigger is the presence of a
+			# field no corpus written before this release carries.
+			if ($ty -ceq 'assumption') {
+				$fcf = ''
+				foreach ($ff in @('forecloses', 'foreclosed_on', 'reverses_if')) {
+					if (-not (Test-CheckPresent $f $ff)) { continue }
+					if ($fcf.Length -ne 0) { $fcf = $fcf + ', ' }
+					$fcf = $fcf + '`' + $ff + '`'
+				}
+				if ($fcf.Length -ne 0) {
+					Add-CheckFailure $f 'foreclosure-on-assumption' $id ('this `assumption` carries ' + $fcf + ', and the three foreclosure fields belong to a `claim`. The restriction is the argument rather than a filing convention: a foreclosure is a conclusion drawn from an input and `foreclosed_on` is where that input is named, so a note resting on nothing has no input to name. An option taken off the table with nothing behind it is not a foreclosure that forgot its fields - it is an assumption in the shape of a finding, and it is the most expensive kind of note to leave that way, because it removes work from the roadmap on the strength of something nobody sourced. THE REPAIR IS NOT TO ADD `reverses_if`: file the `question` the plan stopped asking, and let the answer decide whether a claim closes the option. Where the conclusion really does rest on an input this vault holds, the note is a `claim` and the fields go there. This is not type-agreement - the `type` field is correct and the directory matches; it is the field that cannot sit on this type')
+				}
+			}
 		}
 
 		# --- supersession is always two edits ---------------------------
@@ -5788,6 +6038,27 @@ function Invoke-ModeCheck {
 				if (-not $CONC.ContainsKey($rk)) { $CONC[$rk] = New-Object 'System.Collections.Generic.List[string]' }
 				[void]$CONC[$rk].Add($f)
 			}
+		}
+
+		# --- nested populations, at schemaVersion 4 ---------------------
+		# Two `current` claims under one subject are a collision, and vault.md
+		# resolves one three ways: supersede a side, add a `scopes` edge
+		# because one is narrower, or discover the two genuinely disagree.
+		# Under `market-size` there is a fourth state none of those describes -
+		# the populations are BOTH right and one sits inside the other, a
+		# behavioural cut inside a professional population inside a broader one
+		# - and `nested_in` is the edge that records it.
+		#
+		# Collected here and reported after the loop, because the failure is a
+		# property of a GROUP: neither claim is the wrong one, exactly as
+		# false-independence above.
+		#
+		# A note whose `id` never parsed is left out, because the edge test
+		# below matches an ID against an ID and an empty one would relate every
+		# unidentified note to every other.
+		if ($SCHEMA_N -ge 4 -and $ty -ceq 'claim' -and $id.Length -ne 0 -and
+			(Get-CheckValue $f 'status') -ceq 'current' -and (Get-CheckValue $f 'subject') -ceq 'market-size') {
+			[void]$POP.Add($f)
 		}
 
 		# --- edges resolve to real notes --------------------------------
@@ -5961,6 +6232,101 @@ function Invoke-ModeCheck {
 		}
 	}
 
+	# The `market-size` populations, and whether the corpus says how they sit
+	# inside each other. THE TEST IS CONNECTIVITY, NOT WHETHER EACH NOTE CARRIES
+	# AN EDGE, and vault.md states the contract in those words: what it asks for
+	# is that the claims under one subject are connected, never that every
+	# combination carries a direct edge. Reachability is walked TRANSITIVELY, so
+	# three rings are satisfied by two edges - the innermost names the middle,
+	# the middle names the outermost - which is the shape a plan that sized
+	# properly has, and demanding the third edge would ask for a fact already
+	# derivable from the other two.
+	#
+	# A per-note "does this one carry an edge" test passes a corpus the contract
+	# fails, and the case is not exotic: two nested PAIRS under one subject, each
+	# internally edged and neither related to the other, leaves every note
+	# carrying an edge and the set still holding two unrelated ring systems. So
+	# the edges are unioned and the components counted.
+	#
+	# The edge is undirected here, because the question is whether a pair is
+	# RELATED and not which way round: A naming B is the same statement about the
+	# pair as B naming A, and a rule reading only the narrower end would fail a
+	# corpus that wrote the edge from the other one.
+	#
+	# THIS RULE TESTS RESOLUTION ITSELF rather than leaning on the dangling-edge
+	# rule to have caught a bad target first, and the choice matters:
+	# `nested_in` is in EDGE_FIELDS so dangling-edge does fire on a typo, but
+	# that rule is UNGATED and this one is gated on schemaVersion 4 - two rules
+	# with different triggers, and a nesting check that assumed its sibling had
+	# already run would be assuming something the gate does not guarantee. So
+	# targets resolve through $BYID, the index every other edge-reading check in
+	# this pass uses, and a `nested_in` naming no note links NOTHING.
+	#
+	# The failure that closes: a typo would otherwise satisfy this check - the
+	# corpus would read as nested, the rule would clear, and nothing would say
+	# the edge points at a note that does not exist. Resolved this way the typo
+	# is TWO failures, which is right: a dangling-edge naming the bad target,
+	# and a population-unnested saying the ring is still unrecorded.
+	#
+	# The scalar and the block-list spelling are both read, for the reason
+	# Test-CheckPresent reads both: a note that wrote its edge as a list would
+	# otherwise be exempt by formatting.
+	$POPAT = New-Object 'System.Collections.Generic.Dictionary[string,int]' ([System.StringComparer]::Ordinal)
+	$PAR = New-Object 'System.Collections.Generic.List[int]'
+	for ($pi = 0; $pi -lt $POP.Count; $pi++) {
+		$POPAT[$POP[$pi]] = $pi
+		[void]$PAR.Add($pi)
+	}
+
+	# pop_root() at bin/vault-lint.sh - the representative of one population`s
+	# component. Plain union-find with path halving, iterative rather than
+	# recursive because the population set is corpus data and a recursive walk
+	# over it would be bounded by whatever the corpus happens to hold.
+	function Get-PopRoot {
+		param([int]$X)
+		while ($PAR[$X] -ne $X) {
+			$PAR[$X] = $PAR[$PAR[$X]]
+			$X = $PAR[$X]
+		}
+		return $X
+	}
+
+	foreach ($f in $POP) {
+		$edges = New-Object 'System.Collections.Generic.List[string]'
+		$scalar = Get-CheckValue $f 'nested_in'
+		if ($scalar.Length -ne 0) { [void]$edges.Add($scalar) }
+		foreach ($item in (Get-CheckList $f 'nested_in')) { [void]$edges.Add($item) }
+		foreach ($item in $edges) {
+			$tgt = Get-CheckEdgeTarget $item
+			if (-not $BYID.ContainsKey($tgt)) { continue }
+			if (-not $POPAT.ContainsKey($BYID[$tgt])) { continue }
+			$ra = Get-PopRoot $POPAT[$f]
+			$rb = Get-PopRoot $POPAT[$BYID[$tgt]]
+			if ($ra -ne $rb) { $PAR[$ra] = $rb }
+		}
+	}
+
+	# Reported per NOTE rather than per group, which is where this differs from
+	# false-independence and duplicate-url above. There the whole group is
+	# implicated and neither member is the wrong one; here each row names the
+	# claims THIS one has no chain to, so the note a reader opens tells them
+	# which ring is still unrecorded - and a note already connected to
+	# everything is not a row at all.
+	if ($POP.Count -ge 2) {
+		for ($pi = 0; $pi -lt $POP.Count; $pi++) {
+			$f = $POP[$pi]
+			$unreached = ''
+			for ($pj = 0; $pj -lt $POP.Count; $pj++) {
+				if ($pj -eq $pi) { continue }
+				if ((Get-PopRoot $pj) -eq (Get-PopRoot $pi)) { continue }
+				if ($unreached.Length -ne 0) { $unreached = $unreached + ', ' }
+				$unreached = $unreached + (Get-CheckValue $POP[$pj] 'id')
+			}
+			if ($unreached.Length -eq 0) { continue }
+			Add-CheckFailure $f 'population-unnested' (Get-CheckValue $f 'id') ('`subject: market-size` is carried by ' + [string]$POP.Count + ' `current` claims and no `nested_in` chain connects this one to: ' + $unreached + '. Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. The chain is walked transitively, so three rings are two edges rather than three: add `nested_in` naming the ring immediately outside this claim, or supersede one side if the two genuinely disagree')
+		}
+	}
+
 	foreach ($f in $files) {
 		if ((Get-CheckValue $f 'type') -cne 'source') { continue }
 		$id = Get-CheckValue $f 'id'
@@ -6108,7 +6474,17 @@ if (-not (Test-Path -LiteralPath $CONFIG -PathType Leaf)) {
 # from the FUTURE stays refused, which is the whole reason the field exists: an
 # older tool half-reading a newer vault reports a clean bill of health over
 # every field it never saw.
-$SUPPORTED_SCHEMA = '1 2 3'
+#
+# 3 joins the set for --assumption-rows and --claim-drift, and 4 for the
+# `market-size` nesting check in `check` - bin/vault-lint.sh carries the
+# reasoning for both. The short form of 4: a plan that sized properly already
+# holds several current population claims under that subject, none of them
+# wrong, so an ungated rule turns every corpus that did the work red on the day
+# the plugin updates. A version is exactly what that exemption costs, and
+# vault-migration.md carries the 3 -> 4 back-fill. The fields --foreclosed reads
+# are deliberately not behind it: that mode fires on the presence of
+# `forecloses`, so nothing written before the field can owe it.
+$SUPPORTED_SCHEMA = '1 2 3 4'
 $FOUND_SCHEMA = ''
 foreach ($line in (Read-TextLines $CONFIG)) {
 	$m = [regex]::Match($line, '"schemaVersion"[ \t]*:[ \t]*[0-9]+')
@@ -6194,7 +6570,16 @@ if (Test-Path -LiteralPath $FINMODEL -PathType Leaf) { $HAS_FINMODEL = 1 }
 # so a mistyped one has to be a dangling edge rather than a silent exclusion. An
 # ARR term that declares it leaves out a note the vault does not hold is the one
 # form of that declaration nobody can check by reading it.
-$EDGE_FIELDS = 'rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes'
+#
+# `nested_in` is here on exactly those terms, and ungated for `depends_on`'s
+# reason - no corpus written before the field carries it, so listing it costs
+# nothing at any version. What it buys is the difference between the two ways a
+# population claim can be missing its ring: population-unnested resolves the
+# edge through $BYID, so a MISTYPED `nested_in` links nothing and would read as
+# an edge nobody wrote, which is a different repair. Listed here, the typo is a
+# dangling-edge failure under its own name, and `graph` shows which population
+# a claim sits inside instead of stopping at it.
+$EDGE_FIELDS = 'rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes nested_in'
 
 # ----------------------------------------------------------------------------
 # the record stream
@@ -6846,4 +7231,5 @@ if ($MODE -ceq 'claim-drift') { Invoke-ModeClaimDrift }
 if ($MODE -ceq 'citation-codes') { Invoke-ModeCitationCodes }
 if ($MODE -ceq 'unflattened-source') { Invoke-ModeUnflattenedSource }
 if ($MODE -ceq 'subject-orphan') { Invoke-ModeSubjectOrphan }
+if ($MODE -ceq 'foreclosed') { Invoke-ModeForeclosed }
 Invoke-ModeCheck
