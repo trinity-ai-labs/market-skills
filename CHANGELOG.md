@@ -2,6 +2,28 @@
 
 Versions are the `version` field in `.claude-plugin/plugin.json`. Because that field is set, an installed plugin only picks up changes when it **changes** — pushing to `main` alone ships nothing. CI enforces the bump.
 
+## 1.19.2
+
+- **A bolded `Local ledger:` declaration silently did not apply, so a corpus that had correctly
+  declared its ledger was told to flatten it.** `--unflattened-source` reads its exemption out of
+  `sources.md`'s own header, and that exemption is what decides whether the mode is usable at all:
+  a corpus legitimately keeping a hundred-and-fifty-row per-profile ledger out of the global log
+  gets a hundred and fifty failures without it, which is how a check gets switched off. Emphasis
+  defeated the read two separate ways, both silent. A leading marker is neither a bullet nor the
+  label, so `**Local ledger: …` was dropped before any parsing happened; and where the label did
+  match, a marker around the path rode along in the token, so `**research/x.md**` resolved to no
+  file. Bold is the first thing an author reaches for in a markdown header, which made the failing
+  forms the likelier ones to be written — and the failure ran toward the false positive, with the
+  author believing the declaration was made. A leading `-` or `*` bullet and any run of `*`, `**`,
+  `_` or `__` are now stripped at each place a wrapper can sit: before the label, between the colon
+  and the path, and after the path. The markers are a class rather than the `**` that was reported,
+  because a fix for the doubled asterisk alone leaves the next author writing `_Local ledger:_` in
+  that exact position. **The strip never reaches inside the path** — an underscore is an emphasis
+  marker and an ordinary filename character both, so removing it everywhere would turn
+  `company_profiles.md` into a name no corpus holds and reproduce the failure under the fix written
+  to stop it. Every form is pinned by the fixtures suite, the ones that already parsed included,
+  because a fix pinned by one bolded fixture leaves the rest for the next refactor to reopen.
+
 ## 1.19.1
 
 - **1.19.0 deleted every count in this repo that could rot, except the one that was expensive to
