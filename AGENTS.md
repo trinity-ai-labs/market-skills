@@ -272,11 +272,15 @@ cadence and the decision each would change, `--deliverable` for whether the rend
 `deliverables/*.html` carries a vault address out to a reader who has no vault,
 `--assumption-rows` for whether the model's assumptions table and the notes that
 declare themselves inputs to it are the same set, `--claim-drift` for whether a cited section
-still carries what it carried when the claim recorded reading it, `--release-gate` for the ten
-parts the composite paragraph below enumerates run as one call — not ten of these, since
-`--unverified` is not a gate part and the bare `check` is not in this list, which is the
-enumeration trap sitting inside the sentence that warns about it — and
-`graph <ID>` for one note's neighbourhood. This sentence is
+still carries what it carried when the claim recorded reading it, `--citation-codes` for whether
+every `[F#]` and `[S#]` a document cites resolves to a row in the index that assigns it,
+`--unflattened-source` for whether every row of a research file's own local source table names a
+URL the root `sources.md` also names, `--release-gate` for the
+parts the composite paragraph below enumerates run as one call — and they are not simply the flags
+in this sentence, since `--unverified` is not a gate part and the bare `check` is not in this list,
+which is the enumeration trap sitting inside the sentence that warns about it; the count is left
+out for the reason the fixture counts are, that a number here rots on the next mode anybody adds —
+and `graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it, in both
 scripts** — an enumeration that has gone stale reads exactly like one that is complete.
 Rule 3 above has the reasoning for why `bin/` and `scripts/` sit under different
@@ -297,7 +301,8 @@ to one script's table and not its twin's.
 
 `--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
 `--supersession-sweep`, `--red-team`, `--roadmap-table`, `--binding-driver`, `--monitoring`,
-`--deliverable`, `--assumption-rows` and `--claim-drift` as separate
+`--deliverable`, `--assumption-rows`, `--claim-drift`, `--citation-codes` and
+`--unflattened-source` as separate
 invocations of the script and exits with the
 **worst** status any part returned, so a refusal (2) is never reported as a failed check (1). It
 exists because the render gate was several calls made from memory — which of them ran was a
@@ -556,6 +561,39 @@ and pasting it is the assertion that the read happened exactly as stamping a dat
 `current` `claim` and `assumption` notes and only entries whose `#anchor` resolves — a dead anchor is
 `--used-in`'s verdict, and reporting it twice under a name about reconciliation sends its reader to the
 wrong fix. Gated on `schemaVersion` 3.
+
+`--citation-codes` is the same boundary one address over. `--used-in` opens the document and section
+a NOTE names; plan prose cites `[F#]` and `[S#]`, which resolve through `research/founder-brief.md`
+and `sources.md` — a contract `docs/specs/2026-07-27-claim-citation-codes.md` wrote down and nothing
+enforced, so a code resolving to nothing rendered exactly like a working one and cleared the gate.
+Two properties belong in any change to it. **The two index files are excluded from the scan, and
+that is load-bearing rather than an optimisation**: an index legitimately records that a code was
+withdrawn and deliberately left unused, which names that code in its own prose, and a scan reading
+the mention as a citation fails a corpus doing the right thing. **It runs forward only**, which is
+the opposite call to `--red-team`'s roster and `--roadmap-table`'s two directions and is specific to
+an index: a recorded fact nothing leans on yet is healthy, so failing an uncited row would push an
+author toward citing things to silence a linter, and there is no dodge by omission either way
+because deleting the citation deletes the claim that needed it. **Its success line states the
+limit**, which is the point of the mode rather than a footnote — resolution is necessary and not
+sufficient, because a research file carries its own local `S` table and a document citing a local
+code the global log also assigns resolves to a row and to a different source. Observed on four
+documents at once, every code resolving. Ungated: the trigger is an index file the corpus either has
+or does not.
+
+`--unflattened-source` closes the half of that a check can reach — every row of a `research/*.md`
+local source table must name a URL the root `sources.md` also names, because the log is what assigns
+a citable `[S#]` and a source that never reached it can be cited from research prose and not from a
+plan document at all. **The failure kind is `source-unflattened` and NOT `orphan-source`**, which
+`check` already emits for close to the opposite finding — a source note nothing rests on — and
+neither is widened into the other, because one is a source nobody cited and the other a source
+nobody can cite. **The declared exemption decides whether the mode survives**: a corpus may
+deliberately keep a per-row ledger of a hundred and fifty profile rows out of the log, and a mode
+reporting all of them is switched off within a day, taking the working half with it. So the
+exemption is read from the LOG'S OWN HEADER — a `Local ledger: <path> - <why>` line before the
+log's first table row — rather than keyed on a filename this script knows, because the file holding
+a ledger differs per corpus and a hardcoded name is a rule that only fits the vault it was written
+against. A row carrying no URL is neither resolved nor failed and is counted in the success line
+instead, the same rule `--assumption-rows` learned about a half that walks an empty set.
 
 **The two subjects trigger differently, and the asymmetry is the design rather than an
 inconsistency.** `target-verdict` is a term 1.12.0 introduces, so no existing corpus carries it and
