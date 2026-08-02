@@ -14,7 +14,7 @@ they may not omit.
 - [The vault is a claim ledger over the prose](#the-vault-is-a-claim-ledger-over-the-prose)
 - [Seven note types, and the seventh is a record rather than a grade](#seven-note-types-and-the-seventh-is-a-record-rather-than-a-grade)
 - [An ID is an address, not a label](#an-id-is-an-address-not-a-label)
-- [Seven edges, each stored once on the asserting note](#seven-edges-each-stored-once-on-the-asserting-note)
+- [Eight edges, each stored once on the asserting note](#eight-edges-each-stored-once-on-the-asserting-note)
 - [Four format invariants that break silently](#four-format-invariants-that-break-silently)
   - [Block lists survive an Obsidian save; inline flow lists do not](#block-lists-survive-an-obsidian-save-inline-flow-lists-do-not)
   - [Coerce nothing: ban the ambiguous value instead of parsing it](#coerce-nothing-ban-the-ambiguous-value-instead-of-parsing-it)
@@ -25,6 +25,7 @@ they may not omit.
   - [The source note keeps the quote that outlives the URL](#the-source-note-keeps-the-quote-that-outlives-the-url)
   - [The fact note is one observed value with its provenance](#the-fact-note-is-one-observed-value-with-its-provenance)
   - [The claim note is the only type that carries a subject](#the-claim-note-is-the-only-type-that-carries-a-subject)
+  - [A claim that forecloses an option declares what would reverse it](#a-claim-that-forecloses-an-option-declares-what-would-reverse-it)
   - [The assumption note is what you would believe with no evidence](#the-assumption-note-is-what-you-would-believe-with-no-evidence)
   - [A target verdict is a claim carrying five more fields, not an eighth note type](#a-target-verdict-is-a-claim-carrying-five-more-fields-not-an-eighth-note-type)
   - [The question note records the gap, not the answer](#the-question-note-records-the-gap-not-the-answer)
@@ -159,7 +160,7 @@ only the shape `TYPE-[A-Za-z0-9]+`. A shorter hand-written ID from an early note
 lint failure, because failing an otherwise-valid corpus over a cosmetic length is how a
 useful check gets switched off.
 
-## Seven edges, each stored once on the asserting note
+## Eight edges, each stored once on the asserting note
 
 | edge | meaning | written on |
 |---|---|---|
@@ -170,8 +171,9 @@ useful check gets switched off.
 | `depends_on` | this milestone cannot land until that one has | the later milestone |
 | `moves` | this milestone changes the value that note asserts | the milestone |
 | `arr_excludes` | the ARR term of this verdict's identity does not carry that note's revenue | the verdict |
+| `nested_in` | this population sits inside that one — both are current counts of one subject | the inner population |
 
-All seven are block lists of IDs.
+All eight are block lists of IDs.
 
 **`arr_excludes` is an edge rather than a prose note on the verdict for one reason: its items are
 note IDs, so a mistyped one has to be a `dangling-edge` failure and not a silent exclusion.** A
@@ -206,6 +208,48 @@ disagree because one is narrower than the other are not in conflict: "willingnes
 around a certain figure" and "for the largest segment it is roughly triple that" are both
 true, and the second `scopes` the first. Writing that edge is what stops the next reader
 treating the pair as a contradiction and picking one at random.
+
+**`nested_in` is the edge for a set of populations, and it is not `scopes` wearing another
+name.** Under `market-size` a corpus legitimately holds several current counts for one subject —
+a behavioural cut inside a professional population inside a broader one — and each is a correct
+count of a different set, so none of them narrows any other's assertion. What `scopes` says is
+*read the narrower note where both apply*: after it one of the pair is the one to believe, and
+that is the wrong instruction here, because a share figure is meaningless until it names which
+ring it is a share of. After `nested_in` the whole chain is what gets reported, innermost to
+outermost, and the reader can see which one a percentage was computed against.
+
+**Write the chain, not every pair.** Three rings are two edges — the innermost names the middle,
+the middle names the outermost — and the check walks `nested_in` **transitively**, so what it asks
+for is that the claims under one subject are connected, never that every combination carries a
+direct edge:
+
+```yaml
+# CLAIM-BH21NN44 — the behavioural cut, the innermost ring
+nested_in:
+  - CLAIM-PR55QQ18
+
+# CLAIM-PR55QQ18 — the professional population it sits inside
+nested_in:
+  - CLAIM-BD07VV92
+```
+
+Asking for the pairwise form instead would demand a third edge from the innermost claim to the
+outermost one, and that edge is already derivable from the two above — the same second copy of one
+fact the no-mirroring rule refuses, where editing one side and forgetting the other leaves the
+corpus holding two answers about which ring contains which. It would also fail a correctly chained
+three-population nesting, which is the shape a plan that sized properly actually has.
+
+**The failure it prevents is a pessimistic denominator that reads as careful sizing.** Left
+unedged, the set is several unrelated figures under one subject and whoever writes the share picks
+one — reliably the innermost, because it is the one the beachhead argument was written about. That
+is the smallest population in the corpus, so the share of it the plan must win to hit its target is
+the largest number available, and a target needing a large share of a small market is the one a
+verdict calls unreachable. Nothing downstream can see the substitution: the figure is real, its
+formula is correct, and the wider counts sit in the same directory. The edge also separates a
+nesting from a subject collision, which is the mechanical half — two current population claims
+under one subject that no `nested_in` chain connects are either a genuine contradiction or a missing
+edge, and `check` fails them at `schemaVersion` 4 rather than letting the pair pass as two
+independent sizings.
 
 **There is deliberately no `contradicts` edge.** It could only ever be written by someone who
 had already noticed the conflict — and that is the moment they resolve it, supersede one
@@ -675,6 +719,75 @@ from memory is a set nobody can be held to. The bare run's own success line says
 that the note-level checks passed and that the citation targets, the supersession blast radius, the
 panel objection rows, the roadmap table and the verdict drivers and the evidence under them were
 **not** opened.
+
+### A claim that forecloses an option declares what would reverse it
+
+A claim of the form *X is not credible*, *Y is not reachable* or *this rules out Z* does not add a
+position to the plan — it removes one. It takes work off the roadmap, kills a segment, or takes a
+configuration off the table. Three fields are what keep it arguable afterwards, written as a set
+on the claim that draws the conclusion:
+
+```yaml
+forecloses: "the seat-only configuration"      # what this claim takes off the table
+foreclosed_on: CLAIM-TW49PL03                  # the one input the conclusion rests on
+reverses_if: "the denominator is the professional population rather than the behavioural cut"
+```
+
+**This is `validated_by` pointed the other way, and the mirror is exact.** An assumption names the
+step that would settle it, because an assumption with no validation step is a permanent unverified
+belief nothing will ever revisit. A foreclosing claim names the input it depends on and the value
+of that input that would put the option back, because a foreclosure with no reversal condition is a
+permanent closed door nothing will ever revisit — and it is worse off than the assumption in one
+respect, since the assumption is at least still in the corpus with a queue position.
+
+**It is the highest-consequence class of claim in a plan, and until these fields there was nothing
+for an attack to point at.** The three panel lenses that predate them are aimed at whether the plan
+can deliver what it promises; none is aimed at whether it wrongly concluded it could
+not. **And the failure is silent by construction:** the
+option is gone, so nothing downstream references it, so no check has a target. A killed segment
+leaves no row for a table-versus-note comparison to catch, no citation for `--used-in` to resolve
+and no recorded section for `--claim-drift` to re-hash. Every query this schema supports returns
+clean over an option that was removed, which is the property these fields exist to break.
+
+**`forecloses` is the option in the words the plan uses**, not the reason it was closed. The
+reason is the note body, where it always was; this field is the option's own name, so a reader
+scanning the set sees what the plan no longer contains rather than a list of arguments.
+
+**`foreclosed_on` names ONE input, and it is an ID rather than a phrase.** Singular, because
+`reverses_if` states the value of *that* input which reverses the conclusion — a list of inputs
+against one condition leaves nobody able to say which input the condition belongs to, and a
+foreclosure genuinely resting on two independent inputs has two ways back and is two notes. An ID
+because the input has to be reachable: `vault-lint.sh graph` walks from the foreclosure to the
+denominator or driver underneath it, so somebody asking whether the door is still shut opens the
+input rather than re-arguing the conclusion from scratch.
+
+**`reverses_if` is a value, not a topic** — the rule `value` on an assumption is held to, one note
+type over. "If the market turns out to be bigger" cannot be checked against anything, so nothing
+will ever report that it happened; "the denominator is the professional population rather than the
+behavioural cut" is a condition somebody can look up in an afternoon.
+
+**The three sit on a `claim` and not on either asserting type, and the restriction is the
+argument.** A foreclosure is a conclusion drawn from an input, and `foreclosed_on` is where that
+input is named — a note resting on nothing has no input to name. So an option taken off the table
+with nothing behind it is not a foreclosure that forgot its fields; it is an assumption in the
+shape of a finding, and the repair is to file the `question` the plan stopped asking rather than
+to dress the note in these three.
+
+**`vault-lint.sh --foreclosed` reads the set two ways**, and both are why the fields are fields
+rather than prose. As a part of `--release-gate` it fails a `current` claim carrying `forecloses`
+with no `reverses_if` — the same shape as an `assumption` with no `validated_by`, and for the same
+reason. And it is the query the red team's floor skeptic is briefed from: the lens arrives holding
+every option the plan closed, with the section each one's `used_in` names, instead of an
+instruction to go looking for conclusions that are not there.
+
+**All three ship additive at the current version, and that is a different decision from the
+nesting rule above.** The trigger is the presence of `forecloses`, which no note in any existing
+corpus carries, so no vault can fail on the day the plugin updates — the exemption `schemaVersion`
+exists to provide, obtained without spending one. The `market-size` nesting check is the half of
+this release that does gate on a version, because it fires on a shape existing corpora already
+have. Gating the fields on the version too would cost an exemption over an empty population;
+shipping the nesting check without one would turn every properly sized vault red at once. They are
+one release and two decisions.
 
 ### The assumption note is what you would believe with no evidence
 
@@ -1255,7 +1368,7 @@ error at all. Refusing without an explicit path costs one flag and removes the e
 
 ```json
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "created": "2026-03-14"
 }
 ```
@@ -1263,11 +1376,11 @@ error at all. Refusing without an explicit path costs one flag and removes the e
 `schemaVersion` is a required integer, incremented only on a change that would make an older
 tool misread an existing vault. `created` is optional. The file is JSON, not YAML, so the
 coerce-nothing rule does not apply to it — JSON has unambiguous types. **The current version is
-3**; a new vault is scaffolded at it.
+4**; a new vault is scaffolded at it.
 
-**The tool reads a SET of versions, not one.** `vault-lint.sh` reads `1`, `2` and `3`. A vault at
-1 gets exactly the behaviour it has always had, a vault at 2 additionally gets the checks version 2
-added, and a vault at 3 gets those plus the checks version 3 added — each enumerated in its own
+**The tool reads a SET of versions, not one.** `vault-lint.sh` reads `1`, `2`, `3` and `4`. A vault at
+1 gets exactly the behaviour it has always had, and each later version adds that version's checks
+on top of the ones before it — each set enumerated in its own
 table below. A vault at 1
 has no `milestones/` directory by construction, so it cannot owe any of the milestone rules; one
 that has grown the directory without moving its version is told so by `type-agreement` rather
@@ -1297,6 +1410,23 @@ this release can carry:
 | the assumptions table renders the declared inputs | `--assumption-rows` | a declared `model_input` with no row and no `excluded_from_model`, a row matching no `assumption` `title` verbatim, declared inputs with no table to render them, and a line excluded from the model that the roadmap ships a change to and no verdict note lists in `arr_excludes` |
 | a cited section still carries what it carried | `--claim-drift` | a `reconciled_sections` hash the section no longer matches, a resolving citation with no entry recording it, and an entry naming a target `used_in` does not |
 
+**What version 4 adds is one rule**, and it is here rather than ungated because it is the rare
+case that fires on a shape an existing corpus already has rather than on a field it does not
+carry:
+
+| rule | mode | what fires |
+|---|---|---|
+| nested populations carry the edge that orders them | `check` | a `market-size` subject holding two or more `current` population claims that no `nested_in` chain connects — either a real contradiction the collision query should have surfaced, or a missing edge. Reachability is transitive, so three rings are satisfied by two edges rather than by an edge on every pair |
+
+**Why that one costs a version and this release's other three fields do not** is the whole
+distinction the field exists to draw. `forecloses`, `foreclosed_on` and `reverses_if` fire on their
+own presence, so they belong in the ungated table below and appear there. The nesting rule fires on
+a `market-size` subject carrying two current population claims, which is the *normal* shape for a
+plan that sized properly — a behavioural cut and a professional population both counted, both
+correct. Ungated, it would fail every one of those vaults the day the plugin updates, for a reason
+that has nothing to do with what changed, which is the shape of upgrade that makes people stop
+upgrading. The rule would be correct and unusable.
+
 **What no version gates**, because each fires on the presence of a field rather than on a rule
 every corpus would suddenly owe — which is the exemption `schemaVersion` exists to provide,
 obtained without spending a version:
@@ -1307,6 +1437,7 @@ obtained without spending a version:
 | a model row stands on a live note | `--assumption-rows` | `model-row-dead-assumption` — a row whose every `title` match, `assumption` or `claim`, is at `status: superseded` or `retracted` |
 | a cited code resolves to a row | `--citation-codes` | `citation-code-no-source-row` — an `[S#]` with no row in `sources.md`; and `citation-code-no-fact-row` — an `[F#]` with no row in `research/founder-brief.md`. The two index files are excluded from the scan, because an index legitimately names a code it withdrew and left unused. Forward only: a row nothing cites is not a failure. A missing index reports a half that did not run |
 | a local source row reached the global log | `--unflattened-source` | `source-unflattened` — a `research/*.md` local `\| S<n> \|` row whose URL `sources.md` carries nowhere, unless that file's ledger is declared exempt by a `Local ledger: <path> - <why>` line in the log's header |
+| a foreclosing claim declares what would reverse it | `--foreclosed` | a `current` `claim` carrying `forecloses` and no `reverses_if` — an option removed from the plan with nothing recording the input that would put it back. Nothing pre-existing carries `forecloses`, so nothing pre-existing owes this |
 
 **`--subject-orphan` is ungated for a different reason, and it is the one rule here that CAN turn
 an existing corpus red.** Everything in the table above is exempt by construction: the field it
@@ -1332,6 +1463,14 @@ renders inputs off.
 each cited section and recording its hash. That is the read invariants 19 and 20 already require,
 made visible — which is the point, and also the reason the version exists rather than the rule
 firing unconditionally. [vault-migration.md](vault-migration.md) carries the procedure.
+
+**Version 4's cost is one edge per nesting and a decision the corpus never wrote down.** A vault
+already holding a behavioural cut and a professional population under `market-size` writes the
+`nested_in` edge between them and is done; the work is small and the value is the ordering, which
+existed only in whichever researcher's head produced the share figure. Where the pair turns out
+*not* to nest, the edge is not the answer — the two figures genuinely collide and one of them is
+wrong, which is the finding rather than an obstacle to it.
+[vault-migration.md](vault-migration.md) carries this step too.
 
 **Each of these tables is the only enumeration of its version's set** — the paragraph above points
 at them rather than restating them, because a version that adds a rule in one release and a second
@@ -1462,8 +1601,10 @@ corpus can tell you what it no longer knows.
 3. **Write the file** at `<type-plural>/<ID>.md`, with the six common fields plus that type's
    required fields. Block lists only. Quote every date, and quote anything containing `: `.
 4. **Set the edges**: `rests_on` for a fact, claim, decision or milestone; `validated_by` for an
-   assumption; `moves` and, where there is a prerequisite, `depends_on` for a milestone. Omit a
-   key rather than writing an empty list.
+   assumption; `moves` and, where there is a prerequisite, `depends_on` for a milestone; and
+   `nested_in` where the note counts a population the corpus also counts a wider version of. Omit
+   a key rather than writing an empty list. Where the note's assertion takes an option off the
+   table, `forecloses`, `foreclosed_on` and `reverses_if` go on with it, as a set.
 5. **Derive `confidence`** where the note rests on something: `min(confidence_own, every
    rests_on target)`. Write both fields.
 6. **Run the lint** before considering the note done. It catches the missing required field,
