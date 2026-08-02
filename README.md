@@ -530,6 +530,26 @@ kind is `source-unflattened` rather than `orphan-source`, which the bare check a
 close to the opposite finding: that one is a source nobody cited, this one is a source nobody *can*
 cite.
 
+`--subject-orphan` asks what the bare check asks only of `required: true` subjects, and asks it of
+the rest. The note-level `coverage-gap` fires when a required subject has no claim under it and
+stops there — so a subject that is optional *in general* and load-bearing *in this plan* is
+invisible: the documents reason from it, the vocabulary declares it, and no note is ever written.
+A subject with no note cannot collide with a contradiction, cannot go stale, cannot be superseded
+and cannot be challenged, because there is nothing filed to return. Silent in every direction is
+what makes it a different failure from an ordinary coverage gap, and why the two are separate
+checks rather than one widened: they send their reader to different repairs.
+
+**The mention is the whole trigger.** The mode fires on an unfiled subject only where the term or
+one of its `aliases` appears in a markdown document under the vault, on a line that is not a
+`subject:` line — so a vault that legitimately has nothing to say about a subject never writes the
+word and stays clean, and one arguing from a subject it never filed is the state the check exists
+to surface. Mentions are matched on token boundaries rather than as substrings, so `price` matches
+`Price` and `price anchor` and never `priceless`. The failure names the subject, the document, the
+line number and the line itself, and then says which note to write — this is the one check that
+turns an existing corpus red on upgrade wherever it carries the gap, and a red gate whose message
+is a diagnosis is a five-minute fix while one that is only a verdict is a support request. It is
+gated on no `schemaVersion`, because it reads no field a corpus written before it lacks.
+
 `--release-gate` is the call before a render, and the only one that asks every question. It is
 **ten parts** — the bare check plus `--used-in`, `--supersession-sweep`, `--red-team`,
 `--roadmap-table`, `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and

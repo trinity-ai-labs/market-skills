@@ -88,8 +88,8 @@ and is never restated here.
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
     bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
     `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows`,
-    `--claim-drift`, `--citation-codes`, `--subject-orphan` and
-    `--unflattened-source`, and exits
+    `--claim-drift`, `--citation-codes`, `--unflattened-source` and
+    `--subject-orphan`, and exits
     non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
@@ -1532,6 +1532,16 @@ three milestones, and where everything landed. Invite pushback on the specific b
   cannot be cited from a plan document at all — and a plan that cites its local number anyway lands
   on whatever the log assigns that number to. A per-row ledger kept out of the log deliberately is
   the declared case, not the failing one; the declaration is what makes it arguable.
+- Every subject the plan reasons *from* has a note filed under it, not just every subject marked
+  `required: true` — and `vault-lint.sh --subject-orphan` fails a vocabulary term with no `claim`
+  and no `assumption` under it that any document in the vault names, under its key or under one of
+  its aliases. The required-subject bar above covers the spine every plan owes; this covers the
+  dependence a *particular* plan invents, which is the half nothing could see. A subject with no
+  note cannot collide with a contradiction, cannot go stale, cannot be superseded and cannot be
+  challenged, so every query the ledger supports returns clean over it and the document leaning on
+  it is the only place the position exists. Nothing gates this on `schemaVersion`, because it reads
+  no field a vault written before it lacks: a corpus that already carries the gap goes red on the
+  upgrade, which is what the check is for.
 
 ## Common failure modes
 

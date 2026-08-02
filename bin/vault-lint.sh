@@ -604,6 +604,82 @@ vault-lint.sh - read-only checks over a claim vault.
 
       A missing sources.md is reported as a mode that did not run rather than
       as agreement, the same convention --citation-codes uses.
+  vault-lint.sh --subject-orphan [--vault PATH] [--json]
+      Check every vocabulary subject with no note filed under it against
+      whether the corpus reasons about it anyway. A verdict - it exits 1 on
+      its one failure.
+
+      coverage-gap asks this of `required: true` subjects and stops there. A
+      subject that is optional IN GENERAL can be load-bearing in a PARTICULAR
+      plan, and nothing sees that: the plan argues from it, no note is ever
+      filed, and the ledger has nothing to say. A subject with no note cannot
+      collide with a contradiction, cannot go stale, cannot be superseded and
+      cannot be challenged - every query the ledger supports returns clean over
+      it, because there is nothing filed to return. Silent in every direction
+      is what makes it a different failure from an ordinary coverage gap, and
+      why widening coverage-gap would send its reader to the wrong repair.
+
+      subject-orphan: a term in _vocab.yml NOT marked `required: true`, with no
+      `claim` and no `assumption` carrying it as `subject`, WHERE the term or
+      one of its `aliases` appears in a markdown document under the vault on a
+      line that is not a `subject:` line. The message names the subject, the
+      document, the line number and the line itself, because the repair is
+      writing one note and the only hard part is knowing which one.
+
+      THE FAILURE IS ATTACHED TO THE DOCUMENT CARRYING THE MENTION, not to
+      _vocab.yml where coverage-gap attaches. That check has nothing to show a
+      reader; here the mention is the evidence, so the file column names a path
+      worth opening.
+
+      THE TWO MODES PARTITION THE VOCABULARY rather than overlapping on it. A
+      `required: true` subject owes a note whether or not any document mentions
+      it, so a mention adds nothing to a repair coverage-gap already demands -
+      and one omission reported as two failures under two names sends its reader
+      looking for two.
+
+      THE MENTION IS THE WHOLE TRIGGER, and it is what stops this from being
+      coverage-gap over every optional term. A vault that legitimately has
+      nothing to say about a subject never mentions it and stays silent here;
+      one that argues from a subject it never filed is the state this exists to
+      surface.
+
+      A MENTION IS MATCHED ON WORD BOUNDARIES, not as a substring. Both sides
+      are cut into lowercase alphanumeric tokens and the term`s tokens have to
+      appear in the line as a consecutive run, so `price` matches `Price` and
+      `price anchor` and never `priceless`. A substring rule fires on ordinary
+      prose, and a check that cries wolf is one somebody switches off.
+
+      _vocab.yml is not markdown and so is never scanned - by construction
+      rather than by exclusion. Read, it would find every term inside its own
+      definition and its own aliases list, and report every unfiled subject in
+      the vault as one the corpus leans on.
+
+      A NOTE FILED UNDER AN ALIAS SPELLING COUNTS AS FILED. The spelling is
+      check`s near-miss-subject and has its own repair; reporting it here as
+      well would tell a reader to write a note that already exists.
+
+      IT DOES NOT READ `status`. A subject whose only note is `superseded` or
+      `retracted` passes here, because a message saying no note is filed under
+      it would be false - that is a supersession the sweep already reports,
+      and reporting it under this name gives the wrong repair.
+
+      THE ALIAS LIST IS THE SENSITIVITY DIAL, and a one-word alias is a broad
+      one: `power` as an alias of `defensibility` fires on any sentence carrying
+      the word. The repair for that is the alias rather than the check -
+      _vocab.yml is the vault`s own file, curated per engagement, and dropping
+      an alias that means something else in this corpus is what it is for.
+
+      WHERE --binding-driver ALREADY REPORTS THE MISSING NOTE, this reports it
+      too. A plan rendering a verdict section with no note behind it fails
+      verdict-unfiled there and subject-orphan here, and both name the same
+      repair - which is redundancy rather than a reader sent to the wrong fix,
+      and cheaper than teaching one general mode the name of one subject.
+
+      NOT gated on schemaVersion, and there is nothing to gate it on: the rule
+      reads no field a corpus written before it lacks. A vault carrying the gap
+      goes red on the version that adds this, and that is the intent - a corpus
+      reasoning about a subject it has never filed is exactly the state the
+      mode exists to surface, and a vacuous pass is worse than a red gate.
 
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
@@ -678,6 +754,7 @@ check                gate  note-level checks
 --claim-drift        gate  cited sections against their recorded hash
 --citation-codes     gate  citation codes against their index rows
 --unflattened-source gate  local source rows against the global log
+--subject-orphan     gate  unfiled subjects the corpus reasons about
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -959,12 +1036,14 @@ done | LC_ALL=C sort >"$FILES"
 # that ships with the skill: a vault must stay checkable against the vocabulary
 # it was written under even after the skill ships new terms.
 #
-# Only `check` consumes T and A records - graph and --unverified match N, S and
-# L alone - so the pass is skipped entirely for them rather than parsed into
-# output nobody reads.
+# Only `check` and --subject-orphan consume T and A records - graph and
+# --unverified match N, S and L alone - so the pass is skipped entirely for the
+# rest rather than parsed into output nobody reads. --subject-orphan needs both
+# record types: T is the set of subjects it asks after, and A is half of what
+# says the corpus is leaning on one.
 # ----------------------------------------------------------------------------
 
-if [ "$HAS_VOCAB" -eq 1 ] && [ "$MODE" = "check" ]; then
+if [ "$HAS_VOCAB" -eq 1 ] && { [ "$MODE" = "check" ] || [ "$MODE" = "subject-orphan" ]; }; then
 	awk '
 		# ONE trailing CR off every line, the same treatment the note parser
 		# gives every line it reads. Without it a CRLF _vocab.yml parses as an
@@ -5083,6 +5162,322 @@ if [ "$MODE" = "unflattened-source" ]; then
 		' "$US_LIST")
 
 	render_failures "vault-lint unflattened-source" "$US_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --subject-orphan - a subject the corpus argues from and never filed
+#
+# coverage-gap in `check` asks this of `required: true` subjects and stops
+# there, and that boundary is exactly the gap. A subject optional in general is
+# routinely load-bearing in one plan: the documents reason from it, the
+# vocabulary declares it, and no note is ever written. Nothing else in this tool
+# can see that. A subject with no note cannot collide with a contradiction,
+# cannot go stale, cannot be superseded and cannot be challenged - every query
+# the ledger supports returns clean over it, because there is nothing filed to
+# return. Silent in every direction is what separates it from an ordinary
+# coverage gap, and why this is a mode beside coverage-gap rather than a widening
+# of it: the two send their reader to different repairs.
+#
+# THE MENTION IS THE WHOLE TRIGGER. Without it this would be coverage-gap over
+# every optional term, which fails a vault for declaring a vocabulary richer than
+# the position it took - and a check that fires on a corpus doing the right thing
+# is one somebody switches off. A vault with nothing to say about a subject never
+# writes the word and stays silent here.
+#
+# MATCHED ON WORD BOUNDARIES, NOT AS A SUBSTRING. Both the candidate and the line
+# are cut into lowercase alphanumeric tokens, and the candidate matches only as a
+# consecutive run of the line`s tokens. Substring matching would fire `price` on
+# `priceless` and `window` on `windows`, which is the crying-wolf shape
+# --roadmap-table was scoped out of a release for once already.
+#
+# THE TERM OWNS ITS KEYS AND ALIASES FILL IN AROUND IT, the same precedence
+# `check` applies when it resolves a subject: every term`s own key is registered
+# first, then the aliases, and the first claimant of a key keeps it. That is what
+# stops one term`s alias reporting a mention that belongs to a different term
+# already carrying a note - a mention of `price` under a filed `price-anchor` is
+# not evidence for an unfiled term that happens to list `price` as an alias.
+#
+# _vocab.yml IS NOT SCANNED, by construction rather than by exclusion: it is not
+# markdown. Read, every term would match inside its own definition and its own
+# aliases list, and every unfiled subject in the vault would report.
+#
+# A NOTE FILED UNDER AN ALIAS SPELLING COUNTS AS FILED, and `status` is not read.
+# The alias spelling is check`s near-miss-subject and the retired note is the
+# supersession sweep; reporting either here would name a second repair for a note
+# that exists, under a message saying no note is filed at all.
+#
+# THE ALIAS LIST IS THE SENSITIVITY DIAL AND THE MODE DOES NOT SECOND-GUESS IT. A
+# one-word alias is a broad one - `power` under `defensibility` fires on any
+# sentence carrying the word - and the repair for that is the alias, not a
+# heuristic here. _vocab.yml is the vault`s own file, curated per engagement, and
+# a mode that decided which of its aliases to believe would be reasoning about
+# the vocabulary instead of reading it.
+#
+# WHERE --binding-driver ALREADY REPORTS THE MISSING NOTE, this reports it too,
+# and that is redundancy rather than a reader sent to the wrong fix: a plan
+# rendering a verdict section with no note behind it fails verdict-unfiled there
+# and subject-orphan here, and both name the same repair. Suppressing one would
+# mean teaching a general mode the name of one subject, which costs more than the
+# second line does.
+#
+# NOT GATED ON schemaVersion, because there is nothing to gate it on - the rule
+# reads no field a corpus written before it lacks. It will turn an existing vault
+# red on the version that adds it wherever that vault carries the gap, which is
+# the intent rather than a cost: a corpus reasoning about a subject it never
+# filed is the state this exists to surface, and a vacuous pass is worse than a
+# red gate. What the failure message owes in exchange is the diagnosis - which
+# note to write, and where the corpus is already leaning on the subject.
+#
+# LC_ALL=C for --used-in`s reason: plan prose carries em dashes and curly quotes,
+# and macOS awk in a UTF-8 locale aborts the record on the first sequence it
+# cannot decode, which would end a document scan early and pass a mention it
+# never reached.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "subject-orphan" ]; then
+	# Every markdown document under the vault, relative to its root and sorted
+	# the way the PowerShell side sorts, so both implementations read the same
+	# files in the same order and report the same FIRST mention of a subject.
+	SUBJDOCS="$TMP/mddocs"
+	(cd "$VAULT" && find . -type f -name '*.md' 2>/dev/null | sed 's|^\./||' | LC_ALL=C sort) >"$SUBJDOCS" 2>/dev/null || : >"$SUBJDOCS"
+
+	SO_OK=$(LC_ALL=C awk -v out="$FAILURES" -v docs="$SUBJDOCS" -v vault="$VAULT" -v hasvocab="$HAS_VOCAB" -F '\t' '
+			BEGIN {
+				while ((getline dl < docs) > 0) {
+					sub(/\r$/, "", dl)
+					if (dl != "") DOC[++ndoc] = dl
+				}
+				close(docs)
+			}
+
+			$1 == "T" { terms[++nterm] = $2; isterm[$2] = 1; required[$2] = $3; next }
+			# Aliases are kept per term IN STREAM ORDER, which is file order: the
+			# vocabulary pass emits every A record as it reads it and every T
+			# record afterwards. Reporting has to be reproducible byte for byte
+			# against the PowerShell side, and a set iterated in whatever order
+			# the interpreter hands back is not.
+			$1 == "A" { aliasof[$2] = $3; ALIAS[$3, ++AN[$3]] = $2; next }
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# Cut a string into lowercase alphanumeric tokens, and return how many.
+			# Anything else - a hyphen, a space, punctuation, a byte outside ASCII
+			# - is a separator, so `price-anchor`, `Price Anchor` and `price
+			# anchor` all cut the same way and `priceless` cuts to one token that
+			# is not `price`. Under LC_ALL=C the class is the ASCII range, so a
+			# high byte falls outside it exactly as it does under a byte-at-a-time
+			# comparison - this runs once per line of the corpus, and a per-byte
+			# awk loop over the same text costs about twice the whole mode.
+			#
+			# split() with a single-space separator is awk`s default field
+			# splitting: runs of blanks collapse and the leading and trailing ones
+			# are dropped, so the caller gets exactly the non-empty tokens. It also
+			# CLEARS arr first, which is what makes reusing one array across every
+			# line safe without `delete arr` - a whole-array delete is an extension
+			# POSIX awk does not have.
+			function tokens(s, arr) {
+				s = tolower(s)
+				gsub(/[^a-z0-9]/, " ", s)
+				return split(s, arr, " ")
+			}
+
+			# One candidate as the token run a line has to carry.
+			function key(s,   n, i, o) {
+				n = tokens(s, KT)
+				o = ""
+				for (i = 1; i <= n; i++) o = (i == 1) ? KT[i] : o " " KT[i]
+				return o
+			}
+
+			# Register a key against the term that owns it, first claimant wins.
+			# The longest candidate is tracked here because it bounds the scan: a
+			# document line builds runs up to that length and no further, so it
+			# costs a fixed number of lookups per token rather than one per
+			# candidate. Read back off the key with split() rather than carried
+			# out of key() in a global - one integer threaded between two
+			# functions is a coupling that only holds while the caller keeps
+			# evaluating them in the right order.
+			#
+			# nowners is what BOUNDS THE DOCUMENT SCAN: every registered term can
+			# take at most one first mention, so once each has one there is nothing
+			# left for a further document to say. Counted here rather than off the
+			# unfiled set, because OWNER carries filed and required terms too and a
+			# bound that ignored them would end the scan before an unfiled subject`s
+			# first mention - a false NEGATIVE, which in this mode is the vacuous
+			# pass the check exists to close.
+			function own(k, t, spell,   n, part) {
+				if (k == "" || (k in OWNER)) return
+				OWNER[k] = t
+				SPELL[k] = spell
+				if (!(t in OWNS)) { OWNS[t] = 1; nowners++ }
+				n = split(k, part, " ")
+				if (n > maxlen) maxlen = n
+				# Every token that OPENS a candidate. The scan skips a start
+				# position whose token opens none, which is nearly all of them -
+				# without it every position builds and hashes maxlen runs, so
+				# lengthening one alias slows the whole corpus read. The alias list
+				# is documented as the sensitivity dial, and this is what keeps
+				# turning it up from costing runtime.
+				FIRST[part[1]] = 1
+			}
+
+			# The line as it goes into the message: tabs to spaces, because the
+			# failure stream is tab separated and a tab in the detail would split
+			# the row; then trimmed. NOT truncated - a byte count and a character
+			# count differ between the two implementations the first time a line
+			# carries an em dash, and a message that disagrees across platforms is
+			# what the parity gate exists to stop.
+			function ctx(s) {
+				gsub(/\t/, " ", s)
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			END {
+				if (hasvocab != "1") {
+					printf("no _vocab.yml under %s - there is no subject list to hold the corpus against, so no unfiled subject was looked for. `check` reports the missing vocabulary itself\n", vault)
+					exit
+				}
+				if (nterm == 0) {
+					printf("_vocab.yml under %s declares no terms, so there is no subject here that could be missing a note\n", vault)
+					exit
+				}
+
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					ty = V[f, "type"]
+					# The pair that FILES a position. A `source` and a `fact` are
+					# provenance a position rests on rather than the position, and
+					# a `milestone`, `question` or `decision` asserts nothing about
+					# the subject at all - the same closed set --assumption-rows
+					# states at its own predicate, and stated here rather than left
+					# as an omission for the same reason.
+					if (ty != "claim" && ty != "assumption") continue
+					s = V[f, "subject"]
+					if (s == "") continue
+					if (s in isterm) FILED[s] = 1
+					else if (s in aliasof) FILED[aliasof[s]] = 1
+				}
+
+				# A `required: true` subject is coverage-gap`s, and this mode never
+				# asks after one. The two partition the vocabulary rather than
+				# overlapping on it: a required subject owes a note whether or not
+				# any document mentions it, so the mention adds nothing to a repair
+				# coverage-gap already demands - and one omission reported as two
+				# failures under two names sends its reader looking for two.
+				for (i = 1; i <= nterm; i++) {
+					t = terms[i]
+					if (required[t] == "true") continue
+					nasked++
+					if (!(t in FILED)) nunfiled++
+				}
+
+				# EVERY TERM REGISTERS ITS STRINGS - filed and required ones
+				# included - AND THE PARTITION IS APPLIED WHERE THE ROW IS
+				# REPORTED, not here. A filed term has to CLAIM its own key and its
+				# aliases for that claim to mean anything: registering only the
+				# unfiled terms leaves a filed term`s strings unowned, so an unfiled
+				# term listing the same alias picks up a mention that was always
+				# about the subject the vault has already answered. Observed on a
+				# vocabulary where `price` is an alias of a FILED `price-anchor` and
+				# of an unfiled `willingness-to-pay`: a sentence discussing
+				# price-anchor was reported as evidence that willingness-to-pay is
+				# load-bearing, under a message stating the corpus reasons from it.
+				# This mode ships failing and ungated, so a confident false positive
+				# is the thing that makes somebody stop upgrading.
+				#
+				# Terms first, then aliases, so a string that is both a term and
+				# another term`s alias belongs to the term - the precedence `check`
+				# applies when it resolves a subject. Past that it is FIRST CLAIMANT
+				# WINS in vocabulary order, and that is now load-bearing rather than
+				# incidental: two terms listing one alias is the vault`s own
+				# ambiguity, and letting file order settle it is a rule an author
+				# can read off _vocab.yml instead of a judgement this mode makes for
+				# them.
+				for (i = 1; i <= nterm; i++) own(key(terms[i]), terms[i], terms[i])
+				for (i = 1; i <= nterm; i++) {
+					t = terms[i]
+					for (j = 1; j <= AN[t]; j++) own(key(ALIAS[t, j]), t, ALIAS[t, j])
+				}
+
+				# Nothing unfiled is nothing to look for, and opening every
+				# document to prove it would be a corpus read with no question
+				# behind it.
+				for (d = 1; nunfiled > 0 && nfound < nowners && d <= ndoc; d++) {
+					path = vault "/" DOC[d]
+					ln = 0
+					while ((getline line < path) > 0) {
+						ln++
+						sub(/\r$/, "", line)
+
+						# A `subject:` line is the note declaring what it is filed
+						# under, which is the one place the word appears without
+						# the corpus reasoning from it. Matched wherever it appears
+						# rather than only inside frontmatter, so a note template
+						# quoted inside a fenced block is out under the same rule.
+						if (line ~ /^[ \t]*subject:/) continue
+
+						nt = tokens(line, LT)
+						for (i = 1; i <= nt; i++) {
+							if (!(LT[i] in FIRST)) continue
+							for (L = 1; L <= maxlen && i + L - 1 <= nt; L++) {
+								k = (L == 1) ? LT[i] : k " " LT[i + L - 1]
+								if (!(k in OWNER)) continue
+								t = OWNER[k]
+								if (t in HITDOC) continue
+								nfound++
+								HITDOC[t] = DOC[d]
+								HITLN[t] = ln
+								HITTXT[t] = ctx(line)
+								HITSPELL[t] = SPELL[k]
+							}
+						}
+					}
+					close(path)
+				}
+
+				# In vocabulary order, so two runs over one vault report in the
+				# same order, and the file the failure is attached to is the
+				# DOCUMENT CARRYING THE MENTION rather than _vocab.yml - which is
+				# where coverage-gap attaches, and the difference is deliberate.
+				# That check has nothing to show a reader: the vocabulary declared
+				# a subject and no note answered it, and the file column can only
+				# name the declaration. Here the mention is the evidence and the
+				# place the repair gets decided, so the column carries a path worth
+				# opening.
+				for (i = 1; i <= nterm; i++) {
+					t = terms[i]
+					if (!(t in HITDOC)) continue
+					# THE PARTITION, APPLIED HERE rather than at registration. A hit
+					# whose owner turns out to be filed or required has still
+					# CONSUMED the key, so no unfiled term can claim that mention -
+					# it just is not a row.
+					if (required[t] == "true" || (t in FILED)) continue
+					report(HITDOC[t], "subject-orphan", t,
+						"no `claim` and no `assumption` is filed under the vocabulary subject `" t "`, and the corpus reasons from it anyway: " HITDOC[t] " line " HITLN[t] " reads `" HITTXT[t] "`" (HITSPELL[t] == t ? "" : ", which carries the alias `" HITSPELL[t] "`") ". Write the note - a `claim` under `subject: " t "` where the position has evidence behind it, an `assumption` where it does not. Unfiled, the subject cannot collide with a contradiction, cannot go stale, cannot be superseded and cannot be challenged, so every query the ledger supports returns clean over it and the document leaning on it is the only place the position exists. This is not coverage-gap, which asks only after subjects marked `required: true`")
+				}
+
+				# Which half ran and which had nothing to run over, rather than a
+				# verdict the mode did not reach: a vocabulary of nothing but
+				# required subjects is coverage-gap`s whole population, and a line
+				# reading as a pass over it would report agreement about a question
+				# this mode never asked.
+				if (nasked == 0)
+					printf("every subject in _vocab.yml is marked `required: true`, which is coverage-gap`s question and not this one - no optional subject was asked after here - %s\n", vault)
+				else if (nunfiled == 0)
+					printf("%d vocabulary subject%s not marked `required: true`, every one of them carrying a `claim` or an `assumption` - %s\n",
+						nasked, (nasked == 1 ? "" : "s"), vault)
+				else
+					printf("%d of the %d vocabulary subject%s not marked `required: true` ha%s no `claim` and no `assumption` filed under it, and no line of the %d markdown document%s under this vault mentions any of them - a subject nothing leans on is not a gap - %s\n",
+						nunfiled, nasked, (nasked == 1 ? "" : "s"), (nunfiled == 1 ? "s" : "ve"), ndoc, (ndoc == 1 ? "" : "s"), vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint subject-orphan" "$SO_OK"
 	exit $?
 fi
 

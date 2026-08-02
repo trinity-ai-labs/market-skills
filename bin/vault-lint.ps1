@@ -1039,6 +1039,82 @@ vault-lint.sh - read-only checks over a claim vault.
 
       A missing sources.md is reported as a mode that did not run rather than
       as agreement, the same convention --citation-codes uses.
+  vault-lint.sh --subject-orphan [--vault PATH] [--json]
+      Check every vocabulary subject with no note filed under it against
+      whether the corpus reasons about it anyway. A verdict - it exits 1 on
+      its one failure.
+
+      coverage-gap asks this of `required: true` subjects and stops there. A
+      subject that is optional IN GENERAL can be load-bearing in a PARTICULAR
+      plan, and nothing sees that: the plan argues from it, no note is ever
+      filed, and the ledger has nothing to say. A subject with no note cannot
+      collide with a contradiction, cannot go stale, cannot be superseded and
+      cannot be challenged - every query the ledger supports returns clean over
+      it, because there is nothing filed to return. Silent in every direction
+      is what makes it a different failure from an ordinary coverage gap, and
+      why widening coverage-gap would send its reader to the wrong repair.
+
+      subject-orphan: a term in _vocab.yml NOT marked `required: true`, with no
+      `claim` and no `assumption` carrying it as `subject`, WHERE the term or
+      one of its `aliases` appears in a markdown document under the vault on a
+      line that is not a `subject:` line. The message names the subject, the
+      document, the line number and the line itself, because the repair is
+      writing one note and the only hard part is knowing which one.
+
+      THE FAILURE IS ATTACHED TO THE DOCUMENT CARRYING THE MENTION, not to
+      _vocab.yml where coverage-gap attaches. That check has nothing to show a
+      reader; here the mention is the evidence, so the file column names a path
+      worth opening.
+
+      THE TWO MODES PARTITION THE VOCABULARY rather than overlapping on it. A
+      `required: true` subject owes a note whether or not any document mentions
+      it, so a mention adds nothing to a repair coverage-gap already demands -
+      and one omission reported as two failures under two names sends its reader
+      looking for two.
+
+      THE MENTION IS THE WHOLE TRIGGER, and it is what stops this from being
+      coverage-gap over every optional term. A vault that legitimately has
+      nothing to say about a subject never mentions it and stays silent here;
+      one that argues from a subject it never filed is the state this exists to
+      surface.
+
+      A MENTION IS MATCHED ON WORD BOUNDARIES, not as a substring. Both sides
+      are cut into lowercase alphanumeric tokens and the term`s tokens have to
+      appear in the line as a consecutive run, so `price` matches `Price` and
+      `price anchor` and never `priceless`. A substring rule fires on ordinary
+      prose, and a check that cries wolf is one somebody switches off.
+
+      _vocab.yml is not markdown and so is never scanned - by construction
+      rather than by exclusion. Read, it would find every term inside its own
+      definition and its own aliases list, and report every unfiled subject in
+      the vault as one the corpus leans on.
+
+      A NOTE FILED UNDER AN ALIAS SPELLING COUNTS AS FILED. The spelling is
+      check`s near-miss-subject and has its own repair; reporting it here as
+      well would tell a reader to write a note that already exists.
+
+      IT DOES NOT READ `status`. A subject whose only note is `superseded` or
+      `retracted` passes here, because a message saying no note is filed under
+      it would be false - that is a supersession the sweep already reports,
+      and reporting it under this name gives the wrong repair.
+
+      THE ALIAS LIST IS THE SENSITIVITY DIAL, and a one-word alias is a broad
+      one: `power` as an alias of `defensibility` fires on any sentence carrying
+      the word. The repair for that is the alias rather than the check -
+      _vocab.yml is the vault`s own file, curated per engagement, and dropping
+      an alias that means something else in this corpus is what it is for.
+
+      WHERE --binding-driver ALREADY REPORTS THE MISSING NOTE, this reports it
+      too. A plan rendering a verdict section with no note behind it fails
+      verdict-unfiled there and subject-orphan here, and both name the same
+      repair - which is redundancy rather than a reader sent to the wrong fix,
+      and cheaper than teaching one general mode the name of one subject.
+
+      NOT gated on schemaVersion, and there is nothing to gate it on: the rule
+      reads no field a corpus written before it lacks. A vault carrying the gap
+      goes red on the version that adds this, and that is the intent - a corpus
+      reasoning about a subject it has never filed is exactly the state the
+      mode exists to surface, and a vacuous pass is worse than a red gate.
 
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
@@ -1117,6 +1193,7 @@ check                gate  note-level checks
 --claim-drift        gate  cited sections against their recorded hash
 --citation-codes     gate  citation codes against their index rows
 --unflattened-source gate  local source rows against the global log
+--subject-orphan     gate  unfiled subjects the corpus reasons about
 '@
 
 # The table's rows as records - the shape `while read -r sel gate part` gives
@@ -1172,7 +1249,8 @@ function Get-ModeForFlag {
 #  12. Invoke-ModeClaimDrift         claim-drift
 #  13. Invoke-ModeCitationCodes      citation-codes
 #  14. Invoke-ModeUnflattenedSource  unflattened-source
-#  15. Invoke-ModeCheck              check
+#  15. Invoke-ModeSubjectOrphan      subject-orphan
+#  16. Invoke-ModeCheck              check
 #
 # THIS LAYOUT IS A CONTRACT SIX SEPARATE BRANCHES BUILD AGAINST. Each of them
 # replaces exactly one function body below and touches nothing else in this
@@ -4706,9 +4784,300 @@ function Invoke-ModeUnflattenedSource {
 
 	exit (Render-Failures 'vault-lint unflattened-source' $okLine)
 }
-
+# 15. --subject-orphan - a subject the corpus argues from and never filed
+#
+# Ports the --subject-orphan body of bin/vault-lint.sh, whose header comment
+# carries the reasoning: why this is a mode beside coverage-gap rather than a
+# widening of it, why the mention is the whole trigger, why the two partition
+# the vocabulary on `required: true`, and why nothing gates it on
+# schemaVersion. Every failure string and every success line is transcribed
+# character for character from the awk program.
+#
+# THE TOKEN RULE HAS TO AGREE BYTE FOR BYTE WITH THE AWK ONE. The shell runs
+# under LC_ALL=C, so it walks BYTES and every byte outside ASCII alphanumeric is
+# a separator; this walks UTF-16 code units, where a non-ASCII character is one
+# or two units and every one of them is a separator too. The token boundaries
+# are therefore the same set on both sides, and the comparison is ordinal, so a
+# subject spelled with a combining sequence cannot match one spelled precomposed
+# on this side while failing to match on the other.
+#
+# THE HELPERS BELOW ARE LOCAL TO THIS BODY, per the stub seam.
 # ----------------------------------------------------------------------------
-# 15. check - pass 3, the note-level checks
+function Invoke-ModeSubjectOrphan {
+	$SUB = [string][char]28
+
+	# The two patterns this mode runs per line, held as Regex objects for the
+	# reason the shared pattern block gives: the static [regex] overloads look the
+	# pattern up in a process-wide cache of fifteen on every call, and these run
+	# once per line of every markdown document in the corpus. Local to this body,
+	# per the stub seam, the same way Invoke-ModeDeliverable holds its own.
+	$RX_SUBJECT_SEP = [regex]'[^A-Za-z0-9]+'
+	$RX_SUBJECT_LINE = [regex]'\A[ \t]*subject:'
+
+	# tokens() at bin/vault-lint.sh: a string cut into lowercase alphanumeric
+	# tokens, with everything else - a hyphen, a space, punctuation, a character
+	# outside ASCII - a separator. `price-anchor`, `Price Anchor` and `price
+	# anchor` all cut the same way, and `priceless` cuts to one token that is not
+	# `price`.
+	#
+	# SPLIT FIRST, LOWERCASE THE PIECES - never lowercase the line. The awk side
+	# folds ASCII bytes under LC_ALL=C, and ToLowerInvariant over a whole line
+	# does more than that: it folds U+212A KELVIN SIGN onto `k` and expands
+	# U+0130, either of which would make a token here out of a byte that is a
+	# separator there. Splitting on the non-alphanumeric class leaves every piece
+	# pure ASCII, so lowercasing it afterwards is exactly the fold awk applies.
+	function Get-SubjectTokens {
+		param([string]$Text)
+		$out = New-Object 'System.Collections.Generic.List[string]'
+		foreach ($piece in $RX_SUBJECT_SEP.Split($Text)) {
+			if ($piece.Length -ne 0) { [void]$out.Add($piece.ToLowerInvariant()) }
+		}
+		return ,$out
+	}
+
+	# key() at bin/vault-lint.sh - one candidate as the token run a line has to
+	# carry. The length in tokens is read back off the key where it is needed,
+	# the same as the awk split(), rather than returned beside it.
+	function Get-SubjectKey {
+		param([string]$Text)
+		return ((Get-SubjectTokens $Text) -join ' ')
+	}
+
+	# ctx() at bin/vault-lint.sh: the line as it goes into the message. Tabs to
+	# spaces, because the failure stream is tab separated and a tab in the detail
+	# would split the row; then trimmed. NOT truncated - a byte count and a
+	# character count differ across the two implementations the first time a line
+	# carries an em dash.
+	function Get-SubjectContext {
+		param([string]$Text)
+		return $Text.Replace([char]9, [char]32).Trim($script:SPACE_TAB)
+	}
+
+	$terms = New-Object 'System.Collections.Generic.List[string]'
+	$isterm = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	$required = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$aliasof = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$aliases = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' ([System.StringComparer]::Ordinal)
+	$files = New-Object 'System.Collections.Generic.List[string]'
+	$v = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+
+	# Aliases are kept per term IN STREAM ORDER, which is file order: the
+	# vocabulary pass emits every A record as it reads it and every T record
+	# afterwards. Reporting has to be reproducible byte for byte against the
+	# shell, and a set iterated in whatever order the runtime hands back is not.
+	foreach ($rec in $script:RECORDS) {
+		$p = $rec.Split([char]9)
+		if ($p[0] -ceq 'T') {
+			[void]$terms.Add($p[1])
+			[void]$isterm.Add($p[1])
+			$required[$p[1]] = $p[2]
+			continue
+		}
+		if ($p[0] -ceq 'A') {
+			$aliasof[$p[1]] = $p[2]
+			$list = $null
+			if (-not $aliases.TryGetValue($p[2], [ref]$list)) {
+				$list = New-Object 'System.Collections.Generic.List[string]'
+				$aliases[$p[2]] = $list
+			}
+			[void]$list.Add($p[1])
+			continue
+		}
+		if ($p[0] -ceq 'N') { [void]$files.Add($p[1]); continue }
+		if ($p[0] -ceq 'S') { $v[$p[1] + $SUB + $p[2]] = $p[3]; continue }
+	}
+
+	if ($script:HAS_VOCAB -ne 1) {
+		exit (Render-Failures 'vault-lint subject-orphan' ('no _vocab.yml under ' + $script:VAULT + ' - there is no subject list to hold the corpus against, so no unfiled subject was looked for. `check` reports the missing vocabulary itself'))
+	}
+	if ($terms.Count -eq 0) {
+		exit (Render-Failures 'vault-lint subject-orphan' ('_vocab.yml under ' + $script:VAULT + ' declares no terms, so there is no subject here that could be missing a note'))
+	}
+
+	# The pair that FILES a position. A `source` and a `fact` are provenance a
+	# position rests on rather than the position, and a `milestone`, `question` or
+	# `decision` asserts nothing about the subject at all.
+	$filed = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	foreach ($f in $files) {
+		$ty = ''
+		if ($v.ContainsKey($f + $SUB + 'type')) { $ty = $v[$f + $SUB + 'type'] }
+		if ($ty -cne 'claim' -and $ty -cne 'assumption') { continue }
+		$s = ''
+		if ($v.ContainsKey($f + $SUB + 'subject')) { $s = $v[$f + $SUB + 'subject'] }
+		if ($s.Length -eq 0) { continue }
+		if ($isterm.Contains($s)) { [void]$filed.Add($s); continue }
+		if ($aliasof.ContainsKey($s)) { [void]$filed.Add($aliasof[$s]) }
+	}
+
+	# Terms first, then aliases, so a string both a term and another term`s alias
+	# answer to belongs to the term. Only the keys of UNFILED, NOT-required terms
+	# become candidates.
+	$owner = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$spell = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	# FIRST[] at bin/vault-lint.sh - every token that OPENS a candidate. The scan
+	# skips a start position whose token opens none, which is nearly all of them.
+	$first = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	$maxlen = 0
+	$nasked = 0
+	$nunfiled = 0
+
+	foreach ($t in $terms) {
+		if ($required[$t] -ceq 'true') { continue }
+		$nasked++
+		if (-not $filed.Contains($t)) { $nunfiled++ }
+	}
+
+	# own() at bin/vault-lint.sh, written out at both call sites rather than
+	# lifted into a helper: a PowerShell function cannot assign back to the
+	# caller`s $maxlen, and a helper that returned it would still need the same
+	# lines at each site to record it.
+	#
+	# EVERY TERM REGISTERS ITS STRINGS - filed and required ones included - AND
+	# THE PARTITION IS APPLIED WHERE THE ROW IS REPORTED. See the shell for the
+	# case that forced it: registering only the unfiled terms leaves a filed
+	# term`s strings unowned, so an unfiled term sharing an alias picks up a
+	# mention that was always about the subject the vault has already answered.
+	#
+	# $owns bounds the scan, and it counts every registered term rather than the
+	# unfiled ones: a bound taken off the unfiled set would end the document scan
+	# before an unfiled subject`s first mention, which is a false negative and the
+	# vacuous pass this mode exists to close.
+	#
+	# Terms first, then aliases, so a string that is both a term and another
+	# term`s alias belongs to the term. Past that it is first claimant wins in
+	# vocabulary order - the vault`s own ambiguity settled by its own file order.
+	$owns = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	foreach ($t in $terms) {
+		$k = Get-SubjectKey $t
+		if ($k.Length -eq 0 -or $owner.ContainsKey($k)) { continue }
+		$owner[$k] = $t
+		$spell[$k] = $t
+		[void]$owns.Add($t)
+		$parts = $k.Split([char]32)
+		if ($parts.Length -gt $maxlen) { $maxlen = $parts.Length }
+		[void]$first.Add($parts[0])
+	}
+	foreach ($t in $terms) {
+		if (-not $aliases.ContainsKey($t)) { continue }
+		foreach ($a in $aliases[$t]) {
+			$k = Get-SubjectKey $a
+			if ($k.Length -eq 0 -or $owner.ContainsKey($k)) { continue }
+			$owner[$k] = $t
+			$spell[$k] = $a
+			[void]$owns.Add($t)
+			$parts = $k.Split([char]32)
+			if ($parts.Length -gt $maxlen) { $maxlen = $parts.Length }
+			[void]$first.Add($parts[0])
+		}
+	}
+
+	# `find . -type f -name '*.md'` with the vault prefix stripped, sorted with
+	# LC_ALL=C, so both implementations read the same files in the same order and
+	# report the same FIRST mention of a subject. The walk starts at the prefix
+	# for the reason Invoke-ModeDeliverable states; -cnotlike because
+	# `find -name '*.md'` matches case-sensitively even on a case-insensitive
+	# filesystem.
+	$found = New-Object 'System.Collections.Generic.List[string]'
+	$prefix = Get-PathPrefix $script:VAULT
+	if ($prefix.Length -ne 0) {
+		foreach ($entry in (Get-ChildItem -LiteralPath $prefix -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+			if ($entry.Name -cnotlike '*.md') { continue }
+			$full = $entry.FullName
+			if (-not $full.StartsWith($prefix, [System.StringComparison]::Ordinal)) { continue }
+			[void]$found.Add((Get-RelativeSlashPath $full $prefix))
+		}
+	}
+	$docs = $found.ToArray()
+	[System.Array]::Sort($docs, [System.StringComparer]::Ordinal)
+
+	$hitDoc = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$hitLine = New-Object 'System.Collections.Generic.Dictionary[string,int]' ([System.StringComparer]::Ordinal)
+	$hitText = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+	$hitSpell = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+
+	# Nothing unfiled is nothing to look for, and opening every document to prove
+	# it would be a corpus read with no question behind it.
+	for ($d = 0; $nunfiled -gt 0 -and $hitDoc.Count -lt $owns.Count -and $d -lt $docs.Length; $d++) {
+		$doc = $docs[$d]
+		$ln = 0
+		foreach ($raw in (Read-TextLines ($script:VAULT + '/' + $doc))) {
+			$line = Remove-TrailingCr $raw
+			$ln++
+
+			# A `subject:` line is the note declaring what it is filed under,
+			# which is the one place the word appears without the corpus
+			# reasoning from it. Matched wherever it appears rather than only
+			# inside frontmatter, so a note template quoted inside a fenced block
+			# is out under the same rule.
+			if ($RX_SUBJECT_LINE.IsMatch($line)) { continue }
+
+			$lt = Get-SubjectTokens $line
+			for ($i = 0; $i -lt $lt.Count; $i++) {
+				if (-not $first.Contains($lt[$i])) { continue }
+				for ($L = 1; $L -le $maxlen -and $i + $L - 1 -lt $lt.Count; $L++) {
+					if ($L -eq 1) { $k = $lt[$i] } else { $k = $k + ' ' + $lt[$i + $L - 1] }
+					if (-not $owner.ContainsKey($k)) { continue }
+					$t = $owner[$k]
+					if ($hitDoc.ContainsKey($t)) { continue }
+					$hitDoc[$t] = $doc
+					$hitLine[$t] = $ln
+					$hitText[$t] = Get-SubjectContext $line
+					$hitSpell[$t] = $spell[$k]
+				}
+			}
+		}
+	}
+
+	# In vocabulary order, so two runs over one vault report in the same order,
+	# and the file the failure is attached to is the DOCUMENT CARRYING THE
+	# MENTION rather than _vocab.yml - which is where coverage-gap attaches, and
+	# the difference is deliberate. That check has nothing to show a reader: the
+	# vocabulary declared a subject and no note answered it, and the file column
+	# can only name the declaration. Here the mention is the evidence and the
+	# place the repair gets decided, so the column carries a path worth opening.
+	foreach ($t in $terms) {
+		if (-not $hitDoc.ContainsKey($t)) { continue }
+		# THE PARTITION, APPLIED HERE rather than at registration. A hit whose
+		# owner turns out to be filed or required has still CONSUMED the key, so
+		# no unfiled term can claim that mention - it just is not a row.
+		if ($required[$t] -ceq 'true' -or $filed.Contains($t)) { continue }
+		$detail = 'no `claim` and no `assumption` is filed under the vocabulary subject `' + $t +
+			'`, and the corpus reasons from it anyway: ' + $hitDoc[$t] + ' line ' + [string]$hitLine[$t] +
+			' reads `' + $hitText[$t] + '`'
+		if ($hitSpell[$t] -cne $t) { $detail = $detail + ', which carries the alias `' + $hitSpell[$t] + '`' }
+		$detail = $detail + '. Write the note - a `claim` under `subject: ' + $t +
+			'` where the position has evidence behind it, an `assumption` where it does not. Unfiled, the subject cannot collide with a contradiction, cannot go stale, cannot be superseded and cannot be challenged, so every query the ledger supports returns clean over it and the document leaning on it is the only place the position exists. This is not coverage-gap, which asks only after subjects marked `required: true`'
+		[void]$script:FAILURES.Add($hitDoc[$t] + "`tsubject-orphan`t" + $t + "`t" + $detail)
+	}
+
+	# Which half ran and which had nothing to run over, rather than a verdict the
+	# mode did not reach: a vocabulary of nothing but required subjects is
+	# coverage-gap`s whole population, and a line reading as a pass over it would
+	# report agreement about a question this mode never asked.
+	if ($nasked -eq 0) {
+		$okLine = 'every subject in _vocab.yml is marked `required: true`, which is coverage-gap`s question and not this one - no optional subject was asked after here - ' + $script:VAULT
+	} elseif ($nunfiled -eq 0) {
+		$askedPlural = 's'
+		if ($nasked -eq 1) { $askedPlural = '' }
+		$okLine = [string]$nasked + ' vocabulary subject' + $askedPlural + ' not marked `required: true`, every one of them carrying a `claim` or an `assumption` - ' + $script:VAULT
+	} else {
+		$askedPlural = 's'
+		if ($nasked -eq 1) { $askedPlural = '' }
+		$have = 've'
+		if ($nunfiled -eq 1) { $have = 's' }
+		$docPlural = 's'
+		if ($docs.Length -eq 1) { $docPlural = '' }
+		$okLine = [string]$nunfiled + ' of the ' + [string]$nasked + ' vocabulary subject' + $askedPlural +
+			' not marked `required: true` ha' + $have + ' no `claim` and no `assumption` filed under it, and no line of the ' +
+			[string]$docs.Length + ' markdown document' + $docPlural +
+			' under this vault mentions any of them - a subject nothing leans on is not a gap - ' + $script:VAULT
+	}
+
+	exit (Render-Failures 'vault-lint subject-orphan' $okLine)
+}
+
+# --------------------------------------------------------------------------
+# 16. check - pass 3, the note-level checks
 #
 # Ports bin/vault-lint.sh:3003-3629. The largest body in the file, gated on
 # schemaVersion throughout, and the mode a bare invocation runs.
@@ -5950,9 +6319,11 @@ $RX_LEADING_ZERO = [regex]'\A0[0-9]+\z'
 # that ships with the skill: a vault must stay checkable against the vocabulary
 # it was written under even after the skill ships new terms.
 #
-# Only `check` consumes T and A records - graph and --unverified match N, S and
-# L alone - so the pass is skipped entirely for them rather than parsed into
-# output nobody reads.
+# Only `check` and --subject-orphan consume T and A records - graph and
+# --unverified match N, S and L alone - so the pass is skipped entirely for the
+# rest rather than parsed into output nobody reads. --subject-orphan needs both
+# record types: T is the set of subjects it asks after, and A is half of what
+# says the corpus is leaning on one.
 #
 # A TRAILING CR IS STRIPPED, exactly as the note parser strips one on every line
 # it reads. An earlier comment here claimed the opposite was a faithful
@@ -5970,7 +6341,7 @@ $RX_LEADING_ZERO = [regex]'\A0[0-9]+\z'
 # to break.
 # ----------------------------------------------------------------------------
 
-if ($HAS_VOCAB -eq 1 -and $MODE -ceq 'check') {
+if ($HAS_VOCAB -eq 1 -and ($MODE -ceq 'check' -or $MODE -ceq 'subject-orphan')) {
 	$vocabOrder = New-Object 'System.Collections.Generic.List[string]'
 	$vocabRequired = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 	$term = ''
@@ -6474,4 +6845,5 @@ if ($MODE -ceq 'assumption-rows') { Invoke-ModeAssumptionRows }
 if ($MODE -ceq 'claim-drift') { Invoke-ModeClaimDrift }
 if ($MODE -ceq 'citation-codes') { Invoke-ModeCitationCodes }
 if ($MODE -ceq 'unflattened-source') { Invoke-ModeUnflattenedSource }
+if ($MODE -ceq 'subject-orphan') { Invoke-ModeSubjectOrphan }
 Invoke-ModeCheck

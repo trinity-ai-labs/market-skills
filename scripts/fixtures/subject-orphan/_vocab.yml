@@ -1,0 +1,61 @@
+# Fixture vocabulary for --subject-orphan. EVERY TERM HERE IS `required: false`,
+# and that is the whole point of the fixture: coverage-gap fires only on
+# `required: true`, so it is silent over this vault while two of these subjects
+# are load-bearing in its documents and have no note filed under them. A mode
+# that were merely coverage-gap widened would report all three unfiled subjects
+# here, including the one nothing mentions.
+
+terms:
+
+  price-anchor:
+    definition: The price point the plan recommends, per unit and cadence. Filed here by an
+      assumption rather than a claim, because the pair that files a position is both types
+      and a rule reading only claims would report this subject as unfiled.
+    aliases:
+      - price
+      - price-point
+    required: false
+
+  timing-window:
+    definition: The shift that makes this product possible or necessary now, and how long the
+      window it opens stays open. Unfiled, and named by its canonical key in the body of a
+      note - the mention half of the trigger, read out of a note rather than a document.
+    aliases:
+      - why-now
+      - market-timing
+    required: false
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver behind it.
+      Unfiled, and reached only through an alias - the plan document never writes the canonical
+      key, so an alias-blind implementation passes this vault.
+    aliases:
+      - growth-rate
+      - market-trajectory
+    required: false
+
+  primary-risk:
+    definition: The highest-ranked way this product dies. Unfiled and never mentioned anywhere
+      in this vault, which is the silent side - a subject the corpus has nothing to say about
+      is not a gap, and reporting it is how a check gets switched off.
+    aliases:
+      - top-risk
+    required: false
+
+  steady-state-ceiling:
+    definition: The equilibrium the modelled configuration converges on. Required, unfiled, and
+      named in the plan below - and SILENT here, because coverage-gap owns every `required: true`
+      subject and one omission reported twice under two names sends its reader looking for two.
+    aliases:
+      - ceiling
+    required: true
+
+  willingness-to-pay:
+    definition: What a buyer will pay before walking away. Unfiled, and it lists `price` as an
+      alias - which price-anchor, FILED by the assumption in this vault, lists too. The mention
+      of `price` in that note belongs to the subject the vault has already answered, so this term
+      must stay SILENT. Registering only unfiled terms leaves the filed term's strings unowned and
+      reports this one, pointing at a sentence about price-anchor.
+    aliases:
+      - price
+    required: false

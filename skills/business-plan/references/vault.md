@@ -1308,6 +1308,17 @@ obtained without spending a version:
 | a cited code resolves to a row | `--citation-codes` | `citation-code-no-source-row` — an `[S#]` with no row in `sources.md`; and `citation-code-no-fact-row` — an `[F#]` with no row in `research/founder-brief.md`. The two index files are excluded from the scan, because an index legitimately names a code it withdrew and left unused. Forward only: a row nothing cites is not a failure. A missing index reports a half that did not run |
 | a local source row reached the global log | `--unflattened-source` | `source-unflattened` — a `research/*.md` local `\| S<n> \|` row whose URL `sources.md` carries nowhere, unless that file's ledger is declared exempt by a `Local ledger: <path> - <why>` line in the log's header |
 
+**`--subject-orphan` is ungated for a different reason, and it is the one rule here that CAN turn
+an existing corpus red.** Everything in the table above is exempt by construction: the field it
+reads is one no older vault carries, so the exemption a version buys is obtained without spending
+one. This mode reads no new field at all — a vocabulary term, the `subject` on a `claim` or an
+`assumption`, and the words in the documents — so there is nothing to gate it on, and a vault that
+already reasons about a subject it never filed goes red on the upgrade that adds it. That is the
+intent rather than a cost: a corpus arguing from a position the ledger has never held is exactly
+the state the mode exists to surface, and a vacuous pass is worse than a red gate. What it owes in
+exchange is a message that is a diagnosis — the subject, the document, the line the corpus leans on
+it from, and which note to write — because a red gate that is only a verdict is a support request.
+
 **`model-row-dead-assumption` and `model-row-no-assumption` are named narrower than the rule they
 now read, and the names stay.** Both cover a `claim` carrying the row's title as well as an
 `assumption`, because what backs a row is `status` rather than which asserting set holds the note.

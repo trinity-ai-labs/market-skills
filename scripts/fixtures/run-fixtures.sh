@@ -142,6 +142,18 @@
 #      is named in the success line, while the research file beside it is still
 #      read. A row carrying no URL is asserted reported as unresolved rather than
 #      passed, and a missing sources.md as a mode that did not run.
+#  26. --subject-orphan reports a vocabulary subject with no `claim` and no
+#      `assumption` under it that the corpus reasons from anyway - by its own key
+#      in a note body, and through an alias in a plan document, which is the half
+#      an alias-blind implementation passes. Its four silent sides are asserted
+#      beside it: a subject nothing mentions, a `required: true` subject that is
+#      coverage-gap`s, an unfiled term sharing an alias with a FILED one - the
+#      mention belongs to the subject already answered, and only registering
+#      every term`s strings keeps it there - and a plan carrying three words a
+#      substring scan finds an alias inside. The message is asserted as a DIAGNOSIS - where the corpus
+#      leans on the subject, and which note to write - because the mode ships
+#      failing rather than gated, and it is not gated on schemaVersion at either
+#      end.
 
 set -u
 
@@ -174,7 +186,7 @@ driver-kind-unknown verdict-fields-incomplete"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift --citation-codes --unflattened-source graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift --citation-codes --unflattened-source --subject-orphan graph"
 
 PASS=0
 FAIL=0
@@ -1096,7 +1108,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash' '--citation-codes: citation codes against their index rows' '--unflattened-source: local source rows against the global log'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash' '--citation-codes: citation codes against their index rows' '--unflattened-source: local source rows against the global log' '--subject-orphan: unfiled subjects the corpus reasons about'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -2672,6 +2684,126 @@ US_NONE_STATUS=$?
 case "$US_NONE" in
 *'no global log to flatten a local row into'*) ok "the absent log is named rather than reported clean" ;;
 *) no "--unflattened-source did not say it had no log to read (got: $US_NONE)" ;;
+esac
+
+# --- 26. a subject the corpus argues from and never filed --------------------
+# coverage-gap asks this of `required: true` subjects and stops there, so the
+# subjects a particular plan invents its own dependence on are invisible: the
+# documents reason from one, the vocabulary declares it, and no note is ever
+# written. Both fixtures here carry NOTHING BUT optional subjects, which is what
+# makes them impossible for coverage-gap to see - a mode that were merely
+# coverage-gap widened would report every unfiled term in both, including the
+# ones nothing mentions.
+printf '\nunfiled subjects the corpus reasons about\n'
+
+SO_OUT=$("$LINT" --subject-orphan --vault "$HERE/subject-orphan" --json 2>/dev/null)
+SO_STATUS=$?
+[ "$SO_STATUS" = "1" ] && ok "--subject-orphan exits 1 on a subject the corpus leans on and never filed" ||
+	no "--subject-orphan should exit 1 over subject-orphan (got $SO_STATUS)"
+
+# The count is what says the three silent subjects in that vault stayed silent:
+# `primary-risk` is unfiled and never mentioned, `steady-state-ceiling` is
+# unfiled, mentioned, and coverage-gap`s because it is `required: true`, and
+# `willingness-to-pay` is the shared-alias case asserted by name below.
+case "$SO_OUT" in
+*'"failure_count": 2'*) ok "the unmentioned subject, the required one and the shared alias are not reported" ;;
+*) no "--subject-orphan did not report exactly two failures over subject-orphan (got: $SO_OUT)" ;;
+esac
+
+# A FILED TERM CLAIMS ITS OWN STRINGS, and this is the assertion that holds the
+# mechanism to the claim. `willingness-to-pay` is unfiled and lists `price` as an
+# alias; so does `price-anchor`, which the assumption in that vault files. The
+# only line carrying `price` is a sentence about price-anchor - a mention the
+# vault has already answered, which owes nothing.
+#
+# Registering only the UNFILED terms leaves the filed term`s strings unowned and
+# reports willingness-to-pay against that sentence: a confident false positive in
+# the one mode that ships failing and ungated and can turn a finished corpus red
+# on upgrade. Asserted BY NAME rather than left to the count above, which moves
+# for any of four reasons and only this one points at the registration order.
+case "$SO_OUT" in
+*willingness-to-pay*)
+	no "an unfiled term claimed an alias a FILED term also lists - that mention belongs to the subject already answered" ;;
+*) ok "a filed term claims its own aliases, so an unfiled term sharing one reports nothing" ;;
+esac
+
+# THE CANONICAL KEY, READ OUT OF A NOTE BODY. `timing-window` is spelled in full
+# in a claim that is filed under a different subject - the corpus reasoning about
+# a position the ledger has never held, which is the whole rule.
+case "$SO_OUT" in
+*'"check": "subject-orphan"'*'"id": "timing-window"'*) ok "a subject named by its own key in a note body is reported" ;;
+*) no "subject-orphan did not report timing-window (got: $SO_OUT)" ;;
+esac
+
+# THE ALIAS PATH, READ OUT OF A PLAN DOCUMENT. `market-growth` never appears in
+# business-plan.md under its canonical key - only as `growth rate` - so an
+# alias-blind implementation passes this vault and this assertion is the only
+# thing that would say so.
+case "$SO_OUT" in
+*'"id": "market-growth"'*'which carries the alias `growth-rate`'*) ok "a subject reached only through an alias is reported, and the message names the alias" ;;
+*) no "subject-orphan did not report market-growth through its alias (got: $SO_OUT)" ;;
+esac
+
+# THE MESSAGE IS A DIAGNOSIS, NOT A VERDICT. This ships failing rather than
+# gated, so a vault carrying the gap goes red on the version that adds it - and a
+# red gate whose message is a diagnosis is a five-minute fix while one that is
+# only a verdict is a support request. Both halves are asserted: where the corpus
+# is already leaning on the subject, and which note to write.
+case "$SO_OUT" in
+*'business-plan.md line 5 reads'*) ok "the failure names the document and the line the corpus leans on" ;;
+*) no "subject-orphan did not name where the mention is (got: $SO_OUT)" ;;
+esac
+case "$SO_OUT" in
+*'Write the note - a `claim` under `subject: market-growth`'*) ok "the failure names the note to write" ;;
+*) no "subject-orphan did not say which note to write (got: $SO_OUT)" ;;
+esac
+
+# THE SILENT SIDE, WHICH IS WHAT KEEPS THIS OFF EVERY OPTIONAL TERM. Every
+# unfiled subject in subject-unmentioned/ is one nothing in the corpus writes
+# down. The plan there also carries `pricing`, `prices` and `priceless`, each of
+# which a SUBSTRING scan matches the alias `price` inside - so this is also the
+# assertion that mentions are matched on token boundaries.
+SO_QUIET=$("$LINT" --subject-orphan --vault "$HERE/subject-unmentioned" 2>&1)
+SO_QUIET_STATUS=$(run_status "$HERE/subject-unmentioned" --subject-orphan)
+[ "$SO_QUIET_STATUS" = "0" ] && ok "--subject-orphan exits 0 when nothing mentions the unfiled subject" ||
+	no "--subject-orphan should exit 0 over subject-unmentioned (got $SO_QUIET_STATUS)"
+case "$SO_QUIET" in
+*'a subject nothing leans on is not a gap'*) ok "the success line says the subject is unfiled and unmentioned, not that every subject is filed" ;;
+*) no "--subject-orphan did not name the unfiled-but-unmentioned half (got: $SO_QUIET)" ;;
+esac
+
+# And the vault every other assertion in this suite requires clean stays clean:
+# every subject in clean/ carries a note, so the line names what it checked
+# rather than reporting a half it never ran.
+SO_CLEAN=$("$LINT" --subject-orphan --vault "$HERE/clean" 2>&1)
+SO_CLEAN_STATUS=$(run_status "$HERE/clean" --subject-orphan)
+[ "$SO_CLEAN_STATUS" = "0" ] && ok "--subject-orphan passes the clean vault" ||
+	no "--subject-orphan should pass the clean vault (got $SO_CLEAN_STATUS)"
+case "$SO_CLEAN" in
+*'every one of them carrying a `claim` or an `assumption`'*) ok "the clean vault is told which half agreed" ;;
+*) no "--subject-orphan did not name what it checked over clean (got: $SO_CLEAN)" ;;
+esac
+
+# NOT GATED ON schemaVersion, and there is nothing to gate it on - the rule reads
+# no field a corpus written before it lacks. Both fixtures above are at 1, so the
+# assertions already ran at the oldest version this tool reads; this is the other
+# end, and a version gate slipped in later would turn one of the two silent.
+SO_AT_2="$PAIRS_FILE.subject-at-2"
+rm -rf "$SO_AT_2"
+cp -R "$HERE/subject-orphan" "$SO_AT_2"
+printf '{\n  "schemaVersion": 2,\n  "created": "2026-03-14"\n}\n' >"$SO_AT_2/.vault/config.json"
+SO_AT_2_STATUS=$(run_status "$SO_AT_2" --subject-orphan)
+[ "$SO_AT_2_STATUS" = "1" ] && ok "--subject-orphan fires at schemaVersion 2 as well as at 1" ||
+	no "--subject-orphan went silent at schemaVersion 2 (got $SO_AT_2_STATUS)"
+
+# A VAULT WITH NO VOCABULARY IS TOLD SO rather than reported clean. There is no
+# subject list to hold the corpus against, so the mode did not run - and a
+# success line reading as a pass over it is the failure this whole family of
+# checks exists to break.
+SO_NOVOCAB=$("$LINT" --subject-orphan --vault "$HERE/no-vocab" 2>&1)
+case "$SO_NOVOCAB" in
+*'no _vocab.yml under'*) ok "a vault with no vocabulary is told no subject was asked after" ;;
+*) no "--subject-orphan reported a verdict over a vault with no vocabulary (got: $SO_NOVOCAB)" ;;
 esac
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
