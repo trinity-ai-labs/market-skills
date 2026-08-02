@@ -40,8 +40,9 @@
 // gate that goes red until the last slice lands makes CI red on every slice PR
 // from now until then, which destroys the signal exactly when it is needed.
 
-import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { cpus, tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -70,7 +71,21 @@ const NOT_PORTED_STATUS = 3;
 // mode also has to produce a document at least once (see compareMode).
 const TEXT_ONLY_MODES = new Set(['graph', 'release-gate']);
 
+// Two lists, and the exit code is what tells them apart. `problems` holds parity
+// findings - the two implementations answered a vault differently - and exits 1.
+// `harnessErrors` holds every way this tool failed to put the question at all,
+// and exits 2: a child that died instead of answering, a probe that could not be
+// classified, and either implementation having no interpreter to run it. That is
+// the split assertRunFixturesModesMatchCensus already drew by exiting 2 inline,
+// generalised to the cases that arise after the run has started and so have to
+// be collected rather than exited on.
+//
+// THE FAILURE THIS PREVENTS: a caller that retries an infrastructure flake and
+// escalates a real regression cannot tell them apart if both exit 1. The three
+// one-sided cases above all mean "nothing was compared", and reporting that with
+// the code reserved for "the two scripts disagree" names the wrong culprit.
 const problems = [];
+const harnessErrors = [];
 
 // Two facts are parsed out of the shell implementation rather than copied here -
 // the mode census and the note-type directories. Read LAZILY and memoized: at
@@ -318,11 +333,103 @@ function findPowerShell() {
 }
 
 // ---------------------------------------------------------------------------
+// one PowerShell startup cache per worker
+//
+// THE FAILURE THIS PREVENTS: two PowerShell hosts corrupting one another's
+// startup cache, which kills a child on SIGABRT mid-run. Before the non-verdict
+// rule below that arrived as `.sh 1, .ps1 134` and read as the two
+// implementations disagreeing - a parity finding this harness manufactured.
+//
+// KNOWN: concurrent non-interactive PowerShell sessions corrupt the shared
+// ~/.cache/powershell/StartupProfileData-NonInteractive and die with 134 or 139,
+// primarily on macOS - https://github.com/PowerShell/PowerShell/issues/26528.
+// Every element of that report is present here: runLint spawns -NonInteractive,
+// bin/vault-lint.ps1 re-invokes a host per --release-gate part, and nothing
+// keeps two of those from overlapping - two contributors gating at once on one
+// machine is enough, and running cells concurrently makes it the normal case.
+//
+// INFERRED: that this is the cause. Five aggressive reproduction attempts at
+// concurrency 8 and 10 produced no crash, so the mechanism matches every
+// observable without having been demonstrated here. Giving each worker its own
+// XDG_CACHE_HOME removes the shared file the report blames and costs nothing if
+// the hypothesis is wrong. It is NOT what makes a residual crash readable - the
+// non-verdict rule is, whichever way this goes.
+//
+// PER WORKER, not per cell: the cache has to warm once and be reused, or every
+// cell pays a cold PowerShell start - about 300ms of the ~400ms a JSON cell
+// takes on the PowerShell side.
+//
+// Inert where it does not apply, and never a requirement to run: Windows
+// PowerShell 5.1 is .NET Framework and keeps no ~/.cache/powershell, so the
+// variable is simply unread there, and a directory that cannot be created
+// degrades to the unmodified process environment rather than aborting the gate.
+// ---------------------------------------------------------------------------
+
+// undefined = not attempted, null = unavailable, string = the directory.
+let cacheRoot;
+const cacheHomes = [];
+
+function cacheHomeFor(slot) {
+  if (cacheRoot === undefined) {
+    try {
+      cacheRoot = mkdtempSync(join(tmpdir(), 'parity-pwsh-cache-'));
+    } catch {
+      cacheRoot = null;
+    }
+  }
+  if (!cacheRoot) return null;
+  if (cacheHomes[slot] === undefined) {
+    const dir = join(cacheRoot, `worker-${slot}`);
+    try {
+      mkdirSync(dir, { recursive: true });
+      cacheHomes[slot] = dir;
+    } catch {
+      cacheHomes[slot] = null;
+    }
+  }
+  return cacheHomes[slot];
+}
+
+// On `exit` rather than in a finally: process.exit() does not unwind the stack,
+// and every failure path in this file leaves through it.
+process.on('exit', () => {
+  if (!cacheRoot) return;
+  try {
+    rmSync(cacheRoot, { recursive: true, force: true });
+  } catch {
+    // A temp directory left behind is not worth changing this tool's answer for.
+  }
+});
+
+// Every child currently running, so an interrupt can take them down with it.
+const liveChildren = new Set();
+
+// Ctrl-C during a multi-minute sweep is ordinary, and a signal does not run the
+// `exit` handler above - so an interrupted run would strand a cache directory.
+// The children have to die FIRST: killing this process alone leaves its
+// PowerShell hosts running, and one of those rewrites the startup cache after
+// the cleanup has already removed it, which both strands the directory and
+// leaves hosts alive to corrupt the cache of whatever runs next - the very
+// failure the per-worker directory exists to prevent. Exiting explicitly with
+// the conventional 128+N code then runs the cleanup and keeps the status a
+// caller sees unchanged. THE LIMIT: SIGKILL cannot be handled at all, so a hard
+// kill still leaves the directory and the hosts behind.
+for (const [signal, number] of [
+  ['SIGINT', 2],
+  ['SIGTERM', 15],
+]) {
+  process.on(signal, () => {
+    for (const child of liveChildren) child.kill('SIGKILL');
+    process.exit(128 + number);
+  });
+}
+
+// ---------------------------------------------------------------------------
 // running one side
 // ---------------------------------------------------------------------------
 
 /**
- * Invoke one implementation and capture raw bytes plus exit status.
+ * Invoke one implementation and capture raw bytes, exit status and signal.
  *
  * THE VAULT IS ALWAYS A RELATIVE PATH, and cwd is always the repo root. The
  * `vault` field of every JSON document echoes the argument verbatim
@@ -333,15 +440,78 @@ function findPowerShell() {
  *
  * Buffers, not strings: byte-for-byte has to mean bytes, and decoding first
  * would fold a real encoding difference into an equal comparison.
+ *
+ * `signal` is returned rather than discarded because a child killed outright
+ * has a null status, and reporting that as `.ps1 null` is worse than reporting
+ * the 134 the other shape of the same death produces. nonVerdict() reads both.
+ *
+ * Asynchronous spawn, not spawnSync: spawnSync blocks the event loop, so a pool
+ * built on it would run one cell at a time no matter how many workers it had.
  */
-function runLint(side, argv) {
+function runLint(side, argv, slot) {
   const spawnArgv =
     side.kind === 'sh'
       ? [SH_LINT, ...argv]
       : ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', PS_LINT, ...argv];
-  const run = spawnSync(side.interpreter, spawnArgv, { cwd: ROOT, maxBuffer: 64 * 1024 * 1024 });
-  if (run.error) throw new Error(`${side.label}: ${run.error.message}`);
-  return { stdout: run.stdout ?? Buffer.alloc(0), stderr: run.stderr ?? Buffer.alloc(0), status: run.status };
+  // Only the PowerShell side reads XDG_CACHE_HOME, so only it gets a modified
+  // environment - the shell side runs with this process's own, untouched.
+  const cacheHome = side.kind === 'ps' ? cacheHomeFor(slot) : null;
+  const env = cacheHome ? { ...process.env, XDG_CACHE_HOME: cacheHome } : process.env;
+
+  return new Promise((settle, fail) => {
+    const child = spawn(side.interpreter, spawnArgv, { cwd: ROOT, env });
+    liveChildren.add(child);
+    const stdout = [];
+    const stderr = [];
+    child.stdout.on('data', (chunk) => stdout.push(chunk));
+    child.stderr.on('data', (chunk) => stderr.push(chunk));
+    child.on('error', (err) => {
+      liveChildren.delete(child);
+      fail(new Error(`${side.label}: ${err.message}`));
+    });
+    child.on('close', (status, signal) => {
+      liveChildren.delete(child);
+      settle({ stdout: Buffer.concat(stdout), stderr: Buffer.concat(stderr), status, signal });
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// a non-verdict exit is a HARNESS error, not a parity finding
+//
+// THE FAILURE THIS PREVENTS: a PowerShell host killed by SIGABRT mid-cell
+// reported as `exit status: .sh 1, .ps1 134`, which reads as the two
+// implementations answering a vault differently. It sent a reviewer hunting a
+// port bug that did not exist. 134 is 128 + SIGABRT.
+//
+// The discriminator is the one NOT_PORTED_STATUS already relies on: the tool
+// documents 0 (clean), 1 (failures) and 2 (refusal) and nothing else, so
+// anything outside that set was not produced by the tool. A signal death
+// arrives in two shapes and both are covered - the child killed directly
+// (status null, signal 'SIGABRT') and the host exiting 128+N because its OWN
+// child died, which is what PowerShell's $LASTEXITCODE propagates (status 134,
+// signal null).
+//
+// THE LIMIT, stated because this repo has just spent a release on success lines
+// that claimed more than they verified: this catches a status ABOVE 2 and a
+// signal death, and NOTHING ELSE. A host failure that exits 1 - a PowerShell
+// parse error is the ordinary one - is indistinguishable from a lint verdict of
+// 1 by status alone, so it still arrives as a parity finding and still reads as
+// a disagreement. Telling those apart would mean reading stderr for meaning,
+// which is a different rule with a different failure behind it.
+// ---------------------------------------------------------------------------
+
+const VERDICT_STATUSES = new Set([0, 1, 2]);
+
+/** Why this run is not a verdict this tool produces, or null when it is one. */
+function nonVerdict(run) {
+  if (run.signal) return `was killed by signal ${run.signal}`;
+  if (run.status === null) return 'ended with neither an exit status nor a signal';
+  if (VERDICT_STATUSES.has(run.status)) return null;
+  if (run.status > 128) {
+    return `exited ${run.status}, which is 128 + ${run.status - 128}: a child of its own died on signal ${run.status - 128}`;
+  }
+  return `exited ${run.status}, outside the 0, 1 and 2 this tool documents`;
 }
 
 // ---------------------------------------------------------------------------
@@ -411,65 +581,155 @@ function firstDifference(shText, psText) {
 }
 
 // ---------------------------------------------------------------------------
-// comparing one mode over every fixture
+// comparing one cell - one mode against one fixture, through both scripts
 // ---------------------------------------------------------------------------
 
 const indent = (text) => text.replace(/^/gm, '  ');
 
-function compareMode(mode, vaults, shSide, psSide) {
-  const diffs = [];
-  const skipped = [];
-  let compared = 0;
-  let documents = 0;
+/**
+ * Run both implementations over one cell and reduce the answer to a verdict the
+ * report can aggregate: a diff or nothing, whether the shell produced a
+ * document, or a harness error saying the two were never compared.
+ *
+ * The comparison happens HERE rather than in the caller so the output buffers
+ * die with the cell - 632 cells holding two buffers each would otherwise all be
+ * live at once.
+ */
+async function compareCell(cell, shSide, psSide, slot) {
+  // Started together: the two are independent processes over a read-only vault,
+  // and the shell side is roughly a tenth of the PowerShell side's runtime, so
+  // awaiting it first would put it on the critical path for nothing.
+  const [sh, ps] = await Promise.all([runLint(shSide, cell.argv, slot), runLint(psSide, cell.argv, slot)]);
+  const where = `${cell.vault} (${cell.argv.join(' ')})`;
 
-  for (const vault of vaults) {
-    const argv = argvFor(mode, vault);
-    // Never a silent skip: a fixture this mode cannot be invoked against is
-    // named in the report, because an uncompared fixture that says nothing reads
-    // exactly like a compared one.
-    if (!argv) {
-      skipped.push(vault);
-      continue;
-    }
-
-    const sh = runLint(shSide, argv);
-    const ps = runLint(psSide, argv);
-    compared++;
-    if (sh.stdout.length) documents++;
-
-    const where = `${vault} (${argv.join(' ')})`;
-    if (sh.status !== ps.status) {
-      diffs.push(`${where}\n  exit status: .sh ${sh.status}, .ps1 ${ps.status}`);
-      continue;
-    }
-
-    if (TEXT_ONLY_MODES.has(mode)) {
-      for (const stream of ['stdout', 'stderr']) {
-        const shText = normalize(sh[stream]);
-        const psText = normalize(ps[stream]);
-        if (shText === psText) continue;
-        diffs.push(`${where}\n  normalized ${stream} differs\n${indent(firstDifference(shText, psText))}`);
-      }
-      continue;
-    }
-
-    // JSON modes: the document itself, byte for byte, no normalization. stderr
-    // is deliberately excluded - it carries only the die() diagnostic, whose
-    // prefix is each script's own filename; the exit code above already tells a
-    // refusal (2) from a failure (1) from a clean run (0).
-    if (sh.stdout.equals(ps.stdout)) continue;
-    const detail = firstDifference(sh.stdout.toString('utf8'), ps.stdout.toString('utf8'));
-    diffs.push(`${where}\n  JSON differs\n${indent(detail)}`);
+  const shWhy = nonVerdict(sh);
+  const psWhy = nonVerdict(ps);
+  if (shWhy || psWhy) {
+    const sides = [];
+    if (shWhy) sides.push(`${SH_LINT} ${shWhy}`);
+    if (psWhy) sides.push(`${PS_LINT} ${psWhy}`);
+    return {
+      harnessError:
+        `${cell.mode} on ${where}: ${sides.join(', and ')}. The two implementations were NOT compared for ` +
+        `this cell - a crashed child is this harness failing, not the two scripts disagreeing.`,
+    };
   }
 
-  return { compared, skipped, diffs, documents };
+  const document = sh.stdout.length > 0;
+
+  if (sh.status !== ps.status) {
+    return { document, diffs: [`${where}\n  exit status: .sh ${sh.status}, .ps1 ${ps.status}`] };
+  }
+
+  if (TEXT_ONLY_MODES.has(cell.mode)) {
+    // One diff per differing STREAM, not one per cell: stdout and stderr
+    // disagreeing are two findings, and collapsing them would drop one from the
+    // report's count.
+    const diffs = [];
+    for (const stream of ['stdout', 'stderr']) {
+      const shText = normalize(sh[stream]);
+      const psText = normalize(ps[stream]);
+      if (shText === psText) continue;
+      diffs.push(`${where}\n  normalized ${stream} differs\n${indent(firstDifference(shText, psText))}`);
+    }
+    return { document, diffs };
+  }
+
+  // JSON modes: the document itself, byte for byte, no normalization. stderr
+  // is deliberately excluded - it carries only the die() diagnostic, whose
+  // prefix is each script's own filename; the exit code above already tells a
+  // refusal (2) from a failure (1) from a clean run (0).
+  if (sh.stdout.equals(ps.stdout)) return { document, diffs: [] };
+  const detail = firstDifference(sh.stdout.toString('utf8'), ps.stdout.toString('utf8'));
+  return { document, diffs: [`${where}\n  JSON differs\n${indent(detail)}`] };
+}
+
+// ---------------------------------------------------------------------------
+// the worker pool - over CELLS, and the report order is not the finish order
+//
+// The sweep is every mode over every fixture vault and about 93% of its wall
+// time is the PowerShell side starting up, so it is almost entirely waiting.
+// Running cells concurrently took it from 501s to 157s on an idle M-series box.
+// The two dimensions are deliberately not written down as numbers here: both
+// grow every release, and a count in a comment goes stale silently, because an
+// enumeration that has gone short reads exactly like one that is complete.
+//
+// OVER CELLS, NOT MODES. Pooled at mode level the speedup caps at the mode
+// count, and --release-gate - alone about half the sweep, because
+// bin/vault-lint.ps1 re-invokes a host per gate part - becomes a multi-minute
+// straggler on one worker while the rest idle. Cells spread it across every
+// worker.
+//
+// THE FAILURE THE ORDERING RULE PREVENTS: a report whose lines arrive in
+// completion order varies run to run, so two CI logs cannot be diffed and a
+// reviewer cannot tell a new failure from a reordered one. Results are written
+// into the cell they came from and read back in MODE_TABLE x fixture order, so
+// the pool changes when work happens and never what the report says.
+//
+// This adds NOTHING to what is compared. Every cell the serial loop ran, the
+// pool runs; the per-mode `N compared` counts are the proof and must not move.
+// ---------------------------------------------------------------------------
+
+// Floored at 1: cpus() answers an empty array on some hosts, and a pool of zero
+// workers would run no cells at all while every per-mode line still printed.
+const DEFAULT_JOBS = Math.max(1, Math.min(8, cpus().length));
+
+/** How many cells run at once. Measured knee is 4-8; 8 is 3.4x over serial. */
+function poolSize() {
+  const declared = process.env.PARITY_JOBS;
+  if (declared === undefined || declared === '') return DEFAULT_JOBS;
+  const jobs = Number.parseInt(declared, 10);
+  if (!Number.isInteger(jobs) || jobs < 1) throw new Error(`PARITY_JOBS=${declared} is not a positive integer`);
+  return jobs;
+}
+
+/**
+ * One cell per mode per fixture, in MODE_TABLE order and then fixture order -
+ * the order the report reads them back in. A fixture a mode cannot be invoked
+ * against becomes a named skip rather than a missing cell, because an
+ * uncompared fixture that says nothing reads exactly like a compared one.
+ */
+function planCells(modes, vaults) {
+  const plan = new Map();
+  for (const mode of modes) {
+    const cells = [];
+    const skipped = [];
+    for (const vault of vaults) {
+      const argv = argvFor(mode, vault);
+      if (!argv) {
+        skipped.push(vault);
+        continue;
+      }
+      cells.push({ mode, vault, argv, result: null });
+    }
+    plan.set(mode, { cells, skipped });
+  }
+  // Flattened out of `plan` rather than accumulated beside it, so there is one
+  // list and the run order cannot drift from the order the report reads back. A
+  // Map iterates in insertion order, which is the order `modes` was walked in.
+  return { plan, all: [...plan.values()].flatMap((entry) => entry.cells) };
+}
+
+/**
+ * Run every cell across a bounded pool, each worker holding one slot for the
+ * whole run so its PowerShell startup cache warms once.
+ */
+async function runCells(cells, shSide, psSide) {
+  const jobs = Math.min(poolSize(), cells.length);
+  let next = 0;
+  const worker = async (slot) => {
+    for (let i = next++; i < cells.length; i = next++) {
+      cells[i].result = await compareCell(cells[i], shSide, psSide, slot);
+    }
+  };
+  await Promise.all(Array.from({ length: jobs }, (_unused, slot) => worker(slot)));
 }
 
 // ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 
-function main() {
+async function main() {
   const modes = modeCensus();
   assertRunFixturesModesMatchCensus(modes);
   const vaults = fixtureVaults();
@@ -500,13 +760,13 @@ function main() {
    * asked. PROBED rather than declared, so a marker file cannot outlive the port
    * it excuses: an entry for a mode that answers properly now is a stale entry.
    */
-  function portedModes() {
+  async function portedModes() {
     if (!psPresent) {
       console.log(`  ${PS_LINT}: does not exist yet - nothing to compare, so every mode must be allowlisted`);
       return new Set();
     }
     if (!psInterpreter) {
-      problems.push(
+      harnessErrors.push(
         `one-sided: fixture suite only - ${PS_LINT} exists but no PowerShell host was found to run it ` +
           `(tried powershell.exe, then pwsh). This gate compared nothing and is not reporting a pass. ` +
           `Install Windows PowerShell 5.1 or PowerShell 7, or set PARITY_POWERSHELL.`,
@@ -522,12 +782,29 @@ function main() {
 
     const answered = new Set();
     for (const mode of modes) {
-      if (runLint(psSide, argvFor(mode, probeVault)).status !== NOT_PORTED_STATUS) answered.add(mode);
+      // Slot 0, so the probe warms the cache the first worker will reuse.
+      const run = await runLint(psSide, argvFor(mode, probeVault), 0);
+      // The stub's sentinel is the one answer outside 0/1/2 that means something
+      // here, so it is read FIRST; anything else has to be a verdict. Without
+      // this the classification is `status !== 3`, and a probe child killed by a
+      // signal answers null - which is not 3, so a crashed probe would be filed
+      // as PORTED and could then report a live marker file as stale. That is the
+      // same fabricated finding nonVerdict() exists to stop one call site over.
+      if (run.status === NOT_PORTED_STATUS) continue;
+      const why = nonVerdict(run);
+      if (why) {
+        harnessErrors.push(
+          `probing \`${mode}\` against ${probeVault}: ${PS_LINT} ${why}. Whether the mode is ported could ` +
+            `not be established, so nothing about it was compared or excused.`,
+        );
+        continue;
+      }
+      answered.add(mode);
     }
     return answered;
   }
 
-  const ported = portedModes();
+  const ported = await portedModes();
   // One name for "the PowerShell side could be asked at all". An empty Set means
   // nothing is ported yet, which is a normal state; null means the question could
   // not be put, which is not.
@@ -560,13 +837,17 @@ function main() {
     // fixture suite still proves the .ps1 answers correctly, but
     // nothing here proves the two AGREE, and that has to be said rather than
     // swallowed.
-    problems.push(
+    harnessErrors.push(
       `one-sided: fixture suite only - no POSIX shell was found to run ${SH_LINT}, so ` +
         `${toCompare.length} ported mode(s) went uncompared. Set PARITY_SH, or install Git Bash.`,
     );
   } else if (toCompare.length) {
     console.log(`  ${SH_LINT}: driven through ${shInterpreter}`);
   }
+
+  const comparable = shInterpreter ? toCompare : [];
+  const { plan, all } = planCells(comparable, vaults);
+  await runCells(all, shSide, psSide);
 
   console.log();
 
@@ -575,11 +856,26 @@ function main() {
       console.log(`  ${mode.padEnd(20)} allowlisted (scripts/parity/unported/${mode})`);
       continue;
     }
-    if (!toCompare.includes(mode) || !shInterpreter) {
+    if (!comparable.includes(mode)) {
       console.log(`  ${mode.padEnd(20)} NOT COMPARED - see the failures below`);
       continue;
     }
-    const { compared, skipped, diffs, documents } = compareMode(mode, vaults, shSide, psSide);
+
+    // Read back in plan order, never completion order - see runCells.
+    const { cells, skipped } = plan.get(mode);
+    const diffs = [];
+    let compared = 0;
+    let documents = 0;
+    for (const { result } of cells) {
+      if (result.harnessError) {
+        harnessErrors.push(result.harnessError);
+        continue;
+      }
+      compared++;
+      if (result.document) documents++;
+      diffs.push(...result.diffs);
+    }
+
     const how = TEXT_ONLY_MODES.has(mode) ? 'normalized stdout/stderr + exit code' : 'byte-identical JSON + exit code';
     const skipNote = skipped.length ? `, ${skipped.length} skipped (no notes): ${skipped.join(', ')}` : '';
     console.log(`  ${mode.padEnd(20)} ${compared} compared${skipNote} - ${diffs.length ? `${diffs.length} DIFFER` : how}`);
@@ -603,18 +899,20 @@ function main() {
   console.log();
   console.log(`parity: ${probed ? ported.size : 0}/${modes.length} modes ported, ${allowlisted.size} allowlisted`);
 
-  if (problems.length) {
-    console.error(`\n${problems.map((problem) => `parity: ${problem}`).join('\n\n')}`);
-    process.exit(1);
+  if (harnessErrors.length || problems.length) {
+    const lines = [...harnessErrors, ...problems].map((entry) => `parity: ${entry}`);
+    console.error(`\n${lines.join('\n\n')}`);
+    // Both lists are printed because both are findings someone has to read, and
+    // the exit code is what says which kind this run was: a harness failure wins,
+    // because a run that could not put the question cannot report the answer.
+    process.exit(harnessErrors.length ? 2 : 1);
   }
 }
 
 // Exit 2 on a crash, as scripts/check.mjs does. Node exits 1 on an uncaught
 // throw, which here reads as "the two implementations disagree" - the one answer
 // a broken harness must never give by accident.
-try {
-  main();
-} catch (err) {
+main().catch((err) => {
   console.error('parity: crashed —', err?.stack || err);
   process.exit(2);
-}
+});

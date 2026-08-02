@@ -272,11 +272,17 @@ cadence and the decision each would change, `--deliverable` for whether the rend
 `deliverables/*.html` carries a vault address out to a reader who has no vault,
 `--assumption-rows` for whether the model's assumptions table and the notes that
 declare themselves inputs to it are the same set, `--claim-drift` for whether a cited section
-still carries what it carried when the claim recorded reading it, `--release-gate` for the ten
-parts the composite paragraph below enumerates run as one call — not ten of these, since
-`--unverified` is not a gate part and the bare `check` is not in this list, which is the
-enumeration trap sitting inside the sentence that warns about it — and
-`graph <ID>` for one note's neighbourhood. This sentence is
+still carries what it carried when the claim recorded reading it, `--citation-codes` for whether
+every `[F#]` and `[S#]` a document cites resolves to a row in the index that assigns it,
+`--unflattened-source` for whether every row of a research file's own local source table names a
+URL the root `sources.md` also names, `--subject-orphan` for a vocabulary subject the corpus
+reasons about and has never filed a note under, `--foreclosed` for the live notes that take an
+option off the table and whether each says what would put it back, `--release-gate` for the
+parts the composite paragraph below enumerates run as one call — and they are not simply the flags
+in this sentence, since `--unverified` is not a gate part and the bare `check` is not in this list,
+which is the enumeration trap sitting inside the sentence that warns about it; the count is left
+out for the reason the fixture counts are, that a number here rots on the next mode anybody adds —
+and `graph <ID>` for one note's neighbourhood. This sentence is
 exhaustive on purpose, so **a new flag lands here in the same PR that adds it, in both
 scripts** — an enumeration that has gone stale reads exactly like one that is complete.
 Rule 3 above has the reasoning for why `bin/` and `scripts/` sit under different
@@ -297,7 +303,8 @@ to one script's table and not its twin's.
 
 `--release-gate` is a composite rather than another check surface: it runs `check`, `--used-in`,
 `--supersession-sweep`, `--red-team`, `--roadmap-table`, `--binding-driver`, `--monitoring`,
-`--deliverable`, `--assumption-rows` and `--claim-drift` as separate
+`--deliverable`, `--assumption-rows`, `--claim-drift`, `--citation-codes`,
+`--unflattened-source`, `--subject-orphan` and `--foreclosed` as separate
 invocations of the script and exits with the
 **worst** status any part returned, so a refusal (2) is never reported as a failed check (1). It
 exists because the render gate was several calls made from memory — which of them ran was a
@@ -332,8 +339,8 @@ in *Writing skills* below is that a rule with no failure mode gets cut, and thes
 rewritten on the strength of a sibling's incident rather than their own — so they are recorded
 rather than changed. Rewrite them when one of them costs a read, or when a slice owns those modes.
 
-**`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2 3`) and refuses anything else.** A vault at
-1 is held to exactly the rules it was written under; 2 and 3 are where a check that an existing
+**`vault-lint.sh` reads a SET of `schemaVersion`s (`1 2 3 4`) and refuses anything else.** A vault at
+1 is held to exactly the rules it was written under; 2, 3 and 4 are where a check that an existing
 corpus could not owe goes, and the found version is passed into every awk program that needs it as
 `schema` so a new check can gate on it. Three rules sit behind 2:
 the sweep's `reconciled:` verdict, `--red-team`'s demand for a roster in a
@@ -341,7 +348,15 @@ the sweep's `reconciled:` verdict, `--red-team`'s demand for a roster in a
 no `milestones/` directory to render. Two whole MODES sit behind 3 — `--assumption-rows` and
 `--claim-drift` — because both read fields no corpus written before them carries, and
 `--claim-drift`'s would otherwise be owed by every claim in every finished corpus at once, which
-is the one shape of upgrade that reddens a whole population on the day the plugin updates. Refusing a version from the future stays the point of the field: an
+is the one shape of upgrade that reddens a whole population on the day the plugin updates. ONE
+rule sits behind 4 — `check`'s `population-unnested` — and it is bought for the same reason one
+version down: a plan that sized properly already carries several `current` population claims under
+`market-size`, none of them wrong, so the ungated rule reddens every corpus that did the work for a
+reason having nothing to do with what changed. Correct and unusable is what a version buys out of.
+**The three fields `--foreclosed` reads are deliberately NOT behind it**, which is the same call
+`superseded_by`'s two rules make: the mode fires on the PRESENCE of `forecloses`, so a corpus that
+never wrote the field cannot owe anything, and a version spent over an empty population buys an
+exemption nobody needed. Refusing a version from the future stays the point of the field: an
 older tool half-reading a newer vault reports a clean bill of health over every field it never
 saw. Adding a check that fires unconditionally on every existing corpus is the thing this
 mechanism exists to make unnecessary.
@@ -557,6 +572,61 @@ and pasting it is the assertion that the read happened exactly as stamping a dat
 `--used-in`'s verdict, and reporting it twice under a name about reconciliation sends its reader to the
 wrong fix. Gated on `schemaVersion` 3.
 
+`--citation-codes` is the same boundary one address over. `--used-in` opens the document and section
+a NOTE names; plan prose cites `[F#]` and `[S#]`, which resolve through `research/founder-brief.md`
+and `sources.md` — a contract `docs/specs/2026-07-27-claim-citation-codes.md` wrote down and nothing
+enforced, so a code resolving to nothing rendered exactly like a working one and cleared the gate.
+Two properties belong in any change to it. **The two index files are excluded from the scan, and
+that is load-bearing rather than an optimisation**: an index legitimately records that a code was
+withdrawn and deliberately left unused, which names that code in its own prose, and a scan reading
+the mention as a citation fails a corpus doing the right thing. **It runs forward only**, which is
+the opposite call to `--red-team`'s roster and `--roadmap-table`'s two directions and is specific to
+an index: a recorded fact nothing leans on yet is healthy, so failing an uncited row would push an
+author toward citing things to silence a linter, and there is no dodge by omission either way
+because deleting the citation deletes the claim that needed it. **Its success line states the
+limit**, which is the point of the mode rather than a footnote — resolution is necessary and not
+sufficient, because a research file carries its own local `S` table and a document citing a local
+code the global log also assigns resolves to a row and to a different source. Observed on four
+documents at once, every code resolving. Ungated: the trigger is an index file the corpus either has
+or does not.
+
+`--unflattened-source` closes the half of that a check can reach — every row of a `research/*.md`
+local source table must name a URL the root `sources.md` also names, because the log is what assigns
+a citable `[S#]` and a source that never reached it can be cited from research prose and not from a
+plan document at all. **The failure kind is `source-unflattened` and NOT `orphan-source`**, which
+`check` already emits for close to the opposite finding — a source note nothing rests on — and
+neither is widened into the other, because one is a source nobody cited and the other a source
+nobody can cite. **The declared exemption decides whether the mode survives**: a corpus may
+deliberately keep a per-row ledger of a hundred and fifty profile rows out of the log, and a mode
+reporting all of them is switched off within a day, taking the working half with it. So the
+exemption is read from the LOG'S OWN HEADER — a `Local ledger: <path> - <why>` line before the
+log's first table row — rather than keyed on a filename this script knows, because the file holding
+a ledger differs per corpus and a hardcoded name is a rule that only fits the vault it was written
+against. A row carrying no URL is neither resolved nor failed and is counted in the success line
+instead, the same rule `--assumption-rows` learned about a half that walks an empty set.
+
+`--subject-orphan` is `coverage-gap` over the half of the vocabulary that rule cannot see, and the
+two **partition** `_vocab.yml` rather than overlapping on it. `coverage-gap` fires on a
+`required: true` subject with no claim under it; a subject optional in general is routinely
+load-bearing in one plan, and there nothing notices that the documents argue from it and no note
+was ever written. **A subject with no note cannot collide, cannot go stale, cannot be superseded
+and cannot be challenged** — every query the ledger supports returns clean over it, because there
+is nothing filed to return, and silent in every direction is what makes it a different failure from
+an ordinary coverage gap. Three properties belong in any change to it. **The MENTION is the whole
+trigger** — the term or one of its `aliases` on a line of a markdown document under the vault that
+is not a `subject:` line — because without it this is `coverage-gap` over every optional term,
+which fails a vault for declaring a vocabulary richer than the position it took. **A mention is
+matched on TOKEN BOUNDARIES, never as a substring**: both sides are cut into lowercase alphanumeric
+tokens and the candidate has to appear as a consecutive run, so `price` matches `Price` and never
+`priceless` — a substring rule fires on ordinary prose, which is `--roadmap-table`'s crying-wolf
+shape one mode over. And **the message is a diagnosis rather than a verdict** — the subject, the
+document, the line number, the line, and which note to write — because this is the one check gated
+on nothing that can turn a finished corpus red on the version that adds it. That is deliberate: a
+corpus reasoning about a subject it has never filed is the state the mode exists to surface, and a
+vacuous pass is worse than a red gate. Nothing is gated because there is nothing to gate on — it
+reads no field a corpus written before it lacks — which is the exemption `schemaVersion` buys,
+here declined rather than obtained cheaply.
+
 **The two subjects trigger differently, and the asymmetry is the design rather than an
 inconsistency.** `target-verdict` is a term 1.12.0 introduces, so no existing corpus carries it and
 the four fields owed outright are owed whatever the note carries — a note under that subject holding
@@ -568,6 +638,94 @@ subjects fails every vault authored before it on the day the plugin updates. Ext
 to the verdict half would pay an exemption's whole cost over an empty population and make omitting
 `binding_driver` the cheapest way past every rule that reads it — and a dodge available by omission
 is not an exemption, which is why `--red-team` checks its roster both ways too.
+
+`--foreclosed` is the first mode in this tool pointed at a plan claiming TOO LITTLE, and that is the
+whole reason it exists rather than a framing. Every other guard here — the target verdict, the
+citation codes, the assumption rows, the section hashes — fires on an overclaim, and the asymmetry
+was already recognised twice in `skills/business-plan` (the furthest-defensible target, and
+red-team pre-pass step 4) with both fixes stopping at the identity's own terms. A note asserting an
+option is NOT viable removes work from the roadmap, kills a segment or takes a configuration off
+the table, and **nothing attacked it**: the three panel lenses that predate this release ask
+whether the plan can deliver what it promises and none asks whether it wrongly concluded it could
+not — which is what the fourth, the floor skeptic briefed off this mode's output, is for. **The failure is silent by
+construction, which is what makes it a different shape from every check that reads an edge** — the
+option is gone, so nothing downstream references it, so no query has a target; the foreclosure
+cannot dangle, cannot go stale in a way anybody notices, and cannot collide with the work it
+cancelled, because that work was never written down. What a check can reach is the CONDITION, and
+that is the whole of the mode: `foreclosure-no-reverse` fails a `current` note carrying `forecloses`
+with no `reverses_if`. It is `validated_by` one field over and carries that rule's honest limit —
+a stated reversal condition is not evidence the thinking was done, only that skipping it stopped
+being the default. Three boundaries belong in any change to it. **It reads `claim` only, and
+`--subject-orphan`'s closed pair does not transfer** — that rule asks which types *file* a
+position, while these three fields are claim-only *by argument*: a foreclosure is a conclusion
+drawn from an input, `foreclosed_on` names that input, and a note resting on nothing has no input
+to name. Reading both types would give the wrong repair under the right name, because this mode's
+message says to add `reverses_if` and the documented repair for an assumption in the shape of a
+finding is the `question` the plan stopped asking. The dodge that narrowing looks like it opens is
+closed by `check`'s `foreclosure-on-assumption` instead — **reported separately from
+`type-agreement` for the reason `filename-mismatch` is**: the `type` field is correct and the
+directory matches, so a reader sent to look at `type` reads `assumption`, concludes it is right,
+and stops. Two rules, two repairs, and neither says the other's sentence. **`status` is read
+and a retired foreclosure owes nothing**, the live predicate `--assumption-rows` learned — a
+`superseded` or `retracted` note has already been taken back, so demanding a reversal condition of
+it names a repair on a note the ledger retired. And **the passing side is a LISTING, not a bare
+pass**: the mode feeds the panel as well as the gate, so its success line names every foreclosure
+with the section its `used_in` reached, and a vault where nothing forecloses is told which half did
+not run rather than that its conclusions agree. **`foreclosed-on-dangling` is the mode's second
+kind, and it exists because `foreclosed_on` is a SCALAR note reference** — `check`'s dangling-edge
+rule walks the block-list edge fields and never opens one, which is the gap `superseded_by` has and
+which the repo answers the same way: a rule of its own rather than a silent omission. The cost is
+specific to this field. The floor skeptic is briefed off this mode's output with `foreclosed_on` in
+it, so a dangling target dispatches the one lens pointed at the foreclosure to a note that does not
+exist — and a lens that found nothing is indistinguishable from a foreclosure that survived being
+attacked, which is the vacuous pass this release exists to close, shipped by the release closing
+it. It is a separate kind from `foreclosure-no-reverse` because the repairs differ: write the
+missing note or fix the typo, against state the condition. **Ungated, and the absence of a gating sentence
+here would be the wrong reading** — the three fields ship additive at the current `schemaVersion`
+and this rule is deliberately behind no version at all, because the trigger is the PRESENCE of
+`forecloses`: a corpus written before the field declares nothing and can owe nothing, so a version
+spent here would buy an exemption over an empty population. That is the exemption `schemaVersion`
+exists to provide, obtained without spending one, on the terms `superseded_by`'s two rules are on.
+
+**`check`'s `population-unnested` is the collision rule one subject over, and the version it costs
+is the point of it.** Two `current` claims sharing a `subject` are a collision, and `vault.md`
+resolves one three ways — supersede a side, add a `scopes` edge because one is narrower, or go
+settle the disagreement. Under `market-size` there is a fourth state none of those describes: the
+populations are BOTH right and one sits inside the other, a behavioural cut inside a professional
+population inside a broader one, and `nested_in` is the edge that records it. Without it a
+percentage-of-market figure is a share of whichever population its reader assumed, and taking the
+innermost silently produces the smallest share available — which then reads as conservative rather
+than as a decision nobody made. Three properties belong in any change to it. **Both ends of the edge
+count as one relation**, because the question is whether the pair is related and not which way
+round, and a rule reading only the narrower end fails a corpus that wrote the edge from the other.
+**The test is CONNECTIVITY and not whether each note carries an edge** — `vault.md` states the
+contract in those words, and reachability is walked transitively, so three rings are satisfied by
+two edges and demanding the third would ask for a fact already derivable from the other two. The
+two forms look equivalent and are not, which is why this is written down rather than left to the
+next reader: **two nested pairs under one subject, each internally edged and neither related to the
+other, leaves every note carrying an edge and the set still holding two unrelated ring systems**,
+so a share figure is a percentage of whichever system its reader assumed — the failure the edge
+exists to remove, surviving the check that was added to remove it. The edges are unioned and the
+components counted. And **it reports per NOTE rather than per group**, where `false-independence`
+and `duplicate-url` report per member: there the whole group is implicated and neither member is
+the wrong one, here each row names the claims *that* note has no chain to, so the note a reader
+opens tells them which ring is still unrecorded and a note already connected to everything is not
+a row at all. Gated on `schemaVersion` 4 — the paragraph above has why —
+and the suite asserts the GATE rather than only the rule, by running
+`scripts/fixtures/population-no-edge` and then a copy of it restamped to 3, which is the idiom
+`--subject-orphan` already uses: the two vaults cannot differ in anything but the version, where a
+second checked-in fixture tree would desync the first time somebody edited one of them.
+**`nested_in` is in `EDGE_FIELDS`, and the rule ALSO resolves the target itself — both halves, for
+different failures.** In the set, a mistyped edge is a `dangling-edge` under its own name and
+`graph` walks the ring; that is what the other ten edge fields already buy. Resolving it here as
+well is what stops a typo *satisfying* this check: read as a bare relation, `nested_in: CLAIM-TYPO`
+makes the corpus look nested, the rule clears, and nothing anywhere says the edge points at
+nothing — a vacuous pass handed back by the check written to refuse one. It resolves through the
+same `BYID` index every other edge-reading rule uses, so an unresolvable edge links nothing. **It
+does not lean on `dangling-edge` having run first, and that is deliberate:** that rule is ungated
+and this one is gated on 4, so a nesting check assuming its sibling already fired would be assuming
+something the gate does not guarantee. A typo is therefore two failures, which is correct — fix the
+target, and record the ring are different repairs.
 
 **Every invocation in `skills/` is bare — `vault-lint.sh …` or `vault-lint.ps1 …`, never a
 path**, and CI rejects the path form of either. The pre-plugin layout used a relative path,

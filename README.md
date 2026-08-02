@@ -185,7 +185,7 @@ lives inside it:
 
 ```
 ~/Documents/go-to-market/<product-slug>/
-├── .vault/config.json       # schemaVersion — currently 3; a directory without it is not a vault
+├── .vault/config.json       # schemaVersion — currently 4; a directory without it is not a vault
 ├── _vocab.yml               # controlled subject vocabulary
 ├── sources/ facts/ claims/ assumptions/ questions/ decisions/ milestones/ # one file per note
 ├── research/                # all prose — market-analysis dimensions, product-dossier.md,
@@ -209,8 +209,8 @@ It's also what makes a corpus **portable**: copy the slug directory and every ci
 `rests_on` edge, and every research file travels with it.
 
 **A vault created under an earlier version keeps working, and that is a promise rather than an
-accident.** `.vault/config.json` carries a `schemaVersion`; a new vault is created at **3**, and a
-vault at 1 or 2 is held to exactly the rules it was written under — where a check reads a field
+accident.** `.vault/config.json` carries a `schemaVersion`; a new vault is created at **4**, and a
+vault at 1, 2 or 3 is held to exactly the rules it was written under — where a check reads a field
 that version does not have, it reports that the rule was not applied rather than that your
 documents agree. Moving a vault up is opt-in, one version at a time, and forward-only; what each
 step asks for is in
@@ -238,17 +238,22 @@ near-miss subject terms, duplicate sources, retracted notes still cited, and —
 after the item that needs it or two items competing for one constrained resource while the plan
 asserts they run side by side.
 
-**Nine further modes leave the note directories and read the documents**, because the disagreement
+**The other modes leave the note directories and read the documents**, because the disagreement
 worth catching before a render is between the ledger and the document somebody is about to hand
 over: citations that no longer resolve, sections a supersession put in doubt, panel lenses that
 wrote no objection row, the roadmap table against the milestone notes it was rendered from, the
 verdict on your target against the drivers stored under it, whether the monitoring plan names an
 axis with an instrument, a cadence and the decision it would change, the financial model's
 assumptions table against the notes that declare themselves inputs to it, every cited section
-against the content hash the claim recorded when it read it, and — the only mode that reads a
-rendered file rather than the vault — whether a deliverable carries a vault address out to a reader
-who has no vault. **`--release-gate` is all ten as one call**, which is what you run before a
-render.
+against the content hash the claim recorded when it read it, whether every `[F#]` and `[S#]` the
+prose cites resolves to a row in the index that assigns it, whether a research file's own local
+source row ever reached the global log, whether a vocabulary subject the documents argue from has
+any note filed under it at all, whether a claim that takes an option off the table says what would
+put it back, and — the only mode that reads a rendered file rather than the vault — whether a
+deliverable carries a vault address out to a reader who has no vault.
+**`--release-gate` runs every one of them as one call**, which is what you run before a render. The
+count is left out on purpose: a number here rots on the next mode anybody adds, and an enumeration
+that has gone stale reads exactly like one that is complete.
 
 Claude Code puts an enabled plugin's `bin/` on whichever shell tool the session has — a
 session with the Bash tool gets `vault-lint.sh` on that tool's `PATH`; a session with only
@@ -270,6 +275,10 @@ vault-lint.sh --monitoring --vault "$VAULT_PATH"
 vault-lint.sh --deliverable --vault "$VAULT_PATH"
 vault-lint.sh --assumption-rows --vault "$VAULT_PATH"
 vault-lint.sh --claim-drift --vault "$VAULT_PATH"
+vault-lint.sh --citation-codes --vault "$VAULT_PATH"
+vault-lint.sh --unflattened-source --vault "$VAULT_PATH"
+vault-lint.sh --subject-orphan --vault "$VAULT_PATH"
+vault-lint.sh --foreclosed --vault "$VAULT_PATH"
 vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 ```
 
@@ -489,19 +498,156 @@ than that its documents agree. That is the whole reason the version field exists
 finished corpus is already cited into a plan, so a hash rule that fired unconditionally would turn
 every existing vault red the day the plugin updated.
 
-`--release-gate` is the call before a render, and the only one that asks every question. It is
-**ten parts** — the bare check plus `--used-in`, `--supersession-sweep`, `--red-team`,
-`--roadmap-table`, `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and
-`--claim-drift` — and it prints each under its own heading and exits with the worst status any part
-returned, so the gate is clean only when every part is. The alternative was several calls made from
-memory, and which of them actually ran was a matter of recall.
+`--citation-codes` closes the address a plan's prose uses. A note cites a document and a section,
+which `--used-in` opens; prose cites `[F1]` and `[S7]`, which resolve through
+`research/founder-brief.md` and `sources.md` — a contract this method already wrote down and
+nothing enforced. A code that resolves to nothing renders exactly like one that works, so the
+reader who follows it is the one person who cannot check it. The mode scans every markdown
+document at the vault root and under `research/` and reports a cited code with no row in its index,
+under a separate name per index because the two repairs open different files. **The two index files
+are excluded from the scan, and that is load-bearing rather than an optimisation** — an index
+legitimately records that a code was withdrawn and deliberately left unused, which names that code
+in its own prose, and a scan that read the mention as a citation would fail a corpus doing exactly
+the right thing. It runs **forward only**: cited with no row fails, a row nothing cites does not,
+because a recorded fact nothing leans on yet is healthy and failing it would push an author toward
+citing things to silence a linter. **Its success line states the limit**, and that is the point of
+the mode rather than a footnote: resolution is necessary and it is not sufficient, because a
+research file carries its own local `S` table and a document citing a local code the global log
+also assigns resolves to a row and to a different source. A missing index is reported as a half
+that did not run.
+
+`--unflattened-source` closes the half of that a check can reach. Every row of a research file's
+own local source table names a URL, and the mode fails one the root `sources.md` carries nowhere.
+The global log is what assigns a citable `[S#]`, so such a source can be cited from research prose
+and cannot be cited from a plan document at all — and no existing check sees it, because the local
+table is well-formed, the log is well-formed, and nothing compared them. On a live corpus a source
+existed only as one research file's local `S14`, global `[S14]` was a *different* source, four
+documents cited `[S14]` meaning the local one, and every code resolved. **The exemption is the part
+that decides whether the mode survives:** a corpus may deliberately keep a large per-row ledger out
+of the global log — a per-profile table of a hundred and fifty rows, cited with a qualified suffix
+— and a mode reporting all of them as failures is one somebody switches off within a day, taking
+the working half with it. So the exemption is **read from the log's own header** rather than keyed
+on a filename the script knows: a line before the log's first table row reading
+`Local ledger: research/<file>.md - why it stays local` exempts that file, with the path being what
+the mode reads and the reason being for whoever has to decide whether it still holds. A row
+carrying no URL is neither resolved nor failed — there is no key to match it on — and the success
+line counts those, so a table of unlinkable rows cannot read as a table that agreed. The failure
+kind is `source-unflattened` rather than `orphan-source`, which the bare check already reports for
+close to the opposite finding: that one is a source nobody cited, this one is a source nobody *can*
+cite.
+
+`--subject-orphan` asks what the bare check asks only of `required: true` subjects, and asks it of
+the rest. The note-level `coverage-gap` fires when a required subject has no claim under it and
+stops there — so a subject that is optional *in general* and load-bearing *in this plan* is
+invisible: the documents reason from it, the vocabulary declares it, and no note is ever written.
+A subject with no note cannot collide with a contradiction, cannot go stale, cannot be superseded
+and cannot be challenged, because there is nothing filed to return. Silent in every direction is
+what makes it a different failure from an ordinary coverage gap, and why the two are separate
+checks rather than one widened: they send their reader to different repairs.
+
+**The mention is the whole trigger.** The mode fires on an unfiled subject only where the term or
+one of its `aliases` appears in a markdown document under the vault, on a line that is not a
+`subject:` line — so a vault that legitimately has nothing to say about a subject never writes the
+word and stays clean, and one arguing from a subject it never filed is the state the check exists
+to surface. Mentions are matched on token boundaries rather than as substrings, so `price` matches
+`Price` and `price anchor` and never `priceless`. The failure names the subject, the document, the
+line number and the line itself, and then says which note to write — this is the one check that
+turns an existing corpus red on upgrade wherever it carries the gap, and a red gate whose message
+is a diagnosis is a five-minute fix while one that is only a verdict is a support request. It is
+gated on no `schemaVersion`, because it reads no field a corpus written before it lacks.
+
+`--foreclosed` is pointed at the one class of assertion nothing else in this method attacks.
+Every other guard here fires on a plan claiming **too much** — a number with no source behind it,
+a target the drivers do not reach, a citation that resolved yesterday. A note saying an option is
+*not* viable claims too little, and it is the most expensive assertion in the corpus: it removes
+work from the roadmap, kills a segment, or takes a configuration off the table. All three panel
+lenses ask whether the plan can deliver what it promises and none asks whether it wrongly
+concluded it could not, so the conclusion reaches the founder, the panel and the reader as settled
+ground. **The failure is silent by construction** — the option is gone, so nothing downstream
+references it, so no check has a target to fire on.
+
+What a check *can* reach is the condition. A foreclosing note carries `forecloses` (the option it
+takes off the table), `foreclosed_on` (the input the conclusion depends on) and `reverses_if` (the
+value of that input which would put the option back), and the mode lists every live one with the
+section its `used_in` names and fails one that carries no `reverses_if`. It is `validated_by` one
+field over: an assumption owes the step that would settle it, a foreclosure owes the value that
+would reverse it, and neither is evidence the thinking was done — what both remove is skipping it
+by default. It reads `claim` notes only, and a `superseded` or `retracted` foreclosure owes
+nothing because the ledger has already taken it back.
+
+**Claim-only is the argument, not a filing convention** — and it is why the dodge it looks like it
+opens is closed somewhere else. A foreclosure is a conclusion drawn from an input, `foreclosed_on`
+is where that input is named, and a note resting on nothing has no input to name; so an option
+taken off the table by an *assumption* is not a foreclosure that forgot a field, it is an
+assumption in the shape of a finding, and the repair is to file the **question** the plan stopped
+asking. Reading both types here would hand that reader the wrong repair under the right name: the
+message says add `reverses_if`, and following it dresses the category error in three fields and
+ships it green. So the bare check reports it instead, under its own name, pointing at the
+question — and because the note's `type` is correct and its directory matches, that is deliberately
+not `type-agreement`, which would send a reader to look at `type`, read `assumption`, and stop. **The three fields ship
+additive at the current `schemaVersion` and the rule is deliberately ungated** — that is a decision
+rather than an omission: the trigger is the *presence* of `forecloses`, so a corpus written before
+the field existed declares nothing and can owe nothing, and a version spent to exempt an empty
+population buys an exemption nobody needed.
+
+**The mode has a second failure, and it exists because `foreclosed_on` is a scalar.** The bare
+check's dangling-edge rule walks the block-list edge fields and never opens a scalar note
+reference, which is the same gap `superseded_by` has and gets the same answer — a rule of its own.
+A `foreclosed_on` naming a note the vault does not hold means the conclusion names the input it
+rests on and that input cannot be opened, so nothing can be re-read to overturn it. It is also the
+brief the floor skeptic is dispatched with, so a dangling target sends the one lens pointed at the
+foreclosure to a note that does not exist — and a lens that found nothing reads exactly like a
+foreclosure that survived being attacked.
+
+**The bare check gained one rule with the same shape, and it is the one that needed a version.**
+Where a corpus holds several nested populations under `market-size` — a behavioural cut inside a
+professional population inside a broader one — a percentage-of-market figure is meaningless
+without saying which, and the subject collision does not fire because nested populations are not
+contradictory. Picking the innermost silently produces the most pessimistic share available, which
+then reads as conservative rather than as a decision nobody made. So `nested_in` records which
+population contains which, and `check` fails a `market-size` subject holding two or more `current`
+population claims with no such edge between them — either a real contradiction or a missing edge,
+and the message names both repairs. **It is gated on `schemaVersion` 4**, because every vault that
+sized properly already holds two or more of those claims: ungated, the rule would turn every
+corpus that did the work red on the day the plugin updated, for a reason having nothing to do with
+what changed. That is the failure mode that makes people stop upgrading, and it would have made a
+correct rule unusable.
+
+**What it asks for is that the populations are connected, not that every pair carries an edge.**
+Reachability is transitive, so three rings are two edges — the innermost names the middle, the
+middle names the outermost — and demanding the third would ask for a fact the other two already
+derive. The distinction is not cosmetic: two nested *pairs* under one subject, each internally
+edged and neither related to the other, leaves every note carrying an edge while the set still
+holds two unrelated ring systems, and a share figure is then a percentage of whichever system its
+reader assumed. That is the failure the edge exists to remove, surviving a check that only asked
+whether each note had one.
+
+**Only an edge that resolves clears it.** `nested_in` is an edge like any other — it is in the set
+the bare check follows for dangling targets and `graph` walks, so a `nested_in` naming a note the
+vault does not hold is reported under its own name, and it does not satisfy the nesting rule
+either. Both halves matter: without the first, a typo is invisible; without the second, a typo
+*silences* the check, because the corpus reads as nested and nothing asks which population contains
+which. Resolved this way a mistyped edge is two findings with two repairs — fix the target, and
+record the ring.
+
+`--release-gate` is the call before a render, and the only one that asks every question. It runs
+the bare check plus `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
+`--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows`, `--claim-drift`,
+`--citation-codes`, `--unflattened-source`, `--subject-orphan` and `--foreclosed`, prints each
+under its own heading, and exits with the worst status any part returned, so the gate is clean only
+when every part is. The alternative was several calls made from memory, and which of them actually
+ran was a matter of recall. **No count is written here**, for the reason stated where these modes
+are introduced: a number rots on the next mode anybody adds, and it goes stale silently, because an
+enumeration that has gone short reads exactly like one that is complete.
 
 **The bare run's success line says what it checked and what it did not**, because it used to say
 `clean` and a corpus with dozens of dead anchors printed exactly that. It reads *note-level
 checks passed … not opened: citation targets, supersession blast radius, panel objection rows,
 roadmap table against the milestone set, verdict drivers and the evidence under them, monitoring
 axes and the decision each would change, what the rendered deliverable carries out of the vault,
-assumption rows against the model table, cited sections against their recorded hash* —
+assumption rows against the model table, cited sections against their recorded hash, citation codes
+against their index rows, local source rows against the global log, unfiled subjects the corpus
+reasons about, foreclosed options and what would reverse them* —
 and the list of what it skipped is read off the same mode table `--release-gate` composes itself
 from, so a mode added to the gate cannot leave the line quietly overstating what it covered. A
 success line is what somebody renders on, so it has to be narrower than the verdict its reader

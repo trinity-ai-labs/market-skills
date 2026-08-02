@@ -279,6 +279,22 @@ merge, from the Sources tables inside each `research/*.md`. Research agents NEVE
 sources.md (thirty parallel appenders can't number anything); every brief says so. The reports
 cite `[S12]` so every figure traces in one hop.
 
+**The merge has to be complete, and `vault-lint.sh --unflattened-source` is what says so.** A
+research file's local row that never reached this log has no citable code at all: it can be cited
+from that file's own prose and cannot be cited from a plan document, and a plan citing its local
+number anyway lands on whatever this log assigns that number to — a different source, resolving
+cleanly. Where a per-row ledger is deliberately kept out of the log — a profile table of a hundred
+and fifty rows, cited with a qualified suffix — say so in this file's header, above the table, one
+line per file:
+
+```markdown
+Local ledger: research/company-profiles.md - one row per company, cited as [Sn-ledger]; flattening
+them would bury the sources a plan actually cites.
+```
+
+The path is what the lint reads and the reason is for whoever later has to decide whether it still
+holds. Declaring it is the escape; leaving the rows out silently is the failure.
+
 Per-dimension `research/<dimension>.md` files follow the skeleton in `dimensions.md`, not this
 file.
 

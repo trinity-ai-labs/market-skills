@@ -278,7 +278,10 @@ return {
 ## After Workflow B returns
 
 The conductor (you): reads the research files' Sources tables and writes `sources.md` — it is
-YOURS alone, `[S#]` numbers are assigned at this merge, no agent ever writes it; folds
+YOURS alone, `[S#]` numbers are assigned at this merge, no agent ever writes it, and every local
+row either reaches the log or has its file declared with a `Local ledger:` line in the log's header
+(`vault-lint.sh --unflattened-source` fails a local row this merge dropped, because a source that
+never reached the log cannot be cited from a plan document at all); folds
 `disputedClaims` into corrections/downgrades (the lens tells you which file to fix); resolves
 `vhVerdicts` into the report's Value hypothesis verdicts table; and if `criticVerdict.clean`
 is false, either runs another Workflow B round or records every `unclosedGaps` entry verbatim

@@ -370,6 +370,7 @@ vault-lint.sh - read-only checks over a claim vault.
       is in --release-gate so the call before a render is still one call, but
       the run that gates what actually ships is the one inside the render loop,
       after the HTML exists - see the render loop in rendering.md.
+
   vault-lint.sh --assumption-rows [--vault PATH] [--json]
       Check the assumptions table in financial-model.md against the assumption
       notes that declare themselves inputs to the model, both directions. A
@@ -522,6 +523,225 @@ vault-lint.sh - read-only checks over a claim vault.
       `reconciled_sections` was added - vault-migration.md carries the
       back-fill.
 
+  vault-lint.sh --citation-codes [--vault PATH] [--json]
+      Check that every [F#] and [S#] a document cites resolves to a row in
+      the index that assigns that code. A verdict - it exits 1 on either of
+      its two failures.
+
+      The resolution contract is already written down: [S#] resolves through
+      sources.md at the vault root and [F#] through
+      research/founder-brief.md. Nothing enforced it. --used-in opens a
+      NOTE's citation target; a code in prose is a different address and no
+      check opened it, so a plan could cite a code that resolves to nothing
+      and clear --release-gate. A dead code is indistinguishable from a
+      working one in the rendered document, and the reader who follows it is
+      the one person who cannot check it.
+
+      citation-code-no-source-row: an [S#] with no row in sources.md.
+      citation-code-no-fact-row: an [F#] with no row in
+      research/founder-brief.md. Two codes rather than one because the two
+      repairs open different files.
+
+      THE TWO INDEX FILES ARE NOT SCANNED, and that is load-bearing rather
+      than an optimisation. An index legitimately discusses its own retired
+      numbers - a row recording that a code was withdrawn and deliberately
+      left unused names that code - and a scan that read those mentions as
+      citations would fail a corpus doing exactly the right thing.
+
+      FORWARD DIRECTION ONLY. Cited with no row is the failure; a row nothing
+      cites is not. A recorded fact nothing leans on yet is a healthy state,
+      and failing it would push an author toward citing things to silence a
+      linter.
+
+      WHAT IT DOES NOT CHECK, AND THE SUCCESS LINE SAYS SO: whether a code
+      resolves to the INTENDED source. Resolution is necessary and it is not
+      sufficient. A research file legitimately carries its own local S table,
+      so a document citing a local code the global log also assigns resolves
+      to a row and to a DIFFERENT source - observed on four documents at
+      once, every code resolving. --unflattened-source closes the half of
+      that a check can reach.
+
+      A missing index file is reported as a half that did not run rather than
+      as agreement, the convention --claim-drift uses for a schemaVersion it
+      does not apply to.
+
+  vault-lint.sh --unflattened-source [--vault PATH] [--json]
+      Check that every row of a research file's own local source table names
+      a URL the root sources.md also names. A verdict - it exits 1 on its one
+      failure.
+
+      source-unflattened: a local `| S<n> |` row whose URL appears nowhere in
+      sources.md. The global log is what assigns a citable [S#], so a source
+      that exists only in a research file's local table can be cited from
+      research prose and cannot be cited from a plan document at all. It is
+      invisible to every other check: the local table is well-formed, the log
+      is well-formed, and nothing compared them. Observed: a source lived
+      only as one research file's local S14, global [S14] was a DIFFERENT
+      source, and four documents cited [S14] meaning the local one.
+
+      THE NAME IS NOT `orphan-source`, which `check` already reports and
+      which means close to the opposite - a source note nothing in the vault
+      rests on. That one is a source nobody cited; this one is a source
+      nobody CAN cite.
+
+      IT READS A DECLARED EXEMPTION OUT OF sources.md'S OWN HEADER, and
+      without one the mode is unusable. A corpus may deliberately keep a
+      large per-row ledger out of the global log - a per-profile table of a
+      hundred rows or more, cited with a qualified suffix - and reporting
+      every one of those as a failure is how a check gets switched off. A
+      line in the header, before the log's first table row, of the form
+
+          Local ledger: research/<file>.md - why it stays local
+
+      exempts that file. The first whitespace-delimited token after the colon
+      is the vault-relative path this mode reads; everything after it is the
+      reason, for the person who has to decide whether it still holds. The
+      declaration lives in the log rather than in the research file because
+      the log is where a corpus states which sources it assigns codes to.
+
+      A row carrying NO URL is neither resolved nor failed - there is no key
+      to match it on - and the success line reports how many there were, so a
+      table of unlinkable rows cannot read as a table that agreed.
+
+      A missing sources.md is reported as a mode that did not run rather than
+      as agreement, the same convention --citation-codes uses.
+  vault-lint.sh --subject-orphan [--vault PATH] [--json]
+      Check every vocabulary subject with no note filed under it against
+      whether the corpus reasons about it anyway. A verdict - it exits 1 on
+      its one failure.
+
+      coverage-gap asks this of `required: true` subjects and stops there. A
+      subject that is optional IN GENERAL can be load-bearing in a PARTICULAR
+      plan, and nothing sees that: the plan argues from it, no note is ever
+      filed, and the ledger has nothing to say. A subject with no note cannot
+      collide with a contradiction, cannot go stale, cannot be superseded and
+      cannot be challenged - every query the ledger supports returns clean over
+      it, because there is nothing filed to return. Silent in every direction
+      is what makes it a different failure from an ordinary coverage gap, and
+      why widening coverage-gap would send its reader to the wrong repair.
+
+      subject-orphan: a term in _vocab.yml NOT marked `required: true`, with no
+      `claim` and no `assumption` carrying it as `subject`, WHERE the term or
+      one of its `aliases` appears in a markdown document under the vault on a
+      line that is not a `subject:` line. The message names the subject, the
+      document, the line number and the line itself, because the repair is
+      writing one note and the only hard part is knowing which one.
+
+      THE FAILURE IS ATTACHED TO THE DOCUMENT CARRYING THE MENTION, not to
+      _vocab.yml where coverage-gap attaches. That check has nothing to show a
+      reader; here the mention is the evidence, so the file column names a path
+      worth opening.
+
+      THE TWO MODES PARTITION THE VOCABULARY rather than overlapping on it. A
+      `required: true` subject owes a note whether or not any document mentions
+      it, so a mention adds nothing to a repair coverage-gap already demands -
+      and one omission reported as two failures under two names sends its reader
+      looking for two.
+
+      THE MENTION IS THE WHOLE TRIGGER, and it is what stops this from being
+      coverage-gap over every optional term. A vault that legitimately has
+      nothing to say about a subject never mentions it and stays silent here;
+      one that argues from a subject it never filed is the state this exists to
+      surface.
+
+      A MENTION IS MATCHED ON WORD BOUNDARIES, not as a substring. Both sides
+      are cut into lowercase alphanumeric tokens and the term`s tokens have to
+      appear in the line as a consecutive run, so `price` matches `Price` and
+      `price anchor` and never `priceless`. A substring rule fires on ordinary
+      prose, and a check that cries wolf is one somebody switches off.
+
+      _vocab.yml is not markdown and so is never scanned - by construction
+      rather than by exclusion. Read, it would find every term inside its own
+      definition and its own aliases list, and report every unfiled subject in
+      the vault as one the corpus leans on.
+
+      A NOTE FILED UNDER AN ALIAS SPELLING COUNTS AS FILED. The spelling is
+      check`s near-miss-subject and has its own repair; reporting it here as
+      well would tell a reader to write a note that already exists.
+
+      IT DOES NOT READ `status`. A subject whose only note is `superseded` or
+      `retracted` passes here, because a message saying no note is filed under
+      it would be false - that is a supersession the sweep already reports,
+      and reporting it under this name gives the wrong repair.
+
+      THE ALIAS LIST IS THE SENSITIVITY DIAL, and a one-word alias is a broad
+      one: `power` as an alias of `defensibility` fires on any sentence carrying
+      the word. The repair for that is the alias rather than the check -
+      _vocab.yml is the vault`s own file, curated per engagement, and dropping
+      an alias that means something else in this corpus is what it is for.
+
+      WHERE --binding-driver ALREADY REPORTS THE MISSING NOTE, this reports it
+      too. A plan rendering a verdict section with no note behind it fails
+      verdict-unfiled there and subject-orphan here, and both name the same
+      repair - which is redundancy rather than a reader sent to the wrong fix,
+      and cheaper than teaching one general mode the name of one subject.
+
+      NOT gated on schemaVersion, and there is nothing to gate it on: the rule
+      reads no field a corpus written before it lacks. A vault carrying the gap
+      goes red on the version that adds this, and that is the intent - a corpus
+      reasoning about a subject it has never filed is exactly the state the
+      mode exists to surface, and a vacuous pass is worse than a red gate.
+
+  vault-lint.sh --foreclosed [--vault PATH] [--json]
+      List every live note that takes an option off the table, with the
+      section its used_in names, and fail one that never says what would put
+      the option back. A verdict - it exits 1 on its one failure.
+
+      A note asserting that an option is not viable removes work from the
+      roadmap, kills a segment, or takes a configuration off the table. It is
+      the highest-consequence class of assertion in a plan and the only one
+      nothing attacks: all three panel lenses ask whether the plan can deliver
+      what it promises, and none asks whether it wrongly concluded it could
+      not. The failure is silent BY CONSTRUCTION - the option is gone, so
+      nothing downstream references it, so no other check has a target to fire
+      on, and the conclusion is read as settled ground by the founder, by the
+      panel and by whoever acts on the plan.
+
+      foreclosure-no-reverse: a `current` note carrying `forecloses` and no
+      `reverses_if`. The same shape as an `assumption` carrying no
+      `validated_by`, one field over - the assumption owes the step that would
+      settle it, and the foreclosure owes the value of `foreclosed_on` that
+      would put the option back on the table. Without it the conclusion is
+      permanent, and nothing in the corpus records what it was conditional on.
+
+
+      foreclosed-on-dangling: a note carrying `forecloses` whose
+      `foreclosed_on` names an ID no note in this vault carries. The
+      conclusion names the input it rests on and that input cannot be opened,
+      so nothing can be re-read to overturn it. It is also the brief the
+      floor skeptic is dispatched with, so a dangling target sends the one
+      lens pointed at this conclusion to a note that does not exist - and a
+      lens that found nothing reads exactly like a foreclosure that survived
+      being attacked. `check`s dangling-edge rule walks the block-list edge
+      fields and never this scalar, so nothing else reports it, which is the
+      gap `superseded_by` has and answers the same way.
+      IT READS `claim` ONLY, and --subject-orphan's closed pair does not
+      transfer. That rule asks which types FILE a position; these three fields
+      are claim-only by ARGUMENT - a foreclosure is a conclusion drawn from an
+      input, `foreclosed_on` is where that input is named, and a note resting
+      on nothing has no input to name. An option taken off the table by an
+      `assumption` is not a foreclosure missing a field; it is an assumption
+      in the shape of a finding, and the repair is to file the `question` the
+      plan stopped asking. Reading both types here would give that reader the
+      WRONG REPAIR under the right name - add `reverses_if`, and the category
+      error ships dressed in three fields and green. `check` reports it
+      instead, under foreclosure-on-assumption, which names the question.
+
+      IT READS `status`, AND A RETIRED FORECLOSURE OWES NOTHING. A `superseded`
+      or `retracted` note has already been taken back, so demanding a reversal
+      condition of it names a repair on a corpse - the supersession IS the
+      repair, and --supersession-sweep is what reports the sections it put in
+      doubt.
+
+      NOT gated on schemaVersion, and it does not need to be: the trigger is
+      the PRESENCE of `forecloses`, so a corpus that never wrote the field
+      cannot owe anything here. That is the exemption a version buys, obtained
+      without spending one - the terms `superseded_by`'s two rules are on.
+
+      A vault where nothing forecloses is reported as a mode with nothing to
+      run over rather than as agreement, the convention --citation-codes and
+      --unflattened-source use for a half that did not run.
+
   vault-lint.sh graph <ID> [--depth N] [--vault PATH]
       Print the neighbourhood of one note as text: what it rests on, and what
       rests on it, to the given depth (default 2).
@@ -593,6 +813,10 @@ check                gate  note-level checks
 --deliverable        gate  what the rendered deliverable carries out of the vault
 --assumption-rows    gate  assumption rows against the model table
 --claim-drift        gate  cited sections against their recorded hash
+--citation-codes     gate  citation codes against their index rows
+--unflattened-source gate  local source rows against the global log
+--subject-orphan     gate  unfiled subjects the corpus reasons about
+--foreclosed         gate  foreclosed options and what would reverse them
 '
 
 # The MODE a command-line flag selects, or empty when the flag names no mode.
@@ -716,7 +940,20 @@ CONFIG="$VAULT/.vault/config.json"
 # recorded hash from every claim already cited into a plan, which is every claim
 # in every finished corpus. A version is exactly what that exemption costs, and
 # vault-migration.md carries the 2 -> 3 back-fill.
-SUPPORTED_SCHEMA="1 2 3"
+#
+# 4 joins the set for ONE rule - the `market-size` nesting check in `check`. A
+# plan that sized properly already carries several current population claims
+# under that subject, a behavioural cut inside a professional population inside
+# a broader one, and none of them is wrong. Ungated, the rule would turn every
+# corpus that did the work red on the day the plugin updates, for a reason
+# having nothing to do with what changed - which is the shape that makes people
+# stop upgrading, so the rule would be correct and unusable. A version is
+# exactly what that exemption costs, and vault-migration.md carries the 3 -> 4
+# back-fill. The fields --foreclosed reads are deliberately NOT behind it: that
+# mode fires on the PRESENCE of `forecloses`, so a corpus written before the
+# field cannot owe it, and a version spent over an empty population buys
+# nothing.
+SUPPORTED_SCHEMA="1 2 3 4"
 FOUND_SCHEMA=$(awk '
 	match($0, /"schemaVersion"[ \t]*:[ \t]*[0-9]+/) {
 		s = substr($0, RSTART, RLENGTH)
@@ -824,7 +1061,16 @@ HAS_FINMODEL=0
 # ARR term that declares it leaves out a note the vault does not hold is the one
 # form of that declaration nobody can check by reading it, and `graph` walking
 # the edge is what makes the excluded line reachable from the verdict.
-EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes"
+#
+# `nested_in` is here on exactly those terms, and ungated for `depends_on`'s
+# reason - no corpus written before the field carries it, so listing it costs
+# nothing at any version. What it buys is the difference between the two ways a
+# population claim can be missing its ring: population-unnested resolves the
+# edge through BYID, so a MISTYPED `nested_in` links nothing and would read as
+# an edge nobody wrote, which is a different repair. Listed here, the typo is a
+# dangling-edge failure under its own name, and `graph` shows which population
+# a claim sits inside instead of stopping at it.
+EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes nested_in"
 
 # ----------------------------------------------------------------------------
 # scratch space
@@ -874,12 +1120,14 @@ done | LC_ALL=C sort >"$FILES"
 # that ships with the skill: a vault must stay checkable against the vocabulary
 # it was written under even after the skill ships new terms.
 #
-# Only `check` consumes T and A records - graph and --unverified match N, S and
-# L alone - so the pass is skipped entirely for them rather than parsed into
-# output nobody reads.
+# Only `check` and --subject-orphan consume T and A records - graph and
+# --unverified match N, S and L alone - so the pass is skipped entirely for the
+# rest rather than parsed into output nobody reads. --subject-orphan needs both
+# record types: T is the set of subjects it asks after, and A is half of what
+# says the corpus is leaning on one.
 # ----------------------------------------------------------------------------
 
-if [ "$HAS_VOCAB" -eq 1 ] && [ "$MODE" = "check" ]; then
+if [ "$HAS_VOCAB" -eq 1 ] && { [ "$MODE" = "check" ] || [ "$MODE" = "subject-orphan" ]; }; then
 	awk '
 		# ONE trailing CR off every line, the same treatment the note parser
 		# gives every line it reads. Without it a CRLF _vocab.yml parses as an
@@ -1607,13 +1855,14 @@ if [ "$MODE" = "supersession-sweep" ]; then
 		# Every heading a document offers, as fold keys pointing at the
 		# heading ordinal. Read once per document, on first sight.
 		#
-		# The fence tracking is one of six copies in this file - --used-in
+		# The fence tracking is one of eight copies in this file - --used-in
 		# scans headings under the same rule, and so do --red-team,
-		# --roadmap-table, --binding-driver and --monitoring. All six are the
-		# same six lines: a `#` inside a fenced block is an example rather than a
-		# section anyone can jump to, and the marker and run length are tracked
-		# so a longer nested fence cannot close its parent early. Change one,
-		# change all six.
+		# --roadmap-table, --binding-driver, --monitoring, --claim-drift and the
+		# shared $DOC_SCAN_AWK that --citation-codes and --unflattened-source
+		# both concatenate. All eight are the same six lines: a `#` inside a
+		# fenced block is an example rather than a section anyone can jump to,
+		# and the marker and run length are tracked so a longer nested fence
+		# cannot close its parent early. Change one, change all eight.
 		#
 		# The fold() below has two more copies, in --roadmap-table and
 		# --binding-driver, which resolve their own section headings by the same
@@ -2229,11 +2478,12 @@ render_failures() {
 # folded into every --release-gate run.
 #
 # The fence tracking is the FOURTH copy in this file - --used-in scan(),
-# --supersession-sweep sections() and --red-team carry the same six lines, and
-# --binding-driver readdoc() and --monitoring carry the fifth and the sixth,
-# because each reads a document at the vault root. Collapsing the two table
-# readers into this one removed the seventh; the rest stay, so change one and
-# change all six. A `#` or a `|` inside a fenced block is an example rather than
+# --supersession-sweep sections() and --red-team carry the same six lines,
+# --binding-driver readdoc(), --monitoring and --claim-drift carry the fifth, the
+# sixth and the seventh, and the shared $DOC_SCAN_AWK below carries the eighth
+# for the two modes that concatenate it, because each reads a document at the
+# vault root. Collapsing the two table readers into this one removed one copy;
+# the rest stay, so change one and change all eight. A `#` or a `|` inside a fenced block is an example rather than
 # anything a reader can act on.
 # ----------------------------------------------------------------------------
 
@@ -2341,6 +2591,96 @@ TABLE_READER_AWK='
 					item = (col <= n) ? trim(cell[col]) : ""
 					if (item != "") ROW[++NROW] = item
 				}
+			}
+'
+
+# ----------------------------------------------------------------------------
+# the fence scan two modes share, by the same mechanism the table reader uses
+#
+# --citation-codes and --unflattened-source both walk a document line by line
+# looking for a token, and both have to ignore fenced blocks for the reason every
+# other document-reading mode does: a corpus document that carries its own row
+# template or its own citation example would otherwise fail for documenting its
+# own format, which is exactly why --red-team skips fences over a red-team.md
+# that ships a row template.
+#
+# ONE SOURCE RATHER THAN TWO COPIES, because the two modes are written together
+# and neither has a reason to drift from the other. It is a shell variable for
+# TABLE_READER_AWK's reason - awk takes one program text and two adjacent shell
+# words concatenate into one argument - and it does NOT collapse any of the seven
+# copies that already exist: those were each written independently and none
+# claims to match another, which is the test AGENTS.md sets for collapsing one.
+# It is the EIGHTH copy of the rule in this file, and every one of the other
+# seven names it. That count was wrong before this mode existed - --claim-drift's
+# section reader is a copy no enumeration had ever counted, so the census said
+# six over seven - which is the failure a hand-maintained count has and the
+# reason each site restates it rather than pointing at one place.
+#
+# THE STATE IS GLOBAL AND THE CALLER RESETS IT. FC and FN hold the open fence's
+# marker character and run length across calls, so a caller that reads more than
+# one document sets FC = "" before each file - a fence left open at the end of
+# one document would otherwise swallow the whole of the next.
+#
+# IT ALSO CARRIES trim() AND firstcell(). Both modes read a source or fact code
+# out of the first cell of a table row under identical rules, and the second body
+# said so in its own comment - which is the claim, not the resemblance, that makes
+# a duplicate worth collapsing: a change to how a cell may be spelled would
+# otherwise land in one mode and leave the other reading a different set of rows.
+# A host program gets all three by concatenating this one variable and must not
+# define any of them itself: awk rejects a duplicate function definition at
+# startup, which is what makes the collision loud.
+DOC_SCAN_AWK='
+			function trim(s) {
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			# 1 when this line opens or closes a fence, or sits inside one,
+			# so a caller skips the line on a true answer. The marker
+			# character and its run length are both tracked, which is what
+			# stops a longer nested fence from closing its parent early.
+			#
+			# THE TWO MARKERS ARE BUILT FROM BYTE VALUES rather than written
+			# as literals, which is the one difference from the seven copies
+			# that sit inside an awk program argument. This one travels in a
+			# shell variable, and a backtick inside a single-quoted
+			# assignment is a shell diagnostic about a string the shell never
+			# expands. 96 is the backtick and 126 the tilde, under the LC_ALL=C
+			# every caller sets, where %c is the byte rather than the code
+			# point. Three or more of either opens a fence, which is what the
+			# literal comparison the other copies use tests.
+			function fenced(t,   c, n) {
+				if (BQ == "") { BQ = sprintf("%c", 96); TL = sprintf("%c", 126) }
+				c = substr(t, 1, 1)
+				if (c != BQ && c != TL) return (FC != "")
+				n = 0
+				while (substr(t, n + 1, 1) == c) n++
+				if (n < 3) return (FC != "")
+				if (FC == "") { FC = c; FN = n }
+				else if (c == FC && n >= FN) { FC = ""; FN = 0 }
+				return 1
+			}
+
+			# The first cell of a markdown table row, trimmed, with the
+			# optional square brackets around a code stripped off. "" when the
+			# line is not a table row at all - the same answer a row whose first
+			# cell is empty gives, and both callers treat the two alike because
+			# neither is a code.
+			#
+			# THE BRACKETS ARE OPTIONAL ON EITHER INDEX. The two documents write
+			# the cell differently in the field - a founder brief writes the code
+			# bare and a source log writes it bracketed - and holding each to its
+			# own spelling alone would fail a document written in the other for a
+			# difference no reader can see.
+			function firstcell(t,   row, p) {
+				if (substr(t, 1, 1) != "|") return ""
+				row = substr(t, 2)
+				p = index(row, "|")
+				row = trim((p > 0) ? substr(row, 1, p - 1) : row)
+				sub(/^\[/, "", row)
+				sub(/\]$/, "", row)
+				return row
 			}
 '
 
@@ -2460,12 +2800,13 @@ if [ "$MODE" = "used-in" ]; then
 		# can jump to, so fences are tracked by marker character and run length -
 		# which is what stops a longer nested fence from closing its parent early.
 		#
-		# THAT FENCE BLOCK IS ONE OF SIX COPIES in this file. The
+		# THAT FENCE BLOCK IS ONE OF EIGHT COPIES in this file. The
 		# --supersession-sweep sections(), the --red-team row reader, the
-		# shared readtable(), the --binding-driver readdoc() and
-		# --monitoring carry the same six lines, because all six read a document
-		# at the vault root and no one of them can call a function defined in
-		# another awk program. Change one, change all six.
+		# shared readtable(), the --binding-driver readdoc(), --monitoring and
+		# --claim-drift and the shared $DOC_SCAN_AWK carry the same six lines,
+		# because all eight read a document at the vault root and no one of them
+		# can call a function defined in another awk program. Change one, change
+		# all eight.
 		#
 		# This copy is the one that most needed saying so. It has been edited
 		# twice already - the `{#anchor}` attribute below landed here alone -
@@ -2650,12 +2991,13 @@ if [ "$MODE" = "red-team" ]; then
 				# character and run length so a longer nested fence cannot
 				# close its parent early.
 				#
-				# One of six copies of those six lines: the --used-in scan(),
-				# the --supersession-sweep sections(), the shared
-				# readtable(), the --binding-driver readdoc() and --monitoring
-				# carry the same ones, for the same reason - six awk programs
-				# reading a document at the vault root, and no way to share a
-				# function across them. Change one, change all six.
+				# One of eight copies of those six lines: the --used-in scan(),
+				# the --supersession-sweep sections(), the shared readtable(),
+				# the --binding-driver readdoc(), --monitoring, --claim-drift and
+				# the shared $DOC_SCAN_AWK carry the same ones, for the same
+				# reason - eight awk programs reading a document at the vault
+				# root, and no way to share a function across them. Change one,
+				# change all eight.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
@@ -3093,14 +3435,15 @@ if [ "$MODE" = "binding-driver" ]; then
 			# its rows are not rows. Change one, change both.
 			#
 			# The fence tracking is the FIFTH copy in this file - --used-in
-			# scan(), --supersession-sweep sections(), --red-team and
-			# the shared readtable() carry the same six lines, because each
-			# reads a document at the vault root and no one of them can call a
-			# function defined in another awk program. A `#` or a `|` inside a
+			# scan(), --supersession-sweep sections(), --red-team, the shared
+			# readtable(), --monitoring, --claim-drift and the shared
+			# $DOC_SCAN_AWK carry the same six lines, because each reads a
+			# document at the vault root and no one of them can call a function
+			# defined in another awk program. A `#` or a `|` inside a
 			# fenced block is an example rather than an assertion the document
 			# makes, which is also why fenced lines never reach BODY: a fenced
 			# template carrying a condition would otherwise satisfy the check
-			# for a section that renders nothing. Change one, change all six.
+			# for a section that renders nothing. Change one, change all eight.
 			function readdoc(doc,   path, line, t, c, n, fc, fn, ord, h, ex, row, nc, cell, i, si, nh, alldash, hdr, dcol, kcol, intable, SECT, SLEV, nsect, tpos, kk, dv, kv) {
 				if (doc in SCANNED) return
 				SCANNED[doc] = 1
@@ -3644,13 +3987,14 @@ if [ "$MODE" = "monitoring" ]; then
 				t = line
 				sub(/^[ \t]+/, "", t)
 
-				# Fenced blocks hold examples, not rows. One of six copies of
+				# Fenced blocks hold examples, not rows. One of eight copies of
 				# those six lines: the --used-in scan(), the
 				# --supersession-sweep sections(), the --red-team roster reader,
-				# the shared readtable() and the --binding-driver
-				# readdoc() carry the same ones, for the same reason - six awk
-				# programs reading a document at the vault root, and no way to
-				# share a function across them. Change one, change all six.
+				# the shared readtable(), the --binding-driver readdoc(),
+				# --claim-drift and the shared $DOC_SCAN_AWK carry the same ones,
+				# for the same reason - eight awk programs reading a document at
+				# the vault root, and no way to share a function across them.
+				# Change one, change all eight.
 				if (substr(t, 1, 3) == "```" || substr(t, 1, 3) == "~~~") {
 					c = substr(t, 1, 1)
 					n = 0
@@ -3777,7 +4121,7 @@ fi
 # antecedent. No script can judge an antecedent, so that half is a read-back item
 # in the render loop and this mode covers the half that is mechanical.
 #
-# There is no fenced-block scan here for the reason the other six modes have one:
+# There is no fenced-block scan here for the reason the other modes have one:
 # a deliverable is prose for an outside reader and does not document its own
 # format. The one document in this corpus that does - red-team.md, which carries
 # its own row template - is not a deliverable and is not read by this mode.
@@ -4338,8 +4682,14 @@ if [ "$MODE" = "claim-drift" ]; then
 			# Fenced lines are CONTENT and only heading detection is suspended
 			# inside them: a `#` in a fence is an example rather than a section
 			# boundary, and dropping a fenced block from the hash would leave a
-			# rewritten example invisible. The six lines are another copy of the
-			# scan every document-reading mode here carries.
+			# rewritten example invisible. The six lines are the SEVENTH copy of
+			# the scan every document-reading mode here carries - --used-in
+			# scan(), --supersession-sweep sections(), --red-team, the shared
+			# readtable(), --binding-driver readdoc() and --monitoring carry
+			# the first six, and the shared $DOC_SCAN_AWK carries the eighth.
+			# This copy went uncounted for two releases while every other site
+			# said six, which is what a census nobody re-derives does: change
+			# one, change all eight.
 			function sections(doc,   path, line, t, c, n, fc, fn, h, ex, id, cur, k) {
 				path = root "/" doc
 				fc = ""; fn = 0; id = 0; cur = 0
@@ -4534,6 +4884,841 @@ if [ "$MODE" = "claim-drift" ]; then
 		' "$RECORDS")
 
 	render_failures "vault-lint claim-drift" "$CD_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --citation-codes - every cited code resolves to a row in its index
+#
+# The resolution contract was specified and never enforced: [S#] resolves through
+# sources.md, [F#] through research/founder-brief.md. --used-in opens the target
+# a NOTE names; a code in prose is a different address, and nothing opened it -
+# so a plan could cite a code that resolves to nothing and clear --release-gate.
+# A dead code renders exactly like a working one, and the reader who follows it
+# is the one person who cannot check it.
+#
+# THE TWO INDEX FILES ARE EXCLUDED FROM THE SCAN, and that is load-bearing rather
+# than an optimisation. An index legitimately discusses its own retired numbers -
+# a row recording that a code was withdrawn and deliberately left unused names
+# that code in its own prose - and a naive scan reads that mention as a citation
+# and fails a corpus doing exactly the right thing.
+#
+# FORWARD DIRECTION ONLY, which is the opposite call to --red-team's roster and
+# to --roadmap-table's two directions, for a reason specific to an index: a
+# recorded fact nothing leans on yet is healthy, so failing a row nothing cites
+# would push an author toward citing things to silence a linter. There is no
+# dodge-by-omission here either way - the failure is cited-with-no-row, and
+# deleting the citation is deleting the claim that needed it.
+#
+# THE BRACKETS ARE OPTIONAL ON BOTH INDEX ROWS. The two documents write the cell
+# differently in the field - `| F1 |` in the brief and `| [S1] |` in the log - and
+# holding each to only its own spelling would fail a brief written in the other
+# for a formatting difference no reader can see.
+#
+# WHAT THE SUCCESS LINE MUST SAY. Resolution is necessary and it is not
+# sufficient: a research file carries its own local S table, so a document citing
+# a local code the global log also assigns resolves to a row and to a DIFFERENT
+# source. That is the shape of defect this whole family exists to close - a check
+# whose success line claims more than it verified - so the line states the limit
+# rather than leaving it to be inferred, and --unflattened-source below closes
+# the half of it a check can reach.
+#
+# LC_ALL=C for --used-in's reason: a document carries em dashes and curly quotes,
+# and macOS awk in a UTF-8 locale aborts the record on the first sequence it
+# cannot decode, which would end the scan early and pass a document it never
+# finished reading.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "citation-codes" ]; then
+	CC_BRIEF="research/founder-brief.md"
+	CC_LOG="sources.md"
+	CC_HAS_BRIEF=0
+	[ -f "$VAULT/$CC_BRIEF" ] && CC_HAS_BRIEF=1
+	CC_HAS_LOG=0
+	[ -f "$VAULT/$CC_LOG" ] && CC_HAS_LOG=1
+
+	# NEITHER INDEX, NOTHING TO READ. Every code would resolve against nothing,
+	# so the line is decided before the first document is opened - and opening
+	# them anyway is a full read of the corpus to print a constant. The same
+	# shape --deliverable uses when nothing has been rendered.
+	if [ "$CC_HAS_BRIEF" -eq 0 ] && [ "$CC_HAS_LOG" -eq 0 ]; then
+		render_failures "vault-lint citation-codes" "no $CC_LOG and no $CC_BRIEF under $VAULT - neither index exists, so no \`[F#]\` or \`[S#]\` was resolved against anything and this mode checked nothing"
+		exit $?
+	fi
+
+	# Every document a reader of this corpus opens, as a vault-relative path:
+	# the markdown at the vault root and the markdown in research/. Globs
+	# rather than find, because these are the two directory levels the
+	# resolution contract names and a glob needs no non-POSIX -maxdepth. The
+	# note directories are deliberately not walked - a claim note carries no
+	# citation code at all, which is the same fact --used-in's boundary rests
+	# on - so scanning them would be a walk over the whole ledger for a pattern
+	# it never holds.
+	#
+	# ORDER DOES NOT MATTER HERE and is not sorted: render_failures sorts the
+	# whole failure file before anything prints it, and every count below is
+	# keyed rather than positional.
+	CC_LIST="$TMP/citation-docs"
+	for f in "$VAULT"/*.md "$VAULT"/research/*.md; do
+		[ -f "$f" ] || continue
+		rel="${f#"$VAULT/"}"
+		[ "$rel" = "$CC_LOG" ] && continue
+		[ "$rel" = "$CC_BRIEF" ] && continue
+		printf '%s\n' "$rel"
+	done >"$CC_LIST"
+
+	# $DOC_SCAN_AWK is prepended the way --roadmap-table prepends the table
+	# reader: two adjacent shell words concatenate into the single program text
+	# awk takes. It brings fenced() and trim(), so this program must not define
+	# either itself.
+	CC_OK=$(LC_ALL=C awk -v vault="$VAULT" -v out="$FAILURES" -v brief="$CC_BRIEF" -v logdoc="$CC_LOG" \
+		-v hasbrief="$CC_HAS_BRIEF" -v haslog="$CC_HAS_LOG" "$DOC_SCAN_AWK"'
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# The codes one index assigns, read off the FIRST cell of every
+			# row. A cell holding anything else is not an assignment and is
+			# not read - which is what keeps a prose table in the same
+			# document from registering codes.
+			function readindex(rel, kind,   path, line, t, cell) {
+				path = vault "/" rel
+				FC = ""; FN = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (fenced(t)) continue
+					cell = firstcell(t)
+					if (cell ~ /^[FS][0-9]+$/ && substr(cell, 1, 1) == kind) ASSIGNED[cell] = 1
+				}
+				close(path)
+			}
+
+			# Every [F#] and [S#] one document cites. Reported once per
+			# document per code: the repair is one row in one index, and a
+			# code cited on six lines is not six repairs. The line of the
+			# FIRST occurrence goes in the message, because a failure naming
+			# no line sends its reader through the file by eye.
+			function scan(rel,   path, line, t, ln, rest, tok, code, kind, k) {
+				path = vault "/" rel
+				FC = ""; FN = 0
+				ln = 0
+				while ((getline line < path) > 0) {
+					ln++
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (fenced(t)) continue
+					rest = line
+					while (match(rest, /\[[FS][0-9]+\]/)) {
+						tok = substr(rest, RSTART, RLENGTH)
+						rest = substr(rest, RSTART + RLENGTH)
+						code = substr(tok, 2, length(tok) - 2)
+						kind = substr(code, 1, 1)
+						# A code whose index is absent is not resolved and
+						# not failed. The success line says which half went
+						# unread, rather than reporting agreement over an
+						# index nobody could open.
+						if (kind == "F" && hasbrief != 1) continue
+						if (kind == "S" && haslog != 1) continue
+						k = rel SUBSEP code
+						if (k in DONE) continue
+						DONE[k] = 1
+						nchecked++
+						if (code in ASSIGNED) continue
+						if (kind == "F")
+							report(rel, "citation-code-no-fact-row", code,
+								"line " ln " cites `" tok "` and " brief " carries no `| " code " |` row. The code is an address into the founder brief and it resolves to nothing, so a reader who follows it finds no fact behind the sentence that leaned on one - and the document renders identically to one whose codes all resolve, which is why nothing else in this corpus can see it. Either the row was never written, or the code is a typo for one that was")
+						else
+							report(rel, "citation-code-no-source-row", code,
+								"line " ln " cites `" tok "` and " logdoc " carries no `| " code " |` row. The code is an address into the source log and it resolves to nothing, so the sentence carries the appearance of provenance and none of the substance - and a reader who follows it is the one person who cannot check it. Either the source was never logged, or the code is a typo for one that was")
+					}
+				}
+				close(path)
+			}
+
+			BEGIN {
+				if (haslog == 1) readindex(logdoc, "S")
+				if (hasbrief == 1) readindex(brief, "F")
+			}
+
+			{ scan($0) }
+
+			END {
+				limit = "Not checked: whether a code resolves to the INTENDED source. A research file legitimately carries its own local `S` table, so a document citing a local code the global log also assigns resolves to a row and to a different source - which no count of resolving codes can see. --unflattened-source is the half of that a check can reach."
+				if (hasbrief != 1)
+					printf("%d cited `[S#]` code%s, each resolving to a row in %s - %s. Not checked: `[F#]` codes at all, because there is no %s under %s to resolve them against. %s\n",
+						nchecked, (nchecked == 1 ? "" : "s"), logdoc, vault, brief, vault, limit)
+				else if (haslog != 1)
+					printf("%d cited `[F#]` code%s, each resolving to a row in %s - %s. Not checked: `[S#]` codes at all, because there is no %s under %s to resolve them against. %s\n",
+						nchecked, (nchecked == 1 ? "" : "s"), brief, vault, logdoc, vault, limit)
+				else
+					printf("%d cited code%s, each resolving to a row in the index that assigns it - %s. %s\n",
+						nchecked, (nchecked == 1 ? "" : "s"), vault, limit)
+			}
+		' "$CC_LIST")
+
+	render_failures "vault-lint citation-codes" "$CC_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --unflattened-source - a local source row the global log never received
+#
+# THIS IS THE HALF --citation-codes CANNOT REACH, and the defect is real rather
+# than hypothetical. A vault's research files carry their own local `S` tables for
+# traceability while the root sources.md assigns the global `[S#]` once. A source
+# existed only as one research file's local S14 and was never flattened into the
+# log, so it had no citable code at all - while global [S14] was a DIFFERENT
+# source. Four documents cited [S14] meaning the local one. Every code resolved,
+# and every check passed.
+#
+# THE FAILURE KIND IS `source-unflattened`, NOT `orphan-source`. `check` already
+# emits orphan-source for a source note nothing in the vault rests on, which is
+# close to the opposite finding - one is a source nobody cited, this is a source
+# nobody CAN cite - and giving two findings one name sends half their readers to
+# the wrong repair. Neither is widened into the other.
+#
+# THE DECLARED EXEMPTION IS THE PART THAT DECIDES WHETHER THIS MODE SURVIVES. A
+# corpus may deliberately keep a large per-row ledger out of the global log - a
+# per-profile table of a hundred rows or more, cited with a qualified suffix - and
+# a mode that reported every one of those as a failure would be switched off
+# within a day, taking the working half with it. The exemption is READ FROM THE
+# LOG'S OWN HEADER rather than keyed on a filename this script knows, because the
+# file that holds the ledger differs per corpus and a hardcoded name is a rule
+# that only fits the vault it was written against.
+#
+# THE HEADER IS THE PROSE BEFORE THE LOG'S FIRST TABLE ROW, which is where a
+# corpus already explains what its log does and does not assign. A declaration
+# below the first row would be a note buried inside the data.
+#
+# A ROW WITH NO URL IS NOT RESOLVED AND NOT FAILED. A local row may name a source
+# with no public address, and there is then no key to match it on - so it is
+# counted and reported as unresolved rather than passed in silence, which is the
+# same rule --assumption-rows learned about a half that walks an empty set.
+#
+# LC_ALL=C for --used-in's reason.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "unflattened-source" ]; then
+	US_LOG="sources.md"
+
+	# NO LOG, NO READ. There is nothing to compare a local row against, so the
+	# mode says it did not run before it walks anything - the same shape
+	# --citation-codes reports a missing index with, and the reason the awk
+	# below never has to ask whether the log was there.
+	if [ ! -f "$VAULT/$US_LOG" ]; then
+		render_failures "vault-lint unflattened-source" "no $US_LOG under $VAULT - there is no global log to flatten a local row into, so no research file's own source table was read"
+		exit $?
+	fi
+
+	US_LIST="$TMP/research-docs"
+	for f in "$VAULT"/research/*.md; do
+		[ -f "$f" ] || continue
+		printf '%s\n' "${f#"$VAULT/"}"
+	done >"$US_LIST"
+
+	US_OK=$(LC_ALL=C awk -v vault="$VAULT" -v out="$FAILURES" -v logdoc="$US_LOG" "$DOC_SCAN_AWK"'
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# One URL compared as bytes, minus the punctuation a sentence
+			# leaves on the end of one. The host is case-sensitive here and
+			# a path always is - folding either would be a guess about which
+			# half of a URL is which.
+			# The one URL pattern this mode matches on, held as a string so the
+			# two functions below run the same bytes. Written twice, a class
+			# widened in one and not the other collects an address the other
+			# will never match, and the mode then reports an agreement it did
+			# not verify. The class stops at the characters that delimit a URL
+			# in markdown and in a table - a space, a tab, a pipe, a closing
+			# paren or angle bracket - so a bracketed markdown link and an
+			# angle-bracketed bare one both yield the address and not the
+			# punctuation around it.
+			BEGIN { URLRE = "https?://[^ \t|)>]+" }
+
+			function normurl(u) {
+				sub(/[.,;:]+$/, "", u)
+				sub(/\/+$/, "", u)
+				return u
+			}
+
+			# Every URL one line carries, into the global set.
+			function collecturls(s,   rest, tok) {
+				rest = s
+				while (match(rest, URLRE)) {
+					tok = substr(rest, RSTART, RLENGTH)
+					rest = substr(rest, RSTART + RLENGTH)
+					LOGURL[normurl(tok)] = 1
+				}
+			}
+
+			# The first URL a local row names, which is the key this mode
+			# matches on. First rather than every: a row names one source
+			# and any further link in it is a secondary reference.
+			function firsturl(s) {
+				if (!match(s, URLRE)) return ""
+				return normurl(substr(s, RSTART, RLENGTH))
+			}
+
+			# The log, read once: the URLs it carries anywhere, and the
+			# files its header declares exempt. A URL in the header prose
+			# counts as carried - the question is whether the corpus has the
+			# source in its log at all, not which row holds it.
+			function readlog(   path, line, t, intable, v, w) {
+				path = vault "/" logdoc
+				FC = ""; FN = 0
+				intable = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (fenced(t)) continue
+					if (substr(t, 1, 1) == "|") intable = 1
+					collecturls(line)
+					if (intable) continue
+					# A bullet is still a header line, so the declaration
+					# reads as prose to whoever opens the log.
+					sub(/^[-*][ \t]+/, "", t)
+					if (t !~ /^Local ledger:/) continue
+					# The FIRST whitespace-delimited token after the colon is the
+					# path, and everything after it is the reason - so a
+					# declaration reads as a sentence to whoever opens the log
+					# rather than as a field with a punctuation rule.
+					v = trim(substr(t, 14))
+					if (v == "") continue
+					split(v, w, /[ \t]+/)
+					v = w[1]
+					sub(/^\.\//, "", v)
+					if (v in EXEMPT) continue
+					EXEMPT[v] = 1
+					DECLARED[++ndecl] = v
+				}
+				close(path)
+			}
+
+			# One research file. A row whose first cell is `S<n>` - brackets
+			# optional, the same spelling latitude --citation-codes gives an
+			# index row - is a local source assignment, and the alignment
+			# rule and the header row fall out because neither cell reads as
+			# a code.
+			function scanresearch(rel,   path, line, t, cell, u) {
+				if (rel in EXEMPT) { EXEMPTHIT[rel] = 1; return }
+				path = vault "/" rel
+				FC = ""; FN = 0
+				while ((getline line < path) > 0) {
+					sub(/\r$/, "", line)
+					t = line
+					sub(/^[ \t]+/, "", t)
+					if (fenced(t)) continue
+					cell = firstcell(t)
+					if (cell !~ /^S[0-9]+$/) continue
+					if (!(rel in TABLED)) { TABLED[rel] = 1; nfile++ }
+					u = firsturl(line)
+					if (u == "") { nourl++; continue }
+					nrow++
+					if (u in LOGURL) continue
+					report(rel, "source-unflattened", cell,
+						"this file`s own source table assigns `" cell "` to " u " and " logdoc " carries that URL nowhere. The global log is what assigns a citable `[S#]`, so this source can be cited from research prose and cannot be cited from a plan document at all - and nothing else sees it, because the local table is well-formed, the log is well-formed, and no check compared them. Worse, a plan that cites the local code anyway resolves against whatever the log happens to assign that number to, which is a different source. Flatten it: give it a row in " logdoc ", or declare this file`s ledger exempt with a `Local ledger: " rel " - <why it stays local>` line in the log`s header")
+				}
+				close(path)
+			}
+
+			BEGIN { readlog() }
+
+			{ scanresearch($0) }
+
+			END {
+				# What was declared exempt, named in the line rather than
+				# left implicit: an exemption nobody sees is a switched-off
+				# check that reads as a passing one, and a declaration for a
+				# file that no longer exists is only visible here.
+				ex = ""
+				for (i = 1; i <= ndecl; i++)
+					ex = ex (i == 1 ? "" : ", ") DECLARED[i] (DECLARED[i] in EXEMPTHIT ? "" : " (declared, no such file)")
+				exline = (ndecl == 0) ? "" : sprintf(" Exempt by declaration in the log`s header: %s.", ex)
+				noline = (nourl == 0) ? "" : sprintf(" Not resolved: %d local row%s carrying no URL, each naming a source with no key to match on.", nourl, (nourl == 1 ? "" : "s"))
+
+				if (nfile == 0)
+					printf("no research file under %s carries a local `| S<n> |` table - there is no local ledger to flatten, which is every vault whose research keeps no source table of its own.%s\n", vault, exline)
+				else
+					printf("%d local source row%s across %d research file%s, each naming a URL %s also carries - %s.%s%s\n",
+						nrow, (nrow == 1 ? "" : "s"), nfile, (nfile == 1 ? "" : "s"), logdoc, vault, noline, exline)
+			}
+		' "$US_LIST")
+
+	render_failures "vault-lint unflattened-source" "$US_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --subject-orphan - a subject the corpus argues from and never filed
+#
+# coverage-gap in `check` asks this of `required: true` subjects and stops
+# there, and that boundary is exactly the gap. A subject optional in general is
+# routinely load-bearing in one plan: the documents reason from it, the
+# vocabulary declares it, and no note is ever written. Nothing else in this tool
+# can see that. A subject with no note cannot collide with a contradiction,
+# cannot go stale, cannot be superseded and cannot be challenged - every query
+# the ledger supports returns clean over it, because there is nothing filed to
+# return. Silent in every direction is what separates it from an ordinary
+# coverage gap, and why this is a mode beside coverage-gap rather than a widening
+# of it: the two send their reader to different repairs.
+#
+# THE MENTION IS THE WHOLE TRIGGER. Without it this would be coverage-gap over
+# every optional term, which fails a vault for declaring a vocabulary richer than
+# the position it took - and a check that fires on a corpus doing the right thing
+# is one somebody switches off. A vault with nothing to say about a subject never
+# writes the word and stays silent here.
+#
+# MATCHED ON WORD BOUNDARIES, NOT AS A SUBSTRING. Both the candidate and the line
+# are cut into lowercase alphanumeric tokens, and the candidate matches only as a
+# consecutive run of the line`s tokens. Substring matching would fire `price` on
+# `priceless` and `window` on `windows`, which is the crying-wolf shape
+# --roadmap-table was scoped out of a release for once already.
+#
+# THE TERM OWNS ITS KEYS AND ALIASES FILL IN AROUND IT, the same precedence
+# `check` applies when it resolves a subject: every term`s own key is registered
+# first, then the aliases, and the first claimant of a key keeps it. That is what
+# stops one term`s alias reporting a mention that belongs to a different term
+# already carrying a note - a mention of `price` under a filed `price-anchor` is
+# not evidence for an unfiled term that happens to list `price` as an alias.
+#
+# _vocab.yml IS NOT SCANNED, by construction rather than by exclusion: it is not
+# markdown. Read, every term would match inside its own definition and its own
+# aliases list, and every unfiled subject in the vault would report.
+#
+# A NOTE FILED UNDER AN ALIAS SPELLING COUNTS AS FILED, and `status` is not read.
+# The alias spelling is check`s near-miss-subject and the retired note is the
+# supersession sweep; reporting either here would name a second repair for a note
+# that exists, under a message saying no note is filed at all.
+#
+# THE ALIAS LIST IS THE SENSITIVITY DIAL AND THE MODE DOES NOT SECOND-GUESS IT. A
+# one-word alias is a broad one - `power` under `defensibility` fires on any
+# sentence carrying the word - and the repair for that is the alias, not a
+# heuristic here. _vocab.yml is the vault`s own file, curated per engagement, and
+# a mode that decided which of its aliases to believe would be reasoning about
+# the vocabulary instead of reading it.
+#
+# WHERE --binding-driver ALREADY REPORTS THE MISSING NOTE, this reports it too,
+# and that is redundancy rather than a reader sent to the wrong fix: a plan
+# rendering a verdict section with no note behind it fails verdict-unfiled there
+# and subject-orphan here, and both name the same repair. Suppressing one would
+# mean teaching a general mode the name of one subject, which costs more than the
+# second line does.
+#
+# NOT GATED ON schemaVersion, because there is nothing to gate it on - the rule
+# reads no field a corpus written before it lacks. It will turn an existing vault
+# red on the version that adds it wherever that vault carries the gap, which is
+# the intent rather than a cost: a corpus reasoning about a subject it never
+# filed is the state this exists to surface, and a vacuous pass is worse than a
+# red gate. What the failure message owes in exchange is the diagnosis - which
+# note to write, and where the corpus is already leaning on the subject.
+#
+# LC_ALL=C for --used-in`s reason: plan prose carries em dashes and curly quotes,
+# and macOS awk in a UTF-8 locale aborts the record on the first sequence it
+# cannot decode, which would end a document scan early and pass a mention it
+# never reached.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "subject-orphan" ]; then
+	# Every markdown document under the vault, relative to its root and sorted
+	# the way the PowerShell side sorts, so both implementations read the same
+	# files in the same order and report the same FIRST mention of a subject.
+	SUBJDOCS="$TMP/mddocs"
+	(cd "$VAULT" && find . -type f -name '*.md' 2>/dev/null | sed 's|^\./||' | LC_ALL=C sort) >"$SUBJDOCS" 2>/dev/null || : >"$SUBJDOCS"
+
+	SO_OK=$(LC_ALL=C awk -v out="$FAILURES" -v docs="$SUBJDOCS" -v vault="$VAULT" -v hasvocab="$HAS_VOCAB" -F '\t' '
+			BEGIN {
+				while ((getline dl < docs) > 0) {
+					sub(/\r$/, "", dl)
+					if (dl != "") DOC[++ndoc] = dl
+				}
+				close(docs)
+			}
+
+			$1 == "T" { terms[++nterm] = $2; isterm[$2] = 1; required[$2] = $3; next }
+			# Aliases are kept per term IN STREAM ORDER, which is file order: the
+			# vocabulary pass emits every A record as it reads it and every T
+			# record afterwards. Reporting has to be reproducible byte for byte
+			# against the PowerShell side, and a set iterated in whatever order
+			# the interpreter hands back is not.
+			$1 == "A" { aliasof[$2] = $3; ALIAS[$3, ++AN[$3]] = $2; next }
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# Cut a string into lowercase alphanumeric tokens, and return how many.
+			# Anything else - a hyphen, a space, punctuation, a byte outside ASCII
+			# - is a separator, so `price-anchor`, `Price Anchor` and `price
+			# anchor` all cut the same way and `priceless` cuts to one token that
+			# is not `price`. Under LC_ALL=C the class is the ASCII range, so a
+			# high byte falls outside it exactly as it does under a byte-at-a-time
+			# comparison - this runs once per line of the corpus, and a per-byte
+			# awk loop over the same text costs about twice the whole mode.
+			#
+			# split() with a single-space separator is awk`s default field
+			# splitting: runs of blanks collapse and the leading and trailing ones
+			# are dropped, so the caller gets exactly the non-empty tokens. It also
+			# CLEARS arr first, which is what makes reusing one array across every
+			# line safe without `delete arr` - a whole-array delete is an extension
+			# POSIX awk does not have.
+			function tokens(s, arr) {
+				s = tolower(s)
+				gsub(/[^a-z0-9]/, " ", s)
+				return split(s, arr, " ")
+			}
+
+			# One candidate as the token run a line has to carry.
+			function key(s,   n, i, o) {
+				n = tokens(s, KT)
+				o = ""
+				for (i = 1; i <= n; i++) o = (i == 1) ? KT[i] : o " " KT[i]
+				return o
+			}
+
+			# Register a key against the term that owns it, first claimant wins.
+			# The longest candidate is tracked here because it bounds the scan: a
+			# document line builds runs up to that length and no further, so it
+			# costs a fixed number of lookups per token rather than one per
+			# candidate. Read back off the key with split() rather than carried
+			# out of key() in a global - one integer threaded between two
+			# functions is a coupling that only holds while the caller keeps
+			# evaluating them in the right order.
+			#
+			# nowners is what BOUNDS THE DOCUMENT SCAN: every registered term can
+			# take at most one first mention, so once each has one there is nothing
+			# left for a further document to say. Counted here rather than off the
+			# unfiled set, because OWNER carries filed and required terms too and a
+			# bound that ignored them would end the scan before an unfiled subject`s
+			# first mention - a false NEGATIVE, which in this mode is the vacuous
+			# pass the check exists to close.
+			function own(k, t, spell,   n, part) {
+				if (k == "" || (k in OWNER)) return
+				OWNER[k] = t
+				SPELL[k] = spell
+				if (!(t in OWNS)) { OWNS[t] = 1; nowners++ }
+				n = split(k, part, " ")
+				if (n > maxlen) maxlen = n
+				# Every token that OPENS a candidate. The scan skips a start
+				# position whose token opens none, which is nearly all of them -
+				# without it every position builds and hashes maxlen runs, so
+				# lengthening one alias slows the whole corpus read. The alias list
+				# is documented as the sensitivity dial, and this is what keeps
+				# turning it up from costing runtime.
+				FIRST[part[1]] = 1
+			}
+
+			# The line as it goes into the message: tabs to spaces, because the
+			# failure stream is tab separated and a tab in the detail would split
+			# the row; then trimmed. NOT truncated - a byte count and a character
+			# count differ between the two implementations the first time a line
+			# carries an em dash, and a message that disagrees across platforms is
+			# what the parity gate exists to stop.
+			function ctx(s) {
+				gsub(/\t/, " ", s)
+				sub(/^[ \t]+/, "", s)
+				sub(/[ \t]+$/, "", s)
+				return s
+			}
+
+			END {
+				if (hasvocab != "1") {
+					printf("no _vocab.yml under %s - there is no subject list to hold the corpus against, so no unfiled subject was looked for. `check` reports the missing vocabulary itself\n", vault)
+					exit
+				}
+				if (nterm == 0) {
+					printf("_vocab.yml under %s declares no terms, so there is no subject here that could be missing a note\n", vault)
+					exit
+				}
+
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					ty = V[f, "type"]
+					# The pair that FILES a position. A `source` and a `fact` are
+					# provenance a position rests on rather than the position, and
+					# a `milestone`, `question` or `decision` asserts nothing about
+					# the subject at all - the same closed set --assumption-rows
+					# states at its own predicate, and stated here rather than left
+					# as an omission for the same reason.
+					if (ty != "claim" && ty != "assumption") continue
+					s = V[f, "subject"]
+					if (s == "") continue
+					if (s in isterm) FILED[s] = 1
+					else if (s in aliasof) FILED[aliasof[s]] = 1
+				}
+
+				# A `required: true` subject is coverage-gap`s, and this mode never
+				# asks after one. The two partition the vocabulary rather than
+				# overlapping on it: a required subject owes a note whether or not
+				# any document mentions it, so the mention adds nothing to a repair
+				# coverage-gap already demands - and one omission reported as two
+				# failures under two names sends its reader looking for two.
+				for (i = 1; i <= nterm; i++) {
+					t = terms[i]
+					if (required[t] == "true") continue
+					nasked++
+					if (!(t in FILED)) nunfiled++
+				}
+
+				# EVERY TERM REGISTERS ITS STRINGS - filed and required ones
+				# included - AND THE PARTITION IS APPLIED WHERE THE ROW IS
+				# REPORTED, not here. A filed term has to CLAIM its own key and its
+				# aliases for that claim to mean anything: registering only the
+				# unfiled terms leaves a filed term`s strings unowned, so an unfiled
+				# term listing the same alias picks up a mention that was always
+				# about the subject the vault has already answered. Observed on a
+				# vocabulary where `price` is an alias of a FILED `price-anchor` and
+				# of an unfiled `willingness-to-pay`: a sentence discussing
+				# price-anchor was reported as evidence that willingness-to-pay is
+				# load-bearing, under a message stating the corpus reasons from it.
+				# This mode ships failing and ungated, so a confident false positive
+				# is the thing that makes somebody stop upgrading.
+				#
+				# Terms first, then aliases, so a string that is both a term and
+				# another term`s alias belongs to the term - the precedence `check`
+				# applies when it resolves a subject. Past that it is FIRST CLAIMANT
+				# WINS in vocabulary order, and that is now load-bearing rather than
+				# incidental: two terms listing one alias is the vault`s own
+				# ambiguity, and letting file order settle it is a rule an author
+				# can read off _vocab.yml instead of a judgement this mode makes for
+				# them.
+				for (i = 1; i <= nterm; i++) own(key(terms[i]), terms[i], terms[i])
+				for (i = 1; i <= nterm; i++) {
+					t = terms[i]
+					for (j = 1; j <= AN[t]; j++) own(key(ALIAS[t, j]), t, ALIAS[t, j])
+				}
+
+				# Nothing unfiled is nothing to look for, and opening every
+				# document to prove it would be a corpus read with no question
+				# behind it.
+				for (d = 1; nunfiled > 0 && nfound < nowners && d <= ndoc; d++) {
+					path = vault "/" DOC[d]
+					ln = 0
+					while ((getline line < path) > 0) {
+						ln++
+						sub(/\r$/, "", line)
+
+						# A `subject:` line is the note declaring what it is filed
+						# under, which is the one place the word appears without
+						# the corpus reasoning from it. Matched wherever it appears
+						# rather than only inside frontmatter, so a note template
+						# quoted inside a fenced block is out under the same rule.
+						if (line ~ /^[ \t]*subject:/) continue
+
+						nt = tokens(line, LT)
+						for (i = 1; i <= nt; i++) {
+							if (!(LT[i] in FIRST)) continue
+							for (L = 1; L <= maxlen && i + L - 1 <= nt; L++) {
+								k = (L == 1) ? LT[i] : k " " LT[i + L - 1]
+								if (!(k in OWNER)) continue
+								t = OWNER[k]
+								if (t in HITDOC) continue
+								nfound++
+								HITDOC[t] = DOC[d]
+								HITLN[t] = ln
+								HITTXT[t] = ctx(line)
+								HITSPELL[t] = SPELL[k]
+							}
+						}
+					}
+					close(path)
+				}
+
+				# In vocabulary order, so two runs over one vault report in the
+				# same order, and the file the failure is attached to is the
+				# DOCUMENT CARRYING THE MENTION rather than _vocab.yml - which is
+				# where coverage-gap attaches, and the difference is deliberate.
+				# That check has nothing to show a reader: the vocabulary declared
+				# a subject and no note answered it, and the file column can only
+				# name the declaration. Here the mention is the evidence and the
+				# place the repair gets decided, so the column carries a path worth
+				# opening.
+				for (i = 1; i <= nterm; i++) {
+					t = terms[i]
+					if (!(t in HITDOC)) continue
+					# THE PARTITION, APPLIED HERE rather than at registration. A hit
+					# whose owner turns out to be filed or required has still
+					# CONSUMED the key, so no unfiled term can claim that mention -
+					# it just is not a row.
+					if (required[t] == "true" || (t in FILED)) continue
+					report(HITDOC[t], "subject-orphan", t,
+						"no `claim` and no `assumption` is filed under the vocabulary subject `" t "`, and the corpus reasons from it anyway: " HITDOC[t] " line " HITLN[t] " reads `" HITTXT[t] "`" (HITSPELL[t] == t ? "" : ", which carries the alias `" HITSPELL[t] "`") ". Write the note - a `claim` under `subject: " t "` where the position has evidence behind it, an `assumption` where it does not. Unfiled, the subject cannot collide with a contradiction, cannot go stale, cannot be superseded and cannot be challenged, so every query the ledger supports returns clean over it and the document leaning on it is the only place the position exists. This is not coverage-gap, which asks only after subjects marked `required: true`")
+				}
+
+				# Which half ran and which had nothing to run over, rather than a
+				# verdict the mode did not reach: a vocabulary of nothing but
+				# required subjects is coverage-gap`s whole population, and a line
+				# reading as a pass over it would report agreement about a question
+				# this mode never asked.
+				if (nasked == 0)
+					printf("every subject in _vocab.yml is marked `required: true`, which is coverage-gap`s question and not this one - no optional subject was asked after here - %s\n", vault)
+				else if (nunfiled == 0)
+					printf("%d vocabulary subject%s not marked `required: true`, every one of them carrying a `claim` or an `assumption` - %s\n",
+						nasked, (nasked == 1 ? "" : "s"), vault)
+				else
+					printf("%d of the %d vocabulary subject%s not marked `required: true` ha%s no `claim` and no `assumption` filed under it, and no line of the %d markdown document%s under this vault mentions any of them - a subject nothing leans on is not a gap - %s\n",
+						nunfiled, nasked, (nasked == 1 ? "" : "s"), (nunfiled == 1 ? "s" : "ve"), ndoc, (ndoc == 1 ? "" : "s"), vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint subject-orphan" "$SO_OK"
+	exit $?
+fi
+
+# ----------------------------------------------------------------------------
+# --foreclosed - the assertions that take an option off the table
+#
+# Every other adversarial mechanism in this method fires on a plan claiming too
+# much. A note asserting that an option is NOT viable claims too little, and it
+# is the most expensive assertion in the corpus: it removes work from the
+# roadmap, kills a segment, or takes a configuration off the table. All three
+# panel lenses are pointed at whether the plan can deliver what it promises and
+# none at whether it wrongly concluded it could not, so nothing attacks it.
+#
+# THE FAILURE IS SILENT BY CONSTRUCTION, which is what separates this from
+# every check that reads an edge. The option is gone, so nothing downstream
+# references it, so no query has a target: the foreclosure cannot dangle,
+# cannot go stale in a way anybody notices, and cannot collide with the work it
+# cancelled, because that work was never written down. What the corpus can be
+# held to is the CONDITION - the input value that would put the option back -
+# and that is the whole of this mode.
+#
+# THE VERDICT MIRRORS `validated_by` ONE FIELD OVER. An assumption owes the step
+# that would settle it; a foreclosure owes the value of `foreclosed_on` that
+# would reverse it. Both are assertions somebody has to write down, both are
+# checkable, and neither is evidence the thinking was done - what they remove is
+# skipping it by DEFAULT, which is what a foreclosure held to nothing had been.
+#
+# `claim` ONLY, AND --subject-orphan's CLOSED PAIR DOES NOT TRANSFER HERE. That
+# rule asks which types FILE a position and the answer is both; this one reads
+# fields that are claim-only BY ARGUMENT, because a foreclosure is a conclusion
+# drawn from an input and `foreclosed_on` is where that input is named - a note
+# resting on nothing has no input to name. So an option taken off the table by
+# an `assumption` is not a foreclosure missing a field, it is an assumption in
+# the shape of a finding, and vault.md`s repair is to file the `question` the
+# plan stopped asking rather than to dress the note in these three.
+#
+# READING BOTH TYPES HERE WOULD GIVE THE WRONG REPAIR UNDER THE RIGHT NAME - a
+# reader told to add `reverses_if` dresses the category error in three fields
+# and ships it green, which is worse than the gap. The dodge that would open by
+# narrowing is closed in `check` instead: an `assumption` carrying any of the
+# three is its own failure there, under a name that sends its reader to the
+# question. Two rules, two repairs, and neither says the other`s sentence.
+#
+# `status` IS READ AND A RETIRED FORECLOSURE OWES NOTHING - the live predicate
+# --assumption-rows learned. A `superseded` or `retracted` note has already been
+# taken back, so demanding a reversal condition of it names a repair on a note
+# the ledger has retired.
+#
+# NOT gated on schemaVersion, and it does not need to be: the trigger is the
+# PRESENCE of `forecloses`, so a corpus that never wrote the field cannot owe
+# anything here. That is the exemption a version buys, obtained without spending
+# one, on the terms `superseded_by`'s two rules are on.
+# ----------------------------------------------------------------------------
+
+if [ "$MODE" = "foreclosed" ]; then
+	FC_OK=$(awk -v out="$FAILURES" -v vault="$VAULT" -F '\t' '
+			$1 == "N" { files[++nf] = $2; next }
+			$1 == "S" { V[$2, $3] = $4; next }
+			$1 == "L" { k = $2 SUBSEP $3; LI[k, ++LN[k]] = $4; next }
+
+			function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
+
+			# The same present() the checks pass and --binding-driver use, and
+			# copied verbatim rather than written as `V[f, k] != ""` for their
+			# reason: all three programs implement the same trigger, and a field
+			# authored as a one-item block list is present to one test and absent
+			# to the other. Here that divergence would exempt a note from the
+			# reversal condition purely by how the field was formatted. Three
+			# copies now - the checks pass, --binding-driver and this one. Change
+			# one, change all three.
+			function present(f, k) { return (V[f, k] != "" || LN[f SUBSEP k] > 0) }
+
+			# The same field as TEXT, for the message. Scalar where there is one,
+			# otherwise the block-list items joined - so a value the trigger can
+			# see is a value the message can print, and the two cannot disagree
+			# about whether the field is there.
+			function textof(f, k,   kk, i, o) {
+				if (V[f, k] != "") return V[f, k]
+				kk = f SUBSEP k
+				o = ""
+				for (i = 1; i <= LN[kk]; i++) o = o (i == 1 ? "" : ", ") LI[kk, i]
+				return o
+			}
+
+			# The document sections a note reached, which is where a foreclosure
+			# has to be argued with. A note carrying none is reported as such
+			# rather than skipped: a conclusion that took an option off the table
+			# and reached no document is a decision nothing renders.
+			function cited(f,   kk, i, o) {
+				kk = f SUBSEP "used_in"
+				if (LN[kk] == 0) return "no used_in entry"
+				o = ""
+				for (i = 1; i <= LN[kk]; i++) o = o (i == 1 ? "" : ", ") LI[kk, i]
+				return o
+			}
+
+			END {
+				# Every ID this vault carries, for the dangling test below.
+				# Built here rather than threaded in, because this mode is the
+				# only reader of `foreclosed_on` and the index costs one pass.
+				for (i = 1; i <= nf; i++) {
+					if (V[files[i], "id"] != "") HASID[V[files[i], "id"]] = 1
+				}
+
+				for (i = 1; i <= nf; i++) {
+					f = files[i]
+					id = V[f, "id"]
+					ty = V[f, "type"]
+					if (id == "") continue
+					if (ty != "claim") continue
+					if (V[f, "status"] != "current") continue
+					if (!present(f, "forecloses")) continue
+
+					# Read once and used by both the listing and the failure,
+					# because cited() walks the whole used_in list to build its
+					# string and calling it twice for one note walks it twice.
+					what = textof(f, "forecloses")
+					where = cited(f)
+
+					nfc++
+					listed = listed (nfc == 1 ? "" : "; ") id " forecloses " what " (" where ")"
+
+					# `foreclosed_on` names the input the conclusion rests on,
+					# and it is a SCALAR - so `check`s dangling-edge rule,
+					# which walks the block-list edge fields, never opens it.
+					# The same gap `superseded_by` has, answered the same way:
+					# its own rule rather than a silent omission.
+					#
+					# What a dangling one costs is specific to this field. The
+					# floor skeptic is briefed off this mode`s output with
+					# `foreclosed_on` in it, so a target naming nothing sends
+					# the one lens pointed at the foreclosure to a note that
+					# does not exist. The lens reports nothing, and a lens that
+					# found nothing is indistinguishable from a foreclosure
+					# that survived attack - the vacuous pass this release
+					# exists to close, shipped by the release closing it.
+					fon = textof(f, "foreclosed_on")
+					if (fon != "" && !(fon in HASID))
+						report(f, "foreclosed-on-dangling", id, "`foreclosed_on: " fon "` and no note in this vault carries that ID. The conclusion names the input it rests on and that input cannot be opened, so nothing can be re-read to overturn the foreclosure - either the note was never written, or the ID is a typo. It is the brief the floor skeptic is dispatched with, so a dangling target sends the one lens pointed at this conclusion to a note that does not exist, and a lens that found nothing reads exactly like a foreclosure that survived being attacked. `check`s dangling-edge rule walks the block-list edge fields and never this scalar, so nothing else in this tool reports it")
+
+					if (present(f, "reverses_if")) continue
+					report(f, "foreclosure-no-reverse", id, "`forecloses` names " what " and the note carries no `reverses_if`. Taking an option off the table removes work from the roadmap, kills a segment or rules out a configuration, and it is the one class of assertion nothing in this method attacks - every panel lens asks whether the plan can deliver what it promises and none asks whether it wrongly concluded it could not. With no reversal condition the conclusion is permanent and the corpus records nothing it was conditional on, which is unfalsifiable rather than settled: the option is gone, so nothing downstream references it and no other check has a target to fire on. State `reverses_if` - the value of `foreclosed_on` that would put the option back on the table - the way an `assumption` states `validated_by`. Cited into: " where)
+				}
+
+				# Which half ran, not what it would have concluded. A vault where
+				# nothing forecloses has no population here, and a line reading as
+				# a pass over it would report agreement about a question this mode
+				# never got to ask.
+				if (nfc == 0)
+					printf("no `current` claim under %s carries `forecloses` - nothing in this corpus takes an option off the table, so there is no foreclosure here to hold to a reversal condition\n", vault)
+				else
+					printf("%d `current` note%s take%s an option off the table and every one of them declares what would put it back: %s - %s\n",
+						nfc, (nfc == 1 ? "" : "s"), (nfc == 1 ? "s" : ""), listed, vault)
+			}
+		' "$RECORDS")
+
+	render_failures "vault-lint foreclosed" "$FC_OK"
 	exit $?
 fi
 
@@ -4764,6 +5949,20 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 
 	function present(f, k) { return (V[f, k] != "" || LN[f SUBSEP k] > 0) }
 
+	# The representative of one `market-size` population`s component, for the
+	# nesting rule below. Plain union-find over PAR[], with path halving so a
+	# long chain does not cost its length on every lookup - three rings is the
+	# common case and a deep one is still linear to build. Iterative rather
+	# than recursive because the population set is corpus data and a recursive
+	# walk over it would be bounded by whatever the corpus happens to hold.
+	function pop_root(x) {
+		while (PAR[x] != x) {
+			PAR[x] = PAR[PAR[x]]
+			x = PAR[x]
+		}
+		return x
+	}
+
 	$1 == "T" { terms[++nterm] = $2; isterm[$2] = 1; required[$2] = $3; next }
 	$1 == "A" { aliases[++nalias] = $2; aliasof[$2] = $3; next }
 	$1 == "N" { files[++nf] = $2; DIR[$2] = $3; BASE[$2] = $4; next }
@@ -4939,6 +6138,39 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 					if (BASE[f] != id ".md")
 						report(f, "filename-mismatch", id, "the filename is " BASE[f] " but the ID is " id ". The filename is meant to be exactly the ID plus .md, so that find-the-file-for-this-ID and grep-for-this-ID are the same operation - here they give two answers and one of them is wrong")
 				}
+
+				# --- the foreclosure fields belong to a claim -----------------
+				# vault.md restricts the three to a `claim` and the restriction
+				# IS the rule rather than a place they happen to live: a
+				# foreclosure is a conclusion drawn from an input, and
+				# `foreclosed_on` is where that input is named - a note resting
+				# on nothing has no input to name. So an option taken off the
+				# table by an assumption is not a foreclosure that forgot a
+				# field, it is an assumption in the shape of a finding.
+				#
+				# REPORTED SEPARATELY FROM type-agreement, for the reason
+				# filename-mismatch is above: the note`s `type` is not wrong
+				# here. It is a legitimate assumption carrying a field its type
+				# cannot own, and a reader sent to look at `type` reads
+				# `assumption`, concludes it is correct, and stops.
+				#
+				# AND NOT REPORTED BY --foreclosed, which reads claims only, for
+				# a sharper reason: that mode`s message says to add
+				# `reverses_if`, and following it would dress the category error
+				# in three fields and ship it green. The repair here is the
+				# `question` the plan stopped asking, and only a rule with its
+				# own name can say so.
+				#
+				# Ungated, on --foreclosed`s terms: the trigger is the presence
+				# of a field no corpus written before this release carries.
+				if (ty == "assumption") {
+					fcf = ""
+					if (present(f, "forecloses")) fcf = fcf (fcf == "" ? "" : ", ") "`forecloses`"
+					if (present(f, "foreclosed_on")) fcf = fcf (fcf == "" ? "" : ", ") "`foreclosed_on`"
+					if (present(f, "reverses_if")) fcf = fcf (fcf == "" ? "" : ", ") "`reverses_if`"
+					if (fcf != "")
+						report(f, "foreclosure-on-assumption", id, "this `assumption` carries " fcf ", and the three foreclosure fields belong to a `claim`. The restriction is the argument rather than a filing convention: a foreclosure is a conclusion drawn from an input and `foreclosed_on` is where that input is named, so a note resting on nothing has no input to name. An option taken off the table with nothing behind it is not a foreclosure that forgot its fields - it is an assumption in the shape of a finding, and it is the most expensive kind of note to leave that way, because it removes work from the roadmap on the strength of something nobody sourced. THE REPAIR IS NOT TO ADD `reverses_if`: file the `question` the plan stopped asking, and let the answer decide whether a claim closes the option. Where the conclusion really does rest on an input this vault holds, the note is a `claim` and the fields go there. This is not type-agreement - the `type` field is correct and the directory matches; it is the field that cannot sit on this type")
+				}
 			}
 
 			# --- supersession is always two edits ---------------------------
@@ -5004,6 +6236,28 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 					rk = V[f, "resource"] SUBSEP sq
 					CONC[rk, ++CN[rk]] = f
 				}
+			}
+
+			# --- nested populations, at schemaVersion 4 ---------------------
+			# Two `current` claims under one subject are a collision, and
+			# vault.md resolves one three ways: supersede a side, add a
+			# `scopes` edge because one is narrower, or discover the two
+			# genuinely disagree. Under `market-size` there is a fourth state
+			# none of those describes - the populations are BOTH right and one
+			# sits inside the other, a behavioural cut inside a professional
+			# population inside a broader one - and `nested_in` is the edge
+			# that records it.
+			#
+			# Collected here and reported after the loop, because the failure
+			# is a property of a GROUP: neither claim is the wrong one, exactly
+			# as false-independence above.
+			#
+			# A note whose `id` never parsed is left out, because the edge test
+			# below matches an ID against an ID and an empty one would relate
+			# every unidentified note to every other.
+			if (schema + 0 >= 4 && ty == "claim" && id != "" &&
+			    V[f, "status"] == "current" && V[f, "subject"] == "market-size") {
+				POP[++NPOP] = f
 			}
 
 			# --- edges resolve to real notes --------------------------------
@@ -5153,6 +6407,85 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 			for (j = 1; j <= CN[rk]; j++) others = others (j == 1 ? "" : ", ") V[CONC[rk, j], "id"]
 			for (j = 1; j <= CN[rk]; j++)
 				report(CONC[rk, j], "false-independence", V[CONC[rk, j], "id"], CN[rk] " milestones declare `resource: " rkp[1] "` at `sequence: " rkp[2] "`: " others ". Items competing for one constrained resource cannot be asserted concurrent, so at least one of them is not happening in that slot. Give them distinct sequences, or name the resource each actually consumes - left as is, the plan reads as though both land and every number downstream inherits a week of capacity that was counted twice")
+		}
+
+		# The `market-size` populations, and whether the corpus says how they
+		# sit inside each other. THE TEST IS CONNECTIVITY, NOT WHETHER EACH
+		# NOTE CARRIES AN EDGE, and vault.md states the contract in those
+		# words: what it asks for is that the claims under one subject are
+		# connected, never that every combination carries a direct edge.
+		# Reachability is walked TRANSITIVELY, so three rings are satisfied by
+		# two edges - the innermost names the middle, the middle names the
+		# outermost - which is the shape a plan that sized properly has, and
+		# demanding the third edge would ask for a fact already derivable from
+		# the other two.
+		#
+		# A per-note "does this one carry an edge" test passes a corpus the
+		# contract fails, and the case is not exotic: two nested PAIRS under
+		# one subject, each internally edged and neither related to the other,
+		# leaves every note carrying an edge and the set still holding two
+		# unrelated ring systems. A share figure is then a percentage of
+		# whichever system its reader assumed, which is the whole failure.
+		# So the edges are unioned and the components counted.
+		#
+		# The edge is undirected here, because the question is whether a pair
+		# is RELATED and not which way round: A naming B is the same statement
+		# about the pair as B naming A, and a rule reading only the narrower
+		# end would fail a corpus that wrote the edge from the other one.
+		#
+		# THIS RULE TESTS RESOLUTION ITSELF rather than leaning on the
+		# dangling-edge rule to have caught a bad target first, and the choice
+		# matters: `nested_in` is in EDGE_FIELDS so dangling-edge does fire on
+		# a typo, but that rule is UNGATED and this one is gated on
+		# schemaVersion 4 - two rules with different triggers, and a nesting
+		# check that assumed its sibling had already run would be assuming
+		# something the gate does not guarantee. So targets resolve through
+		# BYID, the index every other edge-reading check in this pass uses, and
+		# a `nested_in` naming no note in the vault links NOTHING.
+		#
+		# The failure that closes: a typo would otherwise satisfy this check.
+		# The corpus would read as nested, the rule would clear, and nothing
+		# anywhere would say the edge points at a note that does not exist -
+		# a vacuous pass of exactly the shape this mode was added to remove.
+		# Resolved this way the typo is TWO failures, which is right: a
+		# dangling-edge naming the bad target, and a population-unnested saying
+		# the ring is still unrecorded. They are different repairs.
+		#
+		# The scalar and the block-list spelling are both read, for the reason
+		# present() reads both: a note that wrote its edge as a list would
+		# otherwise be exempt by formatting.
+		for (i = 1; i <= NPOP; i++) { POPAT[POP[i]] = i; PAR[i] = i }
+		for (i = 1; i <= NPOP; i++) {
+			f = POP[i]
+			nnest = 0
+			if (V[f, "nested_in"] != "") NEST[++nnest] = target_of(V[f, "nested_in"])
+			k = f SUBSEP "nested_in"
+			for (j = 1; j <= LN[k]; j++) NEST[++nnest] = target_of(LI[k, j])
+			for (j = 1; j <= nnest; j++) {
+				tgt = NEST[j]
+				if (!(tgt in BYID)) continue
+				if (!(BYID[tgt] in POPAT)) continue
+				ra = pop_root(i)
+				rb = pop_root(POPAT[BYID[tgt]])
+				if (ra != rb) PAR[ra] = rb
+			}
+		}
+
+		# Reported per NOTE rather than per group, which is where this differs
+		# from false-independence and duplicate-url above. There the whole group
+		# is implicated and neither member is the wrong one; here each row names
+		# the claims THIS one has no chain to, so the note a reader opens tells
+		# them which ring is still unrecorded - and a note already connected to
+		# everything is not a row at all.
+		if (NPOP >= 2) for (i = 1; i <= NPOP; i++) {
+			f = POP[i]
+			unreached = ""
+			for (j = 1; j <= NPOP; j++) {
+				if (j == i || pop_root(j) == pop_root(i)) continue
+				unreached = unreached (unreached == "" ? "" : ", ") V[POP[j], "id"]
+			}
+			if (unreached == "") continue
+			report(f, "population-unnested", V[f, "id"], "`subject: market-size` is carried by " NPOP " `current` claims and no `nested_in` chain connects this one to: " unreached ". Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. The chain is walked transitively, so three rings are two edges rather than three: add `nested_in` naming the ring immediately outside this claim, or supersede one side if the two genuinely disagree")
 		}
 
 		for (i = 1; i <= nf; i++) {

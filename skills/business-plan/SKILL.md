@@ -87,8 +87,9 @@ and is never restated here.
     for which one a given session picks.) A plan citing a retracted source does
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
     bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
-    `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows` and
-    `--claim-drift`, and exits
+    `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows`,
+    `--claim-drift`, `--citation-codes`, `--unflattened-source`, `--subject-orphan` and
+    `--foreclosed`, and exits
     non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
@@ -147,6 +148,12 @@ and is never restated here.
     citation still resolves — and the render is the last moment before the section reaches a
     reader with no way to check it. Both are `schemaVersion` 3 rules, so a vault at 1 or 2 is told
     the rule was not applied rather than that its documents agree.
+    **The reasons above are not the gate's list, and reading them as one is the trap this
+    invariant otherwise sets** — the list is the sentence at the top of this invariant, composed
+    from the tool's own mode table. `--citation-codes`, `--unflattened-source` and
+    `--subject-orphan` are argued at Phase 5's quality bars, and `--foreclosed` at invariant 24;
+    each is as much a gate part as the nine walked through here, and a walkthrough that stops
+    where it stops reads exactly like one that covered everything.
     **Phase 2's checkpoint stays the bare run**: no note carries `used_in` until drafting
     cites it, so the gate's second part would check an empty set there, and running the whole
     gate anyway teaches it as cadence-wide when it belongs to one phase.
@@ -348,6 +355,47 @@ nearest-reachable solve and the negotiation script are in
     quietly loses the one piece of the founder's testimony most worth having — the delivered
     reality a list price hides.
 
+24. **A share figure names the population it is a share of, and where the corpus holds nested
+    populations it reports the set rather than one member — and a claim that forecloses an option
+    declares what would reverse it.** This belongs beside 16 and 18 and sits one level upstream of
+    both: 16 holds the target's arithmetic to evidenced drivers and 18 labels the inputs that
+    arithmetic runs on, and both stop at the identity's own terms. This one is about the
+    populations those terms are solved against, and about the conclusions drawn *away* from the
+    plan. **Almost every mechanical guard in this skill fires on a plan claiming too much.** An
+    overclaim gets challenged; an understatement gets believed — by the founder, by the panel, and
+    by the reader who acts on it.
+
+    **The denominator half is checked.** A corpus that sized properly holds several correct counts
+    for one subject — a behavioural cut inside a professional population inside a broader one —
+    and unedged they read as several unrelated figures, so whoever writes the share picks one.
+    Reliably the innermost, because it is the population the beachhead argument was written about,
+    and it is the smallest denominator available: the share the plan must win is then the largest
+    number the corpus can produce, and a target needing a large share of a small market is the one
+    a verdict calls unreachable. `vault-lint.sh check` fails a `market-size` subject carrying two
+    or more `current` population claims that no `nested_in` chain connects — either a genuine
+    contradiction the collision query should have surfaced, or the missing edge. Gated on
+    `schemaVersion` 4, because it fires on a shape existing corpora already have rather than on a
+    field they lack, and ungated it would fail every properly sized vault the day the plugin
+    updates. The edge is
+    [references/vault.md](references/vault.md#eight-edges-each-stored-once-on-the-asserting-note)'s.
+
+    **The foreclosure half needs different machinery, because there is nothing left to check.** A
+    claim of the form *X is not credible*, *Y is not reachable* or *this rules out Z* removes work
+    from the roadmap, kills a segment, or takes a configuration off the table — the
+    highest-consequence class of claim in a plan and, until the floor skeptic below, the only one
+    nothing attacked. Phase 4's three original lenses are aimed at whether the plan can deliver
+    what it promises; none at whether it wrongly concluded it could not. And the failure is silent
+    by construction: the
+    option is gone, so nothing downstream references it, so no check has a target. `forecloses`,
+    `foreclosed_on` and `reverses_if` are what give one back — `vault-lint.sh --foreclosed` fails a
+    `current` claim that closes an option and records no reversal condition, the same shape as an
+    `assumption` with no `validated_by`, and the **floor skeptic** is briefed from its output
+    rather than sent looking for conclusions that are not there. The three fields ship additive at
+    the current version, because nothing written before them carries `forecloses` and the trigger
+    is its presence; only the nesting check gates on 4, and conflating the two is what would turn
+    every existing corpus red on upgrade. They are
+    [references/vault.md](references/vault.md#a-claim-that-forecloses-an-option-declares-what-would-reverse-it)'s.
+
 ## Output contract — deterministic home
 
 Same folder the market-analysis skill uses (same slug rule — repo directory name or settled
@@ -423,7 +471,7 @@ reads the axes and their decisions rather than re-checking the pages those axes 
 
 **Scaffold the vault before anything writes.** The vault path IS the slug directory — never a
 `vault/` subdirectory under it. Create the tree above, write `.vault/config.json` with
-`"schemaVersion": 3` — the current version, so every check the schema carries applies to this
+`"schemaVersion": 4` — the current version, so every check the schema carries applies to this
 vault from its first note — and copy [references/vocabulary.yml](references/vocabulary.yml) to
 `<slug-dir>/_vocab.yml` — a copy, not a pointer, so a vault stays checkable against the
 vocabulary it was written under after the skill ships new terms. The copy carries the shipped
@@ -1091,16 +1139,42 @@ Before the plan is done, it gets attacked. Dispatch a panel — one agent per le
   size, runway, and the founder's hours?
 - **Target customer** — kill the demand: would the beachhead segment actually switch, at this
   price, from what they use today?
+- **Floor skeptic** — kill the floor rather than the ceiling: argue the plan is **too
+  pessimistic**. Was a killed segment killed on a technicality? Is the denominator the narrowest
+  population the corpus holds, with wider ones sitting beside it? Did a reference class default to
+  the slower of two candidates without anyone choosing it? Does a "not credible" conclusion rest
+  on an input nobody sourced?
+
+  **This lens arrives with a worklist rather than an instruction to go looking, and that is the
+  whole design.** The other three attack what the plan says; this one attacks what the plan
+  stopped saying, which leaves nothing on the page to read — so a brief telling it to find
+  understatement would be telling it to find an absence. Its brief carries two things the others
+  do not: `vault-lint.sh --foreclosed`'s output, every `current` claim that took an option off the
+  table with its `reverses_if` and the section its `used_in` names; and step 4 of the pre-pass
+  below, the inputs unmodelled in the pessimistic direction, each named. Against a foreclosure its
+  job is the reversal condition rather than the conclusion — is the input `foreclosed_on` names
+  actually sourced, and is `reverses_if` something somebody could check this week? **A foreclosure
+  whose reversal condition is already true is the finding**, and it is invisible to every other
+  lens because the option it closed left no trace in the plan to object to.
+
+  **The failure this prevents:** step 4 has been produced and fed into every brief since it was
+  added, and no lens was tasked with it, so a floor nobody sourced reaches the panel as the plan's
+  margin of safety and comes back unattacked — read, if at all, by whoever happens to read it.
+  That is the same "silence and thoroughness look identical" problem the `## Lenses dispatched`
+  roster was added for, one level up. Its rows are held to that roster exactly as the other three
+  lenses' are, so a floor skeptic that returns nothing is visible rather than assumed thorough.
 
 **The target list is generated, not read.** Invariant 19's reconciliation runs before any of this
 and gates the dispatch — its three lint calls, `vault-lint.sh --used-in`, `vault-lint.sh
 --supersession-sweep` and `vault-lint.sh --red-team`, belong beside the query below rather than in
 a block of their own, and no brief is written until the read behind them is done. On a first
 dispatch `--red-team` has no closed round to check and passes; on a re-dispatch it is what stops
-a second panel being briefed over a first one whose objections were never written down. Two further queries then run before the panel
-is briefed: `vault-lint.sh --unverified`, and every claim that reached the plan carrying
-`confidence: L`. Those, addressed by note ID with the sections their `used_in` names, are the attack
-surface each panelist's brief carries in its lens. "Read the plan and object" produces objections
+a second panel being briefed over a first one whose objections were never written down. Three further queries then run before the panel
+is briefed: `vault-lint.sh --unverified`, every claim that reached the plan carrying
+`confidence: L`, and `vault-lint.sh --foreclosed`. Those, addressed by note ID with the sections their `used_in` names, are the attack
+surface each panelist's brief carries in its lens. **The third is the population that was reaching
+the panel as settled ground**: an option the plan closed is not thin evidence, it is an absence,
+so neither of the first two queries can return it — and it goes to the floor skeptic in full. "Read the plan and object" produces objections
 about whatever a panelist happened to notice; this produces them about what the corpus already knows
 is weak. Every brief also carries the founder's named fear `[F#]`: attack this hardest, then name
 the two risks the founder did NOT name. The operator and target-customer briefs additionally carry
@@ -1121,14 +1195,16 @@ was computed under — the assumption most worth attacking, and the one no lens 
 tasked with. Re-run the identity against any objection that survives:
 [references/target.md](references/target.md).
 
-**Read the model's identity before the panel reads its numbers — a pre-pass, not a fourth lens.**
-All three lenses reason from the plan document, so all three inherit its frame: a revenue model
+**Read the model's identity before the panel reads its numbers — a pre-pass, not another lens.**
+Every lens reasons from the plan document, so every one of them inherits its frame: a revenue model
 that assumes a flat curve, or that treats a founder's choice as a fixed property of the business,
-hands every panelist that frame as the ground they attack *from*. A fourth voice briefed alongside
-the others would inherit it too and would arrive at the same moment as three lenses' worth of
+hands every panelist that frame as the ground they attack *from*. Another voice briefed alongside
+the others would inherit it too and would arrive at the same moment as a panel's worth of
 detail objections, too late to change what the panel is pointed at — which is why this runs BEFORE
 any brief is written and its output goes INTO the briefs, exactly as the settled target and the
-binding driver's kind do above. Five steps, in this order:
+binding driver's kind do above. **The floor skeptic does not replace this pass and does not make it
+a lens:** that lens inherits the plan's frame like the rest, which is precisely why it is handed
+step 4's list rather than asked to derive one. Five steps, in this order:
 
 1. **Write out the revenue model's identity — the chain of terms, ahead of any value in it.**
    `MRR = paying customers × price`, the acquisition-and-retention chain standing under the
@@ -1152,7 +1228,9 @@ binding driver's kind do above. Five steps, in this order:
    both-directions test from
    [references/target.md](references/target.md#every-driver-value-names-its-driver-in-both-directions-and-a-low-one-with-none-is-unmodelled)
    over every value in the identity and name each one that is unmodelled, not conservative, so a
-   panelist can attack a floor instead of reading it as the plan's margin of safety.
+   panelist can attack a floor instead of reading it as the plan's margin of safety. **This list is
+   the floor skeptic's worklist**, carried into that lens's brief beside `--foreclosed`'s output —
+   which is what turned this step from a report into something a lens is answerable for.
 5. **Test the terms against what the founder said the business is, and report a term the business
    has that the identity lacks.** Read the identity from step 1 back against the dossier and the
    grill's `[F#]` facts — every revenue layer, every distinct paying motion the founder stated.
@@ -1242,6 +1320,7 @@ carry:
 | R1 | Capital skeptic |
 | R1 | Operator |
 | R1 | Target customer |
+| R1 | Floor skeptic |
 ```
 
 **The failure its absence costs:** a lens returns, its findings get folded into two documents,
@@ -1517,6 +1596,52 @@ three milestones, and where everything landed. Invite pushback on the specific b
   and never a strip filter — deleting a `~~…~~` span leaves the sentence after it correcting an
   antecedent the reader can no longer see.
 - Rendered deliverables verified page-by-page.
+- Every `[F#]` and `[S#]` the prose cites resolves to a row in the index that assigns it, and
+  `vault-lint.sh --citation-codes` reads it forward only — a code with no row fails, a row nothing
+  cites does not, because failing an unused row would push an author toward citing things to
+  silence a linter. **The check's success line states what it did not ask**, and so does this bar:
+  resolution says the address exists and never that it points at the source the sentence meant. A
+  research file carrying its own local `S` table can assign a number the global log assigns to
+  something else, and every one of those citations resolves.
+- Every row of a research file's own local source table is flattened into the root `sources.md`,
+  or that file's ledger is declared exempt in the log's header with the reason it stays local.
+  `vault-lint.sh --unflattened-source` fails a local row whose URL the log carries nowhere: the log
+  is what assigns a citable `[S#]`, so an unflattened source can be cited from research prose and
+  cannot be cited from a plan document at all — and a plan that cites its local number anyway lands
+  on whatever the log assigns that number to. A per-row ledger kept out of the log deliberately is
+  the declared case, not the failing one; the declaration is what makes it arguable.
+- Every subject the plan reasons *from* has a note filed under it, not just every subject marked
+  `required: true` — and `vault-lint.sh --subject-orphan` fails a vocabulary term with no `claim`
+  and no `assumption` under it that any document in the vault names, under its key or under one of
+  its aliases. The required-subject bar above covers the spine every plan owes; this covers the
+  dependence a *particular* plan invents, which is the half nothing could see. A subject with no
+  note cannot collide with a contradiction, cannot go stale, cannot be superseded and cannot be
+  challenged, so every query the ledger supports returns clean over it and the document leaning on
+  it is the only place the position exists. Nothing gates this on `schemaVersion`, because it reads
+  no field a vault written before it lacks: a corpus that already carries the gap goes red on the
+  upgrade, which is what the check is for.
+- Every claim that takes an option off the table carries `forecloses`, the input the conclusion
+  rests on in `foreclosed_on`, and the value of that input that would put the option back in
+  `reverses_if` — and `vault-lint.sh --foreclosed` fails a `current` claim that closes an option
+  and records no reversal condition. Invariant 24 carries the argument; what this bar adds is that
+  it is answerable at the render, where every other bar on this list is. A door closed on a
+  denominator nobody sourced is the most expensive understatement a plan can carry, because what
+  it removes is work, a segment or a configuration nothing downstream will ever revisit.
+- Every share figure names the population it is a share of, and where the corpus holds nested
+  populations under one `market-size` subject the plan reports the set rather than the innermost
+  member alone — `vault-lint.sh check` fails a subject carrying two or more `current` population
+  claims with no `nested_in` chain connecting them, a `schemaVersion` 4 rule so an existing corpus
+  is told the rule was not applied rather than failed on the day the plugin updates. Invariant 24
+  carries why the innermost is the member that gets picked and what that costs. What this bar adds
+  is that the substitution is invisible at the render: the figure is real, the formula behind it is
+  correct, and the wider counts sit in the same directory.
+- The panel included a **floor skeptic**, briefed to argue the plan is too pessimistic, and it
+  arrived holding `vault-lint.sh --foreclosed`'s output and the pre-pass's inputs unmodelled in the
+  pessimistic direction rather than an instruction to go looking. The other three lenses are
+  pointed at whether the plan can deliver what it promises, so a plan sequenced to a number below
+  its own evidence clears every one of them — and the pre-pass step that names those inputs was
+  producing a report no lens was answerable for, read by whoever happened to read it. A lens with a
+  worklist is what turns that report into an objection row somebody has to dispose of.
 
 ## Common failure modes
 
@@ -1531,6 +1656,8 @@ three milestones, and where everything landed. Invite pushback on the specific b
 | Flat acquisition line read as conservative | Zero growth is an assumption: name its driver, and place the implied rate against the band |
 | Product claim gone stale in the pessimistic direction | Re-verify against source at the current commit; a drift is a supersession |
 | Policy variable reported as a ceiling | Label every input structural or policy and record the label on the note; a chosen input caps the configuration, not the business |
+| Share figure computed against the innermost population | Name the ring; write `nested_in` and report the set, not one member |
+| Option killed and never revisited | `forecloses`, `foreclosed_on` and `reverses_if` on the claim; the floor skeptic attacks the reversal condition |
 | Venture template forced on a bootstrapper | Ambition question first; shape follows it |
 | Red team skipped ("plan looks solid") | It runs every time — that's when it's most needed |
 | Grilling the founder on what research answers | Grill intent/resources/appetite; research the market |

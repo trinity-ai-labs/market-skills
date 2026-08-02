@@ -46,7 +46,30 @@
 #     done
 #
 # A spine with twelve gaps then announces itself instead of being inherited in silence by
-# every document downstream of it.
+# every document downstream of it. `vault-lint.sh` runs that query as `coverage-gap` in the
+# bare check, so nobody has to remember the loop.
+#
+# `required: true` IS NOT THE WHOLE OF COVERAGE, and reading it as such is what left the
+# other half silent for a release. A subject optional in general is routinely load-bearing
+# in ONE plan: that plan argues from it, this file declares it, and no note is ever written
+# — and `coverage-gap` cannot see it, because the flag says no plan owes this subject a
+# position rather than that no plan ever takes one. What an unfiled subject costs is the
+# same either way. It cannot collide with a claim that contradicts it, cannot go stale,
+# cannot be superseded and cannot be challenged, so every query the ledger supports returns
+# clean over it and the document leaning on it is the only place the position exists.
+# `vault-lint.sh --subject-orphan` is the other half: it fires on a term with no `claim` and
+# no `assumption` under it that any document in the vault NAMES — under its key or under one
+# of the `aliases` below, which is half of why aliases are worth writing down. The mention
+# is what separates a subject nobody needs from one the corpus is reasoning about, so a
+# vocabulary richer than the position a plan took stays clean and costs nothing.
+#
+# WHICH MAKES THE ALIAS LIST A SENSITIVITY DIAL, and it is worth knowing which way you are
+# turning it. A one-word alias is a broad one: `power` under `defensibility` matches any
+# sentence carrying the word, and `trial` under `free-tier` matches a clinical one. The lint
+# does not second-guess the list — a mode that decided which of a vault's aliases to believe
+# would be reasoning about the vocabulary instead of reading it — so a mention that means
+# something else in THIS corpus is repaired by dropping that alias from the vault's own
+# `_vocab.yml`, which is what a per-engagement copy of this file is for.
 #
 # ---------------------------------------------------------------------------------------
 # 2. The two calibration risks
@@ -109,6 +132,25 @@
 # decided a plan may omit this subject. An absent key would mean nobody decided, and the
 # coverage query cannot tell those apart — it would silently treat undecided as not
 # required, which is the answer that produces no visible work.
+#
+# WHICH FLAG TO FLIP IS A DIFFERENT QUESTION NOW, AND `reference-class` IS THE WORKED CASE.
+# Section 1's second half already holds the mechanism — an optional term the documents NAME and
+# no note is filed under fails `vault-lint.sh --subject-orphan` — so re-read it there rather
+# than here. What it means for this section is that the gap which used to make flipping a flag
+# look like the only available repair is already closed.
+#
+# `reference-class` THEREFORE STAYS `required: false` ON PURPOSE. A plan that states no target
+# computes no verdict and has no structural driver to source, so a required row there produces a
+# comparable set assembled to close a coverage gap, which the term's own definition says. The
+# case that argued for flipping it is the opposite one, where a plan's timings DO come off a
+# class nobody filed and every downstream number inherits whichever class the prose assumed. Two
+# candidate classes an order of magnitude apart make that an unstated default nobody decided, and
+# where the slower one is the default every timing is understated while reading as prudence. That
+# corpus names the class in its own documents, so the mention-driven half already fails it.
+# Flipping the flag instead would fire `coverage-gap` on every vault that exists, none of which
+# owes the subject today — and a release ships one breaking check by design, which this one
+# already spends on the `market-size` nesting rule. Before flipping it in a later release, check
+# that the mention-driven half still fires first.
 #
 # REMOVING A TERM IS NOT DELETION. Demote it to an alias on its replacement. Deleting it
 # turns every existing claim that used it into an unknown-subject error at the next lint,
@@ -282,7 +324,7 @@
 # asserts what the amended subject asserts is SUPERSEDED under the standing two-edit rule, never
 # re-filed in place under wording its author never saw.
 
-vocabulary_version: 4
+vocabulary_version: 5
 
 amendments:
   - term: steady-state-ceiling
@@ -402,6 +444,22 @@ amendments:
       while the companies inside it compound, so a comparable's rate filed here reports the market
       as growing on evidence that says nothing about the market at all.
 
+  - term: market-size
+    amended_at: 5
+    shipped_in: "1.19.0"
+    was: The size of the reachable market, as a figure with the formula that produced it.
+    now: The same figure, naming which population it counts, and carrying a `nested_in` edge to
+      the population containing it wherever the corpus holds a wider count of the same subject.
+    must_assert: A figure with its population named. A claim under this subject stating a size or
+      a share without saying which ring of a nested set the number belongs to is superseded rather
+      than re-filed, because the number alone cannot say which one it was and the author is the
+      only person who ever knew. Where the corpus holds a wider count of the same subject, the
+      edge to it is part of the assertion — without it the set reads as a collision rather than a
+      nesting, so whoever writes the share picks one member, reliably the innermost, which is the
+      smallest denominator in the corpus and therefore the largest share the plan has to win. A
+      target needing a big share of a small market is the one a verdict calls unreachable, and
+      nothing downstream can see that a wider count was sitting beside it the whole time.
+
 # ---------------------------------------------------------------------------------------
 # 8. The terms
 # ---------------------------------------------------------------------------------------
@@ -468,6 +526,13 @@ terms:
     definition: The size of the reachable market, as a figure with the formula that
       produced it. Covers TAM, SAM and SOM on a venture track and the reachable-customer
       count on a bootstrap track. The rate at which that figure moves is market-growth.
+      Where the corpus holds several NESTED populations for one subject — a behavioural cut
+      inside a professional population inside a broader one — the claim names which population
+      its figure counts, and carries a `nested_in` edge to the population that contains it. A
+      percentage-of-market figure is meaningless until it says which population it is a
+      percentage of, and the innermost ring is the smallest denominator the corpus holds, so a
+      share computed silently against it is the most pessimistic one available and arrives in
+      the plan reading as the conservative one.
     aliases:
       - tam
       - sam

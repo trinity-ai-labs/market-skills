@@ -1,0 +1,25 @@
+# Fixture vocabulary for the silent side of --subject-orphan. One subject is
+# filed; the other is not filed and is not mentioned anywhere in this vault
+# under its key or under either alias, so the mode reports nothing.
+#
+# The prose in business-plan.md carries `pricing`, `prices` and `priceless` on
+# purpose. A substring scan matches the alias `price` inside all three and fails
+# this vault; a token scan does not, and that is the difference between a check
+# and one somebody switches off.
+
+terms:
+
+  market-growth:
+    definition: Whether the market is compounding, flat or shrinking, and the driver behind it.
+      Filed by the claim in this vault.
+    aliases:
+      - growth-rate
+    required: false
+
+  price-anchor:
+    definition: The price point the plan recommends, per unit and cadence. Not filed, and not
+      mentioned - which is a vocabulary richer than the position this plan took, not a gap.
+    aliases:
+      - price
+      - list-price
+    required: false

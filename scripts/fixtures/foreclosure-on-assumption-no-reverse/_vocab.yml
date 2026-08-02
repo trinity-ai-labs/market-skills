@@ -1,0 +1,13 @@
+# No required subject, so coverage-gap has nothing to report and the one failure
+# this vault trips is the one it was built for. A vocabulary is here at all
+# because a vault carrying none is its own failure, which would put a second
+# entry in the set the assertions below count.
+
+terms:
+
+  channel-mix:
+    definition: Which routes to the buyer the plan intends to sell through, and what share
+      of volume each is expected to carry.
+    aliases:
+      - route-to-market
+    required: false

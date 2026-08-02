@@ -31,6 +31,7 @@ which of their rules bite differently when you are writing three hundred notes i
 - [Finish with vault-lint, and know which failures legitimately survive](#finish-with-vault-lint-and-know-which-failures-legitimately-survive)
 - [Stamp schemaVersion 2 last, after the vault can already pass at 2](#stamp-schemaversion-2-last-after-the-vault-can-already-pass-at-2)
 - [Then 3, and what 3 asks for is a hash per cited section](#then-3-and-what-3-asks-for-is-a-hash-per-cited-section)
+- [Then 4, and all it asks for is the edge between populations you already counted](#then-4-and-all-it-asks-for-is-the-edge-between-populations-you-already-counted)
 
 ## The extraction manifest is already written — it is the plan's citations
 
@@ -719,8 +720,14 @@ Clean looks like this, and exits 0:
 
 ```
 vault-lint: note-level checks passed - /Users/example/Documents/go-to-market/example-product.
-Not opened: citation targets, supersession blast radius, panel objection rows, roadmap table against the milestone set, verdict drivers and the evidence under them - --release-gate asks all of them.
+Not opened: <every gate mode this run did not open, named one by one> - --release-gate asks all of them.
 ```
+
+**The `Not opened:` list is elided above on purpose, and it is not elided in the tool.** The real
+line names each mode, read off the same table `--release-gate` composes itself from, so it grows
+with every mode added. Transcribed here it would go quietly short on the next one and read as the
+whole list — which is the failure the line itself exists to prevent, one document over. Run the
+command to see the current set.
 
 The line is deliberately narrower than "clean". This run reads note fields and opens no
 document, so a corpus whose citations all point at renamed files prints it too — and a success
@@ -808,12 +815,18 @@ vault-lint.sh graph CLAIM-AS23SD44 --vault "$VAULT_PATH"
 **Before the first render — not here — the first and third of those are part of one call.**
 `vault-lint.sh --release-gate` runs the bare check, `--used-in`, the sweep, `--red-team`,
 `--roadmap-table`, `--binding-driver`, `--monitoring`, `--deliverable`,
-`--assumption-rows` and `--claim-drift`
+`--assumption-rows`, `--claim-drift`, `--citation-codes`, `--unflattened-source`,
+`--subject-orphan` and `--foreclosed`
 together and exits
 non-zero unless every part passes, which is what the render gate is held to. It is deliberately
-not the migration's acceptance test: `coverage-gap` and `orphan-source` legitimately survive a
+not the migration's acceptance test: `coverage-gap`, `orphan-source` and `subject-orphan`
+legitimately survive a
 finished migration, so the gate exits 1 over a corpus that is done, and the census above is the
-thing that tells you it is. Reaching for the gate here would make a finished migration look
+thing that tells you it is. All three are findings about the corpus rather than about the schema —
+a required subject with no claim, research nothing rests on, and a subject the documents reason
+from that no note was ever filed under. None of them is back-fill, none is cleared by a version,
+and `--subject-orphan` reads no field a version could gate it on, so it reports against a corpus
+at 1 exactly as it does against one at 4. Reaching for the gate here would make a finished migration look
 unfinished, and a red that is expected is a red nobody reads.
 
 The census proves the corpus is well-formed. The `graph` spot-check on two or three of the
@@ -823,13 +836,16 @@ migration was ever for.
 
 ## Stamp schemaVersion 2 last, after the vault can already pass at 2
 
-`vault-lint.sh` reads `schemaVersion` 1, 2 and 3. A vault at 1 is held to exactly the rules it
+`vault-lint.sh` reads `schemaVersion` 1, 2, 3 and 4. A vault at 1 is held to exactly the rules it
 was written under, so **nothing about upgrading the skill obliges you to upgrade a vault** — an
 existing corpus keeps working untouched, which is the property the version set exists to buy.
 Move to 2 when you want the checks version 2 added; the list of what those are is in
 [vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand). Move to 3 after that and
 never in the same pass — [the section below](#then-3-and-what-3-asks-for-is-a-hash-per-cited-section)
 says what 3 asks for and why its worklist is one row per citation rather than one per supersession.
+Then 4, on the same one-version-per-pass rule, and
+[what it asks for](#then-4-and-all-it-asks-for-is-the-edge-between-populations-you-already-counted)
+is one edge per nesting.
 
 **What 2 asks of an existing corpus is stage 5, plus a back-fill on anything it already
 superseded or already red-teamed.** The milestone half fires only on notes in `milestones/` — a
@@ -867,8 +883,8 @@ already requires.
    vault-lint.sh --release-gate --vault "$VAULT_PATH"
    ```
 
-   Everything it reports beyond the two that legitimately survive any finished migration
-   (`coverage-gap`, `orphan-source`) is upgrade work. The milestone rules fire only on notes you
+   Everything it reports beyond the three that legitimately survive any finished migration
+   (`coverage-gap`, `orphan-source`, `subject-orphan`) is upgrade work. The milestone rules fire only on notes you
    wrote in stage 5. Two more reach back into a corpus that already exists, and both are back-fill
    rather than repair:
 
@@ -955,7 +971,58 @@ against a section stays green after somebody rewrites that section — the headi
 the claim. That is invariant 20 holding past the first time it was satisfied, which is the only place
 it was ever failing.
 
-**Migrations stay forward-only.** There is no 2→1 path and no 3→2 path, for the reason
+## Then 4, and all it asks for is the edge between populations you already counted
+
+`schemaVersion` 4 adds exactly one rule and it is the cheapest of the three upgrades: `check`
+fails a `market-size` subject holding two or more `current` population claims that no `nested_in`
+chain connects — reachability is transitive, so three rings are two edges and not three. The rule is in
+[vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand)'s version-4 table, and the
+edge itself is in [vault.md](vault.md#eight-edges-each-stored-once-on-the-asserting-note).
+
+**Read this before starting, because conflating it with the rest of the release is what would
+make the upgrade look like a corpus-wide back-fill.** Three fields shipped in the same release —
+`forecloses`, `foreclosed_on` and `reverses_if` — and **none of them is part of this upgrade**.
+They fire on their own presence, so a vault owes them nothing at 1, 2 or 3, and nothing at 4
+either until a claim declares `forecloses`. Write them whenever a claim takes an option off the
+table, at whatever version the vault is stamped; the version buys nothing there because no
+existing corpus carries the field. Only the nesting check gates on 4, and it does because it fires
+on a shape a properly sized corpus already has.
+
+**What 4 asks of an existing corpus is one edge per nesting, and the finding is the pairs that
+turn out not to nest.** The order is the same as the two upgrades above — do the work, then stamp:
+
+1. **Edit `schemaVersion` to 4 in the working tree and do not commit it.** An uncommitted number
+   is a question, and the version-4 check only fires at 4, so this is how you find out what the
+   upgrade owes.
+2. **Run the gate and read the failures as the worklist.** Each one names a `market-size` subject
+   and the `current` population claims filed under it. On a corpus that sized properly there is
+   one such subject and a handful of claims, so the whole list is usually short enough to finish
+   in a sitting.
+3. **Decide which of the two cases each pair is BEFORE writing anything.** Where one population
+   genuinely contains the other — a behavioural cut inside a professional population inside a
+   broader one — write `nested_in` on each note naming the ring immediately outside it, and the
+   set is done. Three rings are two edges rather than three, because the check walks the chain.
+   Where the two are competing counts of the *same* set, the edge is the wrong repair: that is the
+   contradiction the collision query exists to surface, and one of the two figures is wrong.
+   Writing an edge to clear a red files a disagreement as a nesting, which is worse than the red —
+   the check goes quiet and the corpus now asserts a containment nobody established.
+4. **Re-read whatever share figures the plan computed against that subject**, because ordering the
+   set is what the edge is for. A percentage written before the ring was named was written against
+   whichever member its author had open, and the innermost is the one the beachhead argument is
+   about. Where the share turns out to have been computed against the narrowest count, that is a
+   claim to supersede rather than an edit in place, and the sweep picks up the blast radius from
+   there.
+5. **Commit the stamp together with the edges, as the last edit**, for the reason the 2 and 3
+   upgrades give: one commit in which the vault both claims 4 and passes at 4 means no commit in
+   the history records a version the corpus could not back up.
+
+**What moving to 4 buys is that a share figure can no longer be silently pessimistic.** At 3 the
+nested counts sit in one directory as unrelated figures, every one of them correct, and nothing
+records which one a percentage was taken against — so the narrowest denominator, which produces
+the largest share the plan has to win, arrives in the plan reading as the conservative sizing. At
+4 the set is ordered and the figure has to say which ring it belongs to.
+
+**Migrations stay forward-only.** There is no 2→1 path, no 3→2 path and no 4→3 path, for the reason
 [vault.md](vault.md#schemaversion-refuses-what-it-does-not-understand) gives: writing one means
 holding every field the newer schema added in a shape the older one can carry, which is a second
 schema maintained forever.
