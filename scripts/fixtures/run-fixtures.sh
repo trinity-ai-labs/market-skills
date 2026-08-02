@@ -161,6 +161,17 @@
 #      listing is asserted on the passing side, because the mode is a report as
 #      much as a verdict and a success line that named nothing would say the
 #      corpus forecloses nothing.
+#  28. The `market-size` nesting rule is asserted in BOTH directions of its
+#      schemaVersion gate, over one corpus copied and restamped rather than two
+#      kept identical by hand: two unnested `current` population claims fail at
+#      4 and the same vault passes at 3. The gate is the whole reason the rule
+#      is shippable - a vault that sized properly already holds several of these
+#      - so a suite asserting only the failing side would not be testing it.
+#      Only an edge that RESOLVES clears the rule: a `nested_in` naming a note
+#      the vault does not hold is asserted to leave population-unnested firing
+#      and to be reported as a dangling edge beside it, because a typo that
+#      satisfied the check would hand back exactly the vacuous pass the check
+#      exists to refuse.
 
 set -u
 
@@ -2896,6 +2907,82 @@ case "$FC_CLEAN" in
 *'nothing in this corpus takes an option off the table'*) ok "a corpus foreclosing nothing is told so rather than reported clean" ;;
 *) no "--foreclosed did not name the half that had nothing to run over (got: $FC_CLEAN)" ;;
 esac
+
+# --- 28. nested populations, and the version gate that makes the rule usable --
+# The two vaults below are byte-identical apart from the schemaVersion their
+# config carries, which is what makes the gate assertion mean something: the
+# only thing separating a red run from a green one is the version.
+printf '\nnested populations under market-size\n'
+
+PN_OUT=$("$LINT" check --vault "$HERE/population-no-edge" --json 2>/dev/null)
+PN_STATUS=$(run_status "$HERE/population-no-edge")
+[ "$PN_STATUS" = "1" ] && ok "check exits 1 on two unnested current population claims at schemaVersion 4" ||
+	no "check should exit 1 over population-no-edge (got $PN_STATUS)"
+
+# Reported per NOTE and not once per group, so the count is the number of claims
+# owing an edge rather than the size of the collision.
+case "$PN_OUT" in
+*'"failure_count": 2'*) ok "each unnested population claim is its own row" ;;
+*) no "population-no-edge did not report exactly two failures (got: $PN_OUT)" ;;
+esac
+case "$PN_OUT" in
+*'"check": "population-unnested"'*) ok "the failure is population-unnested rather than a widened collision check" ;;
+*) no "population-no-edge did not fire population-unnested (got: $PN_OUT)" ;;
+esac
+# A RETIRED POPULATION IS NOT A MEMBER. The third claim under the subject is
+# `retracted`, so a rule reading every status would report three.
+case "$PN_OUT" in
+*CLAIM-PN04DD44*) no "a retracted population claim was reported as owing an edge (got: $PN_OUT)" ;;
+*) ok "a retracted population claim is not a member of the group" ;;
+esac
+case "$PN_OUT" in
+*'so a share figure is a percentage of whichever population its reader assumed'*)
+	ok "the failure says what an unnamed denominator costs" ;;
+*) no "population-unnested did not name the cost (got: $PN_OUT)" ;;
+esac
+
+PN_EDGE_STATUS=$(run_status "$HERE/population-nested-edge")
+[ "$PN_EDGE_STATUS" = "0" ] && ok "a nested_in edge between the two populations clears the check" ||
+	no "population-nested-edge should pass (got $PN_EDGE_STATUS)"
+
+# ONLY AN EDGE THAT RESOLVES CLEARS THE RULE, and this is the assertion that
+# stops a typo from silencing it. Read as a relation without resolving the
+# target, the vault below passes: it carries a `nested_in`, so it looks nested,
+# nothing asks which population contains which, and the check that exists to
+# refuse a vacuous pass hands one back. Both codes are asserted because they are
+# different repairs - fix the target, and record the ring - and neither is
+# widened into the other.
+PND=$("$LINT" check --vault "$HERE/population-nested-dangling" --json 2>/dev/null)
+PND_STATUS=$(run_status "$HERE/population-nested-dangling")
+[ "$PND_STATUS" = "1" ] && ok "a nested_in naming no note in the vault does not clear the nesting rule" ||
+	no "a dangling nested_in silenced population-unnested (got $PND_STATUS)"
+case "$PND" in
+*'"check": "dangling-edge"'*'CLAIM-PN02BB99'*) ok "the mistyped nested_in target is reported as a dangling edge" ;;
+*) no "the dangling nested_in target was not reported (got: $PND)" ;;
+esac
+case "$PND" in
+*'"check": "population-unnested"'*) ok "the ring is still reported unrecorded beside the dangling edge" ;;
+*) no "population-unnested went silent over a dangling nested_in (got: $PND)" ;;
+esac
+
+# THE GATE, IN THE DIRECTION NOTHING ELSE ASSERTS. Every existing corpus that
+# sized properly holds two or more current population claims, so an ungated rule
+# would turn all of them red on the day the plugin updates - for a reason having
+# nothing to do with what changed, which is what makes people stop upgrading.
+#
+# The vault under test is the FAILING one copied and restamped, the same idiom
+# the --subject-orphan block below uses, rather than a second fixture tree kept
+# byte-identical by hand. That is what makes "the same shape" true by
+# construction: a later edit to population-no-edge travels here, where a
+# checked-in twin would silently desync and the gate assertion would go on
+# passing over a corpus it no longer matches.
+PN_AT_3="$PAIRS_FILE.population-at-3"
+rm -rf "$PN_AT_3"
+cp -R "$HERE/population-no-edge" "$PN_AT_3"
+printf '{\n  "schemaVersion": 3,\n  "created": "2026-08-02"\n}\n' >"$PN_AT_3/.vault/config.json"
+PN_AT_3_STATUS=$(run_status "$PN_AT_3")
+[ "$PN_AT_3_STATUS" = "0" ] && ok "the same unnested shape passes at schemaVersion 3" ||
+	no "the nesting rule fired below schemaVersion 4 (got $PN_AT_3_STATUS)"
 
 printf '\nrun-fixtures: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

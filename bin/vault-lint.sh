@@ -923,7 +923,20 @@ CONFIG="$VAULT/.vault/config.json"
 # recorded hash from every claim already cited into a plan, which is every claim
 # in every finished corpus. A version is exactly what that exemption costs, and
 # vault-migration.md carries the 2 -> 3 back-fill.
-SUPPORTED_SCHEMA="1 2 3"
+#
+# 4 joins the set for ONE rule - the `market-size` nesting check in `check`. A
+# plan that sized properly already carries several current population claims
+# under that subject, a behavioural cut inside a professional population inside
+# a broader one, and none of them is wrong. Ungated, the rule would turn every
+# corpus that did the work red on the day the plugin updates, for a reason
+# having nothing to do with what changed - which is the shape that makes people
+# stop upgrading, so the rule would be correct and unusable. A version is
+# exactly what that exemption costs, and vault-migration.md carries the 3 -> 4
+# back-fill. The fields --foreclosed reads are deliberately NOT behind it: that
+# mode fires on the PRESENCE of `forecloses`, so a corpus written before the
+# field cannot owe it, and a version spent over an empty population buys
+# nothing.
+SUPPORTED_SCHEMA="1 2 3 4"
 FOUND_SCHEMA=$(awk '
 	match($0, /"schemaVersion"[ \t]*:[ \t]*[0-9]+/) {
 		s = substr($0, RSTART, RLENGTH)
@@ -1031,7 +1044,16 @@ HAS_FINMODEL=0
 # ARR term that declares it leaves out a note the vault does not hold is the one
 # form of that declaration nobody can check by reading it, and `graph` walking
 # the edge is what makes the excluded line reachable from the verdict.
-EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes"
+#
+# `nested_in` is here on exactly those terms, and ungated for `depends_on`'s
+# reason - no corpus written before the field carries it, so listing it costs
+# nothing at any version. What it buys is the difference between the two ways a
+# population claim can be missing its ring: population-unnested resolves the
+# edge through BYID, so a MISTYPED `nested_in` links nothing and would read as
+# an edge nobody wrote, which is a different repair. Listed here, the typo is a
+# dangling-edge failure under its own name, and `graph` shows which population
+# a claim sits inside instead of stopping at it.
+EDGE_FIELDS="rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes nested_in"
 
 # ----------------------------------------------------------------------------
 # scratch space
@@ -6116,6 +6138,28 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 				}
 			}
 
+			# --- nested populations, at schemaVersion 4 ---------------------
+			# Two `current` claims under one subject are a collision, and
+			# vault.md resolves one three ways: supersede a side, add a
+			# `scopes` edge because one is narrower, or discover the two
+			# genuinely disagree. Under `market-size` there is a fourth state
+			# none of those describes - the populations are BOTH right and one
+			# sits inside the other, a behavioural cut inside a professional
+			# population inside a broader one - and `nested_in` is the edge
+			# that records it.
+			#
+			# Collected here and reported after the loop, because the failure
+			# is a property of a GROUP: neither claim is the wrong one, exactly
+			# as false-independence above.
+			#
+			# A note whose `id` never parsed is left out, because the edge test
+			# below matches an ID against an ID and an empty one would relate
+			# every unidentified note to every other.
+			if (schema + 0 >= 4 && ty == "claim" && id != "" &&
+			    V[f, "status"] == "current" && V[f, "subject"] == "market-size") {
+				POP[++NPOP] = f
+			}
+
 			# --- edges resolve to real notes --------------------------------
 			for (e = 1; e <= nedge; e++) {
 				k = f SUBSEP edgef[e]
@@ -6263,6 +6307,66 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 			for (j = 1; j <= CN[rk]; j++) others = others (j == 1 ? "" : ", ") V[CONC[rk, j], "id"]
 			for (j = 1; j <= CN[rk]; j++)
 				report(CONC[rk, j], "false-independence", V[CONC[rk, j], "id"], CN[rk] " milestones declare `resource: " rkp[1] "` at `sequence: " rkp[2] "`: " others ". Items competing for one constrained resource cannot be asserted concurrent, so at least one of them is not happening in that slot. Give them distinct sequences, or name the resource each actually consumes - left as is, the plan reads as though both land and every number downstream inherits a week of capacity that was counted twice")
+		}
+
+		# The `market-size` populations, and whether the corpus says how they
+		# sit inside each other. ONE PASS OVER THE EDGES, marking BOTH ends:
+		# the question is whether a pair is RELATED and not which way round, so
+		# A naming B is the same statement about the pair as B naming A, and a
+		# rule that read only the narrower end would fail a corpus that wrote
+		# the edge from the other one. Marking both as the edge is read is what
+		# answers that without a second scan over every pair.
+		#
+		# THIS RULE TESTS RESOLUTION ITSELF rather than leaning on the
+		# dangling-edge rule to have caught a bad target first, and the choice
+		# matters: `nested_in` is in EDGE_FIELDS so dangling-edge does fire on
+		# a typo, but that rule is UNGATED and this one is gated on
+		# schemaVersion 4 - two rules with different triggers, and a nesting
+		# check that assumed its sibling had already run would be assuming
+		# something the gate does not guarantee. So targets resolve through
+		# BYID, the index every other edge-reading check in this pass uses, and
+		# a `nested_in` naming no note in the vault links NOTHING.
+		#
+		# The failure that closes: a typo would otherwise satisfy this check.
+		# The corpus would read as nested, the rule would clear, and nothing
+		# anywhere would say the edge points at a note that does not exist -
+		# a vacuous pass of exactly the shape this mode was added to remove.
+		# Resolved this way the typo is TWO failures, which is right: a
+		# dangling-edge naming the bad target, and a population-unnested saying
+		# the ring is still unrecorded. They are different repairs.
+		#
+		# The scalar and the block-list spelling are both read, for the reason
+		# present() reads both: a note that wrote its edge as a list would
+		# otherwise be exempt by formatting.
+		for (i = 1; i <= NPOP; i++) ISPOP[POP[i]] = 1
+		for (i = 1; i <= NPOP; i++) {
+			f = POP[i]
+			if (V[f, "nested_in"] != "") {
+				tgt = target_of(V[f, "nested_in"])
+				if ((tgt in BYID) && (BYID[tgt] in ISPOP)) { LINKED[f] = 1; LINKED[BYID[tgt]] = 1 }
+			}
+			k = f SUBSEP "nested_in"
+			for (j = 1; j <= LN[k]; j++) {
+				tgt = target_of(LI[k, j])
+				if ((tgt in BYID) && (BYID[tgt] in ISPOP)) { LINKED[f] = 1; LINKED[BYID[tgt]] = 1 }
+			}
+		}
+
+		# Reported per NOTE rather than per group, which is where this differs
+		# from false-independence and duplicate-url above. There the whole group
+		# is implicated and neither member is the wrong one; here the repair is
+		# one `nested_in` line on the note that is missing it, and a reader sent
+		# to a note already carrying its edge finds nothing to do. One note
+		# unrelated to everything is one row, not N.
+		if (NPOP >= 2) for (i = 1; i <= NPOP; i++) {
+			f = POP[i]
+			if (f in LINKED) continue
+			others = ""
+			for (j = 1; j <= NPOP; j++) {
+				if (j == i) continue
+				others = others (others == "" ? "" : ", ") V[POP[j], "id"]
+			}
+			report(f, "population-unnested", V[f, "id"], "`subject: market-size` is carried by " NPOP " `current` claims and no `nested_in` edge relates this one to any of the others: " others ". Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. Add `nested_in` naming the population this claim sits inside, or supersede one side if the two genuinely disagree")
 		}
 
 		for (i = 1; i <= nf; i++) {

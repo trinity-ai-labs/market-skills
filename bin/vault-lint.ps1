@@ -5733,6 +5733,9 @@ function Invoke-ModeCheck {
 	# so which group is visited first cannot reach the output.
 	$URLMEM = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
 	$CONC = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'
+	# The `market-size` populations, collected in note order so the members a
+	# message names are in the order the shell names them.
+	$POP = New-Object 'System.Collections.Generic.List[string]'
 	$restedon = New-Object 'System.Collections.Generic.HashSet[string]'
 	$seen = New-Object 'System.Collections.Generic.HashSet[string]'
 
@@ -5967,6 +5970,27 @@ function Invoke-ModeCheck {
 			}
 		}
 
+		# --- nested populations, at schemaVersion 4 ---------------------
+		# Two `current` claims under one subject are a collision, and vault.md
+		# resolves one three ways: supersede a side, add a `scopes` edge
+		# because one is narrower, or discover the two genuinely disagree.
+		# Under `market-size` there is a fourth state none of those describes -
+		# the populations are BOTH right and one sits inside the other, a
+		# behavioural cut inside a professional population inside a broader one
+		# - and `nested_in` is the edge that records it.
+		#
+		# Collected here and reported after the loop, because the failure is a
+		# property of a GROUP: neither claim is the wrong one, exactly as
+		# false-independence above.
+		#
+		# A note whose `id` never parsed is left out, because the edge test
+		# below matches an ID against an ID and an empty one would relate every
+		# unidentified note to every other.
+		if ($SCHEMA_N -ge 4 -and $ty -ceq 'claim' -and $id.Length -ne 0 -and
+			(Get-CheckValue $f 'status') -ceq 'current' -and (Get-CheckValue $f 'subject') -ceq 'market-size') {
+			[void]$POP.Add($f)
+		}
+
 		# --- edges resolve to real notes --------------------------------
 		foreach ($ef in $edgef) {
 			foreach ($item in (Get-CheckList $f $ef)) {
@@ -6138,6 +6162,69 @@ function Invoke-ModeCheck {
 		}
 	}
 
+	# The `market-size` populations, and whether the corpus says how they sit
+	# inside each other. ONE PASS OVER THE EDGES, marking BOTH ends: the
+	# question is whether a pair is RELATED and not which way round, so A naming
+	# B is the same statement about the pair as B naming A, and a rule that read
+	# only the narrower end would fail a corpus that wrote the edge from the
+	# other one. Marking both as the edge is read is what answers that without a
+	# second scan over every pair.
+	#
+	# THIS RULE TESTS RESOLUTION ITSELF rather than leaning on the dangling-edge
+	# rule to have caught a bad target first, and the choice matters:
+	# `nested_in` is in EDGE_FIELDS so dangling-edge does fire on a typo, but
+	# that rule is UNGATED and this one is gated on schemaVersion 4 - two rules
+	# with different triggers, and a nesting check that assumed its sibling had
+	# already run would be assuming something the gate does not guarantee. So
+	# targets resolve through $BYID, the index every other edge-reading check in
+	# this pass uses, and a `nested_in` naming no note links NOTHING.
+	#
+	# The failure that closes: a typo would otherwise satisfy this check - the
+	# corpus would read as nested, the rule would clear, and nothing would say
+	# the edge points at a note that does not exist. Resolved this way the typo
+	# is TWO failures, which is right: a dangling-edge naming the bad target,
+	# and a population-unnested saying the ring is still unrecorded.
+	#
+	# The scalar and the block-list spelling are both read, for the reason
+	# Test-CheckPresent reads both: a note that wrote its edge as a list would
+	# otherwise be exempt by formatting.
+	$ISPOP = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	foreach ($f in $POP) { [void]$ISPOP.Add($f) }
+	$LINKED = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	foreach ($f in $POP) {
+		$edges = New-Object 'System.Collections.Generic.List[string]'
+		$scalar = Get-CheckValue $f 'nested_in'
+		if ($scalar.Length -ne 0) { [void]$edges.Add($scalar) }
+		foreach ($item in (Get-CheckList $f 'nested_in')) { [void]$edges.Add($item) }
+		foreach ($item in $edges) {
+			$tgt = Get-CheckEdgeTarget $item
+			if (-not $BYID.ContainsKey($tgt)) { continue }
+			if (-not $ISPOP.Contains($BYID[$tgt])) { continue }
+			[void]$LINKED.Add($f)
+			[void]$LINKED.Add($BYID[$tgt])
+		}
+	}
+
+	# Reported per NOTE rather than per group, which is where this differs from
+	# false-independence and duplicate-url above. There the whole group is
+	# implicated and neither member is the wrong one; here the repair is one
+	# `nested_in` line on the note that is missing it, and a reader sent to a
+	# note already carrying its edge finds nothing to do. One note unrelated to
+	# everything is one row, not N.
+	if ($POP.Count -ge 2) {
+		for ($pi = 0; $pi -lt $POP.Count; $pi++) {
+			$f = $POP[$pi]
+			if ($LINKED.Contains($f)) { continue }
+			$others = ''
+			for ($pj = 0; $pj -lt $POP.Count; $pj++) {
+				if ($pj -eq $pi) { continue }
+				if ($others.Length -ne 0) { $others = $others + ', ' }
+				$others = $others + (Get-CheckValue $POP[$pj] 'id')
+			}
+			Add-CheckFailure $f 'population-unnested' (Get-CheckValue $f 'id') ('`subject: market-size` is carried by ' + [string]$POP.Count + ' `current` claims and no `nested_in` edge relates this one to any of the others: ' + $others + '. Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. Add `nested_in` naming the population this claim sits inside, or supersede one side if the two genuinely disagree')
+		}
+	}
+
 	foreach ($f in $files) {
 		if ((Get-CheckValue $f 'type') -cne 'source') { continue }
 		$id = Get-CheckValue $f 'id'
@@ -6285,7 +6372,17 @@ if (-not (Test-Path -LiteralPath $CONFIG -PathType Leaf)) {
 # from the FUTURE stays refused, which is the whole reason the field exists: an
 # older tool half-reading a newer vault reports a clean bill of health over
 # every field it never saw.
-$SUPPORTED_SCHEMA = '1 2 3'
+#
+# 3 joins the set for --assumption-rows and --claim-drift, and 4 for the
+# `market-size` nesting check in `check` - bin/vault-lint.sh carries the
+# reasoning for both. The short form of 4: a plan that sized properly already
+# holds several current population claims under that subject, none of them
+# wrong, so an ungated rule turns every corpus that did the work red on the day
+# the plugin updates. A version is exactly what that exemption costs, and
+# vault-migration.md carries the 3 -> 4 back-fill. The fields --foreclosed reads
+# are deliberately not behind it: that mode fires on the presence of
+# `forecloses`, so nothing written before the field can owe it.
+$SUPPORTED_SCHEMA = '1 2 3 4'
 $FOUND_SCHEMA = ''
 foreach ($line in (Read-TextLines $CONFIG)) {
 	$m = [regex]::Match($line, '"schemaVersion"[ \t]*:[ \t]*[0-9]+')
@@ -6371,7 +6468,16 @@ if (Test-Path -LiteralPath $FINMODEL -PathType Leaf) { $HAS_FINMODEL = 1 }
 # so a mistyped one has to be a dangling edge rather than a silent exclusion. An
 # ARR term that declares it leaves out a note the vault does not hold is the one
 # form of that declaration nobody can check by reading it.
-$EDGE_FIELDS = 'rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes'
+#
+# `nested_in` is here on exactly those terms, and ungated for `depends_on`'s
+# reason - no corpus written before the field carries it, so listing it costs
+# nothing at any version. What it buys is the difference between the two ways a
+# population claim can be missing its ring: population-unnested resolves the
+# edge through $BYID, so a MISTYPED `nested_in` links nothing and would read as
+# an edge nobody wrote, which is a different repair. Listed here, the typo is a
+# dangling-edge failure under its own name, and `graph` shows which population
+# a claim sits inside instead of stopping at it.
+$EDGE_FIELDS = 'rests_on supersedes scopes validated_by depends_on moves covers assumptions_low option_evidence arr_excludes nested_in'
 
 # ----------------------------------------------------------------------------
 # the record stream

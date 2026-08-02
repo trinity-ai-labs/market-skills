@@ -1,0 +1,16 @@
+# Fixture vocabulary - one subject, because that is the whole question this
+# corpus is built to ask. A term the notes are filed under has to be declared
+# here or `check` reports the subject as unknown, which is a different failure
+# from the one under test.
+
+terms:
+
+  market-size:
+    definition: The population the plan is sized against, stated as a count with the cut
+      that produced it. Where a corpus holds several nested populations - a behavioural cut
+      inside a professional population inside a broader one - each is a claim of its own and
+      `nested_in` records which contains which.
+    aliases:
+      - addressable-market
+      - population
+    required: true
