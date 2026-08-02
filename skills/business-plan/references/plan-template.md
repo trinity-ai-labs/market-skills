@@ -224,7 +224,7 @@ the validation evidence so far and the tests running now.>
 the next 2–3 expansion segments — a SOM without a named beachhead is a red flag. The three are
 one nested set, so every share figure here names which of them it is a share of, and the
 `market-size` claims behind them carry the `nested_in` chain that orders them
-([vault.md](vault.md#eight-edges-each-stored-once-on-the-asserting-note)). Unedged they read as
+([vault.md](vault.md#every-edge-is-stored-once-on-the-asserting-note)). Unedged they read as
 three unrelated counts and the share silently lands on the innermost, which is the smallest
 denominator the corpus holds.>
 

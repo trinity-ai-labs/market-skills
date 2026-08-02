@@ -377,7 +377,7 @@ nearest-reachable solve and the negotiation script are in
     `schemaVersion` 4, because it fires on a shape existing corpora already have rather than on a
     field they lack, and ungated it would fail every properly sized vault the day the plugin
     updates. The edge is
-    [references/vault.md](references/vault.md#eight-edges-each-stored-once-on-the-asserting-note)'s.
+    [references/vault.md](references/vault.md#every-edge-is-stored-once-on-the-asserting-note)'s.
 
     **The foreclosure half needs different machinery, because there is nothing left to check.** A
     claim of the form *X is not credible*, *Y is not reachable* or *this rules out Z* removes work

@@ -14,7 +14,7 @@ they may not omit.
 - [The vault is a claim ledger over the prose](#the-vault-is-a-claim-ledger-over-the-prose)
 - [Seven note types, and the seventh is a record rather than a grade](#seven-note-types-and-the-seventh-is-a-record-rather-than-a-grade)
 - [An ID is an address, not a label](#an-id-is-an-address-not-a-label)
-- [Eight edges, each stored once on the asserting note](#eight-edges-each-stored-once-on-the-asserting-note)
+- [Every edge is stored once on the asserting note](#every-edge-is-stored-once-on-the-asserting-note)
 - [Four format invariants that break silently](#four-format-invariants-that-break-silently)
   - [Block lists survive an Obsidian save; inline flow lists do not](#block-lists-survive-an-obsidian-save-inline-flow-lists-do-not)
   - [Coerce nothing: ban the ambiguous value instead of parsing it](#coerce-nothing-ban-the-ambiguous-value-instead-of-parsing-it)
@@ -161,7 +161,7 @@ only the shape `TYPE-[A-Za-z0-9]+`. A shorter hand-written ID from an early note
 lint failure, because failing an otherwise-valid corpus over a cosmetic length is how a
 useful check gets switched off.
 
-## Eight edges, each stored once on the asserting note
+## Every edge is stored once on the asserting note
 
 | edge | meaning | written on |
 |---|---|---|
@@ -174,7 +174,7 @@ useful check gets switched off.
 | `arr_excludes` | the ARR term of this verdict's identity does not carry that note's revenue | the verdict |
 | `nested_in` | this population sits inside that one — both are current counts of one subject | the inner population |
 
-All eight are block lists of IDs.
+All of them are block lists of IDs.
 
 **`arr_excludes` is an edge rather than a prose note on the verdict for one reason: its items are
 note IDs, so a mistyped one has to be a `dangling-edge` failure and not a silent exclusion.** A
