@@ -574,6 +574,15 @@ rather than an omission: the trigger is the *presence* of `forecloses`, so a cor
 the field existed declares nothing and can owe nothing, and a version spent to exempt an empty
 population buys an exemption nobody needed.
 
+**The mode has a second failure, and it exists because `foreclosed_on` is a scalar.** The bare
+check's dangling-edge rule walks the block-list edge fields and never opens a scalar note
+reference, which is the same gap `superseded_by` has and gets the same answer — a rule of its own.
+A `foreclosed_on` naming a note the vault does not hold means the conclusion names the input it
+rests on and that input cannot be opened, so nothing can be re-read to overturn it. It is also the
+brief the floor skeptic is dispatched with, so a dangling target sends the one lens pointed at the
+foreclosure to a note that does not exist — and a lens that found nothing reads exactly like a
+foreclosure that survived being attacked.
+
 **The bare check gained one rule with the same shape, and it is the one that needed a version.**
 Where a corpus holds several nested populations under `market-size` — a behavioural cut inside a
 professional population inside a broader one — a percentage-of-market figure is meaningless
@@ -587,6 +596,15 @@ sized properly already holds two or more of those claims: ungated, the rule woul
 corpus that did the work red on the day the plugin updated, for a reason having nothing to do with
 what changed. That is the failure mode that makes people stop upgrading, and it would have made a
 correct rule unusable.
+
+**What it asks for is that the populations are connected, not that every pair carries an edge.**
+Reachability is transitive, so three rings are two edges — the innermost names the middle, the
+middle names the outermost — and demanding the third would ask for a fact the other two already
+derive. The distinction is not cosmetic: two nested *pairs* under one subject, each internally
+edged and neither related to the other, leaves every note carrying an edge while the set still
+holds two unrelated ring systems, and a share figure is then a percentage of whichever system its
+reader assumed. That is the failure the edge exists to remove, surviving a check that only asked
+whether each note had one.
 
 **Only an edge that resolves clears it.** `nested_in` is an edge like any other — it is in the set
 the bare check follows for dangling targets and `graph` walks, so a `nested_in` naming a note the

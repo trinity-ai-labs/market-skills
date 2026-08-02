@@ -662,7 +662,16 @@ and a retired foreclosure owes nothing**, the live predicate `--assumption-rows`
 it names a repair on a note the ledger retired. And **the passing side is a LISTING, not a bare
 pass**: the mode feeds the panel as well as the gate, so its success line names every foreclosure
 with the section its `used_in` reached, and a vault where nothing forecloses is told which half did
-not run rather than that its conclusions agree. **Ungated, and the absence of a gating sentence
+not run rather than that its conclusions agree. **`foreclosed-on-dangling` is the mode's second
+kind, and it exists because `foreclosed_on` is a SCALAR note reference** — `check`'s dangling-edge
+rule walks the block-list edge fields and never opens one, which is the gap `superseded_by` has and
+which the repo answers the same way: a rule of its own rather than a silent omission. The cost is
+specific to this field. The floor skeptic is briefed off this mode's output with `foreclosed_on` in
+it, so a dangling target dispatches the one lens pointed at the foreclosure to a note that does not
+exist — and a lens that found nothing is indistinguishable from a foreclosure that survived being
+attacked, which is the vacuous pass this release exists to close, shipped by the release closing
+it. It is a separate kind from `foreclosure-no-reverse` because the repairs differ: write the
+missing note or fix the typo, against state the condition. **Ungated, and the absence of a gating sentence
 here would be the wrong reading** — the three fields ship additive at the current `schemaVersion`
 and this rule is deliberately behind no version at all, because the trigger is the PRESENCE of
 `forecloses`: a corpus written before the field declares nothing and can owe nothing, so a version
@@ -677,13 +686,22 @@ populations are BOTH right and one sits inside the other, a behavioural cut insi
 population inside a broader one, and `nested_in` is the edge that records it. Without it a
 percentage-of-market figure is a share of whichever population its reader assumed, and taking the
 innermost silently produces the smallest share available — which then reads as conservative rather
-than as a decision nobody made. Two properties belong in any change to it. **Both ends of the edge
+than as a decision nobody made. Three properties belong in any change to it. **Both ends of the edge
 count as one relation**, because the question is whether the pair is related and not which way
 round, and a rule reading only the narrower end fails a corpus that wrote the edge from the other.
-And **it reports per NOTE rather than per group**, where `false-independence` and `duplicate-url`
-report per member: there the whole group is implicated and neither member is the wrong one, here
-the repair is one `nested_in` line on the note missing it, and a reader sent to a note already
-carrying its edge finds nothing to do. Gated on `schemaVersion` 4 — the paragraph above has why —
+**The test is CONNECTIVITY and not whether each note carries an edge** — `vault.md` states the
+contract in those words, and reachability is walked transitively, so three rings are satisfied by
+two edges and demanding the third would ask for a fact already derivable from the other two. The
+two forms look equivalent and are not, which is why this is written down rather than left to the
+next reader: **two nested pairs under one subject, each internally edged and neither related to the
+other, leaves every note carrying an edge and the set still holding two unrelated ring systems**,
+so a share figure is a percentage of whichever system its reader assumed — the failure the edge
+exists to remove, surviving the check that was added to remove it. The edges are unioned and the
+components counted. And **it reports per NOTE rather than per group**, where `false-independence`
+and `duplicate-url` report per member: there the whole group is implicated and neither member is
+the wrong one, here each row names the claims *that* note has no chain to, so the note a reader
+opens tells them which ring is still unrecorded and a note already connected to everything is not
+a row at all. Gated on `schemaVersion` 4 — the paragraph above has why —
 and the suite asserts the GATE rather than only the rule, by running
 `scripts/fixtures/population-no-edge` and then a copy of it restamped to 3, which is the idiom
 `--subject-orphan` already uses: the two vaults cannot differ in anything but the version, where a
