@@ -238,17 +238,20 @@ near-miss subject terms, duplicate sources, retracted notes still cited, and —
 after the item that needs it or two items competing for one constrained resource while the plan
 asserts they run side by side.
 
-**Nine further modes leave the note directories and read the documents**, because the disagreement
+**The other modes leave the note directories and read the documents**, because the disagreement
 worth catching before a render is between the ledger and the document somebody is about to hand
 over: citations that no longer resolve, sections a supersession put in doubt, panel lenses that
 wrote no objection row, the roadmap table against the milestone notes it was rendered from, the
 verdict on your target against the drivers stored under it, whether the monitoring plan names an
 axis with an instrument, a cadence and the decision it would change, the financial model's
 assumptions table against the notes that declare themselves inputs to it, every cited section
-against the content hash the claim recorded when it read it, and — the only mode that reads a
-rendered file rather than the vault — whether a deliverable carries a vault address out to a reader
-who has no vault. **`--release-gate` is all ten as one call**, which is what you run before a
-render.
+against the content hash the claim recorded when it read it, whether every `[F#]` and `[S#]` the
+prose cites resolves to a row in the index that assigns it, whether a research file's own local
+source row ever reached the global log, and — the only mode that reads a rendered file rather than
+the vault — whether a deliverable carries a vault address out to a reader who has no vault.
+**`--release-gate` runs every one of them as one call**, which is what you run before a render. The
+count is left out on purpose: a number here rots on the next mode anybody adds, and an enumeration
+that has gone stale reads exactly like one that is complete.
 
 Claude Code puts an enabled plugin's `bin/` on whichever shell tool the session has — a
 session with the Bash tool gets `vault-lint.sh` on that tool's `PATH`; a session with only
@@ -488,6 +491,44 @@ Both are `schemaVersion: 3` rules, and a vault at 1 or 2 is told the rule was no
 than that its documents agree. That is the whole reason the version field exists: every claim in a
 finished corpus is already cited into a plan, so a hash rule that fired unconditionally would turn
 every existing vault red the day the plugin updated.
+
+`--citation-codes` closes the address a plan's prose uses. A note cites a document and a section,
+which `--used-in` opens; prose cites `[F1]` and `[S7]`, which resolve through
+`research/founder-brief.md` and `sources.md` — a contract this method already wrote down and
+nothing enforced. A code that resolves to nothing renders exactly like one that works, so the
+reader who follows it is the one person who cannot check it. The mode scans every markdown
+document at the vault root and under `research/` and reports a cited code with no row in its index,
+under a separate name per index because the two repairs open different files. **The two index files
+are excluded from the scan, and that is load-bearing rather than an optimisation** — an index
+legitimately records that a code was withdrawn and deliberately left unused, which names that code
+in its own prose, and a scan that read the mention as a citation would fail a corpus doing exactly
+the right thing. It runs **forward only**: cited with no row fails, a row nothing cites does not,
+because a recorded fact nothing leans on yet is healthy and failing it would push an author toward
+citing things to silence a linter. **Its success line states the limit**, and that is the point of
+the mode rather than a footnote: resolution is necessary and it is not sufficient, because a
+research file carries its own local `S` table and a document citing a local code the global log
+also assigns resolves to a row and to a different source. A missing index is reported as a half
+that did not run.
+
+`--unflattened-source` closes the half of that a check can reach. Every row of a research file's
+own local source table names a URL, and the mode fails one the root `sources.md` carries nowhere.
+The global log is what assigns a citable `[S#]`, so such a source can be cited from research prose
+and cannot be cited from a plan document at all — and no existing check sees it, because the local
+table is well-formed, the log is well-formed, and nothing compared them. On a live corpus a source
+existed only as one research file's local `S14`, global `[S14]` was a *different* source, four
+documents cited `[S14]` meaning the local one, and every code resolved. **The exemption is the part
+that decides whether the mode survives:** a corpus may deliberately keep a large per-row ledger out
+of the global log — a per-profile table of a hundred and fifty rows, cited with a qualified suffix
+— and a mode reporting all of them as failures is one somebody switches off within a day, taking
+the working half with it. So the exemption is **read from the log's own header** rather than keyed
+on a filename the script knows: a line before the log's first table row reading
+`Local ledger: research/<file>.md - why it stays local` exempts that file, with the path being what
+the mode reads and the reason being for whoever has to decide whether it still holds. A row
+carrying no URL is neither resolved nor failed — there is no key to match it on — and the success
+line counts those, so a table of unlinkable rows cannot read as a table that agreed. The failure
+kind is `source-unflattened` rather than `orphan-source`, which the bare check already reports for
+close to the opposite finding: that one is a source nobody cited, this one is a source nobody *can*
+cite.
 
 `--subject-orphan` asks what the bare check asks only of `required: true` subjects, and asks it of
 the rest. The note-level `coverage-gap` fires when a required subject has no claim under it and

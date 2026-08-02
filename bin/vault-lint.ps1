@@ -254,6 +254,103 @@ function ConvertTo-TableFold {
 	return $sb.ToString()
 }
 
+# The three helpers --citation-codes and --unflattened-source share, the twin of
+# $DOC_SCAN_AWK in bin/vault-lint.sh: a fence scan, a first-cell reader and a
+# markdown walk. Both modes walk a document line by line looking for a token, and
+# both have to ignore fenced blocks for the reason every other document-reading
+# mode does - a corpus document carrying its own row template or its own citation
+# example would otherwise fail for documenting its own format.
+#
+# ONE HELPER EACH RATHER THAN TWO COPIES, and the stub-seam rule below is not what
+# this crosses. That rule forbids hoisting a helper OUT of one mode body for a
+# second body to reuse, because six parallel port branches each replacing one
+# body would then be editing each other's code. These two modes are written
+# together in one change, neither body ever owned this scan, and the shell shares
+# one source between the same two for the same reason - so a copy per body here
+# would leave the two implementations disagreeing about how many copies of the
+# rule exist, which is the drift the copy counts are written down to prevent.
+#
+# $Fence is a hashtable carrying awk's `fc`/`fn` across lines: Char is the open
+# fence's marker as a string, holding '' for awk's `fc = ""` sentinel, and Len its
+# run length. A caller that reads more than one document hands each file a fresh
+# one - a fence left open at the end of one document would otherwise swallow the
+# whole of the next. Returns $true when the line opens or closes a fence or sits
+# inside one, so a caller skips the line on a true answer.
+#
+# No comparison here is culture-aware, for the reason Read-FirstItemTable states:
+# the fence character is compared as a code point and the sentinel by length.
+function Test-Fenced {
+	param([string]$Trimmed, [hashtable]$Fence)
+	if ($Trimmed.Length -eq 0) { return ($Fence.Char.Length -ne 0) }
+	$c = [int]$Trimmed[0]
+	if ($c -ne 96 -and $c -ne 126) { return ($Fence.Char.Length -ne 0) }
+	$n = 0
+	while ($n -lt $Trimmed.Length -and [int]$Trimmed[$n] -eq $c) { $n++ }
+	if ($n -lt 3) { return ($Fence.Char.Length -ne 0) }
+	if ($Fence.Char.Length -eq 0) {
+		$Fence.Char = [string][char]$c
+		$Fence.Len = $n
+	} elseif ([int]$Fence.Char[0] -eq $c -and $n -ge $Fence.Len) {
+		$Fence.Char = ''
+		$Fence.Len = 0
+	}
+	return $true
+}
+
+# The first cell of a markdown table row, trimmed, with the optional square
+# brackets around a code stripped off. '' when the line is not a table row at
+# all - the same answer a row whose first cell is empty gives, and both callers
+# treat the two alike because neither is a code.
+#
+# THE BRACKETS ARE OPTIONAL ON EITHER INDEX. The two documents write the cell
+# differently in the field - a founder brief writes the code bare and a source
+# log writes it bracketed - and holding each to its own spelling alone would
+# fail a document written in the other for a difference no reader can see.
+# 124 is the pipe; the comparison is a code point for Test-Fenced's reason.
+function Get-FirstCell {
+	param([string]$Trimmed)
+	if ($Trimmed.Length -eq 0 -or [int]$Trimmed[0] -ne 124) { return '' }
+	$row = $Trimmed.Substring(1)
+	$p = $row.IndexOf([char]124)
+	$cell = $row
+	if ($p -ge 0) { $cell = $row.Substring(0, $p) }
+	$cell = $cell.Trim($script:SPACE_TAB)
+	if ($cell.StartsWith('[', [System.StringComparison]::Ordinal)) { $cell = $cell.Substring(1) }
+	if ($cell.EndsWith(']', [System.StringComparison]::Ordinal)) { $cell = $cell.Substring(0, $cell.Length - 1) }
+	return $cell
+}
+
+# Every markdown document directly inside one vault directory, as vault-relative
+# `/`-separated paths - the twin of the shell's `"$VAULT"/*.md` glob, walked
+# non-recursively because the two directory levels the citation contract names
+# are the vault root and research/. Pass '' for the root.
+#
+# FOUR INVARIANTS LIVE IN THIS WALK and none of them is obvious, which is why it
+# is one function rather than one per caller. -Force so a file the filesystem
+# marks hidden is seen, since `find` and a glob both see it; -cnotlike because
+# `find -name '*.md'` matches case-sensitively even on a case-insensitive
+# filesystem; the leading-dot skip because a POSIX glob does not match one; and
+# Get-ChildItem rooted AT the prefix, so the Substring in Get-RelativeSlashPath
+# cuts off the path rather than into the file name when a directory has two
+# spellings of different lengths (an 8.3 short name, which is what %TEMP% is for
+# any user whose name runs over eight characters).
+function Get-VaultMarkdown {
+	param([string]$Sub)
+	$out = New-Object 'System.Collections.Generic.List[string]'
+	$dir = $script:VAULT
+	if ($Sub.Length -ne 0) { $dir = $script:VAULT + '/' + $Sub }
+	$prefix = Get-PathPrefix $dir
+	if ($prefix.Length -eq 0) { return ,$out.ToArray() }
+	foreach ($entry in (Get-ChildItem -LiteralPath $prefix -File -Force -ErrorAction SilentlyContinue)) {
+		if ($entry.Name -cnotlike '*.md') { continue }
+		if ($entry.Name.StartsWith('.', [System.StringComparison]::Ordinal)) { continue }
+		$rel = Get-RelativeSlashPath $entry.FullName $prefix
+		if ($Sub.Length -ne 0) { $rel = $Sub + '/' + $rel }
+		[void]$out.Add($rel)
+	}
+	return ,$out.ToArray()
+}
+
 # The item cells of the FIRST table under $Heading, plus whether that heading was
 # ever seen - which the caller needs to tell "the document has no such section"
 # apart from "the section is there and lists nothing".
@@ -283,11 +380,13 @@ function ConvertTo-TableFold {
 # The section ends at the next heading of the same depth or shallower, so a
 # subsection under it is still part of it.
 #
-# The fence tracking is one of six copies in this file, one per mode that reads a
-# document at the vault root, and the row parser is one of two - --binding-driver
-# readdoc() reads the corner verdict table under the same rules. Collapsing the
-# two table readers into this one function removed one copy of each; the rest
-# stay, so change one and change all of them.
+# The fence tracking is one of eight copies in this file - one per mode that
+# reads a document at the vault root, including --claim-drift's section reader,
+# plus the shared Test-Fenced above that --citation-codes and
+# --unflattened-source both call - and the row parser is one of two, since
+# --binding-driver readdoc() reads the corner verdict table under the same
+# rules. Collapsing the two table readers into this one function removed
+# one copy of each; the rest stay, so change one and change all of them.
 function Read-FirstItemTable {
 	param([string]$Path, [string]$Heading, [string]$ItemHeader, [int]$DefaultColumn)
 
@@ -858,6 +957,88 @@ vault-lint.sh - read-only checks over a claim vault.
       `reconciled_sections` was added - vault-migration.md carries the
       back-fill.
 
+  vault-lint.sh --citation-codes [--vault PATH] [--json]
+      Check that every [F#] and [S#] a document cites resolves to a row in
+      the index that assigns that code. A verdict - it exits 1 on either of
+      its two failures.
+
+      The resolution contract is already written down: [S#] resolves through
+      sources.md at the vault root and [F#] through
+      research/founder-brief.md. Nothing enforced it. --used-in opens a
+      NOTE's citation target; a code in prose is a different address and no
+      check opened it, so a plan could cite a code that resolves to nothing
+      and clear --release-gate. A dead code is indistinguishable from a
+      working one in the rendered document, and the reader who follows it is
+      the one person who cannot check it.
+
+      citation-code-no-source-row: an [S#] with no row in sources.md.
+      citation-code-no-fact-row: an [F#] with no row in
+      research/founder-brief.md. Two codes rather than one because the two
+      repairs open different files.
+
+      THE TWO INDEX FILES ARE NOT SCANNED, and that is load-bearing rather
+      than an optimisation. An index legitimately discusses its own retired
+      numbers - a row recording that a code was withdrawn and deliberately
+      left unused names that code - and a scan that read those mentions as
+      citations would fail a corpus doing exactly the right thing.
+
+      FORWARD DIRECTION ONLY. Cited with no row is the failure; a row nothing
+      cites is not. A recorded fact nothing leans on yet is a healthy state,
+      and failing it would push an author toward citing things to silence a
+      linter.
+
+      WHAT IT DOES NOT CHECK, AND THE SUCCESS LINE SAYS SO: whether a code
+      resolves to the INTENDED source. Resolution is necessary and it is not
+      sufficient. A research file legitimately carries its own local S table,
+      so a document citing a local code the global log also assigns resolves
+      to a row and to a DIFFERENT source - observed on four documents at
+      once, every code resolving. --unflattened-source closes the half of
+      that a check can reach.
+
+      A missing index file is reported as a half that did not run rather than
+      as agreement, the convention --claim-drift uses for a schemaVersion it
+      does not apply to.
+
+  vault-lint.sh --unflattened-source [--vault PATH] [--json]
+      Check that every row of a research file's own local source table names
+      a URL the root sources.md also names. A verdict - it exits 1 on its one
+      failure.
+
+      source-unflattened: a local `| S<n> |` row whose URL appears nowhere in
+      sources.md. The global log is what assigns a citable [S#], so a source
+      that exists only in a research file's local table can be cited from
+      research prose and cannot be cited from a plan document at all. It is
+      invisible to every other check: the local table is well-formed, the log
+      is well-formed, and nothing compared them. Observed: a source lived
+      only as one research file's local S14, global [S14] was a DIFFERENT
+      source, and four documents cited [S14] meaning the local one.
+
+      THE NAME IS NOT `orphan-source`, which `check` already reports and
+      which means close to the opposite - a source note nothing in the vault
+      rests on. That one is a source nobody cited; this one is a source
+      nobody CAN cite.
+
+      IT READS A DECLARED EXEMPTION OUT OF sources.md'S OWN HEADER, and
+      without one the mode is unusable. A corpus may deliberately keep a
+      large per-row ledger out of the global log - a per-profile table of a
+      hundred rows or more, cited with a qualified suffix - and reporting
+      every one of those as a failure is how a check gets switched off. A
+      line in the header, before the log's first table row, of the form
+
+          Local ledger: research/<file>.md - why it stays local
+
+      exempts that file. The first whitespace-delimited token after the colon
+      is the vault-relative path this mode reads; everything after it is the
+      reason, for the person who has to decide whether it still holds. The
+      declaration lives in the log rather than in the research file because
+      the log is where a corpus states which sources it assigns codes to.
+
+      A row carrying NO URL is neither resolved nor failed - there is no key
+      to match it on - and the success line reports how many there were, so a
+      table of unlinkable rows cannot read as a table that agreed.
+
+      A missing sources.md is reported as a mode that did not run rather than
+      as agreement, the same convention --citation-codes uses.
   vault-lint.sh --subject-orphan [--vault PATH] [--json]
       Check every vocabulary subject with no note filed under it against
       whether the corpus reasons about it anyway. A verdict - it exits 1 on
@@ -1010,6 +1191,8 @@ check                gate  note-level checks
 --deliverable        gate  what the rendered deliverable carries out of the vault
 --assumption-rows    gate  assumption rows against the model table
 --claim-drift        gate  cited sections against their recorded hash
+--citation-codes     gate  citation codes against their index rows
+--unflattened-source gate  local source rows against the global log
 --subject-orphan     gate  unfiled subjects the corpus reasons about
 '@
 
@@ -1064,8 +1247,10 @@ function Get-ModeForFlag {
 #  10. Invoke-ModeDeliverable        deliverable                            3323-3445
 #  11. Invoke-ModeAssumptionRows     assumption-rows
 #  12. Invoke-ModeClaimDrift         claim-drift
-#  13. Invoke-ModeSubjectOrphan      subject-orphan
-#  14. Invoke-ModeCheck              check
+#  13. Invoke-ModeCitationCodes      citation-codes
+#  14. Invoke-ModeUnflattenedSource  unflattened-source
+#  15. Invoke-ModeSubjectOrphan      subject-orphan
+#  16. Invoke-ModeCheck              check
 #
 # THIS LAYOUT IS A CONTRACT SIX SEPARATE BRANCHES BUILD AGAINST. Each of them
 # replaces exactly one function body below and touches nothing else in this
@@ -1078,8 +1263,8 @@ function Get-ModeForFlag {
 # them, and DO NOT hoist a helper out of one body into the shared region for
 # another body to reuse. A helper two modes want is a helper two slices are both
 # editing, which is the cross-slice edit this seam exists to prevent - the shell
-# keeps six separate copies of one six-line fenced-block scan for exactly that
-# reason (bin/vault-lint.sh:1369), and this file inherits the rule.
+# keeps a separate copy of one six-line fenced-block scan per mode body for
+# exactly that reason, and this file inherits the rule.
 #
 # Every stub answers exit status 3 through Exit-NotPorted. Porting a mode is
 # replacing that one call with the mode's real body; the moment it answers
@@ -1625,12 +1810,12 @@ function Invoke-ModeSupersessionSweep {
 	$RX_HEADING = [regex]'\A#+[ \t]+'
 	$RX_ANCHOR = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
 
-	# One of six copies of the same six-line fenced-block scan
-	# (bin/vault-lint.sh:1369 names the other five) - a `#` inside a
+	# One of eight copies of the same six-line fenced-block scan
+	# (bin/vault-lint.sh names the other seven) - a `#` inside a
 	# fenced block is an example, not a heading anyone can jump to, and the
 	# fence marker plus its run length are tracked so a longer nested fence
 	# cannot close its parent early. Kept local rather than hoisted: the other
-	# five copies belong to other mode slices, and reaching across them is
+	# copies belong to other mode slices, and reaching across them is
 	# exactly the cross-slice edit the stub seam exists to prevent.
 	function Read-SweepSections {
 		param([string]$Doc)
@@ -2130,8 +2315,8 @@ function Invoke-ModeUsedIn {
 	$rxAnchorAttr = [regex]'[{]#[A-Za-z0-9_-]+[}]\z'
 
 	# Every heading one document offers an anchor for, ATX form only. Ports
-	# scan() at bin/vault-lint.sh:1829 - ONE OF SIX COPIES of the fenced-block
-	# scan bin/vault-lint.sh:1369 names; this is the local --used-in copy,
+	# scan() at bin/vault-lint.sh - ONE OF EIGHT COPIES of the fenced-block
+	# scan the shell names; this is the local --used-in copy,
 	# kept apart from --red-team's below for the reason THE STUB SEAM states.
 	# Setext headings are deliberately not read - they are document titles, not
 	# a section a #fragment cites.
@@ -2323,8 +2508,8 @@ function Invoke-ModeRedTeam {
 			$line = Remove-TrailingCr $raw
 			$t = $line.TrimStart($script:SPACE_TAB)
 
-			# ONE OF SIX COPIES of the fenced-block scan (bin/vault-lint.sh:1369
-			# names all six) - the local --red-team copy, kept apart from
+			# ONE OF EIGHT COPIES of the fenced-block scan (the shell names them
+			# all) - the local --red-team copy, kept apart from
 			# --used-in's above for the reason THE STUB SEAM states. A
 			# document that carries its own row template as an example would
 			# otherwise register the template as a dispatched lens.
@@ -2795,16 +2980,16 @@ function Invoke-ModeBindingDriver {
 	# table to any renderer, so its rows are not rows. Change one, change both.
 	#
 	# The fence tracking is the FIFTH copy in the shell - --used-in scan(),
-	# --supersession-sweep sections(), --red-team and the shared
-	# Read-FirstItemTable carry the same six lines, because each reads a document
-	# at the vault root. THIS COPY STAYS LOCAL TO THIS BODY: the other three mode
-	# bodies keep their own, and hoisting one out is the cross-slice edit the stub
-	# seam exists to prevent. The table reader is the exception and states why at
+	# --supersession-sweep sections(), --red-team, the shared
+	# Read-FirstItemTable, --monitoring, --claim-drift and the shared Test-Fenced
+	# carry the same six lines, because each reads a document at the vault root. THIS COPY STAYS LOCAL TO
+	# THIS BODY: the other mode bodies keep their own, and hoisting one out is the
+	# cross-slice edit the stub seam exists to prevent. The table reader is the exception and states why at
 	# its own definition: two copies of it existed and one claimed to be a
 	# transcription of the other. A `#` or a `|` inside a fenced block is an example rather than
 	# an assertion the document makes, which is also why fenced lines never reach
 	# BODY: a fenced template carrying a condition would otherwise satisfy the
-	# check for a section that renders nothing. Change one, change all six.
+	# check for a section that renders nothing. Change one, change all eight.
 	function Read-BdDoc {
 		param([string]$Doc)
 		if ($SCANNED.Contains($Doc)) { return }
@@ -3455,8 +3640,8 @@ function Invoke-ModeMonitoring {
 		$line = Remove-TrailingCr $raw
 		$t = $line.TrimStart($script:SPACE_TAB)
 
-		# ONE OF SIX COPIES of the fenced-block scan (bin/vault-lint.sh:1369
-		# names them all) - the local --monitoring copy, kept apart from its five
+		# ONE OF EIGHT COPIES of the fenced-block scan (the shell names them
+		# all) - the local --monitoring copy, kept apart from its seven
 		# siblings for the reason THE STUB SEAM states. Every comparison here is
 		# ordinal: `$fc` stays a string because it carries awk's `fc = ""`
 		# sentinel, and the fence character inside it is compared as a code point.
@@ -4083,6 +4268,14 @@ function Invoke-ModeClaimDrift {
 			$line = Remove-TrailingCr $rawLine
 			$t = $line.TrimStart($SPACE_TAB)
 
+			# THE SEVENTH COPY of the fenced-block scan, and the one every
+			# other site's census used to leave out - --used-in, the sweep,
+			# --red-team, the shared Read-FirstItemTable, --binding-driver and
+			# --monitoring carry the first six and the shared Test-Fenced the
+			# eighth. Fenced lines are CONTENT here and only heading detection
+			# is suspended inside them: dropping a fenced block from the hash
+			# would leave a rewritten example invisible. Change one, change all
+			# eight.
 			if ($t.Length -ge 3 -and ((Test-DriftEqual ($t.Substring(0, 3)) '```') -or (Test-DriftEqual ($t.Substring(0, 3)) '~~~'))) {
 				$c = [int]$t[0]
 				$n = 0
@@ -4317,7 +4510,281 @@ function Invoke-ModeClaimDrift {
 }
 
 # ----------------------------------------------------------------------------
-# 13. --subject-orphan - a subject the corpus argues from and never filed
+# 13. --citation-codes - every cited code resolves to a row in its index
+#
+# Ports the --citation-codes body of bin/vault-lint.sh. The resolution contract
+# was specified and never enforced: [S#] resolves through sources.md, [F#]
+# through research/founder-brief.md, and --used-in opens the target a NOTE names
+# rather than a code in prose. Every failure string below is transcribed
+# character for character from the awk program.
+#
+# THE TWO INDEX FILES ARE EXCLUDED FROM THE SCAN and that is load-bearing rather
+# than an optimisation - an index legitimately names its own retired codes in its
+# own prose, and reading those as citations fails a corpus doing the right thing.
+#
+# THE SUCCESS LINE STATES THE LIMIT. Resolution is necessary and not sufficient:
+# a research file carries its own local S table, so a code resolving to a row in
+# the global log may still be the wrong source. A success line claiming more than
+# it verified is the defect family this mode belongs to.
+#
+# Every comparison against document text is ordinal and every character test is a
+# code point, for the reason Read-FirstItemTable states: the shell compares bytes
+# in awk under LC_ALL=C, and PowerShell's culture path reports a heading carrying
+# a zero-width space equal to one without.
+# ----------------------------------------------------------------------------
+function Invoke-ModeCitationCodes {
+	$brief = 'research/founder-brief.md'
+	$logdoc = 'sources.md'
+	$hasBrief = 0
+	if (Test-Path -LiteralPath ($script:VAULT + '/' + $brief) -PathType Leaf) { $hasBrief = 1 }
+	$hasLog = 0
+	if (Test-Path -LiteralPath ($script:VAULT + '/' + $logdoc) -PathType Leaf) { $hasLog = 1 }
+
+	# NEITHER INDEX, NOTHING TO READ. Every code would resolve against nothing,
+	# so the line is decided before the first document is opened - and opening
+	# them anyway is a full read of the corpus to print a constant. The same
+	# shape --deliverable uses when nothing has been rendered.
+	if ($hasLog -ne 1 -and $hasBrief -ne 1) {
+		exit (Render-Failures 'vault-lint citation-codes' ('no ' + $logdoc + ' and no ' + $brief + ' under ' + $script:VAULT + ' - neither index exists, so no `[F#]` or `[S#]` was resolved against anything and this mode checked nothing'))
+	}
+
+	$RX_CC_CODE = [regex]'\A[FS][0-9]+\z'
+	$RX_CC_CITE = [regex]'\[[FS][0-9]+\]'
+
+	# The codes one index assigns, read off the first cell of every row. A cell
+	# holding anything else is not an assignment and is not read, which is what
+	# keeps a prose table in the same document from registering codes.
+	function Read-CitationIndex {
+		param([string]$Rel, [string]$Kind, [System.Collections.Generic.HashSet[string]]$Assigned)
+		$path = $script:VAULT + '/' + $Rel
+		$fence = @{ Char = ''; Len = 0 }
+		foreach ($raw in (Read-TextLines $path)) {
+			$t = (Remove-TrailingCr $raw).TrimStart($script:SPACE_TAB)
+			if (Test-Fenced $t $fence) { continue }
+			$cell = Get-FirstCell $t
+			if (-not $RX_CC_CODE.IsMatch($cell)) { continue }
+			if ($cell.Substring(0, 1) -cne $Kind) { continue }
+			[void]$Assigned.Add($cell)
+		}
+	}
+
+	$assigned = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	if ($hasLog -eq 1) { Read-CitationIndex $logdoc 'S' $assigned }
+	if ($hasBrief -eq 1) { Read-CitationIndex $brief 'F' $assigned }
+
+	$docs = New-Object 'System.Collections.Generic.List[string]'
+	foreach ($rel in (Get-VaultMarkdown '')) { [void]$docs.Add($rel) }
+	foreach ($rel in (Get-VaultMarkdown 'research')) { [void]$docs.Add($rel) }
+
+	# Keyed per document per code: the repair is one row in one index, and a code
+	# cited on six lines is not six repairs. The count of distinct pairs is the
+	# success line's number, so it is read off the set rather than tallied beside
+	# it.
+	$done = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+
+	foreach ($rel in $docs) {
+		if ($rel -ceq $logdoc) { continue }
+		if ($rel -ceq $brief) { continue }
+		$fence = @{ Char = ''; Len = 0 }
+		$ln = 0
+		foreach ($raw in (Read-TextLines ($script:VAULT + '/' + $rel))) {
+			$line = Remove-TrailingCr $raw
+			$ln++
+			$t = $line.TrimStart($script:SPACE_TAB)
+			if (Test-Fenced $t $fence) { continue }
+
+			# Walked by start offset rather than by re-slicing the tail, the
+			# idiom Add-DeliverableAddresses uses: awk's match() has no start
+			# argument and the shell twin is forced to cut the string, and .NET
+			# is not.
+			$at = 0
+			while ($at -le $line.Length) {
+				$m = $RX_CC_CITE.Match($line, $at)
+				if (-not $m.Success) { break }
+				$at = $m.Index + $m.Length
+				$tok = $m.Value
+				$code = $tok.Substring(1, $tok.Length - 2)
+				$kind = $code.Substring(0, 1)
+				# A code whose index is absent is not resolved and not failed.
+				# The success line says which half went unread, rather than
+				# reporting agreement over an index nobody could open.
+				if ($kind -ceq 'F' -and $hasBrief -ne 1) { continue }
+				if ($kind -ceq 'S' -and $hasLog -ne 1) { continue }
+				if (-not $done.Add($rel + [char]28 + $code)) { continue }
+				if ($assigned.Contains($code)) { continue }
+				# The line of the FIRST occurrence goes in the message, because
+				# a failure naming no line sends its reader through the file by
+				# eye.
+				if ($kind -ceq 'F') {
+					[void]$script:FAILURES.Add($rel + "`tcitation-code-no-fact-row`t" + $code + "`tline " + $ln + ' cites `' + $tok + '` and ' + $brief + ' carries no `| ' + $code + ' |` row. The code is an address into the founder brief and it resolves to nothing, so a reader who follows it finds no fact behind the sentence that leaned on one - and the document renders identically to one whose codes all resolve, which is why nothing else in this corpus can see it. Either the row was never written, or the code is a typo for one that was')
+				} else {
+					[void]$script:FAILURES.Add($rel + "`tcitation-code-no-source-row`t" + $code + "`tline " + $ln + ' cites `' + $tok + '` and ' + $logdoc + ' carries no `| ' + $code + ' |` row. The code is an address into the source log and it resolves to nothing, so the sentence carries the appearance of provenance and none of the substance - and a reader who follows it is the one person who cannot check it. Either the source was never logged, or the code is a typo for one that was')
+				}
+			}
+		}
+	}
+
+	$limit = 'Not checked: whether a code resolves to the INTENDED source. A research file legitimately carries its own local `S` table, so a document citing a local code the global log also assigns resolves to a row and to a different source - which no count of resolving codes can see. --unflattened-source is the half of that a check can reach.'
+	$nchecked = $done.Count
+	$plural = 's'
+	if ($nchecked -eq 1) { $plural = '' }
+	if ($hasBrief -ne 1) {
+		$okLine = [string]$nchecked + ' cited `[S#]` code' + $plural + ', each resolving to a row in ' + $logdoc + ' - ' + $script:VAULT + '. Not checked: `[F#]` codes at all, because there is no ' + $brief + ' under ' + $script:VAULT + ' to resolve them against. ' + $limit
+	} elseif ($hasLog -ne 1) {
+		$okLine = [string]$nchecked + ' cited `[F#]` code' + $plural + ', each resolving to a row in ' + $brief + ' - ' + $script:VAULT + '. Not checked: `[S#]` codes at all, because there is no ' + $logdoc + ' under ' + $script:VAULT + ' to resolve them against. ' + $limit
+	} else {
+		$okLine = [string]$nchecked + ' cited code' + $plural + ', each resolving to a row in the index that assigns it - ' + $script:VAULT + '. ' + $limit
+	}
+
+	exit (Render-Failures 'vault-lint citation-codes' $okLine)
+}
+
+# ----------------------------------------------------------------------------
+# 14. --unflattened-source - a local source row the global log never received
+#
+# Ports the --unflattened-source body of bin/vault-lint.sh. This is the half
+# --citation-codes cannot reach: a source that exists only in a research file's
+# own local table has no citable [S#] at all, while a plan citing that local
+# number resolves it against whatever the global log assigns it to.
+#
+# THE FAILURE KIND IS `source-unflattened`, NOT `orphan-source`. `check` already
+# emits orphan-source for a source note nothing rests on, which is close to the
+# opposite finding, and giving two findings one name sends half their readers to
+# the wrong repair.
+#
+# THE DECLARED EXEMPTION IS READ FROM THE LOG'S OWN HEADER rather than keyed on a
+# filename this script knows: the file holding a per-row ledger differs per
+# corpus, and a mode reporting a hundred and fifty failures over a corpus doing
+# the right thing is one somebody switches off.
+# ----------------------------------------------------------------------------
+function Invoke-ModeUnflattenedSource {
+	$logdoc = 'sources.md'
+
+	# NO LOG, NO READ. There is nothing to compare a local row against, so the
+	# mode says it did not run before it walks anything - the same shape
+	# --citation-codes reports a missing index with.
+	if (-not (Test-Path -LiteralPath ($script:VAULT + '/' + $logdoc) -PathType Leaf)) {
+		exit (Render-Failures 'vault-lint unflattened-source' ('no ' + $logdoc + ' under ' + $script:VAULT + ' - there is no global log to flatten a local row into, so no research file''s own source table was read'))
+	}
+
+	$RX_US_URL = [regex]'https?://[^ \t|)>]+'
+	$RX_US_CODE = [regex]'\AS[0-9]+\z'
+	$RX_US_TRAILPUNCT = [regex]'[.,;:]+\z'
+	$RX_US_TRAILSLASH = [regex]'/+\z'
+	$RX_US_BULLET = [regex]'\A[-*][ \t]+'
+
+	# One URL compared as bytes, minus the punctuation a sentence leaves on the
+	# end of one. The host is case-sensitive here and a path always is - folding
+	# either would be a guess about which half of a URL is which.
+	function ConvertTo-NormalUrl {
+		param([string]$Url)
+		$u = $RX_US_TRAILPUNCT.Replace($Url, '')
+		return $RX_US_TRAILSLASH.Replace($u, '')
+	}
+
+	# The first URL a local row names, which is the key this mode matches on.
+	# First rather than every: a row names one source and any further link in it
+	# is a secondary reference.
+	function Get-FirstUrl {
+		param([string]$Line)
+		$m = $RX_US_URL.Match($Line)
+		if (-not $m.Success) { return '' }
+		return (ConvertTo-NormalUrl $m.Value)
+	}
+
+	$logUrls = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	$exempt = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	$declared = New-Object 'System.Collections.Generic.List[string]'
+	$exemptHit = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+
+	# The log, read once: the URLs it carries anywhere, and the files its header
+	# declares exempt. A URL in the header prose counts as carried - the question
+	# is whether the corpus has the source in its log at all, not which row holds
+	# it. The header is everything before the log's first table row.
+	$fence = @{ Char = ''; Len = 0 }
+	$inTable = $false
+	foreach ($raw in (Read-TextLines ($script:VAULT + '/' + $logdoc))) {
+		$line = Remove-TrailingCr $raw
+		$t = $line.TrimStart($script:SPACE_TAB)
+		if (Test-Fenced $t $fence) { continue }
+		if ($t.Length -ne 0 -and [int]$t[0] -eq 124) { $inTable = $true }
+		foreach ($m in $RX_US_URL.Matches($line)) { [void]$logUrls.Add((ConvertTo-NormalUrl $m.Value)) }
+		if ($inTable) { continue }
+		# A bullet is still a header line, so the declaration reads as prose to
+		# whoever opens the log.
+		$t = $RX_US_BULLET.Replace($t, '')
+		if (-not $t.StartsWith('Local ledger:', [System.StringComparison]::Ordinal)) { continue }
+		# The FIRST whitespace-delimited token after the colon is the path, and
+		# everything after it is the reason - so a declaration reads as a sentence
+		# to whoever opens the log rather than as a field with a punctuation rule.
+		$v = $t.Substring(13).Trim($script:SPACE_TAB)
+		if ($v.Length -eq 0) { continue }
+		$v = [regex]::Split($v, '[ \t]+')[0]
+		if ($v.StartsWith('./', [System.StringComparison]::Ordinal)) { $v = $v.Substring(2) }
+		if (-not $exempt.Add($v)) { continue }
+		[void]$declared.Add($v)
+	}
+
+	$tabled = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	$nrow = 0
+	$nourl = 0
+
+	foreach ($rel in (Get-VaultMarkdown 'research')) {
+		if ($exempt.Contains($rel)) {
+			[void]$exemptHit.Add($rel)
+			continue
+		}
+		$fence = @{ Char = ''; Len = 0 }
+		foreach ($raw in (Read-TextLines ($script:VAULT + '/' + $rel))) {
+			$line = Remove-TrailingCr $raw
+			$t = $line.TrimStart($script:SPACE_TAB)
+			if (Test-Fenced $t $fence) { continue }
+			$cell = Get-FirstCell $t
+			if (-not $RX_US_CODE.IsMatch($cell)) { continue }
+			[void]$tabled.Add($rel)
+			$u = Get-FirstUrl $line
+			if ($u.Length -eq 0) {
+				$nourl++
+				continue
+			}
+			$nrow++
+			if ($logUrls.Contains($u)) { continue }
+			[void]$script:FAILURES.Add($rel + "`t" + 'source-unflattened' + "`t" + $cell + "`t" + 'this file`s own source table assigns `' + $cell + '` to ' + $u + ' and ' + $logdoc + ' carries that URL nowhere. The global log is what assigns a citable `[S#]`, so this source can be cited from research prose and cannot be cited from a plan document at all - and nothing else sees it, because the local table is well-formed, the log is well-formed, and no check compared them. Worse, a plan that cites the local code anyway resolves against whatever the log happens to assign that number to, which is a different source. Flatten it: give it a row in ' + $logdoc + ', or declare this file`s ledger exempt with a `Local ledger: ' + $rel + ' - <why it stays local>` line in the log`s header')
+		}
+	}
+
+	# What was declared exempt, named in the line rather than left implicit: an
+	# exemption nobody sees is a switched-off check that reads as a passing one,
+	# and a declaration for a file that no longer exists is only visible here.
+	$ex = ''
+	for ($i = 0; $i -lt $declared.Count; $i++) {
+		if ($i -ne 0) { $ex = $ex + ', ' }
+		$ex = $ex + $declared[$i]
+		if (-not $exemptHit.Contains($declared[$i])) { $ex = $ex + ' (declared, no such file)' }
+	}
+	$exline = ''
+	if ($declared.Count -ne 0) { $exline = ' Exempt by declaration in the log`s header: ' + $ex + '.' }
+	$noline = ''
+	if ($nourl -ne 0) {
+		$p1 = 's'
+		if ($nourl -eq 1) { $p1 = '' }
+		$noline = ' Not resolved: ' + [string]$nourl + ' local row' + $p1 + ' carrying no URL, each naming a source with no key to match on.'
+	}
+
+	$nfile = $tabled.Count
+	if ($nfile -eq 0) {
+		$okLine = 'no research file under ' + $script:VAULT + ' carries a local `| S<n> |` table - there is no local ledger to flatten, which is every vault whose research keeps no source table of its own.' + $exline
+	} else {
+		$p2 = 's'
+		if ($nrow -eq 1) { $p2 = '' }
+		$p3 = 's'
+		if ($nfile -eq 1) { $p3 = '' }
+		$okLine = [string]$nrow + ' local source row' + $p2 + ' across ' + [string]$nfile + ' research file' + $p3 + ', each naming a URL ' + $logdoc + ' also carries - ' + $script:VAULT + '.' + $noline + $exline
+	}
+
+	exit (Render-Failures 'vault-lint unflattened-source' $okLine)
+}
+# 15. --subject-orphan - a subject the corpus argues from and never filed
 #
 # Ports the --subject-orphan body of bin/vault-lint.sh, whose header comment
 # carries the reasoning: why this is a mode beside coverage-gap rather than a
@@ -4609,8 +5076,8 @@ function Invoke-ModeSubjectOrphan {
 	exit (Render-Failures 'vault-lint subject-orphan' $okLine)
 }
 
-# ----------------------------------------------------------------------------
-# 14. check - pass 3, the note-level checks
+# --------------------------------------------------------------------------
+# 16. check - pass 3, the note-level checks
 #
 # Ports bin/vault-lint.sh:3003-3629. The largest body in the file, gated on
 # schemaVersion throughout, and the mode a bare invocation runs.
@@ -4624,8 +5091,8 @@ function Invoke-ModeSubjectOrphan {
 #
 # THE HELPERS BELOW ARE LOCAL TO THIS FUNCTION ON PURPOSE. present() in
 # particular is copied verbatim into the --binding-driver pass
-# (bin/vault-lint.sh:2513-2517), and the shell keeps six separate copies of one
-# fenced-block scan for the same reason (:1369): a helper two modes want is
+# (bin/vault-lint.sh:2513-2517), and the shell keeps a separate copy of one
+# fenced-block scan per mode body for the same reason: a helper two modes want is
 # a helper two slices are both editing. Hoisting one into the shared region is
 # the cross-slice edit the stub seam exists to prevent, and a divergence between
 # two copies is what the parity gate is there to report.
@@ -6301,10 +6768,12 @@ function Render-Failures {
 	if ($OkLine.Length -eq 0) { $OkLine = 'clean - ' + $script:VAULT }
 
 	# `LC_ALL=C sort` over the failure rows. Ordinal, never Sort-Object's
-	# culture-aware default: all seven modes that render through here inherit the
+	# culture-aware default: EVERY mode that renders through here inherits the
 	# ordering, so a culture-aware comparer reorders rows in every one of them at
 	# once and each JSON diff then reads as a bug in whichever mode was checked
-	# first.
+	# first. The number of them is deliberately not written down - it was stale by
+	# four before anyone noticed, and understating the blast radius is what makes
+	# someone read this as a local concern.
 	$rows = $script:FAILURES.ToArray()
 	[System.Array]::Sort($rows, [System.StringComparer]::Ordinal)
 	$n = $rows.Length
@@ -6374,5 +6843,7 @@ if ($MODE -ceq 'monitoring') { Invoke-ModeMonitoring }
 if ($MODE -ceq 'deliverable') { Invoke-ModeDeliverable }
 if ($MODE -ceq 'assumption-rows') { Invoke-ModeAssumptionRows }
 if ($MODE -ceq 'claim-drift') { Invoke-ModeClaimDrift }
+if ($MODE -ceq 'citation-codes') { Invoke-ModeCitationCodes }
+if ($MODE -ceq 'unflattened-source') { Invoke-ModeUnflattenedSource }
 if ($MODE -ceq 'subject-orphan') { Invoke-ModeSubjectOrphan }
 Invoke-ModeCheck

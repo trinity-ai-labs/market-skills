@@ -128,7 +128,21 @@
 #      the live note in the same position still fails, which is what says the
 #      half was narrowed rather than switched off. excluded-line-on-roadmap
 #      walks the same narrowed set and is asserted silent on a retracted note.
-#  24. --subject-orphan reports a vocabulary subject with no `claim` and no
+#  24. --citation-codes resolves every [F#] and [S#] a document cites against a
+#      row in the index that assigns it, in both index files, with a code inside
+#      a fenced block asserted silent. The passing side is the one that shapes
+#      the mode: an index legitimately names its own retired codes in its own
+#      prose, so the two index files are excluded from the scan. A missing index
+#      is asserted to report a half that did not run, and the success line is
+#      asserted to state the limit - resolution is necessary and not sufficient,
+#      and a success line claiming otherwise is the defect this mode is one of.
+#  25. --unflattened-source compares each row of a research file's own local
+#      source table against the URLs the root sources.md carries, and its
+#      declared exemption is asserted on both sides: the exempt ledger passes and
+#      is named in the success line, while the research file beside it is still
+#      read. A row carrying no URL is asserted reported as unresolved rather than
+#      passed, and a missing sources.md as a mode that did not run.
+#  26. --subject-orphan reports a vocabulary subject with no `claim` and no
 #      `assumption` under it that the corpus reasons from anyway - by its own key
 #      in a note body, and through an alias in a plan document, which is the half
 #      an alias-blind implementation passes. Its four silent sides are asserted
@@ -172,7 +186,7 @@ driver-kind-unknown verdict-fields-incomplete"
 # argument parser reads MODE_TABLE, so a new mode's flag works the moment its
 # row lands - `usage()` is the hand-maintained half, and nothing else in the
 # suite ever runs --help. Append a mode here in the same edit that adds its row.
-MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift --subject-orphan graph"
+MODES="check --unverified --used-in --supersession-sweep --release-gate --red-team --roadmap-table --binding-driver --monitoring --deliverable --assumption-rows --claim-drift --citation-codes --unflattened-source --subject-orphan graph"
 
 PASS=0
 FAIL=0
@@ -1094,7 +1108,7 @@ RG_VIOL_STATUS=$?
 
 # Both vaults, because a gate that stopped at the first failing part would
 # still print all three headings over the clean one.
-for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash' '--subject-orphan: unfiled subjects the corpus reasons about'; do
+for part in 'check: note-level checks' '--used-in: citation targets' '--supersession-sweep: supersession blast radius' '--red-team: panel objection rows' '--roadmap-table: roadmap table against the milestone set' '--binding-driver: verdict drivers and the evidence under them' '--monitoring: monitoring axes and the decision each would change' '--deliverable: what the rendered deliverable carries out of the vault' '--assumption-rows: assumption rows against the model table' '--claim-drift: cited sections against their recorded hash' '--citation-codes: citation codes against their index rows' '--unflattened-source: local source rows against the global log' '--subject-orphan: unfiled subjects the corpus reasons about'; do
 	case "$RG_CLEAN" in
 	*"$part"*) ok "the clean gate carries the $part part" ;;
 	*) no "the clean gate is missing the $part part" ;;
@@ -2548,7 +2562,131 @@ case "$ANM_EOR_OUT" in
 *) ok "retracting the excluded line stops it owing a declaration at the identity" ;;
 esac
 
-# --- 24. a subject the corpus argues from and never filed --------------------
+# --- 24. every cited [F#] and [S#] resolves to a row in its index -------------
+# The resolution contract was specified and never enforced, so a plan could cite
+# a code that resolves to nothing and clear --release-gate. Both index files get
+# their own dangling code, because the two repairs open different files - and
+# the passing side is the one with teeth: an index that names its own retired
+# codes in its own prose is a corpus doing the right thing, and a scan that read
+# the index files would fail it.
+printf '\ncitation codes\n'
+
+CC_F=$("$LINT" --citation-codes --vault "$HERE/citation-dangling-f" --json 2>/dev/null)
+CC_F_STATUS=$?
+[ "$CC_F_STATUS" = "1" ] && ok "--citation-codes exits 1 on an [F#] with no brief row" ||
+	no "--citation-codes should exit 1 on a dangling [F#] (got $CC_F_STATUS)"
+case "$CC_F" in
+*'"check": "citation-code-no-fact-row"'*'"id": "F7"'*) ok "the dangling [F#] is reported against the founder brief" ;;
+*) no "citation-code-no-fact-row did not report F7 (got: $CC_F)" ;;
+esac
+# The count is what says the resolving code beside it was not swept up too.
+case "$CC_F" in
+*'"failure_count": 1'*) ok "the [F#] that does resolve is not reported" ;;
+*) no "--citation-codes reported more than the one dangling code (got: $CC_F)" ;;
+esac
+
+CC_S=$("$LINT" --citation-codes --vault "$HERE/citation-dangling-s" --json 2>/dev/null)
+CC_S_STATUS=$?
+[ "$CC_S_STATUS" = "1" ] && ok "--citation-codes exits 1 on an [S#] with no sources.md row" ||
+	no "--citation-codes should exit 1 on a dangling [S#] (got $CC_S_STATUS)"
+case "$CC_S" in
+*'"check": "citation-code-no-source-row"'*'"id": "S9"'*) ok "the dangling [S#] is reported against the source log" ;;
+*) no "citation-code-no-source-row did not report S9 (got: $CC_S)" ;;
+esac
+# A fenced block in that same document cites a code no row assigns. A scan that
+# read fenced lines would report it, and a check that fires on a document for
+# documenting its own format is one somebody switches off.
+case "$CC_S" in
+*S404*) no "a citation inside a fenced block was read as a citation" ;;
+*) ok "a code inside a fenced block is an example, not a citation" ;;
+esac
+
+# THE ASSERTION THIS MODE IS SHAPED BY. Both index files carry a mention of a
+# code they no longer assign - one in the log's header prose, one inside a row -
+# and excluding the two indexes from the scan is what keeps that a pass.
+CC_RET=$("$LINT" --citation-codes --vault "$HERE/citation-retired-code" 2>&1)
+CC_RET_STATUS=$?
+[ "$CC_RET_STATUS" = "0" ] && ok "an index discussing its own retired codes passes" ||
+	no "a retired code named inside its own index must not fail (got $CC_RET_STATUS: $CC_RET)"
+
+# THE SUCCESS LINE STATES THE LIMIT, and this is the assertion that keeps it
+# there: resolution is necessary and not sufficient, so a line reporting only
+# that every code resolved would claim coverage the mode does not have - the
+# exact defect family this mode belongs to.
+case "$CC_RET" in
+*'INTENDED source'*) ok "the success line says which question it did not ask" ;;
+*) no "--citation-codes did not state its limit on success (got: $CC_RET)" ;;
+esac
+
+# A missing index is a half that did not run, never agreement. The clean vault
+# cites [F1] and carries no founder brief at all.
+CC_NONE=$("$LINT" --citation-codes --vault "$HERE/clean" 2>&1)
+CC_NONE_STATUS=$?
+[ "$CC_NONE_STATUS" = "0" ] && ok "a vault with neither index passes" ||
+	no "a vault with no index to resolve against should pass (got $CC_NONE_STATUS: $CC_NONE)"
+case "$CC_NONE" in
+*'neither index exists'*) ok "the absent indexes are named rather than reported clean" ;;
+*) no "--citation-codes did not say it had no index to read (got: $CC_NONE)" ;;
+esac
+
+# --- 25. a local source row the global log never received ---------------------
+# The half --citation-codes cannot reach: a source that exists only in a research
+# file's own table has no citable code at all, while a plan citing that local
+# number resolves it against whatever the log assigns it to. The exemption is the
+# other half of the fixture pair, and it is what keeps the mode switched on.
+printf '\nunflattened sources\n'
+
+US_OUT=$("$LINT" --unflattened-source --vault "$HERE/source-unflattened" --json 2>/dev/null)
+US_STATUS=$?
+[ "$US_STATUS" = "1" ] && ok "--unflattened-source exits 1 on a local row the log never received" ||
+	no "--unflattened-source should exit 1 on an unflattened row (got $US_STATUS)"
+case "$US_OUT" in
+*'"check": "source-unflattened"'*'"id": "S2"'*) ok "the local row whose URL is absent is reported" ;;
+*) no "source-unflattened did not report S2 (got: $US_OUT)" ;;
+esac
+# The sibling row in the same table IS in the log, so the count is what says the
+# mode compared URLs rather than reporting every local row it found.
+case "$US_OUT" in
+*'"failure_count": 1'*) ok "the local row that was flattened is not reported" ;;
+*) no "--unflattened-source reported more than the one absent URL (got: $US_OUT)" ;;
+esac
+
+# THE DECLARED EXEMPTION, which is what stops this mode reporting a hundred and
+# fifty failures over a corpus doing the right thing - and a mode that does that
+# is one somebody switches off, taking the working half with it.
+US_EX=$("$LINT" --unflattened-source --vault "$HERE/source-ledger-exempt" 2>&1)
+US_EX_STATUS=$?
+[ "$US_EX_STATUS" = "0" ] && ok "a ledger declared exempt in the log's header passes" ||
+	no "a declared local ledger must not fail (got $US_EX_STATUS: $US_EX)"
+case "$US_EX" in
+*'research/company-profiles.md'*) ok "the success line names what was exempted" ;;
+*) no "the exemption is invisible in the success line (got: $US_EX)" ;;
+esac
+# The file NEXT to the exempt one is still read, which is what says the
+# exemption is scoped to a file rather than switching the mode off.
+case "$US_EX" in
+*'1 local source row across 1 research file'*) ok "the file beside the exempt one is still compared" ;;
+*) no "the unexempt research file was not read (got: $US_EX)" ;;
+esac
+# A row naming a source with no URL has no key to match on. Counted and named
+# rather than passed in silence, so a table of unlinkable rows cannot read as a
+# table that agreed.
+case "$US_EX" in
+*'carrying no URL'*) ok "a row with no URL is reported as unresolved, not as agreed" ;;
+*) no "the row with no URL was silently passed (got: $US_EX)" ;;
+esac
+
+# No sources.md is a mode that did not run, never agreement.
+US_NONE=$("$LINT" --unflattened-source --vault "$HERE/clean" 2>&1)
+US_NONE_STATUS=$?
+[ "$US_NONE_STATUS" = "0" ] && ok "a vault with no global log passes" ||
+	no "a vault with no sources.md should pass (got $US_NONE_STATUS: $US_NONE)"
+case "$US_NONE" in
+*'no global log to flatten a local row into'*) ok "the absent log is named rather than reported clean" ;;
+*) no "--unflattened-source did not say it had no log to read (got: $US_NONE)" ;;
+esac
+
+# --- 26. a subject the corpus argues from and never filed --------------------
 # coverage-gap asks this of `required: true` subjects and stops there, so the
 # subjects a particular plan invents its own dependence on are invisible: the
 # documents reason from one, the vocabulary declares it, and no note is ever
