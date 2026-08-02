@@ -725,7 +725,9 @@ panel objection rows, the roadmap table and the verdict drivers and the evidence
 A claim of the form *X is not credible*, *Y is not reachable* or *this rules out Z* does not add a
 position to the plan — it removes one. It takes work off the roadmap, kills a segment, or takes a
 configuration off the table. Three fields are what keep it arguable afterwards, written as a set
-on the claim that draws the conclusion:
+on the note that draws the conclusion — normally a `claim`, and **`--foreclosed` holds a `claim`
+and an `assumption` alike**, because a foreclosure is a foreclosure whichever type carries it and a
+rule reading only claims is one a retype escapes:
 
 ```yaml
 forecloses: "the seat-only configuration"      # what this claim takes off the table
