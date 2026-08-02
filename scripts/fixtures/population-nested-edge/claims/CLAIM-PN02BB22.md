@@ -10,8 +10,11 @@ subject: "market-size"
 stale_after: "2099-12-31"
 rests_on:
   - SOURCE-PN01AA11
+nested_in:
+  - CLAIM-PN05EE55
 ---
 
-The outer ring: every establishment carrying the activity as a principal
-occupation. Nothing contains this one, so it names no `nested_in` and is
-related to the corpus by the edge the narrower claim writes.
+The middle ring: every establishment carrying the activity as a principal
+occupation. THREE RINGS ARE TWO EDGES - this one names the ring outside it and
+the behavioural cut names this one, and the check walks the chain transitively,
+so nothing owes the third edge from the innermost claim to the outermost.

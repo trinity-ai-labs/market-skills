@@ -1138,6 +1138,17 @@ vault-lint.sh - read-only checks over a claim vault.
       would put the option back on the table. Without it the conclusion is
       permanent, and nothing in the corpus records what it was conditional on.
 
+
+      foreclosed-on-dangling: a note carrying `forecloses` whose
+      `foreclosed_on` names an ID no note in this vault carries. The
+      conclusion names the input it rests on and that input cannot be opened,
+      so nothing can be re-read to overturn it. It is also the brief the
+      floor skeptic is dispatched with, so a dangling target sends the one
+      lens pointed at this conclusion to a note that does not exist - and a
+      lens that found nothing reads exactly like a foreclosure that survived
+      being attacked. `check`s dangling-edge rule walks the block-list edge
+      fields and never this scalar, so nothing else reports it, which is the
+      gap `superseded_by` has and answers the same way.
       IT READS BOTH TYPES THAT FILE A POSITION, `claim` and `assumption` - the
       closed pair --subject-orphan states at its own predicate. A `source` or
       a `fact` is provenance a position rests on, and a `milestone`, `question`
@@ -5215,6 +5226,15 @@ function Invoke-ModeForeclosed {
 	$nfc = 0
 	$listed = ''
 
+	# Every ID this vault carries, for the dangling test below. Built here
+	# rather than threaded in, because this mode is the only reader of
+	# `foreclosed_on` and the index costs one pass.
+	$hasId = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	foreach ($f in $files) {
+		$fid = Get-ForeclosedValue $f 'id'
+		if ($fid.Length -ne 0) { [void]$hasId.Add($fid) }
+	}
+
 	foreach ($f in $files) {
 		$id = Get-ForeclosedValue $f 'id'
 		$ty = Get-ForeclosedValue $f 'type'
@@ -5231,6 +5251,20 @@ function Invoke-ModeForeclosed {
 		$nfc++
 		if ($nfc -ne 1) { $listed = $listed + '; ' }
 		$listed = $listed + $id + ' forecloses ' + $what + ' (' + $where + ')'
+
+		# `foreclosed_on` names the input the conclusion rests on, and it is a
+		# SCALAR - so Invoke-ModeCheck's dangling-edge rule, which walks the
+		# block-list edge fields, never opens it. The same gap `superseded_by`
+		# has, answered the same way: its own rule rather than a silent
+		# omission. What a dangling one costs is specific to this field - the
+		# floor skeptic is briefed off this mode's output with `foreclosed_on`
+		# in it, so a target naming nothing sends the one lens pointed at the
+		# foreclosure to a note that does not exist, and a lens that found
+		# nothing is indistinguishable from a foreclosure that survived attack.
+		$fon = Get-ForeclosedText $f 'foreclosed_on'
+		if ($fon.Length -ne 0 -and -not $hasId.Contains($fon)) {
+			[void]$script:FAILURES.Add($f + "`tforeclosed-on-dangling`t" + $id + "`t" + '`foreclosed_on: ' + $fon + '` and no note in this vault carries that ID. The conclusion names the input it rests on and that input cannot be opened, so nothing can be re-read to overturn the foreclosure - either the note was never written, or the ID is a typo. It is the brief the floor skeptic is dispatched with, so a dangling target sends the one lens pointed at this conclusion to a note that does not exist, and a lens that found nothing reads exactly like a foreclosure that survived being attacked. `check`s dangling-edge rule walks the block-list edge fields and never this scalar, so nothing else in this tool reports it')
+		}
 
 		if (Test-ForeclosedPresent $f 'reverses_if') { continue }
 		$detail = '`forecloses` names ' + $what + ' and the note carries no `reverses_if`. Taking an option off the table removes work from the roadmap, kills a segment or rules out a configuration, and it is the one class of assertion nothing in this method attacks - every panel lens asks whether the plan can deliver what it promises and none asks whether it wrongly concluded it could not. With no reversal condition the conclusion is permanent and the corpus records nothing it was conditional on, which is unfalsifiable rather than settled: the option is gone, so nothing downstream references it and no other check has a target to fire on. State `reverses_if` - the value of `foreclosed_on` that would put the option back on the table - the way an `assumption` states `validated_by`. Cited into: ' + $where
@@ -6163,12 +6197,25 @@ function Invoke-ModeCheck {
 	}
 
 	# The `market-size` populations, and whether the corpus says how they sit
-	# inside each other. ONE PASS OVER THE EDGES, marking BOTH ends: the
-	# question is whether a pair is RELATED and not which way round, so A naming
-	# B is the same statement about the pair as B naming A, and a rule that read
-	# only the narrower end would fail a corpus that wrote the edge from the
-	# other one. Marking both as the edge is read is what answers that without a
-	# second scan over every pair.
+	# inside each other. THE TEST IS CONNECTIVITY, NOT WHETHER EACH NOTE CARRIES
+	# AN EDGE, and vault.md states the contract in those words: what it asks for
+	# is that the claims under one subject are connected, never that every
+	# combination carries a direct edge. Reachability is walked TRANSITIVELY, so
+	# three rings are satisfied by two edges - the innermost names the middle,
+	# the middle names the outermost - which is the shape a plan that sized
+	# properly has, and demanding the third edge would ask for a fact already
+	# derivable from the other two.
+	#
+	# A per-note "does this one carry an edge" test passes a corpus the contract
+	# fails, and the case is not exotic: two nested PAIRS under one subject, each
+	# internally edged and neither related to the other, leaves every note
+	# carrying an edge and the set still holding two unrelated ring systems. So
+	# the edges are unioned and the components counted.
+	#
+	# The edge is undirected here, because the question is whether a pair is
+	# RELATED and not which way round: A naming B is the same statement about the
+	# pair as B naming A, and a rule reading only the narrower end would fail a
+	# corpus that wrote the edge from the other one.
 	#
 	# THIS RULE TESTS RESOLUTION ITSELF rather than leaning on the dangling-edge
 	# rule to have caught a bad target first, and the choice matters:
@@ -6188,9 +6235,26 @@ function Invoke-ModeCheck {
 	# The scalar and the block-list spelling are both read, for the reason
 	# Test-CheckPresent reads both: a note that wrote its edge as a list would
 	# otherwise be exempt by formatting.
-	$ISPOP = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
-	foreach ($f in $POP) { [void]$ISPOP.Add($f) }
-	$LINKED = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+	$POPAT = New-Object 'System.Collections.Generic.Dictionary[string,int]' ([System.StringComparer]::Ordinal)
+	$PAR = New-Object 'System.Collections.Generic.List[int]'
+	for ($pi = 0; $pi -lt $POP.Count; $pi++) {
+		$POPAT[$POP[$pi]] = $pi
+		[void]$PAR.Add($pi)
+	}
+
+	# pop_root() at bin/vault-lint.sh - the representative of one population`s
+	# component. Plain union-find with path halving, iterative rather than
+	# recursive because the population set is corpus data and a recursive walk
+	# over it would be bounded by whatever the corpus happens to hold.
+	function Get-PopRoot {
+		param([int]$X)
+		while ($PAR[$X] -ne $X) {
+			$PAR[$X] = $PAR[$PAR[$X]]
+			$X = $PAR[$X]
+		}
+		return $X
+	}
+
 	foreach ($f in $POP) {
 		$edges = New-Object 'System.Collections.Generic.List[string]'
 		$scalar = Get-CheckValue $f 'nested_in'
@@ -6199,29 +6263,31 @@ function Invoke-ModeCheck {
 		foreach ($item in $edges) {
 			$tgt = Get-CheckEdgeTarget $item
 			if (-not $BYID.ContainsKey($tgt)) { continue }
-			if (-not $ISPOP.Contains($BYID[$tgt])) { continue }
-			[void]$LINKED.Add($f)
-			[void]$LINKED.Add($BYID[$tgt])
+			if (-not $POPAT.ContainsKey($BYID[$tgt])) { continue }
+			$ra = Get-PopRoot $POPAT[$f]
+			$rb = Get-PopRoot $POPAT[$BYID[$tgt]]
+			if ($ra -ne $rb) { $PAR[$ra] = $rb }
 		}
 	}
 
 	# Reported per NOTE rather than per group, which is where this differs from
 	# false-independence and duplicate-url above. There the whole group is
-	# implicated and neither member is the wrong one; here the repair is one
-	# `nested_in` line on the note that is missing it, and a reader sent to a
-	# note already carrying its edge finds nothing to do. One note unrelated to
-	# everything is one row, not N.
+	# implicated and neither member is the wrong one; here each row names the
+	# claims THIS one has no chain to, so the note a reader opens tells them
+	# which ring is still unrecorded - and a note already connected to
+	# everything is not a row at all.
 	if ($POP.Count -ge 2) {
 		for ($pi = 0; $pi -lt $POP.Count; $pi++) {
 			$f = $POP[$pi]
-			if ($LINKED.Contains($f)) { continue }
-			$others = ''
+			$unreached = ''
 			for ($pj = 0; $pj -lt $POP.Count; $pj++) {
 				if ($pj -eq $pi) { continue }
-				if ($others.Length -ne 0) { $others = $others + ', ' }
-				$others = $others + (Get-CheckValue $POP[$pj] 'id')
+				if ((Get-PopRoot $pj) -eq (Get-PopRoot $pi)) { continue }
+				if ($unreached.Length -ne 0) { $unreached = $unreached + ', ' }
+				$unreached = $unreached + (Get-CheckValue $POP[$pj] 'id')
 			}
-			Add-CheckFailure $f 'population-unnested' (Get-CheckValue $f 'id') ('`subject: market-size` is carried by ' + [string]$POP.Count + ' `current` claims and no `nested_in` edge relates this one to any of the others: ' + $others + '. Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. Add `nested_in` naming the population this claim sits inside, or supersede one side if the two genuinely disagree')
+			if ($unreached.Length -eq 0) { continue }
+			Add-CheckFailure $f 'population-unnested' (Get-CheckValue $f 'id') ('`subject: market-size` is carried by ' + [string]$POP.Count + ' `current` claims and no `nested_in` chain connects this one to: ' + $unreached + '. Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. The chain is walked transitively, so three rings are two edges rather than three: add `nested_in` naming the ring immediately outside this claim, or supersede one side if the two genuinely disagree')
 		}
 	}
 

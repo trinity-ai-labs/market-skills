@@ -370,6 +370,7 @@ vault-lint.sh - read-only checks over a claim vault.
       is in --release-gate so the call before a render is still one call, but
       the run that gates what actually ships is the one inside the render loop,
       after the HTML exists - see the render loop in rendering.md.
+
   vault-lint.sh --assumption-rows [--vault PATH] [--json]
       Check the assumptions table in financial-model.md against the assumption
       notes that declare themselves inputs to the model, both directions. A
@@ -703,6 +704,17 @@ vault-lint.sh - read-only checks over a claim vault.
       would put the option back on the table. Without it the conclusion is
       permanent, and nothing in the corpus records what it was conditional on.
 
+
+      foreclosed-on-dangling: a note carrying `forecloses` whose
+      `foreclosed_on` names an ID no note in this vault carries. The
+      conclusion names the input it rests on and that input cannot be opened,
+      so nothing can be re-read to overturn it. It is also the brief the
+      floor skeptic is dispatched with, so a dangling target sends the one
+      lens pointed at this conclusion to a note that does not exist - and a
+      lens that found nothing reads exactly like a foreclosure that survived
+      being attacked. `check`s dangling-edge rule walks the block-list edge
+      fields and never this scalar, so nothing else reports it, which is the
+      gap `superseded_by` has and answers the same way.
       IT READS BOTH TYPES THAT FILE A POSITION, `claim` and `assumption` - the
       closed pair --subject-orphan states at its own predicate. A `source` or
       a `fact` is provenance a position rests on, and a `milestone`, `question`
@@ -5631,6 +5643,13 @@ if [ "$MODE" = "foreclosed" ]; then
 			}
 
 			END {
+				# Every ID this vault carries, for the dangling test below.
+				# Built here rather than threaded in, because this mode is the
+				# only reader of `foreclosed_on` and the index costs one pass.
+				for (i = 1; i <= nf; i++) {
+					if (V[files[i], "id"] != "") HASID[V[files[i], "id"]] = 1
+				}
+
 				for (i = 1; i <= nf; i++) {
 					f = files[i]
 					id = V[f, "id"]
@@ -5648,6 +5667,24 @@ if [ "$MODE" = "foreclosed" ]; then
 
 					nfc++
 					listed = listed (nfc == 1 ? "" : "; ") id " forecloses " what " (" where ")"
+
+					# `foreclosed_on` names the input the conclusion rests on,
+					# and it is a SCALAR - so `check`s dangling-edge rule,
+					# which walks the block-list edge fields, never opens it.
+					# The same gap `superseded_by` has, answered the same way:
+					# its own rule rather than a silent omission.
+					#
+					# What a dangling one costs is specific to this field. The
+					# floor skeptic is briefed off this mode`s output with
+					# `foreclosed_on` in it, so a target naming nothing sends
+					# the one lens pointed at the foreclosure to a note that
+					# does not exist. The lens reports nothing, and a lens that
+					# found nothing is indistinguishable from a foreclosure
+					# that survived attack - the vacuous pass this release
+					# exists to close, shipped by the release closing it.
+					fon = textof(f, "foreclosed_on")
+					if (fon != "" && !(fon in HASID))
+						report(f, "foreclosed-on-dangling", id, "`foreclosed_on: " fon "` and no note in this vault carries that ID. The conclusion names the input it rests on and that input cannot be opened, so nothing can be re-read to overturn the foreclosure - either the note was never written, or the ID is a typo. It is the brief the floor skeptic is dispatched with, so a dangling target sends the one lens pointed at this conclusion to a note that does not exist, and a lens that found nothing reads exactly like a foreclosure that survived being attacked. `check`s dangling-edge rule walks the block-list edge fields and never this scalar, so nothing else in this tool reports it")
 
 					if (present(f, "reverses_if")) continue
 					report(f, "foreclosure-no-reverse", id, "`forecloses` names " what " and the note carries no `reverses_if`. Taking an option off the table removes work from the roadmap, kills a segment or rules out a configuration, and it is the one class of assertion nothing in this method attacks - every panel lens asks whether the plan can deliver what it promises and none asks whether it wrongly concluded it could not. With no reversal condition the conclusion is permanent and the corpus records nothing it was conditional on, which is unfalsifiable rather than settled: the option is gone, so nothing downstream references it and no other check has a target to fire on. State `reverses_if` - the value of `foreclosed_on` that would put the option back on the table - the way an `assumption` states `validated_by`. Cited into: " where)
@@ -5895,6 +5932,20 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 	function report(file, check, id, detail) { print file "\t" check "\t" id "\t" detail >> out }
 
 	function present(f, k) { return (V[f, k] != "" || LN[f SUBSEP k] > 0) }
+
+	# The representative of one `market-size` population`s component, for the
+	# nesting rule below. Plain union-find over PAR[], with path halving so a
+	# long chain does not cost its length on every lookup - three rings is the
+	# common case and a deep one is still linear to build. Iterative rather
+	# than recursive because the population set is corpus data and a recursive
+	# walk over it would be bounded by whatever the corpus happens to hold.
+	function pop_root(x) {
+		while (PAR[x] != x) {
+			PAR[x] = PAR[PAR[x]]
+			x = PAR[x]
+		}
+		return x
+	}
 
 	$1 == "T" { terms[++nterm] = $2; isterm[$2] = 1; required[$2] = $3; next }
 	$1 == "A" { aliases[++nalias] = $2; aliasof[$2] = $3; next }
@@ -6310,12 +6361,28 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		}
 
 		# The `market-size` populations, and whether the corpus says how they
-		# sit inside each other. ONE PASS OVER THE EDGES, marking BOTH ends:
-		# the question is whether a pair is RELATED and not which way round, so
-		# A naming B is the same statement about the pair as B naming A, and a
-		# rule that read only the narrower end would fail a corpus that wrote
-		# the edge from the other one. Marking both as the edge is read is what
-		# answers that without a second scan over every pair.
+		# sit inside each other. THE TEST IS CONNECTIVITY, NOT WHETHER EACH
+		# NOTE CARRIES AN EDGE, and vault.md states the contract in those
+		# words: what it asks for is that the claims under one subject are
+		# connected, never that every combination carries a direct edge.
+		# Reachability is walked TRANSITIVELY, so three rings are satisfied by
+		# two edges - the innermost names the middle, the middle names the
+		# outermost - which is the shape a plan that sized properly has, and
+		# demanding the third edge would ask for a fact already derivable from
+		# the other two.
+		#
+		# A per-note "does this one carry an edge" test passes a corpus the
+		# contract fails, and the case is not exotic: two nested PAIRS under
+		# one subject, each internally edged and neither related to the other,
+		# leaves every note carrying an edge and the set still holding two
+		# unrelated ring systems. A share figure is then a percentage of
+		# whichever system its reader assumed, which is the whole failure.
+		# So the edges are unioned and the components counted.
+		#
+		# The edge is undirected here, because the question is whether a pair
+		# is RELATED and not which way round: A naming B is the same statement
+		# about the pair as B naming A, and a rule reading only the narrower
+		# end would fail a corpus that wrote the edge from the other one.
 		#
 		# THIS RULE TESTS RESOLUTION ITSELF rather than leaning on the
 		# dangling-edge rule to have caught a bad target first, and the choice
@@ -6338,35 +6405,38 @@ awk -v today="$TODAY" -v out="$FAILURES" -v hasvocab="$HAS_VOCAB" -v edgefields=
 		# The scalar and the block-list spelling are both read, for the reason
 		# present() reads both: a note that wrote its edge as a list would
 		# otherwise be exempt by formatting.
-		for (i = 1; i <= NPOP; i++) ISPOP[POP[i]] = 1
+		for (i = 1; i <= NPOP; i++) { POPAT[POP[i]] = i; PAR[i] = i }
 		for (i = 1; i <= NPOP; i++) {
 			f = POP[i]
-			if (V[f, "nested_in"] != "") {
-				tgt = target_of(V[f, "nested_in"])
-				if ((tgt in BYID) && (BYID[tgt] in ISPOP)) { LINKED[f] = 1; LINKED[BYID[tgt]] = 1 }
-			}
+			nnest = 0
+			if (V[f, "nested_in"] != "") NEST[++nnest] = target_of(V[f, "nested_in"])
 			k = f SUBSEP "nested_in"
-			for (j = 1; j <= LN[k]; j++) {
-				tgt = target_of(LI[k, j])
-				if ((tgt in BYID) && (BYID[tgt] in ISPOP)) { LINKED[f] = 1; LINKED[BYID[tgt]] = 1 }
+			for (j = 1; j <= LN[k]; j++) NEST[++nnest] = target_of(LI[k, j])
+			for (j = 1; j <= nnest; j++) {
+				tgt = NEST[j]
+				if (!(tgt in BYID)) continue
+				if (!(BYID[tgt] in POPAT)) continue
+				ra = pop_root(i)
+				rb = pop_root(POPAT[BYID[tgt]])
+				if (ra != rb) PAR[ra] = rb
 			}
 		}
 
 		# Reported per NOTE rather than per group, which is where this differs
 		# from false-independence and duplicate-url above. There the whole group
-		# is implicated and neither member is the wrong one; here the repair is
-		# one `nested_in` line on the note that is missing it, and a reader sent
-		# to a note already carrying its edge finds nothing to do. One note
-		# unrelated to everything is one row, not N.
+		# is implicated and neither member is the wrong one; here each row names
+		# the claims THIS one has no chain to, so the note a reader opens tells
+		# them which ring is still unrecorded - and a note already connected to
+		# everything is not a row at all.
 		if (NPOP >= 2) for (i = 1; i <= NPOP; i++) {
 			f = POP[i]
-			if (f in LINKED) continue
-			others = ""
+			unreached = ""
 			for (j = 1; j <= NPOP; j++) {
-				if (j == i) continue
-				others = others (others == "" ? "" : ", ") V[POP[j], "id"]
+				if (j == i || pop_root(j) == pop_root(i)) continue
+				unreached = unreached (unreached == "" ? "" : ", ") V[POP[j], "id"]
 			}
-			report(f, "population-unnested", V[f, "id"], "`subject: market-size` is carried by " NPOP " `current` claims and no `nested_in` edge relates this one to any of the others: " others ". Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. Add `nested_in` naming the population this claim sits inside, or supersede one side if the two genuinely disagree")
+			if (unreached == "") continue
+			report(f, "population-unnested", V[f, "id"], "`subject: market-size` is carried by " NPOP " `current` claims and no `nested_in` chain connects this one to: " unreached ". Two live claims under one subject are a collision, and under this subject the collision is usually not a contradiction - a behavioural cut sits inside a professional population sits inside a broader one, and every one of the figures is right. Nothing in the corpus says which contains which, so a share figure is a percentage of whichever population its reader assumed, and taking the innermost silently produces the smallest share available - which then reads as conservative rather than as a decision nobody made. The chain is walked transitively, so three rings are two edges rather than three: add `nested_in` naming the ring immediately outside this claim, or supersede one side if the two genuinely disagree")
 		}
 
 		for (i = 1; i <= nf; i++) {
