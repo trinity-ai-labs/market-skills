@@ -88,8 +88,8 @@ and is never restated here.
     not render. **Phase 5's run is one call — `vault-lint.sh --release-gate`** — which runs the
     bare check, `--used-in`, `--supersession-sweep`, `--red-team`, `--roadmap-table`,
     `--binding-driver`, `--monitoring`, `--deliverable`, `--assumption-rows`,
-    `--claim-drift`, `--citation-codes`, `--subject-orphan` and
-    `--unflattened-source`, and exits
+    `--claim-drift`, `--citation-codes`, `--unflattened-source` and
+    `--subject-orphan`, and exits
     non-zero unless
     every part passes. It is one call because it was several, and calls made from memory are a set
     nobody can be held to: which of them actually ran was a matter of recall, and the bare run's
